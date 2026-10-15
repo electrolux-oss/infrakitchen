@@ -2,8 +2,7 @@ import { useMemo } from "react";
 
 import { Control, Controller, useFormContext, useWatch } from "react-hook-form";
 
-import { Box, Button, Stack, TextField, Typography } from "@mui/material";
-
+import { Button, TextField } from "../../ui";
 import { formatNumericDisplayValue, parseNumericField } from "../utils/numeric";
 
 interface ValidationNumberControlsProps {
@@ -43,18 +42,12 @@ export const ValidationNumberControls = ({
   };
 
   return (
-    <Box sx={{ mt: 1 }}>
-      <Typography
-        variant="body2"
-        sx={{
-          color: "text.secondary",
-          mb: 2,
-        }}
-      >
+    <div className="mt-2">
+      <p className="m-0 mb-4 text-body2 text-fg-muted">
         Set optional numeric boundaries for this variable. Leave a field blank
         to skip that constraint entirely.
-      </Typography>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+      </p>
+      <div className="flex flex-col gap-4 sm:flex-row">
         <Controller
           name={minFieldName}
           control={control}
@@ -83,7 +76,7 @@ export const ValidationNumberControls = ({
               value={formatNumericDisplayValue(field.value)}
               label="Min value"
               type="number"
-              slotProps={{ htmlInput: { step: "any" } }}
+              inputProps={{ step: "any" }}
               onChange={(event) => {
                 field.onChange(event.target.value);
                 setValue(ruleIdFieldName, null, {
@@ -125,7 +118,7 @@ export const ValidationNumberControls = ({
               value={formatNumericDisplayValue(field.value)}
               label="Max value"
               type="number"
-              slotProps={{ htmlInput: { step: "any" } }}
+              inputProps={{ step: "any" }}
               onChange={(event) => {
                 field.onChange(event.target.value);
                 setValue(ruleIdFieldName, null, {
@@ -139,16 +132,16 @@ export const ValidationNumberControls = ({
             />
           )}
         />
-      </Stack>
+      </div>
       <Button
+        className="mt-4 self-start"
         variant="text"
         color="secondary"
-        sx={{ mt: 2, alignSelf: "flex-start" }}
         onClick={clearValues}
         disabled={!hasAnyValue}
       >
         Clear Validation
       </Button>
-    </Box>
+    </div>
   );
 };

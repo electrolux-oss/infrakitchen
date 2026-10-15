@@ -1,11 +1,18 @@
 import { ReactNode, useMemo } from "react";
 
-import { ExpandLess, ExpandMore, InfoOutlined } from "@mui/icons-material";
-import { Box, CardContent, CardHeader, Tooltip } from "@mui/material";
-import Card from "@mui/material/Card";
-import Collapse from "@mui/material/Collapse";
-import IconButton from "@mui/material/IconButton";
-
+import {
+  ExpandLessIcon,
+  ExpandMoreIcon,
+  InfoOutlinedIcon,
+} from "../../../icons/material";
+import {
+  IconButton,
+  Tooltip,
+  CardContent,
+  CardHeader,
+  Card,
+  Collapse,
+} from "../../../ui";
 import { useLocalStorage } from "../../context/UIStateContext";
 
 export interface PropertyCollapseCardProps {
@@ -33,45 +40,27 @@ export const PropertyCollapseCard = (props: PropertyCollapseCardProps) => {
   };
 
   return (
-    <Card sx={{ width: "100%" }}>
+    <Card className="w-full">
       <CardHeader
         title={
-          <Box
+          <div
+            className="flex items-center"
             onClick={() => toggleExpanded(cardId)}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-            }}
           >
             {title}
             {subtitle && (
               <Tooltip title={subtitle} arrow>
-                <Box
-                  component="span"
-                  sx={{
-                    ml: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    cursor: "pointer",
-                    color: "info.main",
-                    fontSize: 16,
-                  }}
+                <span
+                  className="ml-2 flex cursor-pointer items-center text-[16px] text-info"
                   onClick={(e) => e.stopPropagation()}
                   tabIndex={0}
                 >
-                  <InfoOutlined fontSize="inherit" />
-                </Box>
+                  <InfoOutlinedIcon fontSize="inherit" />
+                </span>
               </Tooltip>
             )}
             <IconButton
-              disableRipple
-              disableFocusRipple
-              sx={{
-                marginLeft: "auto",
-                "&:hover": {
-                  backgroundColor: "transparent",
-                },
-              }}
+              className="ml-auto hover:bg-transparent"
               onClick={(e) => {
                 e.stopPropagation();
                 toggleExpanded(cardId);
@@ -80,9 +69,9 @@ export const PropertyCollapseCard = (props: PropertyCollapseCardProps) => {
               aria-label={isExpanded ? "Collapse" : "Expand"}
               size="small"
             >
-              {isExpanded ? <ExpandLess /> : <ExpandMore />}
+              {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
             </IconButton>
-          </Box>
+          </div>
         }
       />
       <Collapse in={isExpanded}>

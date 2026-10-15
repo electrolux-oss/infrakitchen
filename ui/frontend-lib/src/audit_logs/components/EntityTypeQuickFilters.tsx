@@ -1,7 +1,5 @@
 import { useMemo } from "react";
 
-import { Box } from "@mui/material";
-
 import { humanizeEntityType } from "../../common/components/entities/Entity";
 import { Label } from "../../common/components/labels/Label";
 
@@ -52,7 +50,7 @@ export const EntityTypeQuickFilters = ({
   };
 
   return (
-    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+    <div className="flex flex-wrap gap-1">
       {sortedTypes.map((type) => (
         <Label
           key={type}
@@ -68,9 +66,8 @@ export const EntityTypeQuickFilters = ({
           aria-label={`Filter audit logs by ${humanizeEntityType(type)}`}
           tone={selectedSet.has(type) ? "info" : "default"}
           size="medium"
-          sx={{ cursor: "pointer" }}
         />
       ))}
-    </Box>
+    </div>
   );
 };

@@ -1,4 +1,3 @@
-import type { Theme } from "@mui/material";
 import {
   type Edge,
   type OnEdgesChange,
@@ -11,7 +10,12 @@ import { create } from "zustand";
 
 import { ENTITY_STATUS } from "../../../../utils";
 
-import { DiagramNode, sourceHandleId, targetHandleId } from "./helpers";
+import {
+  CANVAS_PALETTE,
+  DiagramNode,
+  sourceHandleId,
+  targetHandleId,
+} from "./helpers";
 import { GenericStep, GenericTemplate, WiringRule } from "./types";
 import { TemplatePorts } from "./WiringCanvas.types";
 
@@ -175,7 +179,6 @@ export function buildEdges(params: {
   selectedTemplates: GenericTemplate[];
   externalTemplates: Array<{ id: string; name: string }>;
   constants: Array<{ id: string; name: string }>;
-  theme: Theme;
   stepByTemplate?: Map<string, GenericStep>;
 }): Edge[] {
   const {
@@ -183,12 +186,10 @@ export function buildEdges(params: {
     selectedTemplates,
     externalTemplates,
     constants,
-    theme,
     stepByTemplate,
   } = params;
 
-  // See `useCanvasPalette` — `theme.palette` is light-only under cssVariables.
-  const palette = (theme.vars ?? theme).palette;
+  const palette = CANVAS_PALETTE;
   const accent = palette.info.main;
 
   return wiring

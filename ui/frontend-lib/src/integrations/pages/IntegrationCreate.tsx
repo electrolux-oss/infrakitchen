@@ -3,23 +3,19 @@ import { useCallback, useState, useMemo } from "react";
 import { Control, useForm, Controller } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 
+import { useConfig, StyledTab, LabelInput } from "../../common";
+import { notify, notifyError } from "../../common/hooks/useNotification";
+import PageContainer from "../../common/PageContainer";
 import {
-  Box,
-  Typography,
-  TextField,
   Button,
+  TextField,
   Card,
   CardContent,
   CardActions,
   CardHeader,
-  Link,
   Tabs,
-} from "@mui/material";
-
-import { useConfig, StyledTab, LabelInput } from "../../common";
-import { notify, notifyError } from "../../common/hooks/useNotification";
-import PageContainer from "../../common/PageContainer";
-import { CODE_FONT_FAMILY } from "../../common/theme";
+  Link,
+} from "../../ui";
 import { CREATE_INTEGRATION_WITH_STORAGE_MUTATION } from "../../use_cases/graphql";
 import { renderFieldsForProvider } from "../components/IntegrationProviderForms";
 import { providers } from "../constants";
@@ -161,12 +157,12 @@ const IntegrationCreatePage = () => {
   if (!providerObject) {
     return (
       <PageContainer title="Integration Not Found">
-        <Typography variant="h5">
+        <h5 className="m-0 text-h5">
           The specified integration provider was not found.
-        </Typography>
+        </h5>
         <Button
+          className="mt-4"
           onClick={() => navigate(`${linkPrefix}integrations`)}
-          sx={{ mt: 2 }}
         >
           Go Back
         </Button>
@@ -177,24 +173,14 @@ const IntegrationCreatePage = () => {
   return (
     <PageContainer title={`Set up ${providerObject?.name} Integration`}>
       {hasMultipleAuthMethods && (
-        <Box
-          sx={{
-            mb: 3,
-            width: "100%",
-            minWidth: 320,
-          }}
-        >
+        <div className="mb-6 w-full min-w-80">
           <Tabs
+            hideIndicator
             value={connectionType}
             onChange={(_, newValue: ConnectionType) => {
               setConnectionType(newValue);
             }}
             variant="fullWidth"
-            sx={{
-              "& .MuiTabs-indicator": {
-                display: "none",
-              },
-            }}
           >
             <StyledTab
               label="Token Authentication"
@@ -205,113 +191,52 @@ const IntegrationCreatePage = () => {
               value={ConnectionType.SSH}
             />
           </Tabs>
-        </Box>
+        </div>
       )}
-      <Card
-        sx={{
-          mb: 4,
-          width: "100%",
-          minWidth: 320,
-        }}
-      >
+      <Card className="mb-8 w-full min-w-80">
         <CardHeader
           title={
-            <Box sx={{ display: "flex", alignItems: "center" }}>
+            <div className="flex items-center">
               {providerObject.icon && (
                 <providerObject.icon width="50" height="50" />
               )}
-              <Box sx={{ ml: 2 }}>
-                <Typography variant="h6" component="h2">
+              <div className="ml-4">
+                <h2 className="m-0 text-h6">
                   {providerObject.name} Integration Setup
-                </Typography>
-                <Typography sx={{ color: "text.secondary" }}>
+                </h2>
+                <p className="m-0 text-body2 text-fg-muted">
                   {`Connect ${providerObject.name} to integrate with InfraKitchen.`}
-                </Typography>
-              </Box>
-            </Box>
+                </p>
+              </div>
+            </div>
           }
         />
         <CardContent>
-          <Box
-            sx={{
-              backgroundColor: "action.hover",
-              p: 2,
-              mx: 3,
-              borderRadius: "var(--template-surface-radius)",
-              // Inline code inside instruction steps renders through the shared
-              // InlineCode component; block snippets keep the code-font look.
-              "& pre": {
-                fontFamily: CODE_FONT_FAMILY,
-                fontSize: "0.85em",
-                backgroundColor: "var(--template-palette-action-hover)",
-                borderRadius: "var(--template-code-radius)",
-                margin: 0.5,
-                p: 1,
-                overflowX: "auto",
-                whiteSpace: "pre-wrap",
-              },
-            }}
-          >
-            <Typography sx={{ fontWeight: 600, mb: 1 }}>
+          {/* Inline code inside instruction steps renders through the shared
+              InlineCode component; block snippets keep the code-font look. */}
+          <div className="mx-6 rounded-surface bg-hover p-4 [&_pre]:m-1 [&_pre]:overflow-x-auto [&_pre]:rounded-code [&_pre]:bg-hover [&_pre]:p-2 [&_pre]:font-mono [&_pre]:text-[0.85em] [&_pre]:whitespace-pre-wrap">
+            <p className="m-0 mb-2 text-body2 font-semibold">
               How to connect to {providerObject.name}:
-            </Typography>
-            <Box
-              component="div"
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 1,
-              }}
-            >
+            </p>
+            <div className="flex flex-col gap-2">
               {providerObject.instructions.map((line, index) => (
-                <Box key={index} sx={{ display: "flex", gap: 1.5 }}>
-                  <Box
-                    component="span"
-                    sx={{
-                      width: 20,
-                      height: 20,
-                      flexShrink: 0,
-                      mt: 0.1,
-                      borderRadius: "50%",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      backgroundColor: "primary.main",
-                      color: "primary.contrastText",
-                      fontSize: "0.75rem",
-                      lineHeight: 1,
-                    }}
-                  >
+                <div className="flex gap-3" key={index}>
+                  <span className="mt-[0.8px] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[0.75rem] leading-[1] text-primary-contrast">
                     {index + 1}
-                  </Box>
-                  <Box component="span" sx={{ alignSelf: "center" }}>
-                    {line}
-                  </Box>
-                </Box>
+                  </span>
+                  <span className="self-center">{line}</span>
+                </div>
               ))}
-            </Box>
+            </div>
             {providerObject.tokenLink && (
-              <Link
-                href={providerObject.tokenLink}
-                underline="hover"
-                sx={{ display: "block", mt: 2 }}
-              >
+              <Link className="mt-4 block" href={providerObject.tokenLink}>
                 Open {providerObject.name} Settings
               </Link>
             )}
-          </Box>
+          </div>
         </CardContent>
       </Card>{" "}
-      <Card
-        sx={{
-          width: "100%",
-          minWidth: 320,
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: "var(--template-surface-radius)",
-          boxShadow: "none",
-        }}
-      >
+      <Card className="w-full min-w-80 rounded-surface border border-divider shadow-none">
         <CardHeader
           title="Integration Details"
           subheader={`Provide your integration name and ${providerObject.name} ${connectionType === ConnectionType.SSH ? "SSH key" : "token"}`}
@@ -374,15 +299,7 @@ const IntegrationCreatePage = () => {
             true,
           )}
         </CardContent>
-        <CardActions
-          sx={{
-            display: "flex",
-            gap: 2,
-            mt: 2,
-            mb: 1,
-            justifyContent: "center",
-          }}
-        >
+        <CardActions className="mt-4 mb-2 flex justify-center gap-4">
           <Button onClick={handleValidation}>Test Connection</Button>
           <Button
             variant="contained"

@@ -1,26 +1,15 @@
-import DeleteIcon from "@mui/icons-material/Delete";
-import StorageIcon from "@mui/icons-material/Storage";
-import {
-  Box,
-  Chip,
-  IconButton,
-  Tooltip,
-  Typography,
-  useTheme,
-} from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import { Handle, NodeProps, Position } from "@xyflow/react";
 
-import { CODE_FONT_FAMILY } from "../../../theme";
+import { DeleteIcon, StorageIcon } from "../../../../icons/material";
+import { IconButton, Chip, Tooltip } from "../../../../ui";
 import { STATUS_CHIP_COLOR } from "../../../utils";
 import { InlineCode } from "../../code/InlineCode";
 import { GetReferenceUrlValue } from "../../fields/CommonField";
 
-import { DiagramNode, makeHandleStyle, useCanvasPalette } from "./helpers";
+import { CANVAS_PALETTE, DiagramNode, makeHandleStyle } from "./helpers";
 
 export function TemplateNode({ data }: NodeProps<DiagramNode>) {
-  const theme = useTheme();
-  const palette = useCanvasPalette();
+  const palette = CANVAS_PALETTE;
   const bg = palette.background.paper;
   const isExternal = data.kind === "external";
   const displayOrder =
@@ -51,195 +40,105 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
   }
 
   return (
-    <Box
-      sx={{
-        background: bg,
-        border: `1px ${borderStyle} ${borderColor}`,
-        borderRadius: "var(--template-surface-radius)",
-        minWidth: 220,
-        maxWidth: 300,
-        boxShadow: theme.shadows[2],
-      }}
+    <div
+      className="max-w-75 min-w-55 rounded-surface shadow-[var(--ik-shadow-2)]"
+      style={{ background: bg, border: `1px ${borderStyle} ${borderColor}` }}
     >
       {/* Header */}
-      <Box
-        sx={{
-          px: 1.5,
-          py: 0.5,
-          borderBottom: `1px solid ${palette.divider}`,
+      <div
+        className="flex items-center gap-1.5 rounded-t-[6px] border-b border-divider px-3 py-1"
+        style={{
           background: `color-mix(in srgb, ${headerBg} 85%, transparent)`,
-          borderTopLeftRadius: 6,
-          borderTopRightRadius: 6,
-          display: "flex",
-          alignItems: "center",
-          gap: 0.75,
         }}
       >
         {isExternal && (
           <StorageIcon
+            style={{ color: headerText }}
+            className="shrink-0"
             fontSize="small"
-            sx={{ color: headerText, flexShrink: 0 }}
           />
         )}
         {displayOrder != null && (
           // Not a Chip: the theme's dark-mode Chip background out-specifies
           // `sx` and would force a grey badge onto the coloured header.
-          <Box
-            sx={{
-              flexShrink: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minWidth: 20,
-              height: 20,
-              px: 0.5,
-              borderRadius: "10px",
-              bgcolor: "rgba(255, 255, 255, 0.25)",
-              color: headerText,
-              fontSize: 11,
-              fontWeight: 700,
-              lineHeight: 1,
-            }}
+          <div
+            className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-[10px] bg-[rgba(255,_255,_255,_0.25)] px-1 text-[11px] leading-[1] font-bold"
+            style={{ color: headerText }}
           >
             {displayOrder}
-          </Box>
+          </div>
         )}
-        <Typography
-          variant="subtitle2"
-          sx={{
-            fontWeight: 700,
-            color: headerText,
-            flex: 1,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
+        <h6
+          className="m-0 flex-1 overflow-hidden text-subtitle2 font-bold text-ellipsis whitespace-nowrap text-grey-500"
+          style={{ color: headerText }}
         >
           {data.label}
-        </Typography>
+        </h6>
         {data.status && !canRemove && (
           <Chip
+            className="h-5 text-[10px] font-semibold"
             label={data.status.replace("_", " ").toUpperCase()}
             color={STATUS_CHIP_COLOR[data.status]}
-            sx={{ fontWeight: 600, fontSize: 10, height: 20 }}
           />
         )}
         {canRemove && (
           <Tooltip title="Remove" arrow>
             <IconButton
+              style={{ color: headerText }}
+              className="ml-1 p-0.5 hover:bg-error/35"
               size="small"
               onClick={() => data.onRemove?.(data.templateId)}
-              sx={{
-                color: headerText,
-                ml: 0.5,
-                p: 0.25,
-                "&:hover": {
-                  backgroundColor: (theme) =>
-                    alpha(theme.palette.error.main, 0.35),
-                },
-              }}
             >
-              <DeleteIcon sx={{ fontSize: 16 }} />
+              <DeleteIcon className="text-[16px]" />
             </IconButton>
           </Tooltip>
         )}
-      </Box>
+      </div>
       {/* External badge */}
       {isExternal && (
-        <Box sx={{ px: 1.5, pt: 1 }}>
+        <div className="px-3 pt-2">
           <Chip label="External" variant="outlined" color="warning" />
-          <Typography
-            variant="caption"
-            sx={{
-              color: "text.secondary",
-              display: "block",
-              mt: 0.5,
-              mb: 0.5,
-            }}
-          >
+          <span className="mt-1 mb-1 block text-caption text-fg-muted">
             Parent resource as input
-          </Typography>
-        </Box>
+          </span>
+        </div>
       )}
       {/* Resource link (workflow mode only) */}
       {data.resourceId && (
-        <Box
-          sx={{
-            px: 1.5,
-            pt: 1,
-            display: "flex",
-            alignItems: "center",
-            gap: 0.5,
-          }}
-        >
-          <Typography
-            variant="caption"
-            sx={{
-              color: "text.secondary",
-            }}
-          >
-            Resource:
-          </Typography>
+        <div className="flex items-center gap-1 px-3 pt-2">
+          <span className="text-caption text-fg-muted">Resource:</span>
           <GetReferenceUrlValue
             id={data.resourceId}
             entityName="resource"
             identifier={data.resourceName ?? `${data.resourceId.slice(0, 8)}…`}
           />
-        </Box>
+        </div>
       )}
       {/* Error message (workflow mode only) */}
       {data.errorMessage && (
         <Tooltip title={data.errorMessage} arrow>
-          <Box
-            sx={{
-              mx: 1.5,
-              mt: 0.75,
-              p: 0.75,
-              bgcolor: "error.main",
-              color: "error.contrastText",
-              borderRadius: "var(--template-surface-radius)",
-              fontSize: 11,
-              fontFamily: CODE_FONT_FAMILY,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              cursor: "help",
-            }}
-          >
+          <div className="mx-3 mt-1.5 cursor-help overflow-hidden rounded-surface bg-error p-1.5 font-mono text-[11px] text-ellipsis whitespace-nowrap text-error-contrast">
             {data.errorMessage}
-          </Box>
+          </div>
         </Tooltip>
       )}
       {/* Ports */}
-      <Box sx={{ display: "flex", gap: 2, p: 1.5 }}>
+      <div className="flex gap-4 p-3">
         {data.inputs.length > 0 && (
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant="caption"
-              sx={{
-                color: "text.secondary",
-                fontWeight: 600,
-                display: "block",
-                mb: 0.5,
-              }}
-            >
+          <div className="min-w-0 flex-1">
+            <span className="mb-1 block text-caption font-semibold text-fg-muted">
               Inputs
-            </Typography>
+            </span>
             {data.inputs.map((input) => (
-              <Box
+              <div
+                className="my-[3.2px] flex min-w-0 items-center"
                 key={`in-${input}`}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  my: 0.4,
-                  minWidth: 0,
-                }}
               >
                 <Tooltip
                   title={
                     <>
                       Drag from an output to connect it to{" "}
-                      <InlineCode disableCopy sx={{ mx: 0.25 }}>
+                      <InlineCode className="mx-0.5" disableCopy>
                         {input}
                       </InlineCode>
                     </>
@@ -259,25 +158,17 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
                 </Tooltip>
                 <Tooltip title={input} arrow>
                   <Chip
+                    className="min-w-0 flex-initial text-[11px]"
                     label={input}
                     variant="outlined"
                     color="info"
-                    sx={{
-                      fontSize: 11,
-                      minWidth: 0,
-                      flex: "0 1 auto",
-                      "& .MuiChip-label": {
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      },
-                    }}
                   />
                 </Tooltip>
                 <Tooltip
                   title={
                     <>
                       Drag to use{" "}
-                      <InlineCode disableCopy sx={{ mx: 0.25 }}>
+                      <InlineCode className="mx-0.5" disableCopy>
                         {input}
                       </InlineCode>{" "}
                       as a source for another input
@@ -296,57 +187,34 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
                     }}
                   />
                 </Tooltip>
-              </Box>
+              </div>
             ))}
-          </Box>
+          </div>
         )}
 
         {data.outputs.length > 0 && (
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant="caption"
-              sx={{
-                color: "text.secondary",
-                fontWeight: 600,
-                display: "block",
-                mb: 0.5,
-                textAlign: "right",
-              }}
-            >
+          <div className="min-w-0 flex-1">
+            <span className="mb-1 block text-right text-caption font-semibold text-fg-muted">
               Outputs
-            </Typography>
+            </span>
             {data.outputs.map((output) => (
-              <Box
+              <div
+                className="my-[3.2px] flex min-w-0 items-center justify-end"
                 key={`out-${output}`}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "flex-end",
-                  my: 0.4,
-                  minWidth: 0,
-                }}
               >
                 <Tooltip title={output} arrow>
                   <Chip
+                    className="min-w-0 flex-initial text-[11px]"
                     label={output}
                     variant="outlined"
                     color="success"
-                    sx={{
-                      fontSize: 11,
-                      minWidth: 0,
-                      flex: "0 1 auto",
-                      "& .MuiChip-label": {
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      },
-                    }}
                   />
                 </Tooltip>
                 <Tooltip
                   title={
                     <>
                       Drag to connect{" "}
-                      <InlineCode disableCopy sx={{ mx: 0.25 }}>
+                      <InlineCode className="mx-0.5" disableCopy>
                         {output}
                       </InlineCode>{" "}
                       to an input
@@ -365,34 +233,21 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
                     }}
                   />
                 </Tooltip>
-              </Box>
+              </div>
             ))}
-          </Box>
+          </div>
         )}
-      </Box>
+      </div>
       {/* Required configuration variables: set from a wire and usable as a source */}
       {(data.configs?.length ?? 0) > 0 && (
-        <Box sx={{ px: 1.5, pb: 1.5 }}>
-          <Typography
-            variant="caption"
-            sx={{
-              color: "text.secondary",
-              fontWeight: 600,
-              display: "block",
-              mb: 0.5,
-            }}
-          >
+        <div className="px-3 pb-3">
+          <span className="mb-1 block text-caption font-semibold text-fg-muted">
             Dependency config
-          </Typography>
+          </span>
           {data.configs?.map((config) => (
-            <Box
+            <div
+              className="my-[3.2px] flex min-w-0 items-center"
               key={`config-${config}`}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                my: 0.4,
-                minWidth: 0,
-              }}
             >
               {/* External resources already exist, their config is only a source */}
               {!isExternal && (
@@ -400,7 +255,7 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
                   title={
                     <>
                       Drag from an output or constant to set{" "}
-                      <InlineCode disableCopy sx={{ mx: 0.25 }}>
+                      <InlineCode className="mx-0.5" disableCopy>
                         {config}
                       </InlineCode>
                     </>
@@ -421,26 +276,17 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
               )}
               <Tooltip title={config} arrow>
                 <Chip
+                  className="mr-auto min-w-0 flex-initial text-[11px]"
                   label={config}
                   variant="outlined"
                   color="secondary"
-                  sx={{
-                    fontSize: 11,
-                    minWidth: 0,
-                    flex: "0 1 auto",
-                    mr: "auto",
-                    "& .MuiChip-label": {
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    },
-                  }}
                 />
               </Tooltip>
               <Tooltip
                 title={
                   <>
                     Drag to connect{" "}
-                    <InlineCode disableCopy sx={{ mx: 0.25 }}>
+                    <InlineCode className="mx-0.5" disableCopy>
                       {config}
                     </InlineCode>{" "}
                     to an input
@@ -459,10 +305,10 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
                   }}
                 />
               </Tooltip>
-            </Box>
+            </div>
           ))}
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }

@@ -1,14 +1,11 @@
 import { forwardRef, useEffect, useState } from "react";
 
-import { MenuItem, TextField, TextFieldProps } from "@mui/material";
-
 import { useConfig } from "../../common";
 import { notifyError } from "../../common/hooks/useNotification";
 import { ProviderIcon } from "../../icons/Icons";
+import { MenuItem, TextField, type TextFieldProps } from "../../ui";
 import { TOOLS_QUERY } from "../graphql";
 import { Tool, toolLabel, toolStatus, defaultToolLabel } from "../types";
-
-import { SELECTED_ICON_SX } from "./selectSx";
 
 type ToolSelectProps = Omit<TextFieldProps, "onChange" | "value"> & {
   value: string | null | undefined;
@@ -20,8 +17,8 @@ type ToolSelectProps = Omit<TextFieldProps, "onChange" | "value"> & {
  * An empty value means the global default tool is used,
  * or tofu installed in the worker runtime when no default is set.
  */
-export const ToolSelect = forwardRef<HTMLDivElement, ToolSelectProps>(
-  ({ value, onChange, helperText, slotProps, ...props }, ref) => {
+export const ToolSelect = forwardRef<HTMLElement, ToolSelectProps>(
+  ({ value, onChange, helperText, selectProps, ...props }, ref) => {
     const { ikApi } = useConfig();
     const [tools, setTools] = useState<Tool[]>([]);
     const [defaultTool, setDefaultTool] = useState<Tool | null>(null);
@@ -53,16 +50,8 @@ export const ToolSelect = forwardRef<HTMLDivElement, ToolSelectProps>(
         size="small"
         margin="dense"
         value={value || ""}
-        sx={[
-          SELECTED_ICON_SX,
-          ...(Array.isArray(props.sx) ? props.sx : [props.sx]),
-        ]}
-        // the global default option has an empty value, which MUI renders as blank unless displayEmpty is set
-        slotProps={{
-          ...slotProps,
-          select: { displayEmpty: true, ...slotProps?.select },
-          inputLabel: { shrink: true, ...slotProps?.inputLabel },
-        }}
+        // the global default option has an empty value, which Select renders as blank unless displayEmpty is set
+        selectProps={{ displayEmpty: true, ...selectProps }}
         onChange={(event) => onChange(event.target.value || null)}
         helperText={
           helperText ??
@@ -71,7 +60,7 @@ export const ToolSelect = forwardRef<HTMLDivElement, ToolSelectProps>(
       >
         <MenuItem value="">{defaultToolLabel(defaultTool)}</MenuItem>
         {tools.map((tool) => (
-          <MenuItem key={tool.id} value={tool.id} sx={{ gap: 1 }}>
+          <MenuItem key={tool.id} value={tool.id} className="gap-2">
             <ProviderIcon provider={tool.name} />
             {toolLabel(tool)}
           </MenuItem>

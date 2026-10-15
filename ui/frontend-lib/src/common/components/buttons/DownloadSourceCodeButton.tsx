@@ -1,9 +1,8 @@
 import { useState } from "react";
 
-import BugReportIcon from "@mui/icons-material/BugReport";
-import { IconButton, Tooltip } from "@mui/material";
-
+import { BugReportIcon } from "../../../icons/material";
 import { RESOURCE_DOWNLOAD_QUERY } from "../../../resources/graphql/queries";
+import { IconButton, Tooltip } from "../../../ui";
 import { useConfig } from "../../context/ConfigContext";
 import { notifyError } from "../../hooks/useNotification";
 

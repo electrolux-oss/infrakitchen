@@ -1,5 +1,5 @@
-import { Box, InputAdornment, TextField, Typography } from "@mui/material";
-
+import { InputAdornment, TextField } from "../../../ui";
+import { cn } from "../../../utils/cn";
 import { InlineCode } from "../code/InlineCode";
 
 interface ConfirmNameFieldProps {
@@ -17,32 +17,32 @@ export const ConfirmNameField = ({
   const matched = value === name;
 
   return (
-    <Box>
-      <Typography variant="body2" sx={{ mb: 1 }}>
+    <div>
+      <p className="m-0 mb-2 text-body2">
         To confirm, type <InlineCode>{name}</InlineCode> below.
-      </Typography>
+      </p>
       <TextField
         fullWidth
         placeholder={name}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         error={value.length > 0 && !matched}
-        slotProps={{
-          input: {
-            endAdornment: value.length > 0 && (
-              <InputAdornment position="end">
-                <Typography
-                  variant="caption"
-                  color={matched ? "success.main" : "error.main"}
-                >
-                  {matched ? "✓" : "✗"}
-                </Typography>
-              </InputAdornment>
-            ),
-          },
-        }}
+        endAdornment={
+          value.length > 0 && (
+            <InputAdornment position="end">
+              <span
+                className={cn(
+                  "text-caption",
+                  matched ? "text-success" : "text-error",
+                )}
+              >
+                {matched ? "✓" : "✗"}
+              </span>
+            </InputAdornment>
+          )
+        }
         autoComplete="off"
       />
-    </Box>
+    </div>
   );
 };

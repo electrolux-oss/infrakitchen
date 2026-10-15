@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 
-import { GridSize, TextField } from "@mui/material";
-
+import { TextField } from "../../../ui";
+import { FieldSpan } from "../fields/CommonField";
 import { PlaceholderDescription } from "../fields/PlaceholderDescription";
 
 import { CommonEditableField } from "./CommonEditableField";
@@ -13,8 +13,8 @@ export interface EditableDescriptionFieldProps {
   canEdit: boolean;
   /** Persists the new description; should throw on failure so it can be surfaced. */
   onSave: (description: string) => Promise<void>;
-  /** Grid sizing for the underlying field cell (defaults to full width). */
-  size?: GridSize | { xs: GridSize; md: GridSize } | undefined;
+  /** Width in the surrounding field grid (defaults to full). */
+  span?: FieldSpan;
   /** Optional custom read-only rendering; overrides the default value/placeholder. */
   display?: ReactNode;
 }
@@ -28,7 +28,7 @@ export const EditableDescriptionField = ({
   value,
   canEdit,
   onSave,
-  size = 12,
+  span = "full",
   display = value ? <span>{value}</span> : <PlaceholderDescription />,
 }: EditableDescriptionFieldProps) => (
   <CommonEditableField<string>
@@ -42,7 +42,7 @@ export const EditableDescriptionField = ({
       <TextField
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        slotProps={{ input: { "aria-label": "Description" } }}
+        aria-label="Description"
         fullWidth
         multiline
         minRows={2}
@@ -50,7 +50,7 @@ export const EditableDescriptionField = ({
         autoFocus
       />
     )}
-    size={size}
+    span={span}
   />
 );
 

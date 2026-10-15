@@ -1,14 +1,12 @@
 import { useCallback, useRef, useState } from "react";
 
 import InfiniteScroll from "react-infinite-scroll-component";
-import { useEffectOnce } from "react-use";
-
-import { Box, Typography } from "@mui/material";
 
 import { GqlLog, LOG_DETAIL_FIELDS } from "../../logs/graphql";
 import { getTimeOnlyValue } from "../components/fields/CommonField";
 import { useConfig } from "../context";
 import GradientCircularProgress from "../GradientCircularProgress";
+import { useEffectOnce } from "../hooks/useEffectOnce";
 
 import { LogLine } from "./LogLine";
 
@@ -102,17 +100,9 @@ export const LogsView = (props: {
   });
 
   return (
-    <Box
+    <div
+      className="flex h-[calc(100vh_-_300px)] max-h-[80vh] min-h-100 flex-col-reverse overflow-y-auto p-2"
       id={scrollContainerId}
-      sx={{
-        height: "calc(100vh - 300px)",
-        minHeight: 400,
-        maxHeight: "80vh",
-        overflowY: "auto",
-        padding: 1,
-        display: "flex",
-        flexDirection: "column-reverse",
-      }}
     >
       {logs.length > 0 ? (
         <InfiniteScroll
@@ -128,14 +118,8 @@ export const LogsView = (props: {
           ))}
         </InfiniteScroll>
       ) : (
-        <Typography
-          sx={{
-            color: "text.secondary",
-          }}
-        >
-          No logs available.
-        </Typography>
+        <p className="m-0 text-body2 text-fg-muted">No logs available.</p>
       )}
-    </Box>
+    </div>
   );
 };

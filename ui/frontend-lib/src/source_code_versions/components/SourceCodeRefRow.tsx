@@ -4,24 +4,6 @@ import React from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import CallSplitIcon from "@mui/icons-material/CallSplit";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import SellOutlinedIcon from "@mui/icons-material/SellOutlined";
-import {
-  Typography,
-  Box,
-  CircularProgress,
-  Paper,
-  Switch,
-  IconButton,
-  Collapse,
-  Divider,
-  Tabs,
-  Tab,
-  Chip,
-  Button,
-} from "@mui/material";
-
 import {
   useConfig,
   useEntityListProvider,
@@ -31,8 +13,25 @@ import {
 import { Audit } from "../../common/components/activity/Audit";
 import { HclItemList } from "../../common/components/hcl/HclItemList";
 import { notify } from "../../common/hooks/useNotification";
+import {
+  CallSplitIcon,
+  KeyboardArrowDownIcon,
+  SellOutlinedIcon,
+} from "../../icons/material";
 import { Revision } from "../../revision/Revision";
+import {
+  Divider,
+  Spinner,
+  Switch,
+  IconButton,
+  Button,
+  Chip,
+  Tabs,
+  Tab,
+  Collapse,
+} from "../../ui";
 import { ENTITY_STATUS } from "../../utils";
+import { cn } from "../../utils/cn";
 import { SourceCodeVersionConfigProvider } from "../context/SourceCodeVersionConfigContext";
 import { GqlSourceCodeVersion } from "../graphql";
 import { useVersionActions } from "../hooks/useVersionActions";
@@ -112,7 +111,11 @@ export const SourceCodeRefRow = ({
   const inProgress = localInProgress || isEntityInProgress;
 
   const SrcIcon = type === RefType.BRANCH ? CallSplitIcon : SellOutlinedIcon;
-  const accentColor = type === RefType.TAG ? "primary.main" : "warning.main";
+  const isTag = type === RefType.TAG;
+  const accentClass = isTag ? "border-l-primary" : "border-l-warning";
+  const accentHoverClass = isTag
+    ? "hover:border-l-primary"
+    : "hover:border-l-warning";
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -158,63 +161,36 @@ export const SourceCodeRefRow = ({
   };
 
   return (
-    <Paper
-      variant="outlined"
-      sx={{
-        py: 1,
-        borderLeft: 3,
-        borderLeftColor: open ? accentColor : "transparent",
-        transition: "border-left-color 0.15s ease",
-        "&:hover": { borderLeftColor: accentColor },
-      }}
+    <div
+      className={cn(
+        "rounded-surface border border-divider bg-paper text-fg",
+        "border-l-3 py-2 [transition:border-left-color_0.15s_ease]",
+        open ? accentClass : "border-l-transparent",
+        accentHoverClass,
+      )}
     >
-      <Box
+      <div
+        className="grid cursor-pointer grid-cols-[1fr_auto_auto_auto]"
         onClick={() => setOpen((prev) => !prev)}
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "1fr auto auto auto",
-          cursor: "pointer",
-        }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
-            px: 2,
-            py: 1.25,
-          }}
-        >
-          <SrcIcon
-            fontSize="small"
-            sx={{ color: "text.secondary", flexShrink: 0 }}
-          />
-          <Typography variant="body2" sx={{ fontSize: "0.82rem" }}>
-            {entry}
-          </Typography>
+        <div className="flex items-center gap-3 px-4 py-2.5">
+          <SrcIcon className="shrink-0 text-fg-muted" fontSize="small" />
+          <p className="m-0 text-[0.82rem] font-normal">{entry}</p>
           {hasVersion &&
             !!entity.resourcesCount && ( // Render only when the SCV has resources
               <Chip
+                className="h-5 text-[0.7rem] hover:border-primary hover:text-primary"
+                labelClassName="px-1.5"
                 label={`${entity.resourcesCount}`}
                 variant="outlined"
                 onClick={handleResourcesClick}
-                sx={{
-                  height: 20,
-                  fontSize: "0.7rem",
-                  cursor: "pointer",
-                  "& .MuiChip-label": { px: 0.75 },
-                  "&:hover": {
-                    borderColor: "primary.main",
-                    color: "primary.main",
-                  },
-                }}
               />
             )}
-        </Box>
+        </div>
 
-        <Box sx={{ display: "flex", alignItems: "center", pr: 1.5 }}>
+        <div className="flex items-center pr-3">
           {loading || inProgress ? (
-            <CircularProgress size={20} sx={{ mx: 2.5 }} />
+            <Spinner className="mx-5" size={20} />
           ) : (
             <Switch
               checked={isDone}
@@ -222,36 +198,34 @@ export const SourceCodeRefRow = ({
               disabled={!canWrite}
             />
           )}
-        </Box>
+        </div>
 
-        <Box sx={{ display: "flex", alignItems: "center", px: 1 }}>
+        <div className="flex items-center px-2">
           <IconButton
+            className={cn(
+              "[&_svg]:transition-transform [&_svg]:duration-200",
+              open && "[&_svg]:rotate-180",
+            )}
             size="small"
             disabled={inProgress || loading}
             onClick={(e) => {
               e.stopPropagation();
               setOpen((prev) => !prev);
             }}
-            sx={{
-              "& svg": {
-                transition: "transform 0.2s",
-                transform: open ? "rotate(180deg)" : "rotate(0deg)",
-              },
-            }}
           >
             <KeyboardArrowDownIcon fontSize="small" />
           </IconButton>
-        </Box>
-      </Box>
+        </div>
+      </div>
       <CommonDialog
         open={toggleDialogOpen}
         onClose={() => setToggleDialogOpen(false)}
         title={isDone ? "Disable Version" : "Enable Version"}
         content={
-          <Typography variant="body2">
+          <p className="m-0 text-body2">
             Are you sure you want to {isDone ? "disable" : "enable"} this
             version ({entry})?
-          </Typography>
+          </p>
         }
         actions={
           <Button
@@ -265,16 +239,11 @@ export const SourceCodeRefRow = ({
       />
       <Collapse in={open} unmountOnExit>
         <Divider />
-        <Box sx={{ px: 2, pb: 1.5 }}>
+        <div className="px-4 pb-3">
           <Tabs
+            className="mb-3 border-b border-divider"
             value={activeTab}
             onChange={handleTabChange}
-            sx={{
-              borderBottom: 1,
-              borderColor: "divider",
-              mb: 1.5,
-              "& .MuiTab-root": { textTransform: "none" },
-            }}
           >
             <Tab label="Metadata" value="metadata" />
             <Tab
@@ -308,9 +277,9 @@ export const SourceCodeRefRow = ({
           )}
 
           {activeTab === "outputs" && (
-            <Box sx={{ pt: 0.5 }}>
+            <div className="pt-1">
               {loading ? (
-                <CircularProgress size={16} />
+                <Spinner size={16} />
               ) : (
                 <>
                   {entity?.outputs ? (
@@ -320,7 +289,7 @@ export const SourceCodeRefRow = ({
                   )}
                 </>
               )}
-            </Box>
+            </div>
           )}
 
           {activeTab === "audit" && entity && (
@@ -333,12 +302,12 @@ export const SourceCodeRefRow = ({
           )}
 
           {activeTab === "revision" && entity && (
-            <Box sx={{ maxWidth: 1000 }}>
+            <div className="max-w-250">
               <Revision resourceId={entity.id} resourceRevision={0} />
-            </Box>
+            </div>
           )}
-        </Box>
+        </div>
       </Collapse>
-    </Paper>
+    </div>
   );
 };

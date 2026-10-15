@@ -1,29 +1,14 @@
-import {
-  HTMLAttributes,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Control, Controller, useFormContext, useWatch } from "react-hook-form";
 
 import {
-  Alert,
   Autocomplete,
-  Box,
+  Alert,
   FormControlLabel,
-  Stack,
   Switch,
   TextField,
-  Typography,
-} from "@mui/material";
-
-import { CODE_FONT_FAMILY } from "../../common/theme";
-import {
-  getAutocompleteInputProps,
-  getAutocompleteTextFieldProps,
-} from "../../common/utils/autocompleteInput";
+} from "../../ui";
 import { useSourceCodeVersionConfigContext } from "../context/SourceCodeVersionConfigContext";
 import {
   buildRegexFromState,
@@ -288,16 +273,11 @@ export const ValidationRegexControls = ({
   );
 
   return (
-    <Box sx={{ mt: 2 }}>
-      <Typography
-        variant="body2"
-        sx={{
-          color: "text.secondary",
-        }}
-      >
+    <div className="mt-4">
+      <p className="m-0 text-body2 text-fg-muted">
         Provide a regular expression for this variable or use the toggles to
         generate one automatically.
-      </Typography>
+      </p>
       <Controller
         name={fieldName}
         control={control}
@@ -325,7 +305,7 @@ export const ValidationRegexControls = ({
             regexOptions.find((option) => option.regex === field.value) ?? null;
 
           return (
-            <Autocomplete<RegexOption, false, false, true>
+            <Autocomplete<RegexOption, false, true>
               freeSolo
               options={regexOptions}
               value={selectedOption}
@@ -368,78 +348,42 @@ export const ValidationRegexControls = ({
               getOptionLabel={(option) =>
                 typeof option === "string" ? option : option.label
               }
-              renderOption={(props, option) => {
-                const optionProps = {
-                  ...(props as HTMLAttributes<HTMLLIElement>),
-                };
-                delete (optionProps as Record<string, unknown>).key;
-
-                return (
-                  <li key={option.id} {...optionProps}>
-                    <Box sx={{ display: "flex", flexDirection: "column" }}>
-                      <Typography variant="body2">{option.label}</Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: "text.secondary",
-                        }}
-                      >
-                        {option.regex}
-                      </Typography>
-                    </Box>
-                  </li>
-                );
-              }}
-              renderInput={(params) => {
-                const inputProps = getAutocompleteInputProps(params);
-
-                return (
-                  <TextField
-                    {...params}
-                    {...getAutocompleteTextFieldProps(params, {
-                      input: {
-                        ...inputProps,
-                        sx: {
-                          fontFamily: CODE_FONT_FAMILY,
-                        },
-                      },
-                    })}
-                    label="Validation Regex"
-                    placeholder="e.g. ^[a-zA-Z0-9]{1,64}$"
-                    fullWidth
-                    margin="normal"
-                    onBlur={field.onBlur}
-                    error={Boolean(fieldState.error)}
-                    helperText={
-                      fieldState.error?.message ||
-                      (selectedOption
-                        ? `Selected rule: ${selectedOption.label}`
-                        : "Select a predefined rule or enter a custom regex.")
-                    }
-                  />
-                );
-              }}
+              getOptionKey={(option) =>
+                typeof option === "string" ? option : option.id
+              }
+              renderOption={(option) => (
+                <div className="flex flex-col">
+                  <p className="m-0 text-body2">{option.label}</p>
+                  <span className="text-caption text-fg-muted">
+                    {option.regex}
+                  </span>
+                </div>
+              )}
+              inputClassName="font-mono"
+              label="Validation Regex"
+              placeholder="e.g. ^[a-zA-Z0-9]{1,64}$"
+              fullWidth
+              margin="normal"
+              onBlur={field.onBlur}
+              error={Boolean(fieldState.error)}
+              helperText={
+                fieldState.error?.message ||
+                (selectedOption
+                  ? `Selected rule: ${selectedOption.label}`
+                  : "Select a predefined rule or enter a custom regex.")
+              }
             />
           );
         }}
       />
       {isComplexRegex && (
-        <Alert severity="warning" sx={{ mt: 1 }}>
+        <Alert className="mt-2" severity="warning">
           This regex is too complex to edit using toggles.
         </Alert>
       )}
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={1}
-        sx={{
-          m: 2,
-          flexWrap: "wrap",
-          gap: 1,
-        }}
-        useFlexGap
-      >
+      <div className="m-4 flex flex-col flex-wrap gap-2 sm:flex-row">
         {TOGGLE_DEFINITIONS.map((definition) => (
-          <Box key={definition.key} sx={{ minWidth: 220 }}>
+          <div className="min-w-55" key={definition.key}>
             <FormControlLabel
               control={
                 <Switch
@@ -452,23 +396,15 @@ export const ValidationRegexControls = ({
               }
               label={definition.label}
             />
-          </Box>
+          </div>
         ))}
-      </Stack>
+      </div>
       {toggleError && (
-        <Typography
-          variant="caption"
-          color="error"
-          sx={{ display: "block", mt: 0.5 }}
-        >
+        <span className="mt-1 block text-caption text-error">
           {toggleError}
-        </Typography>
+        </span>
       )}
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={2}
-        sx={{ mt: 4, alignItems: "baseline" }}
-      >
+      <div className="mt-8 flex flex-col items-baseline gap-4 sm:flex-row">
         <TextField
           label="Min length"
           type="text"
@@ -494,7 +430,7 @@ export const ValidationRegexControls = ({
           }
         />
         <FormControlLabel
-          sx={{ mt: 1, minWidth: 200 }}
+          className="mt-2 min-w-50"
           control={
             <Switch
               checked={hasInfiniteMax}
@@ -504,30 +440,19 @@ export const ValidationRegexControls = ({
           }
           label="Infinite max length"
         />
-      </Stack>
+      </div>
       {lengthError && (
-        <Typography
-          variant="caption"
-          color="error"
-          sx={{ display: "block", mt: 0.5 }}
-        >
+        <span className="mt-1 block text-caption text-error">
           {lengthError}
-        </Typography>
+        </span>
       )}
       <TextField
+        className="mt-4"
         label="Test Input"
         value={testValue}
         onChange={(event) => setTestValue(event.target.value)}
-        sx={{ mt: 2 }}
         fullWidth
         error={testResult === "no-match" || testResult === "no-length-match"}
-        color={
-          testResult === "match"
-            ? "success"
-            : testResult === "no-length-match"
-              ? "warning"
-              : undefined
-        }
         helperText={
           testResult === "match"
             ? "Value matches the current regex."
@@ -538,6 +463,6 @@ export const ValidationRegexControls = ({
                 : "Enter a sample value to test against this regex."
         }
       />
-    </Box>
+    </div>
   );
 };

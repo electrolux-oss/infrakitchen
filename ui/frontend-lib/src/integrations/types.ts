@@ -1,8 +1,7 @@
 import React from "react";
 
-import { ChipProps } from "@mui/material/Chip";
-
 import { IconProps } from "../icons/Icons";
+import type { ChipColor } from "../ui";
 
 export interface IntegrationCreate {
   id: string;
@@ -35,9 +34,7 @@ export enum ConnectionType {
  * info (blue), notification is warning (orange), and everything else (git)
  * falls back to secondary.
  */
-export const integrationTypeChipColor = (
-  integrationType: string,
-): Exclude<ChipProps["color"], undefined> =>
+export const integrationTypeChipColor = (integrationType: string): ChipColor =>
   integrationType === IntegrationType.CLOUD
     ? "info"
     : integrationType === IntegrationType.NOTIFICATION

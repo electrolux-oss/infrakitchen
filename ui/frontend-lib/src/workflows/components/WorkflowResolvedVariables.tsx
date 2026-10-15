@@ -1,22 +1,20 @@
 import { useMemo } from "react";
 
-import CodeIcon from "@mui/icons-material/Code";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { notify, notifyError } from "../../common/hooks/useNotification";
+import { copyToClipboard } from "../../common/utils/clipboard";
 import {
+  CodeIcon,
+  ContentCopyIcon,
+  ExpandMoreIcon,
+} from "../../icons/material";
+import {
+  IconButton,
+  Chip,
+  Tooltip,
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Box,
-  Chip,
-  IconButton,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-
-import { notify, notifyError } from "../../common/hooks/useNotification";
-import { CODE_FONT_FAMILY } from "../../common/theme";
-import { copyToClipboard } from "../../common/utils/clipboard";
+} from "../../ui";
 import { GqlWorkflowStep } from "../graphql";
 
 interface WorkflowResolvedVariablesProps {
@@ -61,59 +59,36 @@ export const WorkflowResolvedVariables = ({
 
   if (grouped.length === 0) {
     return (
-      <Typography
-        variant="body2"
-        sx={{
-          color: "text.secondary",
-          py: 2,
-        }}
-      >
-        No workflow steps.
-      </Typography>
+      <p className="m-0 py-4 text-body2 text-fg-muted">No workflow steps.</p>
     );
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+    <div className="flex flex-col gap-3">
       {grouped.map((group) => (
         <Accordion
+          standalone
+          className="overflow-hidden"
           key={group.templateId}
           defaultExpanded
-          elevation={0}
-          disableGutters
-          sx={{
-            border: 1,
-            borderColor: "divider",
-            borderRadius: "var(--template-surface-radius)",
-            "&:before": { display: "none" },
-            overflow: "hidden",
-          }}
         >
           <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            sx={{ bgcolor: "background.default" }}
+            expandIcon={<ExpandMoreIcon className="bg-canvas" />}
           >
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-                width: "100%",
-              }}
-            >
+            <div className="flex w-full items-center gap-3">
               <CodeIcon fontSize="small" color="action" />
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              <h6 className="m-0 text-subtitle1 font-semibold text-grey-500">
                 {group.templateName}
-              </Typography>
+              </h6>
               <Chip
                 label={`${group.steps.length} step${
                   group.steps.length === 1 ? "" : "s"
                 }`}
                 variant="outlined"
               />
-            </Box>
+            </div>
           </AccordionSummary>
-          <AccordionDetails sx={{ p: 0 }}>
+          <AccordionDetails className="p-0">
             {group.steps.map((step) => (
               <StepVariablesBlock
                 key={step.id}
@@ -124,7 +99,7 @@ export const WorkflowResolvedVariables = ({
           </AccordionDetails>
         </Accordion>
       ))}
-    </Box>
+    </div>
   );
 };
 
@@ -150,75 +125,34 @@ const StepVariablesBlock = ({
   };
 
   return (
-    <Box
-      sx={{
-        borderTop: 1,
-        borderColor: "divider",
-        "&:first-of-type": { borderTop: 0 },
-      }}
-    >
-      <Box
-        sx={{
-          px: 2,
-          py: 1,
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-          bgcolor: "action.hover",
-        }}
-      >
+    <div className="border-t border-divider first-of-type:border-t-0">
+      <div className="flex items-center gap-2 bg-hover px-4 py-2">
         {showPosition && (
           <Chip
+            className="min-w-9 font-bold"
             label={`#${step.position + 1}`}
             color="primary"
-            sx={{ fontWeight: 700, minWidth: 36 }}
           />
         )}
-        <Typography
-          variant="caption"
-          sx={{
-            color: "text.secondary",
-          }}
-        >
+        <span className="text-caption text-fg-muted">
           {entries.length} variable{entries.length === 1 ? "" : "s"}
-        </Typography>
-        <Box sx={{ flex: 1 }} />
+        </span>
+        <div className="flex-1" />
         <Tooltip title="Copy JSON">
           <IconButton size="small" onClick={handleCopy}>
             <ContentCopyIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-      </Box>
+      </div>
       {entries.length === 0 ? (
-        <Typography
-          variant="body2"
-          sx={{
-            color: "text.secondary",
-            px: 2,
-            py: 1.5,
-          }}
-        >
+        <p className="m-0 px-4 py-3 text-body2 text-fg-muted">
           No resolved variables.
-        </Typography>
+        </p>
       ) : (
-        <Box
-          component="pre"
-          sx={{
-            m: 0,
-            px: 2,
-            py: 1.5,
-            bgcolor: "background.default",
-            borderRadius: "var(--template-code-radius)",
-            fontSize: 13,
-            fontFamily: CODE_FONT_FAMILY,
-            overflow: "auto",
-            maxHeight: 400,
-            whiteSpace: "pre",
-          }}
-        >
+        <pre className="m-0 max-h-100 overflow-auto rounded-code bg-canvas px-4 py-3 font-mono text-[13px] whitespace-pre">
           {jsonText}
-        </Box>
+        </pre>
       )}
-    </Box>
+    </div>
   );
 };

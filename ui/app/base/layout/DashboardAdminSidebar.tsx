@@ -1,8 +1,10 @@
 import { matchPath, useLocation } from "react-router";
 
 import { PermissionWrapper } from "@electrolux-oss/infrakitchen";
-import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
-import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import {
+  MiscellaneousServicesIcon,
+  VerifiedUserIcon,
+} from "@electrolux-oss/infrakitchen";
 
 import DashboardSidebarPageItem from "./DashboardSidebarPageItem";
 

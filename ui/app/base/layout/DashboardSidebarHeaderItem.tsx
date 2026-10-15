@@ -1,12 +1,11 @@
 import * as React from "react";
 
-import ListSubheader from "@mui/material/ListSubheader";
+import { cn } from "@electrolux-oss/infrakitchen";
 
-import type {} from "@mui/material/themeCssVarsAugmentation";
 import { DRAWER_WIDTH } from "../../constants";
 import DashboardSidebarContext from "../../context/DashboardSidebarContext";
 
-import { getDrawerSxTransitionMixin } from "./mixins";
+import { drawerTransition } from "./mixins";
 
 export interface DashboardSidebarHeaderItemProps {
   children?: React.ReactNode;
@@ -26,24 +25,19 @@ export default function DashboardSidebarHeaderItem({
   } = sidebarContext;
 
   return (
-    <ListSubheader
-      sx={{
-        fontSize: 12,
-        fontWeight: "600",
-        height: mini ? 0 : 36,
-        ...(hasDrawerTransitions
-          ? getDrawerSxTransitionMixin(fullyExpanded, "height")
-          : {}),
-        px: 1.5,
-        py: 0,
+    <li
+      className={cn(
+        "z-2 overflow-hidden px-3 py-0 text-[12px] leading-[36px] font-semibold text-ellipsis whitespace-nowrap text-fg-muted",
+        mini ? "h-0" : "h-9",
+      )}
+      style={{
         minWidth: DRAWER_WIDTH,
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
-        zIndex: 2,
+        transition: hasDrawerTransitions
+          ? drawerTransition(fullyExpanded, "height")
+          : undefined,
       }}
     >
       {children}
-    </ListSubheader>
+    </li>
   );
 }

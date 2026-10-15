@@ -6,15 +6,6 @@ type ColorToken = {
   borderColor: string;
 };
 
-export type MuiChipColor =
-  | "default"
-  | "success"
-  | "info"
-  | "warning"
-  | "error"
-  | "secondary"
-  | "primary";
-
 export const getStateColor = (
   statusValue: string,
   stateValue: string | undefined,
@@ -99,6 +90,45 @@ export const getStateColor = (
     borderColor: "grey.300",
   };
 };
+
+// Palette paths returned by getStateColor mapped to token classes. Classes
+// are spelled out in full so Tailwind can find them in the source.
+const PALETTE_TEXT_CLASS: Record<string, string> = {
+  "primary.main": "text-primary",
+  "secondary.main": "text-secondary",
+  "info.main": "text-info",
+  "success.dark": "text-success-dark",
+  "warning.dark": "text-warning-dark",
+  "error.dark": "text-error-dark",
+  "text.primary": "text-fg",
+  "text.secondary": "text-fg-muted",
+  "text.disabled": "text-fg-disabled",
+  "success.main": "text-success",
+  "warning.main": "text-warning",
+  "error.main": "text-error",
+  "info.dark": "text-info-dark",
+  "grey.200": "text-grey-200",
+  "grey.300": "text-grey-300",
+  "grey.400": "text-grey-400",
+};
+
+const PALETTE_BG_CLASS: Record<string, string> = {
+  "success.main": "bg-success",
+  "warning.main": "bg-warning",
+  "error.main": "bg-error",
+  "info.dark": "bg-info-dark",
+  "grey.200": "bg-grey-200",
+  "grey.300": "bg-grey-300",
+  "grey.400": "bg-grey-400",
+};
+
+/** Text color class for a palette path from getStateColor. */
+export const paletteTextClass = (path: string): string =>
+  PALETTE_TEXT_CLASS[path] ?? "";
+
+/** Background color class for a palette path from getStateColor. */
+export const paletteBgClass = (path: string): string =>
+  PALETTE_BG_CLASS[path] ?? "";
 
 export const STATUS_CHIP_COLOR: Record<
   ENTITY_STATUS,
@@ -324,3 +354,20 @@ export const sameStringSet = (
     [...x].sort().join("\u0000") === [...y].sort().join("\u0000")
   );
 };
+
+/**
+ * Option filter for reference pickers: keeps entities already attached (by
+ * id) and otherwise only offers those the user can write to.
+ */
+export const makeWriteAccessFilter =
+  (
+    permissions: Record<string, string>,
+    entityName: string,
+    existingIds: Set<string> = new Set(),
+  ) =>
+  (option: { id: string | number }) => {
+    if (existingIds.has(String(option.id))) return true;
+    if (permissions["*"] === "admin") return true;
+    const p = permissions[`${entityName}:${option.id}`];
+    return p === "write" || p === "admin";
+  };

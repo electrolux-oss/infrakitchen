@@ -6,20 +6,16 @@ import React, {
   useState,
 } from "react";
 
-import AddIcon from "@mui/icons-material/Add";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import { AddIcon, DeleteOutlinedIcon } from "../../../icons/material";
 import {
-  Box,
   Button,
   IconButton,
+  Tooltip,
   MenuItem,
   Select,
   TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-
-import { deleteIconButtonStyle } from "../buttons/deleteIconButtonStyle";
+} from "../../../ui";
+import { deleteIconButtonClass } from "../buttons/deleteIconButtonClass";
 import { AutocompleteSelect, ReferenceAutocomplete } from "../inputs";
 
 import {
@@ -65,33 +61,8 @@ function getDefaultOperator(field?: FilterableField): FilterOperator {
   return field?.defaultOperator || field?.operators[0] || "eq";
 }
 
-const VALUE_INPUT_SX = {
-  flex: "1 1 280px",
-  minWidth: 0,
-} as const;
-
-const ROW_HEIGHT = 32;
-
-// Compact input sizing (32px height, 14px text, no top margin) is the global
-// theme default via MuiOutlinedInput/MuiInputBase, so only the
-// filter-specific layout (flex sizing, chip wrapping) stays here.
-const SINGLE_VALUE_INPUT_SX = VALUE_INPUT_SX;
-
-const SINGLE_VALUE_REFERENCE_AUTOCOMPLETE_SX = {
-  ...VALUE_INPUT_SX,
-  "& .MuiInputBase-root": {
-    flexWrap: "nowrap",
-  },
-} as const;
-
-// Chips wrap to multiple rows; keep them at the 32px minimum so they stay
-// flush with the single-line inputs above.
-const MULTI_VALUE_AUTOCOMPLETE_SX = {
-  ...VALUE_INPUT_SX,
-  "& .MuiInputBase-root": {
-    minHeight: ROW_HEIGHT,
-  },
-} as const;
+// Value inputs share the row with the field and operator selects.
+const VALUE_INPUT_CLASS = "min-w-0 flex-[1_1_280px]";
 
 function toAutocompleteOptions(options: string[]) {
   return options.map((option) => ({ label: option, value: option }));
@@ -232,9 +203,9 @@ const ClauseRow = ({
     if (!selectedField) {
       return (
         <TextField
+          className="min-w-0 flex-[1_1_280px]"
           disabled
           placeholder="Select a field first"
-          sx={SINGLE_VALUE_INPUT_SX}
         />
       );
     }
@@ -242,10 +213,10 @@ const ClauseRow = ({
     if (isValuelessOperator(clause.operator)) {
       return (
         <TextField
+          className="min-w-0 flex-[1_1_280px]"
           disabled
           value=""
           placeholder="No value needed"
-          sx={SINGLE_VALUE_INPUT_SX}
         />
       );
     }
@@ -278,7 +249,7 @@ const ClauseRow = ({
           onChange={(newVal) => onUpdate(clause.id, { value: newVal })}
           multiple={multiValue}
           placeholder={`Search ${selectedField.label.toLowerCase()}...`}
-          sx={SINGLE_VALUE_REFERENCE_AUTOCOMPLETE_SX}
+          className={VALUE_INPUT_CLASS}
         />
       );
     }
@@ -311,7 +282,7 @@ const ClauseRow = ({
           multiple
           freeSolo
           placeholder={`Select ${selectedField.label.toLowerCase()}...`}
-          sx={MULTI_VALUE_AUTOCOMPLETE_SX}
+          className={VALUE_INPUT_CLASS}
         />
       );
     }
@@ -326,7 +297,7 @@ const ClauseRow = ({
           multiple
           freeSolo={false}
           placeholder={`Select ${selectedField.label.toLowerCase()}...`}
-          sx={MULTI_VALUE_AUTOCOMPLETE_SX}
+          className={VALUE_INPUT_CLASS}
           renderOptionContent={
             selectedField.renderSelectOption
               ? (option) =>
@@ -349,7 +320,7 @@ const ClauseRow = ({
           placeholder={
             selectedField.placeholder ?? `Type values, press Enter...`
           }
-          sx={MULTI_VALUE_AUTOCOMPLETE_SX}
+          className={VALUE_INPUT_CLASS}
         />
       );
     }
@@ -364,7 +335,7 @@ const ClauseRow = ({
           multiple={false}
           freeSolo={false}
           placeholder="Select..."
-          sx={SINGLE_VALUE_INPUT_SX}
+          className={VALUE_INPUT_CLASS}
           renderOptionContent={
             selectedField.renderSelectOption
               ? (option) =>
@@ -378,42 +349,26 @@ const ClauseRow = ({
     // Default: text input
     return (
       <TextField
+        className="min-w-0 flex-[1_1_280px]"
         value={localTextValue}
         onChange={(e) => setLocalTextValue(e.target.value)}
         onBlur={handleTextCommit}
         onKeyDown={handleKeyDown}
         placeholder={`Filter by ${selectedField.label.toLowerCase()}...`}
-        sx={SINGLE_VALUE_INPUT_SX}
       />
     );
   };
   return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 1.25,
-        width: "100%",
-        flexWrap: "nowrap",
-        minWidth: 0,
-      }}
-    >
+    <div className="flex w-full min-w-0 flex-nowrap items-center gap-2.5">
       {/* Field selector */}
       <Select
+        className="min-w-0 flex-[0_0_220px]"
         value={clause.field}
         onChange={(e) => handleFieldChange(e.target.value)}
         displayEmpty
-        sx={{ flex: "0 0 220px", minWidth: 0, height: ROW_HEIGHT }}
       >
         <MenuItem value="" disabled>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-            }}
-          >
-            Field...
-          </Typography>
+          <span className="text-body2 text-fg-muted">Field...</span>
         </MenuItem>
         {availableFields.map((f) => (
           <MenuItem key={f.field} value={f.field}>
@@ -423,11 +378,11 @@ const ClauseRow = ({
       </Select>
       {/* Operator selector */}
       <Select
+        className="min-w-0 flex-[0_0_160px]"
         value={availableOperators.length === 0 ? "" : clause.operator}
         onChange={(e) => handleOperatorChange(e.target.value as FilterOperator)}
         disabled={!clause.field || availableOperators.length <= 1}
         displayEmpty
-        sx={{ flex: "0 0 160px", minWidth: 0, height: ROW_HEIGHT }}
       >
         {availableOperators.length === 0 ? (
           <MenuItem value="" disabled>
@@ -454,13 +409,13 @@ const ClauseRow = ({
           <IconButton
             size="small"
             onClick={() => onRemove(clause.id)}
-            sx={deleteIconButtonStyle}
+            className={deleteIconButtonClass}
           >
-            <DeleteOutlineIcon fontSize="small" />
+            <DeleteOutlinedIcon fontSize="small" />
           </IconButton>
         </span>
       </Tooltip>
-    </Box>
+    </div>
   );
 };
 
@@ -661,35 +616,18 @@ export const AdvancedFilter = ({
     return usedFields.size < fields.length && allClausesComplete;
   }, [allClausesComplete, fields.length, usedFields]);
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 1, width: "100%" }}
-    >
+    <div className="flex w-full flex-col gap-2">
       {clauses.map((clause, index) => (
-        <Box
+        <div
+          className="flex min-w-0 items-center gap-2 overflow-x-auto"
           key={clause.id}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            minWidth: 0,
-            overflowX: "auto",
-          }}
         >
           {index > 0 && (
-            <Typography
-              variant="caption"
-              sx={{
-                minWidth: 32,
-                textAlign: "center",
-                color: "text.secondary",
-                fontWeight: 600,
-                textTransform: "uppercase",
-              }}
-            >
+            <span className="min-w-8 text-center text-caption font-semibold text-fg-muted uppercase">
               AND
-            </Typography>
+            </span>
           )}
-          {index === 0 && clauses.length > 1 && <Box sx={{ minWidth: 32 }} />}
+          {index === 0 && clauses.length > 1 && <div className="min-w-8" />}
           <ClauseRow
             clause={clause}
             clauses={clauses}
@@ -699,7 +637,7 @@ export const AdvancedFilter = ({
             onUpdate={handleUpdate}
             onRemove={handleRemove}
           />
-        </Box>
+        </div>
       ))}
       {/* Only show "Add filter" while there is still an unused field to add;
           once every filterable field is in use (e.g. a single-field table
@@ -713,32 +651,20 @@ export const AdvancedFilter = ({
           {/* The span is a flex item in the column wrapper; keep it from
               stretching full-width so the tooltip anchors to the button
               instead of floating centered over the panel. */}
-          <Box component="span" sx={{ alignSelf: "flex-start" }}>
+          <span className="self-start">
             <Button
-              startIcon={<AddIcon />}
+              className="h-7 min-h-0"
+              startIcon={
+                <AddIcon className="rounded-surface border border-dashed border-divider px-2.5 py-0 text-fg-muted hover:border-fg-muted hover:bg-hover hover:text-fg [&_svg]:text-base" />
+              }
               onClick={handleAdd}
               disabled={!canAddMore}
-              sx={{
-                height: 28,
-                minHeight: 0,
-                p: "0 10px",
-                color: "text.secondary",
-                border: "1px dashed",
-                borderColor: "divider",
-                borderRadius: 1,
-                "& .MuiSvgIcon-root": { fontSize: 16 },
-                "&:hover": {
-                  color: "text.primary",
-                  borderColor: "text.secondary",
-                  backgroundColor: "action.hover",
-                },
-              }}
             >
               Add filter
             </Button>
-          </Box>
+          </span>
         </Tooltip>
       )}
-    </Box>
+    </div>
   );
 };

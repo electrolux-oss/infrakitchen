@@ -2,23 +2,20 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Typography,
-} from "@mui/material";
-
 import ReferenceInput from "../../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../../common/context";
 import { useEntityProvider } from "../../../common/context/EntityContext";
 import { notifyError } from "../../../common/hooks/useNotification";
 import { IkEntity, ValidationRule } from "../../../types";
+import {
+  Alert,
+  Spinner,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+} from "../../../ui";
 import {
   ENTITY_STATE,
   VERSION_LIFECYCLE_STATE,
@@ -318,17 +315,11 @@ export const ResourceVariablesEditDialog = ({
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>Edit Input Variables</DialogTitle>
       <DialogContent>
-        <Box sx={{ mb: 3, mt: 1 }}>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              mb: 1,
-            }}
-          >
+        <div className="mt-2 mb-6">
+          <p className="m-0 mb-2 text-body2 text-fg-muted">
             Select a template version. Variables will be reconfigured based on
             the selected version&apos;s schema.
-          </Typography>
+          </p>
           <ReferenceInput
             ikApi={ikApi}
             entity_name="source_code_versions"
@@ -350,32 +341,32 @@ export const ResourceVariablesEditDialog = ({
             label="Template Version"
           />
           {isDeprecatedVersion ? (
-            <Alert severity="warning" sx={{ mt: 1 }}>
+            <Alert className="mt-2" severity="warning">
               This template version is deprecated. Prefer an active or preview
               version unless you intentionally need the deprecated one.
             </Alert>
           ) : null}
           {breakingChangesWarning ? (
-            <Alert severity="warning" sx={{ mt: 1 }}>
-              <Typography variant="body2">
+            <Alert className="mt-2" severity="warning">
+              <p className="m-0 text-body2">
                 This version has breaking changes. Please review the following
                 before saving:
-              </Typography>
+              </p>
               {breakingChangesWarning}
             </Alert>
           ) : null}
-        </Box>
+        </div>
 
         {loadingSchema && (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <CircularProgress />
-          </Box>
+          <div className="flex justify-center py-8">
+            <Spinner />
+          </div>
         )}
 
         {!loadingSchema && (
           <FormProvider {...methods}>
             {(schema.length > 0 || fields.length > 0) && (
-              <Box>
+              <div>
                 {fields.map((field, index) =>
                   (() => {
                     const variableStatus = variableStatusByName[field.name];
@@ -415,21 +406,15 @@ export const ResourceVariablesEditDialog = ({
                     );
                   })(),
                 )}
-              </Box>
+              </div>
             )}
             {!loadingSchema &&
               schema.length === 0 &&
               fields.length === 0 &&
               effectiveVersionId && (
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: "text.secondary",
-                    py: 2,
-                  }}
-                >
+                <p className="m-0 py-4 text-body2 text-fg-muted">
                   No configurable variables for this template version.
-                </Typography>
+                </p>
               )}
           </FormProvider>
         )}

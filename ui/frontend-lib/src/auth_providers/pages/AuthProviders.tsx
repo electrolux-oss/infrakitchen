@@ -2,10 +2,6 @@ import { useMemo } from "react";
 
 import { useNavigate } from "react-router";
 
-import AddIcon from "@mui/icons-material/Add";
-import { Button, Switch, Tooltip } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { PermissionWrapper, useConfig } from "../../common";
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
@@ -17,6 +13,9 @@ import {
 import { getProviderValue } from "../../common/components/fields/CommonField";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import PageContainer from "../../common/PageContainer";
+import { AddIcon } from "../../icons/material";
+import { Switch, Button, Tooltip } from "../../ui";
+import { RenderCellParams } from "../../ui";
 import { AUTH_PROVIDER_FIELD_MAP } from "../graphql";
 
 export const AuthProvidersPage = () => {
@@ -32,7 +31,7 @@ export const AuthProvidersPage = () => {
         fetchFields: ["name", "entityName"],
         flex: 1,
         hideable: false,
-        renderCell: (params: GridRenderCellParams) => {
+        renderCell: (params: RenderCellParams) => {
           return <Entity entity={params.row} />;
         },
       },
@@ -46,18 +45,18 @@ export const AuthProvidersPage = () => {
         headerName: "Provider",
         flex: 1,
         sortField: "auth_provider",
-        renderCell: (params: GridRenderCellParams) =>
+        renderCell: (params: RenderCellParams) =>
           getProviderValue(params.value, 18),
       },
       {
         field: "enabled",
         headerName: "Enabled",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <Tooltip title={params.row.enabled ? "Enabled" : "Disabled"}>
             <Switch
+              className="pointer-events-none cursor-default"
               checked={Boolean(params.row.enabled)}
-              sx={{ pointerEvents: "none", cursor: "default" }}
             />
           </Tooltip>
         ),
@@ -69,7 +68,7 @@ export const AuthProvidersPage = () => {
         align: "right",
         headerAlign: "right",
         sortField: "created_at",
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <RelativeTime date={params.value} compact />
         ),
       },

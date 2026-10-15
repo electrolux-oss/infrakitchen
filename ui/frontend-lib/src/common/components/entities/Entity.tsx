@@ -1,12 +1,13 @@
 import { ReactNode, useLayoutEffect, useRef, useState } from "react";
 
-import CallSplitOutlinedIcon from "@mui/icons-material/CallSplitOutlined";
-import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import { Box, Tooltip } from "@mui/material";
-import { SxProps, Theme } from "@mui/system";
-
 import { ProviderIcon } from "../../../icons/Icons";
+import {
+  CallSplitOutlinedIcon,
+  LocalOfferOutlinedIcon,
+  WarningAmberIcon,
+} from "../../../icons/material";
+import { Tooltip } from "../../../ui";
+import { cn } from "../../../utils/cn";
 import VersionLifecycleStateChip from "../../VersionLifecycleStateChip";
 import { Label } from "../labels/Label";
 
@@ -43,9 +44,7 @@ export interface EntityProps {
   entity?: EntityRecord | null;
   /** Show the type/template label chip (hidden by default). */
   showLabel?: boolean;
-  /** Styles forwarded to the rendered link. */
-  sx?: SxProps<Theme>;
-  /** Class name forwarded to the rendered link. */
+  /** Class name forwarded to the rendered link (or name span when disableLink). */
   linkClassName?: string;
   /** Size of the provider icon shown for integration entities. */
   providerIconSize?: number;
@@ -87,7 +86,6 @@ export function humanizeEntityType(entityName?: string): string {
 export const Entity = ({
   entity,
   showLabel = false,
-  sx,
   linkClassName,
   providerIconSize,
   disableLink = false,
@@ -166,7 +164,6 @@ export const Entity = ({
               entityName={entityType}
               name={entity.name}
               identifier={entity.identifier}
-              sx={sx}
               className={linkClassName}
               noWrap={noWrap}
             />
@@ -184,22 +181,9 @@ export const Entity = ({
           : CallSplitOutlinedIcon
         : null;
     const entityName = disableLink ? (
-      <Box
-        component="span"
-        sx={[
-          noWrap
-            ? {
-                minWidth: 0,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }
-            : {},
-          ...(Array.isArray(sx) ? sx : [sx]),
-        ]}
-      >
+      <span className={cn(noWrap && "min-w-0 truncate", linkClassName)}>
         {displayText}
-      </Box>
+      </span>
     ) : (
       <EntityLink
         id={entity.id}
@@ -209,7 +193,6 @@ export const Entity = ({
         }
         name={displayText}
         identifier={entity.identifier}
-        sx={sx}
         className={linkClassName}
         noWrap={noWrap}
       />
@@ -263,10 +246,7 @@ export const Entity = ({
           />
         )}
         {SourceCodeRefIcon && (
-          <SourceCodeRefIcon
-            color="action"
-            sx={{ fontSize: 18, flexShrink: 0 }}
-          />
+          <SourceCodeRefIcon className="shrink-0 text-[18px]" color="action" />
         )}
         {entityName}
         {lifecycleVariant === "dot" && trailingBreakingChangesWarning}
@@ -282,36 +262,24 @@ export const Entity = ({
     showLabel && tagLabel ? (
       <Label className="Entity-typeLabel" label={tagLabel} />
     ) : null;
-  const contentRow = {
-    display: "flex",
-    alignItems: "center",
-    gap: 0.75,
-    minWidth: 0,
-  } as const;
+  const contentRow = "flex min-w-0 items-center gap-1.5";
 
   if (labelWrapped || stacked) {
     return (
-      <Box
+      <div
+        className="flex w-full min-w-0 flex-col items-start gap-1"
         ref={rowRef}
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          gap: 0.5,
-          minWidth: 0,
-          width: "100%",
-        }}
       >
-        <Box sx={{ ...contentRow, width: "100%" }}>{content}</Box>
+        <div className={cn(contentRow, "w-full")}>{content}</div>
         {label}
-      </Box>
+      </div>
     );
   }
 
   return (
-    <Box ref={rowRef} sx={contentRow}>
+    <div ref={rowRef} className={contentRow}>
       {content}
       {label}
-    </Box>
+    </div>
   );
 };

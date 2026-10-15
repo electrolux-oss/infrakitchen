@@ -1,6 +1,5 @@
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import { Box, CircularProgress, Divider, Typography } from "@mui/material";
-
+import { FavoriteIcon } from "../../icons/material";
+import { Divider, Spinner } from "../../ui";
 import { FavoriteResource } from "../types";
 
 import { FavoriteResourceItem } from "./FavoriteResourceItem";
@@ -15,71 +14,41 @@ export const MyFavoritesWidget = ({
   loading = false,
 }: MyFavoritesWidgetProps) => {
   return (
-    <Box sx={{ width: "100%" }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-        <FavoriteIcon sx={{ color: "primary.main", fontSize: 20 }} />
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+    <div className="w-full">
+      <div className="mb-3 flex items-center gap-2">
+        <FavoriteIcon className="text-[20px] text-primary" />
+        <h6 className="m-0 text-subtitle1 font-semibold text-grey-500">
           My Favorites
-        </Typography>
+        </h6>
         {!loading && (
-          <Typography
-            variant="caption"
-            sx={{ color: "text.secondary", ml: "auto" }}
-          >
+          <span className="ml-auto text-caption text-fg-muted">
             {favorites.length}{" "}
             {favorites.length !== 1 ? "favorites" : "favorite"}
-          </Typography>
+          </span>
         )}
-      </Box>
-      <Divider sx={{ mb: 1.5 }} />
-      <Box
-        sx={{
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: "var(--template-surface-radius)",
-          backgroundColor: "background.paper",
-          overflow: "hidden",
-          overflowY: "auto",
-          maxHeight: 400,
-        }}
-      >
+      </div>
+      <Divider className="mb-3" />
+      <div className="max-h-100 overflow-hidden overflow-y-auto rounded-surface border border-divider bg-paper">
         {loading ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              py: 4,
-            }}
-          >
-            <CircularProgress size={24} />
-          </Box>
+          <div className="flex items-center justify-center py-8">
+            <Spinner size={24} />
+          </div>
         ) : favorites.length === 0 ? (
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              py: 4,
-              color: "text.secondary",
-            }}
-          >
-            <FavoriteIcon
-              sx={{ fontSize: 32, mb: 1, opacity: 0.5, color: "primary.main" }}
-            />
-            <Typography variant="body2">No favorites yet.</Typography>
-            <Typography variant="caption">
+          <div className="flex flex-col items-center py-8 text-fg-muted">
+            <FavoriteIcon className="mb-2 text-[32px] text-primary opacity-50" />
+            <p className="m-0 text-body2">No favorites yet.</p>
+            <span className="text-caption">
               Pin resources for quick access.
-            </Typography>
-          </Box>
+            </span>
+          </div>
         ) : (
-          <Box>
+          <div>
             {favorites.map((favorite) => (
               <FavoriteResourceItem key={favorite.id} resource={favorite} />
             ))}
-          </Box>
+          </div>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };

@@ -3,17 +3,6 @@ import React from "react";
 
 import { useNavigate } from "react-router";
 
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import {
-  Typography,
-  Box,
-  Autocomplete,
-  TextField,
-  Button,
-  Tooltip,
-  IconButton,
-} from "@mui/material";
-
 import {
   useConfig,
   useEntityListProvider,
@@ -23,23 +12,18 @@ import {
 } from "../../common";
 import { DeleteButton } from "../../common/components/buttons/DeleteEntityButton";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
+import { OpenInNewIcon } from "../../icons/material";
 import { IkEntity } from "../../types";
+import { Autocomplete, Button, IconButton, Tooltip } from "../../ui";
 import { ENTITY_STATUS } from "../../utils";
 import { GqlSourceCodeVersion } from "../graphql";
 import { useVersionActions } from "../hooks/useVersionActions";
 import { RefType } from "../types";
 
 const FieldLabel = ({ children }: { children: React.ReactNode }) => (
-  <Typography
-    variant="caption"
-    sx={{
-      color: "text.secondary",
-      textTransform: "uppercase",
-      letterSpacing: "0.05em",
-    }}
-  >
+  <span className="text-caption tracking-[0.05em] text-fg-muted uppercase">
     {children}
-  </Typography>
+  </span>
 );
 
 type MetadataTabProps = {
@@ -98,22 +82,14 @@ export const MetadataTab = ({
   };
 
   return (
-    <Box sx={{ pt: 0.5 }}>
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "8rem 15rem auto 8rem 15rem",
-          alignItems: "center",
-          mx: "1rem",
-          gap: 1.5,
-        }}
-      >
+    <div className="pt-1">
+      <div className="mx-[1rem] grid grid-cols-[8rem_15rem_auto_8rem_15rem] items-center gap-3">
         <FieldLabel>Template</FieldLabel>
 
         {hasVersion ? (
-          <Typography variant="body2">{entity.template?.name}</Typography>
+          <p className="m-0 text-body2">{entity.template?.name}</p>
         ) : (
-          <Box onClick={(e) => e.stopPropagation()}>
+          <div onClick={(e) => e.stopPropagation()}>
             <ReferenceInput
               ikApi={ikApi}
               entity_name="templates"
@@ -124,48 +100,27 @@ export const MetadataTab = ({
               onChange={(value: string) => setDraftTemplate(value)}
               required
             />
-          </Box>
+          </div>
         )}
 
-        <Box />
+        <div />
         <FieldLabel>Path</FieldLabel>
 
         {hasVersion ? (
-          <Typography variant="body2">
-            {entity.sourceCodeFolder ?? "—"}
-          </Typography>
+          <p className="m-0 text-body2">{entity.sourceCodeFolder ?? "—"}</p>
         ) : (
-          <Box onClick={(e) => e.stopPropagation()}>
+          <div onClick={(e) => e.stopPropagation()}>
             <Autocomplete
-              size="small"
               options={gitFolders}
               value={draftFolder}
               onChange={(_, newValue) => setDraftFolder(newValue ?? "")}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  placeholder="Select or enter path"
-                  sx={{
-                    "& .MuiInputBase-input": {
-                      fontSize: "0.875rem",
-                    },
-                  }}
-                />
-              )}
+              placeholder="Select or enter path"
             />
-          </Box>
+          </div>
         )}
-      </Box>
+      </div>
 
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "flex-end",
-          mt: 1.5,
-          mr: 2,
-          gap: 1,
-        }}
-      >
+      <div className="mt-3 mr-4 flex justify-end gap-2">
         <PermissionWrapper
           requiredPermission="api:source_code_version"
           permissionAction="write"
@@ -184,10 +139,10 @@ export const MetadataTab = ({
             onClose={() => setRootPathDialogOpen(false)}
             title="Save root path?"
             content={
-              <Typography variant="body2">
+              <p className="m-0 text-body2">
                 The selected path is <InlineCode>/</InlineCode>. This will save
                 the version at the repository root. Do you want to continue?
-              </Typography>
+              </p>
             }
             actions={
               <Button
@@ -219,6 +174,7 @@ export const MetadataTab = ({
           <>
             <Tooltip title="Open version detail page">
               <IconButton
+                className="justify-self-start"
                 size="small"
                 onClick={(e) => {
                   if (e.metaKey || e.ctrlKey) {
@@ -230,7 +186,6 @@ export const MetadataTab = ({
                   }
                   navigate(`${linkPrefix}source_code_versions/${entity.id}`);
                 }}
-                sx={{ justifySelf: "start" }}
               >
                 <OpenInNewIcon fontSize="small" />
               </IconButton>
@@ -289,10 +244,10 @@ export const MetadataTab = ({
                 onClose={() => setDeleteDialogOpen(false)}
                 title="Erase Version Data"
                 content={
-                  <Typography variant="body2">
+                  <p className="m-0 text-body2">
                     Are you sure you want to erase all data for this version?
                     This action is irreversible.
-                  </Typography>
+                  </p>
                 }
                 actions={
                   <DeleteButton
@@ -311,7 +266,7 @@ export const MetadataTab = ({
             </PermissionWrapper>
           </>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };

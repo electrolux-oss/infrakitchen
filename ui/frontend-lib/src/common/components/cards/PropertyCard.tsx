@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 
-import { Card, CardActions, CardContent, CardHeader } from "@mui/material";
+import { Card, CardActions, CardContent, CardHeader } from "../../../ui";
 
 export const PropertyCard = (props: {
   title?: ReactNode;
@@ -11,17 +11,10 @@ export const PropertyCard = (props: {
 }) => {
   const { title = "Properties", subtitle, children, actions, action } = props;
   return (
-    <Card
-      sx={{
-        width: "100%",
-        mb: 2,
-      }}
-    >
+    <Card className="mb-4 w-full">
       <CardHeader title={title} subheader={subtitle} action={action} />
       <CardContent>{children}</CardContent>
-      <CardActions sx={{ justifyContent: "center", mt: 2 }}>
-        {actions}
-      </CardActions>
+      <CardActions className="mt-4 justify-center">{actions}</CardActions>
     </Card>
   );
 };

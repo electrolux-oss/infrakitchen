@@ -9,8 +9,6 @@ import {
 } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import { Box, TextField, Button, MenuItem } from "@mui/material";
-
 import { LabelInput } from "../../common";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
@@ -18,6 +16,7 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { IkEntity } from "../../types";
+import { Button, TextField, MenuItem } from "../../ui";
 import { renderFieldsForProvider } from "../components/SecretProviderForms";
 import {
   CREATE_SECRET_MUTATION,
@@ -145,17 +144,9 @@ const SecretCreatePageInner = () => {
         </>
       }
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          flexDirection: "column",
-          width: "100%",
-          minWidth: 320,
-        }}
-      >
+      <div className="flex w-full min-w-80 flex-col items-center">
         <PropertyCard title="Secret Definition">
-          <Box>
+          <div>
             <Controller
               name="name"
               control={control}
@@ -164,7 +155,6 @@ const SecretCreatePageInner = () => {
                 <TextField
                   {...field}
                   label="Name"
-                  variant="outlined"
                   error={!!errors.name}
                   helperText={
                     errors.name ? errors.name.message : "Provide a unique name"
@@ -181,7 +171,6 @@ const SecretCreatePageInner = () => {
                 <TextField
                   {...field}
                   label="Description"
-                  variant="outlined"
                   error={!!errors.description}
                   helperText={
                     errors.description
@@ -208,7 +197,6 @@ const SecretCreatePageInner = () => {
                   {...field}
                   select
                   label="Secret Provider"
-                  variant="outlined"
                   error={!!errors.secretProvider}
                   helperText={
                     errors.secretProvider
@@ -269,7 +257,6 @@ const SecretCreatePageInner = () => {
                   select
                   disabled
                   label="Secret Type"
-                  variant="outlined"
                   error={!!errors.secretType}
                   helperText={
                     errors.secretType
@@ -287,23 +274,23 @@ const SecretCreatePageInner = () => {
                 </TextField>
               )}
             />
-          </Box>
+          </div>
         </PropertyCard>
 
         {selectedProvider && (
           <PropertyCard
             title={`Configuration for ${secretProviderMapping[selectedProvider] || ""}`}
           >
-            <Box>
+            <div>
               {renderFieldsForProvider(
                 selectedProvider,
                 control as Control<any>,
                 errors,
               )}
-            </Box>
+            </div>
           </PropertyCard>
         )}
-      </Box>
+      </div>
     </PageContainer>
   );
 };

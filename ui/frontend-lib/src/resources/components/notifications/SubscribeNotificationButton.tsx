@@ -2,22 +2,21 @@ import React, { useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
-import NotificationsOffIcon from "@mui/icons-material/NotificationsOff";
-import TuneIcon from "@mui/icons-material/Tune";
-import {
-  Box,
-  Button,
-  Divider,
-  IconButton,
-  Popover,
-  Stack,
-  Switch,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-
 import { useConfig } from "../../../common/context/ConfigContext";
+import {
+  NotificationsActiveIcon,
+  NotificationsOffIcon,
+  TuneIcon,
+} from "../../../icons/material";
+import {
+  Divider,
+  Switch,
+  Button,
+  IconButton,
+  Tooltip,
+  Popover,
+} from "../../../ui";
+import { cn } from "../../../utils/cn";
 
 interface SubscribeNotificationButtonProps {
   isSubscribed: boolean;
@@ -82,7 +81,6 @@ export const SubscribeNotificationButton = ({
         }
       >
         <IconButton
-          color={isSubscribed ? "error" : "primary"}
           onClick={handleButtonClick}
           disabled={isLoading}
           aria-label={isSubscribed ? "Unsubscribe" : "Subscribe"}
@@ -100,68 +98,46 @@ export const SubscribeNotificationButton = ({
         onClose={handleClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
-        slotProps={{ paper: { sx: { borderRadius: 2, mt: 1 } } }}
+        className="mt-2 rounded-[16px]"
       >
-        <Stack sx={{ width: 400, p: 2, gap: 1.5 }}>
-          <Stack direction="row" sx={{ gap: 1.5, alignItems: "center" }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 36,
-                height: 36,
-                borderRadius: "50%",
-                bgcolor: "action.hover",
-                color: action === "subscribe" ? "primary.main" : "error.main",
-              }}
+        <div className="flex w-100 flex-col gap-3 p-4">
+          <div className="flex flex-row items-center gap-3">
+            <div
+              className={cn(
+                action === "subscribe" ? "text-primary" : "text-error",
+                "flex h-9 w-9 items-center justify-center rounded-full bg-hover",
+              )}
             >
               {action === "subscribe" ? (
                 <NotificationsOffIcon fontSize="small" />
               ) : (
                 <NotificationsActiveIcon fontSize="small" />
               )}
-            </Box>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            </div>
+            <div className="min-w-0">
+              <h6 className="m-0 text-subtitle2 font-semibold text-grey-500">
                 {action === "subscribe"
                   ? "Subscribe to notifications"
                   : "Unsubscribe from notifications"}
-              </Typography>
-              <Typography
-                variant="caption"
-                sx={{ color: "text.secondary", display: "block" }}
-              >
+              </h6>
+              <span className="block text-caption text-fg-muted">
                 {action === "subscribe"
                   ? `Get notified when this ${entityName} changes`
                   : `Stop receiving notifications for this ${entityName}`}
-              </Typography>
-            </Box>
-          </Stack>
+              </span>
+            </div>
+          </div>
           <Divider />
           {showIncludeChildren ? (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-              }}
-            >
+            <div className="flex items-center gap-2">
               <Switch
                 checked={inheritChildren}
                 onChange={(e) => setInheritChildren(e.target.checked)}
               />
-              <Typography variant="body2">Include child resources</Typography>
-            </Box>
+              <p className="m-0 text-body2">Include child resources</p>
+            </div>
           ) : null}
-          <Stack
-            direction="row"
-            sx={{
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 1,
-            }}
-          >
+          <div className="flex flex-row items-center justify-between gap-2">
             {preferencesPath ? (
               <Button
                 size="small"
@@ -174,9 +150,9 @@ export const SubscribeNotificationButton = ({
                 Preferences
               </Button>
             ) : (
-              <Box />
+              <div />
             )}
-            <Stack direction="row" sx={{ gap: 1 }}>
+            <div className="flex flex-row gap-2">
               <Button onClick={handleClose} color="inherit">
                 Cancel
               </Button>
@@ -187,9 +163,9 @@ export const SubscribeNotificationButton = ({
               >
                 {action === "subscribe" ? "Subscribe" : "Unsubscribe"}
               </Button>
-            </Stack>
-          </Stack>
-        </Stack>
+            </div>
+          </div>
+        </div>
       </Popover>
     </>
   );

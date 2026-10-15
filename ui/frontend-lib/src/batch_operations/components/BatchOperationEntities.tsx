@@ -2,37 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { FormProvider, useForm } from "react-hook-form";
 
-import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
-import RefreshIcon from "@mui/icons-material/Refresh";
-import {
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  List,
-  ListItem,
-  ListItemText,
-  Stack,
-} from "@mui/material";
-import {
-  DataGrid,
-  GridColDef,
-  GridPaginationModel,
-  GridRenderCellParams,
-  GridRowSelectionModel,
-} from "@mui/x-data-grid";
-
 import { buildAuditLogsQuery, GqlAuditLog } from "../../audit_logs/graphql";
 import { useConfig } from "../../common";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { Entity } from "../../common/components/entities/Entity";
-import {
-  dataGridDefaultProps,
-  dataGridSx,
-} from "../../common/components/entity_table/dataGridStyles";
 import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useLocalStorage } from "../../common/context/UIStateContext";
@@ -43,7 +16,25 @@ import { LogActionButtons } from "../../common/LogsComponent/LogActionButtons";
 import { Logs } from "../../common/LogsComponent/Logs";
 import StatusChip from "../../common/StatusChip";
 import { EXECUTOR_FIELD_MAP } from "../../executors/graphql";
+import { AddIcon, DeleteIcon, RefreshIcon } from "../../icons/material";
 import { RESOURCE_FIELD_MAP } from "../../resources/graphql";
+import {
+  Button,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  ListItemText,
+  List,
+  ListItem,
+} from "../../ui";
+import {
+  DataTable,
+  DataTableColumn,
+  PaginationModel,
+  RenderCellParams,
+} from "../../ui";
 import {
   BATCH_OPERATION_ENTITY_IDS_MUTATION,
   GqlBatchOperation,
@@ -84,10 +75,9 @@ export const BatchOperationEntities = ({
   const [actionRunning, setActionRunning] = useState(false);
 
   const storageKey = "batch_operation_entities";
-  const { get, setKey } =
-    useLocalStorage<Record<string, GridPaginationModel>>();
+  const { get, setKey } = useLocalStorage<Record<string, PaginationModel>>();
   const savedPagination = get(storageKey);
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>(
+  const [paginationModel, setPaginationModel] = useState<PaginationModel>(
     savedPagination || { page: 0, pageSize: 25 },
   );
 
@@ -366,13 +356,13 @@ export const BatchOperationEntities = ({
     [batchOperation?.id, ikApi, setEntityIds],
   );
 
-  const entityColumns: GridColDef[] = useMemo(() => {
-    const baseColumns: GridColDef[] = [
+  const entityColumns: DataTableColumn[] = useMemo(() => {
+    const baseColumns: DataTableColumn[] = [
       {
         field: "name",
         headerName: "Name",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) => {
+        renderCell: (params: RenderCellParams) => {
           return <Entity entity={params.row} />;
         },
       },
@@ -381,7 +371,7 @@ export const BatchOperationEntities = ({
         headerName: "State",
         flex: 1,
         valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <StatusChip
             status={String(params.row.status).toLowerCase()}
             state={String(params.row.state).toLowerCase()}
@@ -394,16 +384,11 @@ export const BatchOperationEntities = ({
         width: RELATIVE_TIME_COLUMN_WIDTH,
         align: "right",
         headerAlign: "right",
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <RelativeTime
+            className="flex h-full items-center justify-end"
             date={params.value}
             compact
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-end",
-              height: "100%",
-            }}
           />
         ),
       },
@@ -413,7 +398,7 @@ export const BatchOperationEntities = ({
         width: 120,
         sortable: false,
         filterable: false,
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <LogActionButtons
             action={"any"}
             sourceCodeLanguage={"opentofu"}
@@ -428,7 +413,7 @@ export const BatchOperationEntities = ({
         width: 140,
         sortable: false,
         filterable: false,
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <Button
             color="error"
             startIcon={<DeleteIcon />}
@@ -447,7 +432,7 @@ export const BatchOperationEntities = ({
         headerName: "Template",
         flex: 1,
         valueGetter: (value: any) => value?.name || "",
-        renderCell: (params: GridRenderCellParams) => {
+        renderCell: (params: RenderCellParams) => {
           const template = params.row.template;
           return <Entity entity={template} />;
         },
@@ -494,35 +479,22 @@ export const BatchOperationEntities = ({
         </>
       }
     >
-      {" "}
-      <DataGrid
-        rows={entities}
-        columns={entityColumns}
-        autoHeight
-        loading={entitiesLoading}
-        {...dataGridDefaultProps}
-        checkboxSelection
-        disableRowSelectionOnClick
-        rowSelectionModel={{
-          type: "include",
-          ids: new Set(selectedEntityIds),
-        }}
-        onRowSelectionModelChange={(newSelection: GridRowSelectionModel) => {
-          const currentPageIds = entities.map((entity) => String(entity.id));
-          const excludedIds = new Set(Array.from(newSelection.ids).map(String));
-
-          const nextSelected =
-            newSelection.type === "exclude"
-              ? currentPageIds.filter((id) => !excludedIds.has(id))
-              : Array.from(excludedIds);
-
-          setSelectedEntityIds(nextSelected);
-        }}
-        paginationModel={paginationModel}
-        onPaginationModelChange={setPaginationModel}
-        pageSizeOptions={[10, 25, 50, 100]}
-        sx={{ ...dataGridSx }}
-      />
+      <div className="overflow-hidden rounded-surface border border-divider bg-paper">
+        <DataTable
+          rows={entities}
+          columns={entityColumns}
+          loading={entitiesLoading}
+          checkboxSelection
+          rowSelectionModel={selectedEntityIds}
+          onRowSelectionModelChange={(newSelection) =>
+            setSelectedEntityIds(newSelection.map(String))
+          }
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          pageSizeOptions={[10, 25, 50, 100]}
+          className="md:min-h-[380px]"
+        />
+      </div>
       <Dialog
         open={Boolean(logsEntityId)}
         onClose={handleCloseLogs}
@@ -603,17 +575,13 @@ export const BatchOperationEntities = ({
                       primary={entity ? <Entity entity={entity} /> : key}
                       secondary={result?.message}
                     />
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      sx={{ alignItems: "center" }}
-                    >
+                    <div className="flex flex-row items-center gap-2">
                       <Chip
                         label={status}
                         color={statusColor}
                         variant={status === "pending" ? "outlined" : "filled"}
                       />
-                    </Stack>
+                    </div>
                   </ListItem>
                 );
               })}

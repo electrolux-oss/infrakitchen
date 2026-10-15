@@ -2,30 +2,20 @@ import * as React from "react";
 
 import { useNavigate } from "react-router";
 
-import { UserAvatar } from "@electrolux-oss/infrakitchen";
-import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
-import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
-import Box from "@mui/material/Box";
-import Divider, { dividerClasses } from "@mui/material/Divider";
-import { listClasses } from "@mui/material/List";
-import ListItemIcon, { listItemIconClasses } from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import Menu from "@mui/material/Menu";
-import MuiMenuItem from "@mui/material/MenuItem";
-import { paperClasses } from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import { styled } from "@mui/material/styles";
-import Typography, { typographyClasses } from "@mui/material/Typography";
+import {
+  Divider,
+  ListItemIcon,
+  ListItemText,
+  LogoutRoundedIcon,
+  Menu,
+  MenuItem,
+  PersonRoundedIcon,
+  UserAvatar,
+} from "@electrolux-oss/infrakitchen";
 
 import { useAuth } from "../auth/AuthContext";
 
 import MenuButton from "./MenuButton";
-
-const MenuItem = styled(MuiMenuItem)({
-  margin: "2px 0",
-  paddingTop: 4,
-  paddingBottom: 4,
-});
 
 export default function UserSidebar() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -46,40 +36,18 @@ export default function UserSidebar() {
   }
 
   return (
-    <Stack
-      direction="row"
-      sx={{
-        gap: 1,
-        alignItems: "center",
-        minWidth: 0,
-      }}
-    >
+    <div className="flex min-w-0 flex-row items-center gap-2">
       <MenuButton
         aria-label="Open user menu"
         onClick={handleOpen}
         aria-controls={open ? "user-menu" : undefined}
         aria-expanded={open ? "true" : undefined}
         aria-haspopup="true"
-        sx={(theme) => ({
-          p: 0,
-          border: "none",
-          backgroundColor: "transparent",
-          "&:hover": { backgroundColor: "transparent" },
-          height: "2.25rem",
-          ...theme.applyStyles("dark", {
-            border: "none",
-            backgroundColor: "transparent",
-            "&:hover": { backgroundColor: "transparent" },
-          }),
-        })}
+        className="h-9 border-0 bg-transparent p-0 hover:bg-transparent"
       >
         <UserAvatar
           identifier={user.identifier}
-          sx={{
-            fontSize: "0.875rem",
-            border: "1px solid",
-            borderColor: "divider",
-          }}
+          className="border border-divider text-[0.875rem]"
         />
       </MenuButton>
       <Menu
@@ -90,108 +58,45 @@ export default function UserSidebar() {
         onClick={handleClose}
         transformOrigin={{ horizontal: "right", vertical: "top" }}
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-        sx={{
-          [`& .${listClasses.root}`]: {
-            padding: "2px",
-          },
-          [`& .${paperClasses.root}`]: {
-            padding: 0,
-            minWidth: 200,
-          },
-          [`& .${dividerClasses.root}`]: {
-            margin: "2px 0",
-          },
-        }}
+        className="min-w-50 p-0"
+        listClassName="p-0.5"
       >
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{ px: 1.5, py: 1, alignItems: "center" }}
-        >
+        <div className="flex flex-row items-center gap-2 px-3 py-2">
           <UserAvatar
             identifier={user.identifier}
-            sx={{
-              fontSize: 14,
-              height: 30,
-              width: 30,
-            }}
+            className="size-[30px] text-[14px]"
           />
-          <Box sx={{ minWidth: 0 }}>
-            <Typography
-              sx={{
-                lineHeight: 1.3,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
+          <div className="min-w-0">
+            <p className="m-0 truncate text-body2 leading-[1.3]">
               {user.identifier}
-            </Typography>
+            </p>
             {user.email ? (
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "text.secondary",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  display: "block",
-                }}
-              >
+              <span className="block truncate text-caption text-fg-muted">
                 {user.email}
-              </Typography>
+              </span>
             ) : null}
-          </Box>
-        </Stack>
+          </div>
+        </div>
 
-        <Divider />
+        <Divider className="my-0.5" />
 
         <MenuItem
+          className="my-0.5 py-1"
           onClick={() => navigate(`/users/${user.id}`)}
-          sx={{
-            [`& .${listItemIconClasses.root}`]: {
-              minWidth: 0,
-              mr: 1.5,
-            },
-          }}
         >
-          <ListItemIcon>
+          <ListItemIcon className="mr-3">
             <PersonRoundedIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText
-            sx={{
-              [`& .${typographyClasses.root}`]: {
-                fontWeight: 400,
-              },
-            }}
-          >
-            My Profile
-          </ListItemText>
+          <ListItemText primaryClassName="font-normal">My Profile</ListItemText>
         </MenuItem>
 
-        <MenuItem
-          onClick={logout}
-          sx={{
-            [`& .${listItemIconClasses.root}`]: {
-              minWidth: 0,
-              mr: 1.5,
-            },
-          }}
-        >
-          <ListItemIcon>
+        <MenuItem className="my-0.5 py-1" onClick={logout}>
+          <ListItemIcon className="mr-3">
             <LogoutRoundedIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText
-            sx={{
-              [`& .${typographyClasses.root}`]: {
-                fontWeight: 400,
-              },
-            }}
-          >
-            Log Out
-          </ListItemText>
+          <ListItemText primaryClassName="font-normal">Log Out</ListItemText>
         </MenuItem>
       </Menu>
-    </Stack>
+    </div>
   );
 }

@@ -8,8 +8,6 @@ import {
 } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import { Box, TextField, Button, MenuItem } from "@mui/material";
-
 import { LabelInput } from "../../common";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
@@ -22,6 +20,7 @@ import BitbucketOrganizations from "../../providers/bitbucket/Organizations";
 import BitbucketRepos from "../../providers/bitbucket/Repos";
 import GithubRepoInput from "../../providers/github/RepoInput";
 import { IkEntity } from "../../types";
+import { Button, TextField, MenuItem } from "../../ui";
 import { CREATE_WORKSPACE_MUTATION } from "../graphql";
 import { WorkspaceCreate } from "../types";
 
@@ -111,17 +110,9 @@ const WorkspaceCreatePageInner = () => {
         </>
       }
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          flexDirection: "column",
-          width: "100%",
-          minWidth: 320,
-        }}
-      >
+      <div className="flex w-full min-w-80 flex-col items-center">
         <PropertyCard title="Workspace Definition">
-          <Box>
+          <div>
             <Controller
               name="description"
               control={control}
@@ -129,7 +120,6 @@ const WorkspaceCreatePageInner = () => {
                 <TextField
                   {...field}
                   label="Description"
-                  variant="outlined"
                   error={!!errors.description}
                   helperText={
                     errors.description
@@ -163,7 +153,6 @@ const WorkspaceCreatePageInner = () => {
                   }}
                   select
                   label="Workspace Provider"
-                  variant="outlined"
                   required
                   error={!!errors.workspaceProvider}
                   helperText={
@@ -221,12 +210,12 @@ const WorkspaceCreatePageInner = () => {
                 )}
               />
             )}
-          </Box>
+          </div>
         </PropertyCard>
 
         {selectedProvider && selectedIntegration && (
           <PropertyCard title="Workspace Configuration">
-            <Box>
+            <div>
               {selectedProvider === "bitbucket" && (
                 <Controller
                   name="configuration.organization"
@@ -363,10 +352,10 @@ const WorkspaceCreatePageInner = () => {
                   )}
                 </>
               )}
-            </Box>
+            </div>
           </PropertyCard>
         )}
-      </Box>
+      </div>
     </PageContainer>
   );
 };

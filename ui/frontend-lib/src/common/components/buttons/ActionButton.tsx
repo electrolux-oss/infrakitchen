@@ -1,7 +1,6 @@
 import { useState } from "react";
 
-import { Button } from "@mui/material";
-
+import { Button } from "../../../ui";
 import { useConfig, useEntityProvider } from "../../context";
 import { buildEntityActionMutation } from "../../graphql/entityActionMutation";
 import { notify, notifyError } from "../../hooks/useNotification";

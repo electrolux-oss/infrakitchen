@@ -1,10 +1,16 @@
 import { useState } from "react";
 
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import { useConfig } from "../../common";
+import { deleteIconButtonClass } from "../../common/components/buttons/deleteIconButtonClass";
+import { notifyError } from "../../common/hooks/useNotification";
 import {
+  CheckIcon,
+  CloseIcon,
+  DeleteForeverIcon,
+  DeleteOutlinedIcon,
+} from "../../icons/material";
+import {
+  Spinner,
   Button,
   IconButton,
   Dialog,
@@ -12,13 +18,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  CircularProgress,
-  Stack,
-} from "@mui/material";
-
-import { useConfig } from "../../common";
-import { deleteIconButtonStyle } from "../../common/components/buttons/deleteIconButtonStyle";
-import { notifyError } from "../../common/hooks/useNotification";
+} from "../../ui";
 import {
   CASCADE_DELETE_PERMISSION_MUTATION,
   DELETE_PERMISSION_MUTATION,
@@ -107,9 +107,9 @@ export const DeletePermissionButton = (
         title={`Delete`}
         onClick={handleOpenDialog}
         size="small"
-        sx={deleteIconButtonStyle}
+        className={deleteIconButtonClass}
       >
-        <DeleteOutlineIcon fontSize="small" />
+        <DeleteOutlinedIcon fontSize="small" />
       </IconButton>
 
       <Dialog
@@ -118,10 +118,7 @@ export const DeletePermissionButton = (
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-        <DialogTitle
-          id="alert-dialog-title"
-          sx={{ color: "error.main", fontWeight: "bold" }}
-        >
+        <DialogTitle className="font-bold text-error" id="alert-dialog-title">
           {"Confirm Deletion"}
         </DialogTitle>
         <DialogContent>
@@ -129,58 +126,58 @@ export const DeletePermissionButton = (
             Are you sure you want to delete this? This action cannot be undone.
           </DialogContentText>
           {enableCascadeDelete && (
-            <DialogContentText sx={{ mt: 2 }}>
+            <DialogContentText className="mt-4">
               Cascade delete will also remove matching child resource policies
               inherited from this policy.
             </DialogContentText>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: 2, pt: 0 }}>
-          <Stack direction="row" spacing={1}>
+        <DialogActions className="p-4 pt-0">
+          <div className="flex flex-row gap-2">
             <Button
+              className="font-bold normal-case"
               color="inherit"
               onClick={handleCloseDialog}
               startIcon={<CloseIcon />}
               disabled={isLoading}
-              sx={{ textTransform: "none", fontWeight: "bold" }}
             >
               Cancel
             </Button>
             <Button
+              className="font-bold normal-case"
               variant="contained"
               color="error"
               onClick={handleDeletePermission}
               startIcon={
                 isLoading ? (
-                  <CircularProgress size={20} color="inherit" />
+                  <Spinner size={20} color="inherit" />
                 ) : (
                   <CheckIcon />
                 )
               }
               disabled={isLoading}
-              sx={{ textTransform: "none", fontWeight: "bold" }}
             >
               {isLoading ? "Deleting..." : "Delete"}
             </Button>
             {enableCascadeDelete && (
               <Button
+                className="font-bold normal-case"
                 variant="contained"
                 color="error"
                 onClick={handleCascadeDeletePermission}
                 startIcon={
                   isLoading ? (
-                    <CircularProgress size={20} color="inherit" />
+                    <Spinner size={20} color="inherit" />
                   ) : (
                     <DeleteForeverIcon />
                   )
                 }
                 disabled={isLoading}
-                sx={{ textTransform: "none", fontWeight: "bold" }}
               >
                 {isLoading ? "Deleting..." : "Cascade Delete"}
               </Button>
             )}
-          </Stack>
+          </div>
         </DialogActions>
       </Dialog>
     </>

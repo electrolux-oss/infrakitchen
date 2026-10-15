@@ -1,38 +1,36 @@
 import React, { useState } from "react";
 
-import { RestartAlt } from "@mui/icons-material";
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import WarningIcon from "@mui/icons-material/Warning";
-import {
-  Button,
-  Typography,
-  CircularProgress,
-  Alert,
-  Box,
-  Collapse,
-  IconButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Chip,
-  TableContainer,
-  Stack,
-} from "@mui/material";
-
 import { CommonDialog, useConfig } from "../../../../common";
 import { getDateValue } from "../../../../common/components/fields/CommonField";
 import { notify, notifyError } from "../../../../common/hooks/useNotification";
+import {
+  CheckIcon,
+  CloseIcon,
+  DeleteOutlinedIcon,
+  KeyboardArrowDownIcon,
+  KeyboardArrowUpIcon,
+  RestartAltIcon,
+  WarningIcon,
+} from "../../../../icons/material";
 import {
   DELETE_KUBERNETES_POD_MUTATION,
   RESTART_KUBERNETES_DEPLOYMENT_MUTATION,
 } from "../../../../providers/kubernetes/graphql";
 import { K8sPod } from "../../../../providers/kubernetes/types";
+import {
+  Alert,
+  Spinner,
+  Button,
+  IconButton,
+  Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TableContainer,
+  Collapse,
+} from "../../../../ui";
 
 interface PodDetailsProps {
   loadingPods: boolean;
@@ -104,12 +102,7 @@ const PodRow = (props: {
 
   return (
     <React.Fragment>
-      <TableRow
-        sx={{
-          "& > *": { borderBottom: "unset" },
-          "&:hover": { backgroundColor: "action.hover" },
-        }}
-      >
+      <TableRow className="hover:bg-hover [&>*]:border-b-0">
         <TableCell>
           <IconButton
             aria-label="Expand Row"
@@ -120,89 +113,62 @@ const PodRow = (props: {
           </IconButton>
         </TableCell>
         <TableCell component="th" scope="row">
-          <Typography
-            variant="body1"
-            sx={{
-              fontWeight: "medium",
-            }}
-          >
-            {pod?.metadata.name}
-          </Typography>
+          <p className="m-0 text-body1 font-medium">{pod?.metadata.name}</p>
         </TableCell>
         <TableCell align="center">
           <Chip
+            className="font-bold"
             label={pod?.status.phase || "Unknown"}
             color={statusColor(pod?.status.phase)}
-            sx={{ fontWeight: "bold" }}
           />
         </TableCell>
         <TableCell align="center">
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-            }}
-          >
+          <p className="m-0 text-body2 text-fg-muted">
             {pod?.metadata.labels["app.kubernetes.io/version"] || "N/A"}
-          </Typography>
+          </p>
         </TableCell>
         <TableCell align="center">
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-            }}
-          >
+          <p className="m-0 text-body2 text-fg-muted">
             {getDateValue(pod?.metadata.creation_timestamp) || "N/A"}
-          </Typography>
+          </p>
         </TableCell>
         <TableCell align="center">
           {isLoading && (
-            <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-              <CircularProgress />
-            </Box>
+            <div className="flex justify-center p-4">
+              <Spinner />
+            </div>
           )}
 
           {isConfirmingKill ? (
             // Display Approve and Cancel buttons when confirming
-            <Stack
-              direction="row"
-              spacing={1}
-              sx={{
-                justifyContent: "flex-end",
-              }}
-            >
+            <div className="flex flex-row justify-end gap-2">
               <Button
+                className="font-bold normal-case"
                 variant="contained"
                 startIcon={<CheckIcon />}
                 onClick={() => handleKillPod(pod.metadata.name)}
-                sx={{ textTransform: "none", fontWeight: "bold" }}
                 disabled={isLoading}
               >
                 Approve
               </Button>
               <Button
+                className="font-bold normal-case"
                 color="error"
                 startIcon={<CloseIcon />}
                 onClick={handleCancelKill}
-                sx={{ textTransform: "none", fontWeight: "bold" }}
                 disabled={isLoading}
               >
                 Cancel
               </Button>
-            </Stack>
+            </div>
           ) : (
             <Button
+              className="min-w-25 font-bold normal-case"
               variant="contained"
               color="error"
-              startIcon={<DeleteOutlineIcon />}
+              startIcon={<DeleteOutlinedIcon />}
               onClick={handleInitiateKillConfirmation}
               disabled={isLoading}
-              sx={{
-                textTransform: "none",
-                fontWeight: "bold",
-                minWidth: "100px",
-              }}
             >
               Terminate
             </Button>
@@ -211,37 +177,16 @@ const PodRow = (props: {
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-          <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box
-              sx={{
-                margin: 1.5,
-                p: 2,
-                bgcolor: "background.paper",
-                borderRadius: "var(--template-surface-radius)",
-                boxShadow: 3,
-              }}
-            >
-              <Typography
-                variant="h5"
-                gutterBottom
-                component="div"
-                sx={{ mb: 2, color: "primary.main" }}
-              >
-                Pod Details
-              </Typography>
+          <Collapse in={open} unmountOnExit>
+            <div className="m-3 rounded-surface bg-paper p-4 shadow-[var(--ik-shadow-3)]">
+              <div className="m-0 mb-4 text-h5 text-primary">Pod Details</div>
               <Table size="small" aria-label="pod-labels">
                 <TableBody>
                   <TableRow>
                     <TableCell colSpan={2}>
-                      <Typography
-                        variant="h6"
-                        gutterBottom
-                        sx={{
-                          fontWeight: "bold",
-                        }}
-                      >
+                      <h6 className="m-0 mb-[0.35em] text-h6 font-bold">
                         Labels:
-                      </Typography>
+                      </h6>
                     </TableCell>
                   </TableRow>
                   {pod?.metadata.labels &&
@@ -249,34 +194,19 @@ const PodRow = (props: {
                     Object.entries(pod.metadata.labels).map(([key, value]) => (
                       <TableRow key={key}>
                         <TableCell component="th" scope="row">
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              color: "text.secondary",
-                            }}
-                          >
-                            {key}
-                          </Typography>
+                          <p className="m-0 text-body2 text-fg-muted">{key}</p>
                         </TableCell>
                         <TableCell align="right">
-                          <Typography variant="body2">
-                            {value as string}
-                          </Typography>
+                          <p className="m-0 text-body2">{value as string}</p>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
                       <TableCell colSpan={2} align="center">
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: "text.secondary",
-                            py: 1,
-                          }}
-                        >
+                        <p className="m-0 py-2 text-body2 text-fg-muted">
                           No labels found for this pod.
-                        </Typography>
+                        </p>
                       </TableCell>
                     </TableRow>
                   )}
@@ -285,35 +215,23 @@ const PodRow = (props: {
                       <>
                         <TableRow>
                           <TableCell colSpan={2}>
-                            <Typography
-                              variant="h6"
-                              gutterBottom
-                              sx={{
-                                fontWeight: "bold",
-                                mt: 2,
-                              }}
-                            >
+                            <h6 className="m-0 mt-4 mb-[0.35em] text-h6 font-bold">
                               Annotations:
-                            </Typography>
+                            </h6>
                           </TableCell>
                         </TableRow>
                         {Object.entries(pod.metadata.annotations).map(
                           ([key, value]) => (
                             <TableRow key={key}>
                               <TableCell component="th" scope="row">
-                                <Typography
-                                  variant="body2"
-                                  sx={{
-                                    color: "text.secondary",
-                                  }}
-                                >
+                                <p className="m-0 text-body2 text-fg-muted">
                                   {key}
-                                </Typography>
+                                </p>
                               </TableCell>
                               <TableCell align="right">
-                                <Typography variant="body2">
+                                <p className="m-0 text-body2">
                                   {value as string}
-                                </Typography>
+                                </p>
                               </TableCell>
                             </TableRow>
                           ),
@@ -324,34 +242,20 @@ const PodRow = (props: {
                     <>
                       <TableRow>
                         <TableCell colSpan={2}>
-                          <Typography
-                            variant="h6"
-                            gutterBottom
-                            sx={{
-                              fontWeight: "bold",
-                              mt: 2,
-                            }}
-                          >
+                          <h6 className="m-0 mt-4 mb-[0.35em] text-h6 font-bold">
                             Containers:
-                          </Typography>
+                          </h6>
                         </TableCell>
                       </TableRow>
                       {pod.spec.containers.map((container: any) => (
                         <TableRow key={container.name}>
                           <TableCell component="th" scope="row">
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                color: "text.secondary",
-                              }}
-                            >
+                            <p className="m-0 text-body2 text-fg-muted">
                               {container.name}
-                            </Typography>
+                            </p>
                           </TableCell>
                           <TableCell align="right">
-                            <Typography variant="body2">
-                              {container.image}
-                            </Typography>
+                            <p className="m-0 text-body2">{container.image}</p>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -359,7 +263,7 @@ const PodRow = (props: {
                   )}
                 </TableBody>
               </Table>
-            </Box>
+            </div>
           </Collapse>
         </TableCell>
       </TableRow>
@@ -414,25 +318,23 @@ const RestartPodsDialog = (props: {
     <CommonDialog
       maxWidth="xs"
       title={
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <div className="flex items-center gap-2">
           <WarningIcon color="warning" />
-          <Typography variant="h6" component="span">
-            Confirmation
-          </Typography>
-        </Box>
+          <span className="text-h6">Confirmation</span>
+        </div>
       }
       open={openRestartConfirmationDialog}
       onClose={() => setOpenRestartConfirmationDialog(false)}
       content={
         <>
-          <Typography>
+          <p className="m-0 text-body2">
             Are you sure you want to restart all pods for the {deploymentName}{" "}
             in the {clusterName} cluster?
-          </Typography>
+          </p>
           {isLoading && (
-            <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-              <CircularProgress />
-            </Box>
+            <div className="flex justify-center p-4">
+              <Spinner />
+            </div>
           )}
         </>
       }
@@ -461,42 +363,31 @@ export const PodDetails = (props: PodDetailsProps) => {
     useState(false);
 
   return (
-    <Box>
+    <div>
       {loadingPods && (
-        <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-          <CircularProgress />
-        </Box>
+        <div className="flex justify-center p-4">
+          <Spinner />
+        </div>
       )}
       {errorPods && (
         <Alert severity="error">
-          <Typography variant="body2">
+          <p className="m-0 text-body2">
             Error fetching pods for {deploymentName}: {errorPods.message}
-          </Typography>
+          </p>
         </Alert>
       )}
       {!loadingPods && !errorPods && (
         <>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-              mb: 2,
-            }}
-          >
+          <div className="mb-4 flex items-center justify-end">
             <Button
+              className="min-w-25 font-bold normal-case"
               variant="contained"
-              startIcon={<RestartAlt />}
+              startIcon={<RestartAltIcon />}
               onClick={() => setOpenRestartConfirmationDialog(true)}
-              sx={{
-                textTransform: "none",
-                fontWeight: "bold",
-                minWidth: "100px",
-              }}
             >
               Restart All
             </Button>
-          </Box>
+          </div>
           <RestartPodsDialog
             openRestartConfirmationDialog={openRestartConfirmationDialog}
             setOpenRestartConfirmationDialog={setOpenRestartConfirmationDialog}
@@ -512,7 +403,7 @@ export const PodDetails = (props: PodDetailsProps) => {
               <Table stickyHeader aria-label="pods table">
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ width: "40px" }} />
+                    <TableCell className="w-10" />
                     <TableCell>Pod Name</TableCell>
                     <TableCell align="center">Status</TableCell>
                     <TableCell align="center">Version</TableCell>
@@ -534,17 +425,12 @@ export const PodDetails = (props: PodDetailsProps) => {
               </Table>
             </TableContainer>
           ) : (
-            <Typography
-              variant="body2"
-              sx={{
-                color: "text.secondary",
-              }}
-            >
+            <p className="m-0 text-body2 text-fg-muted">
               No pods found for this deployment.
-            </Typography>
+            </p>
           )}
         </>
       )}
-    </Box>
+    </div>
   );
 };

@@ -1,7 +1,6 @@
-import SyncIcon from "@mui/icons-material/Sync";
-import { Box, Button, CircularProgress, Tooltip } from "@mui/material";
-
 import { SlackIcon } from "../../../icons/Icons";
+import { SyncIcon } from "../../../icons/material";
+import { Spinner, Button, Tooltip } from "../../../ui";
 import { notify, notifyError } from "../../hooks/useNotification";
 
 import { useSlackLink } from "./useSlackLink";
@@ -27,7 +26,7 @@ export const SlackSync = ({ userId, slackId }: SlackSyncProps) => {
   };
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+    <div className="flex items-center gap-2">
       <SlackIcon width={18} height={18} />
       {isLinked ? (
         <Tooltip title="Slack User ID">
@@ -36,11 +35,7 @@ export const SlackSync = ({ userId, slackId }: SlackSyncProps) => {
       ) : integrationAvailable ? (
         <Button
           startIcon={
-            linking ? (
-              <CircularProgress size={14} />
-            ) : (
-              <SyncIcon fontSize="small" />
-            )
+            linking ? <Spinner size={14} /> : <SyncIcon fontSize="small" />
           }
           onClick={handleSyncSlack}
           disabled={linking}
@@ -50,6 +45,6 @@ export const SlackSync = ({ userId, slackId }: SlackSyncProps) => {
       ) : (
         <span>Not linked</span>
       )}
-    </Box>
+    </div>
   );
 };

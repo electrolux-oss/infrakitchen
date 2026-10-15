@@ -1,8 +1,8 @@
-import { Launch } from "@mui/icons-material";
-import { Box, Link, useColorScheme } from "@mui/material";
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 
 import { useConfig } from "../..";
+import { LaunchIcon } from "../../../icons/material";
+import { Link, useColorScheme } from "../../../ui";
 import StatusChip from "../../StatusChip";
 import { Entity } from "../entities/Entity";
 import { TreeResponse } from "../tree/types";
@@ -20,15 +20,12 @@ export type GraphNode = Node<GraphNodeData, "graphNode">;
  * Graph node for the resource/template dependency graph. Mirrors the Tree
  * View's node content so both views stay visually consistent.
  *
- * Colors are picked explicitly from `useColorScheme()` rather than theme
- * tokens (`background.paper`/`divider`) because React Flow nodes render
- * outside the app's CSS-variable palette cascade, and `theme.palette.mode`
- * from `useTheme()` doesn't update on dark-mode toggle when `cssVariables`
- * is enabled (see WiringDiagram for the same pattern).
+ * Colors are picked explicitly from the resolved color scheme rather than
+ * palette tokens because React Flow nodes render outside the app's
+ * CSS-variable palette cascade (see WiringDiagram for the same pattern).
  */
 export function GraphViewNode({ data }: NodeProps<GraphNode>) {
-  const { mode } = useColorScheme();
-  const isDark = mode === "dark";
+  const isDark = useColorScheme().resolvedMode === "dark";
   const { linkPrefix } = useConfig();
   const { entity_name, entity_id, item, isRoot } = data;
 
@@ -40,25 +37,14 @@ export function GraphViewNode({ data }: NodeProps<GraphNode>) {
   const highlightColor = isDark ? "#58a6ff" : "#0969da";
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "flex-start",
-        gap: 1,
-        px: 1.5,
-        py: 1,
-        width: 280,
-        minWidth: 180,
-        maxWidth: 280,
-        boxSizing: "border-box",
+    <div
+      className="box-border flex w-[280px] max-w-[280px] min-w-[180px] cursor-grab items-start gap-2 rounded-surface px-3 py-2 active:cursor-grabbing"
+      style={{
         backgroundColor,
         border: `1px solid ${isRoot ? highlightColor : borderColor}`,
-        borderRadius: "var(--template-surface-radius)",
         boxShadow: isRoot
           ? `0 0 0 2px ${highlightColor}33`
           : "0 1px 2px rgba(0, 0, 0, 0.1)",
-        cursor: "grab",
-        "&:active": { cursor: "grabbing" },
       }}
     >
       <Handle
@@ -66,14 +52,7 @@ export function GraphViewNode({ data }: NodeProps<GraphNode>) {
         position={Position.Left}
         style={{ visibility: "hidden" }}
       />
-      <Box
-        sx={{
-          display: "flex",
-          flex: "1 1 auto",
-          minWidth: 0,
-          overflow: "hidden",
-        }}
-      >
+      <div className="flex min-w-0 flex-auto overflow-hidden">
         <Entity
           entity={{
             id: entity_id,
@@ -86,41 +65,30 @@ export function GraphViewNode({ data }: NodeProps<GraphNode>) {
           showLabel
           stacked
           noWrap
-          linkClassName="nodrag"
-          sx={{ minWidth: 0, typography: "body2" }}
+          linkClassName="nodrag min-w-0 text-body2"
         />
-      </Box>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-          mt: 0.25,
-          ml: "auto",
-          flexShrink: 0,
-        }}
-      >
+      </div>
+      <div className="mt-0.5 ml-auto flex shrink-0 items-center gap-2">
         <StatusChip
           status={status}
           state={state}
           compact
-          sx={{ fontSize: 15 }}
+          className="text-[15px]"
         />
         <Link
           href={`${linkPrefix}${entity_name}s/${entity_id}`}
           target="_blank"
-          className="nodrag"
-          sx={{ display: "inline-flex" }}
+          className="nodrag inline-flex"
           aria-label={`Open ${item.name} ${entity_name} in new tab`}
         >
-          <Launch sx={{ fontSize: 15, color: "text.secondary" }} />
+          <LaunchIcon className="text-[15px] text-fg-muted" />
         </Link>
-      </Box>
+      </div>
       <Handle
         type="source"
         position={Position.Right}
         style={{ visibility: "hidden" }}
       />
-    </Box>
+    </div>
   );
 }

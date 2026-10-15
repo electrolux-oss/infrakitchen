@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { Icon } from "@iconify/react";
-import { Box, Button } from "@mui/material";
+import carbonLinkData from "@iconify-icons/carbon/link";
 
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import {
@@ -9,6 +9,7 @@ import {
   GetReferenceUrlValue,
 } from "../../common/components/fields/CommonField";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { Button } from "../../ui";
 import { GqlUser, GqlUserShort } from "../graphql";
 
 import { LinkUserDialog } from "./LinkAccountDialog";
@@ -38,7 +39,7 @@ export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
           name="Secondary Accounts"
           value={
             <>
-              <Box>
+              <div>
                 {user.secondaryAccounts?.map((ent: GqlUserShort) => (
                   <CommonField
                     name={ent.identifier}
@@ -46,16 +47,14 @@ export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
                     key={ent.id}
                   />
                 ))}
-              </Box>
+              </div>
               {user.secondaryAccounts?.length === 0 && (
-                <Box sx={{ color: "text.secondary" }}>
-                  No secondary accounts
-                </Box>
+                <div className="text-fg-muted">No secondary accounts</div>
               )}
               <Button
+                className="mt-4"
                 onClick={() => handleOpenSecondaryAccountsDialog()}
-                startIcon={<Icon icon="carbon:link" />}
-                sx={{ mt: 2 }}
+                startIcon={<Icon icon={carbonLinkData} ssr />}
               >
                 Link Secondary Account
               </Button>
@@ -73,7 +72,7 @@ export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
           name="Primary Account"
           value={
             <>
-              <Box>
+              <div>
                 {user.primaryAccount?.map((ent: GqlUserShort) => (
                   <CommonField
                     name={ent.identifier}
@@ -81,9 +80,9 @@ export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
                     key={ent.id}
                   />
                 ))}
-              </Box>
+              </div>
               {user.primaryAccount?.length === 0 && (
-                <Box sx={{ color: "text.secondary" }}>No primary account</Box>
+                <div className="text-fg-muted">No primary account</div>
               )}
               {user.primaryAccount?.length === 1 && (
                 <UnlinkAccountButton

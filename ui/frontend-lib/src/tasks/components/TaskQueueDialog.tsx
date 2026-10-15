@@ -1,18 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 
-import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
-import RefreshIcon from "@mui/icons-material/Refresh";
-import {
-  Badge,
-  Box,
-  Button,
-  CircularProgress,
-  Divider,
-  IconButton,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-
 import { CommonDialog } from "../../common/components/dialogs/CommonDialog";
 import { Entity } from "../../common/components/entities/Entity";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
@@ -21,6 +8,8 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import { useNow } from "../../common/hooks/useNow";
 import StatusChip from "../../common/StatusChip";
 import { formatTimeUntil } from "../../common/utils";
+import { HourglassEmptyIcon, RefreshIcon } from "../../icons/material";
+import { Divider, Spinner, Button, IconButton, Tooltip, Badge } from "../../ui";
 import { ENTITY_STATUS } from "../../utils/constants";
 import { CANCEL_QUEUED_TASK_MUTATION } from "../../workers/graphql";
 import {
@@ -78,8 +67,8 @@ const QueueRow = ({
   };
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 2, py: 1.25 }}>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
+    <div className="flex items-center gap-4 py-2.5">
+      <div className="min-w-0 flex-1">
         {item.entityData ? (
           <Entity
             entity={{
@@ -91,11 +80,9 @@ const QueueRow = ({
             noWrap
           />
         ) : (
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-            {humanize(item.entity)}
-          </Typography>
+          <p className="m-0 text-body2 font-medium">{humanize(item.entity)}</p>
         )}
-        <Typography variant="body2" color="text.secondary" component="div">
+        <div className="m-0 text-body2 text-fg-muted">
           {actionLabel(item)} ·{" "}
           {running ? (
             <>
@@ -114,8 +101,8 @@ const QueueRow = ({
           {item.retries > 0
             ? ` · retry ${item.retries}/${item.maxRetries}`
             : ""}
-        </Typography>
-      </Box>
+        </div>
+      </div>
       <StatusChip
         status={running ? ENTITY_STATUS.IN_PROGRESS : ENTITY_STATUS.QUEUED}
       />
@@ -129,7 +116,7 @@ const QueueRow = ({
           {isCancelling ? "Cancelling..." : "Cancel"}
         </Button>
       )}
-    </Box>
+    </div>
   );
 };
 
@@ -210,26 +197,23 @@ export const TaskQueueButton = () => {
         }
         content={
           loading && items.length === 0 ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-              <CircularProgress size={28} />
-            </Box>
+            <div className="flex justify-center py-8">
+              <Spinner size={28} />
+            </div>
           ) : items.length === 0 ? (
-            <Typography
-              color="text.secondary"
-              sx={{ py: 3, textAlign: "center" }}
-            >
+            <p className="m-0 py-6 text-center text-body2 text-fg-muted">
               No tasks are waiting for a worker.
-            </Typography>
+            </p>
           ) : (
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            <div>
+              <p className="m-0 mb-2 text-body2 text-fg-muted">
                 {running.length} running · {queued.length} queued
                 {count > items.length
                   ? ` · showing the oldest ${items.length}`
                   : ""}
-              </Typography>
+              </p>
               {items.map((item, index) => (
-                <Box key={item.id}>
+                <div key={item.id}>
                   {index > 0 && <Divider />}
                   <QueueRow
                     item={item}
@@ -239,9 +223,9 @@ export const TaskQueueButton = () => {
                     }
                     onCancelled={loadQueue}
                   />
-                </Box>
+                </div>
               ))}
-            </Box>
+            </div>
           )
         }
       />

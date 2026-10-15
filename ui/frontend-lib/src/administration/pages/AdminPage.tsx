@@ -2,10 +2,9 @@ import React, { useEffect } from "react";
 
 import { useNavigate, useParams } from "react-router";
 
-import { Box, Tab, Tabs } from "@mui/material";
-
 import { useConfig } from "../../common";
 import PageContainer from "../../common/PageContainer";
+import { Tab, Tabs } from "../../ui";
 import {
   FeatureFlagSection,
   PermissionsSection,
@@ -50,35 +49,30 @@ export const AdminPage = () => {
       title="Settings"
       description="Manage permissions, feature flags, and scheduled jobs."
     >
-      <Box sx={{ width: "100%" }}>
-        <Box sx={{ mt: 2 }}>
+      <div className="w-full">
+        <div className="mt-4">
           <Tabs
+            className="mb-3 border-b border-divider"
             value={activeTab}
             onChange={handleTabChange}
             aria-label="Settings tabs"
-            sx={{
-              borderBottom: 1,
-              borderColor: "divider",
-              mb: 1.5,
-              "& .MuiTab-root": { textTransform: "none" },
-            }}
           >
             {ADMIN_TABS.map((item) => (
               <Tab key={item.path} value={item.path} label={item.label} />
             ))}
           </Tabs>
-        </Box>
+        </div>
 
-        <Box role="tabpanel" hidden={activeTab !== "permissions"}>
+        <div role="tabpanel" hidden={activeTab !== "permissions"}>
           <PermissionsSection />
-        </Box>
-        <Box role="tabpanel" hidden={activeTab !== "feature-flags"}>
+        </div>
+        <div role="tabpanel" hidden={activeTab !== "feature-flags"}>
           <FeatureFlagSection />
-        </Box>
-        <Box role="tabpanel" hidden={activeTab !== "scheduler"}>
+        </div>
+        <div role="tabpanel" hidden={activeTab !== "scheduler"}>
           <SchedulerJobsSection />
-        </Box>
-      </Box>
+        </div>
+      </div>
     </PageContainer>
   );
 };

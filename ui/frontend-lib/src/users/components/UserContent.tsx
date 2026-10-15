@@ -1,5 +1,3 @@
-import { Box } from "@mui/material";
-
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import {
@@ -24,17 +22,10 @@ export const UserContent = () => {
     {
       label: "Configuration",
       content: (
-        <Box
-          sx={{
-            width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-          }}
-        >
+        <div className="flex w-full flex-col gap-4">
           <UserConfiguration user={entity} />
           <UserPersonalAccessTokensCard user={entity} />
-        </Box>
+        </div>
       ),
     },
     {
@@ -48,13 +39,13 @@ export const UserContent = () => {
     {
       label: "Notifications",
       content: (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <div className="flex flex-col gap-4">
           <UserNotificationPreferencesCard
             user_id={entity.id}
             slackId={entity.meta?.slackId}
           />
           <UserNotificationSubscriptionsCard user_id={entity.id} />
-        </Box>
+        </div>
       ),
     },
     {
@@ -70,11 +61,9 @@ export const UserContent = () => {
   ];
 
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
-    >
+    <div className="flex w-full flex-col gap-4">
       <UserOverview user={entity} />
       <TabbedContent tabs={tabs} />
-    </Box>
+    </div>
   );
 };

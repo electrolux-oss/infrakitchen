@@ -2,8 +2,8 @@ import React, { useCallback } from "react";
 
 import { useNavigate } from "react-router";
 
-import { Avatar, Link, Tooltip, Typography } from "@mui/material";
-
+import { Tooltip, Avatar, Link } from "../../../ui";
+import { cn } from "../../../utils/cn";
 import { useConfig } from "../../context";
 
 // Extracts up to two initials from a user identifier by splitting on whitespace, underscores, hyphens, or dots, ignoring numeric-only segments.
@@ -31,11 +31,11 @@ const getAvatarColor = (identifier: string): string => {
 export const UserAvatar = ({
   id,
   identifier,
-  sx,
+  className,
 }: {
   id?: string;
   identifier?: string;
-  sx?: any;
+  className?: string;
 }) => {
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
@@ -56,19 +56,15 @@ export const UserAvatar = ({
   const avatar = (
     <Tooltip title={identifier}>
       <Avatar
-        sx={{
-          fontSize: "inherit",
-          height: "1.5em",
-          width: "1.5em",
-          flexShrink: 0,
-          cursor: "pointer",
-          bgcolor: getAvatarColor(identifier),
-          ...sx,
-        }}
+        className={cn(
+          "size-[1.5em] shrink-0 cursor-pointer text-[length:inherit]",
+          className,
+        )}
+        style={{ backgroundColor: getAvatarColor(identifier) }}
       >
-        <Typography component="span" sx={{ fontSize: "0.8em" }}>
+        <span className="text-[0.8em] font-normal">
           {getInitials(identifier)}
-        </Typography>
+        </span>
       </Avatar>
     </Tooltip>
   );

@@ -2,12 +2,11 @@ import { useCallback } from "react";
 
 import { useNavigate, useLocation } from "react-router";
 
-import AddIcon from "@mui/icons-material/Add";
-import { Button } from "@mui/material";
-
 import { useConfig, PermissionWrapper } from "../../common";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
+import { AddIcon } from "../../icons/material";
+import { Button } from "../../ui";
 import {
   buildAdvancedApiFilters,
   resourceColumns,

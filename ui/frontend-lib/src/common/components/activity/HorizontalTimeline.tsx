@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 
-import { Box, Stack } from "@mui/material";
+import { cn } from "../../../utils/cn";
 
 export interface HorizontalTimelineItem {
   id: string;
@@ -16,65 +16,30 @@ export const HorizontalTimeline = <T extends HorizontalTimelineItem>({
   renderItem,
 }: HorizontalTimelineProps<T>) => {
   return (
-    <Box sx={{ display: "flex", flexWrap: "wrap", ml: 2 }}>
+    <div className="ml-4 flex flex-wrap">
       {items.map((item, index) => (
-        <Stack
-          key={item.id}
-          sx={{
-            alignItems: "center",
-            minWidth: 160,
-            pb: 1,
-          }}
-        >
-          <Stack
-            direction="row"
-            sx={{
-              alignItems: "center",
-              width: "100%",
-              height: 12,
-            }}
-          >
-            <Box
-              sx={{
-                flex: 1,
-                height: 2,
-                bgcolor: index > 0 ? "text.disabled" : "transparent",
-              }}
+        <div className="flex min-w-40 flex-col items-center pb-2" key={item.id}>
+          <div className="flex h-3 w-full flex-row items-center">
+            <div
+              className={cn(
+                index > 0 ? "bg-fg-disabled" : "bg-transparent",
+                "h-0.5 flex-1",
+              )}
             />
-            <Box
-              sx={{
-                width: 12,
-                height: 12,
-                borderRadius: "50%",
-                bgcolor: "primary.main",
-                flexShrink: 0,
-              }}
-            />
-            <Box
-              sx={{
-                flex: 1,
-                height: 2,
-                bgcolor:
-                  index < items.length - 1 ? "text.disabled" : "transparent",
-              }}
+            <div className="h-3 w-3 shrink-0 rounded-full bg-primary" />
+            <div
+              className={cn(
+                index < items.length - 1 ? "bg-fg-disabled" : "bg-transparent",
+                "h-0.5 flex-1",
+              )}
             />
             {index < items.length - 1 && (
-              <Box
-                sx={{
-                  width: 0,
-                  height: 0,
-                  borderTop: "5px solid transparent",
-                  borderBottom: "5px solid transparent",
-                  borderLeft: "6px solid",
-                  borderLeftColor: "text.disabled",
-                  flexShrink: 0,
-                }}
-              />
+              <div className="h-0 w-0 shrink-0 border-y-5 border-l-6 border-y-transparent border-l-fg-disabled" />
             )}
-          </Stack>
+          </div>
           {renderItem(item, index)}
-        </Stack>
+        </div>
       ))}
-    </Box>
+    </div>
   );
 };

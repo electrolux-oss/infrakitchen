@@ -2,8 +2,6 @@ import React, { useCallback } from "react";
 
 import { useNavigate } from "react-router";
 
-import { Box, Typography } from "@mui/material";
-
 import { useConfig } from "../../common";
 import { Entity } from "../../common/components/entities/Entity";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
@@ -48,36 +46,16 @@ export const FavoriteResourceItem = ({
   );
 
   return (
-    <Box
+    <div
+      className="flex cursor-pointer items-center gap-3 border-b border-divider px-4 py-2.5 [outline:none] [transition:background-color_120ms_ease-in-out] last:border-b-0 hover:bg-hover focus-visible:shadow-[0_0_0_2px]"
       role="button"
       tabIndex={0}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 1.5,
-        px: 2,
-        py: 1.25,
-        cursor: "pointer",
-        borderBottom: "1px solid",
-        borderColor: "divider",
-        transition: "background-color 120ms ease-in-out",
-        outline: "none",
-        "&:hover": {
-          backgroundColor: "action.hover",
-        },
-        "&:focus-visible": {
-          boxShadow: "0 0 0 2px",
-        },
-        "&:last-child": {
-          borderBottom: "none",
-        },
-      }}
     >
-      <Box
+      <div
+        className="min-w-0 flex-1 overflow-hidden whitespace-nowrap"
         title={resource.name}
-        sx={{ flex: 1, minWidth: 0, overflow: "hidden", whiteSpace: "nowrap" }}
       >
         <Entity
           entity={{
@@ -88,15 +66,11 @@ export const FavoriteResourceItem = ({
           }}
           showLabel
         />
-      </Box>
+      </div>
       {resource.updatedAt && (
-        <Typography color="text.disabled" sx={{ whiteSpace: "nowrap" }}>
-          <RelativeTime
-            date={resource.updatedAt}
-            compact
-            sx={{ display: "flex" }}
-          />
-        </Typography>
+        <p className="m-0 text-body2 whitespace-nowrap text-fg-disabled">
+          <RelativeTime className="flex" date={resource.updatedAt} compact />
+        </p>
       )}
       {(resource.status || resource.state) && (
         <StatusChip
@@ -105,6 +79,6 @@ export const FavoriteResourceItem = ({
           compact
         />
       )}
-    </Box>
+    </div>
   );
 };

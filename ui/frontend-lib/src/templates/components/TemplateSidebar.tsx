@@ -1,34 +1,28 @@
 import { useCallback, useState } from "react";
 
-import { Box, Chip, Grid, TextField } from "@mui/material";
-
 import {
   EntitySidebar,
   SidebarSection,
 } from "../../common/components/cards/EntitySidebar";
+import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
 import { InlineCode } from "../../common/components/code/InlineCode";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
+import { EditableNameField } from "../../common/components/editors/EditableNameField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import { MultiSelectEditor } from "../../common/components/editors/MultiSelectEditor";
 import { StringChips } from "../../common/components/editors/StringChips";
 import { StringTagEditor } from "../../common/components/editors/StringTagEditor";
-import { Entity } from "../../common/components/entities/Entity";
-import {
-  CommonField,
-  GetReferenceUrlValue,
-} from "../../common/components/fields/CommonField";
+import { GetReferenceUrlValue } from "../../common/components/fields/CommonField";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
-import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import { useConfig } from "../../common/context";
-import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
-import { notify, notifyError } from "../../common/hooks/useNotification";
+import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import StatusChip from "../../common/StatusChip";
 import { getProviderDisplayName, sameStringSet } from "../../common/utils";
-import { solidChipColorSx } from "../../common/utils/softChip";
 import { IkEntity } from "../../types";
+import { Chip } from "../../ui";
 import { INTEGRATION_PROVIDER_OPTIONS } from "../constants";
 import { GqlTemplate } from "../graphql";
 import {
@@ -51,27 +45,15 @@ export interface TemplateSidebarProps {
  */
 export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
   const { ikApi } = useConfig();
-  const { refreshEntity } = useEntityProvider();
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = checkActionPermission("api:template", "write");
 
   const [buffer, setBuffer] = useState<Record<string, IkEntity[]>>({});
 
-  const saveField = useCallback(
-    async (input: TemplateUpdateFieldInput) => {
-      try {
-        await ikApi.graphqlRequest(UPDATE_TEMPLATE_MUTATION, {
-          id: template.id,
-          input,
-        });
-        notify("Template updated successfully", "success");
-        refreshEntity?.();
-      } catch (error) {
-        notifyError(error);
-        throw error;
-      }
-    },
-    [ikApi, template.id, refreshEntity],
+  const saveField = useEntityFieldSaver<TemplateUpdateFieldInput>(
+    UPDATE_TEMPLATE_MUTATION,
+    template.id,
+    "Template",
   );
 
   const saveConfiguration = useCallback(
@@ -88,24 +70,10 @@ export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
   return (
     <EntitySidebar ariaLabel="Template details">
       <SidebarSection title="About">
-        <CommonEditableField<string>
-          name={"Name"}
-          canEdit={canEdit}
+        <EditableNameField
           value={template.name}
-          ariaLabel="Edit name"
-          display={<span>{template.name}</span>}
+          canEdit={canEdit}
           onSave={(value) => saveField({ name: value })}
-          renderEditor={({ value, onChange }) => (
-            <TextField
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              slotProps={{ input: { "aria-label": "Name" } }}
-              fullWidth
-              margin="normal"
-              autoFocus
-            />
-          )}
-          size={12}
         />
         <EditableDescriptionField
           value={template.description}
@@ -120,14 +88,14 @@ export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
       </SidebarSection>
 
       <SidebarSection title="Status">
-        <Grid size={12}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <div className="col-span-full">
+          <div className="flex items-center gap-2">
             <StatusChip status={template.status} />
             {template.abstract && (
-              <Chip label="ABSTRACT" sx={solidChipColorSx("info")} />
+              <Chip label="ABSTRACT" appearance="solid" color="info" />
             )}
-          </Box>
-        </Grid>
+          </div>
+        </div>
       </SidebarSection>
 
       <SidebarSection title="Relations">
@@ -139,19 +107,13 @@ export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
           isEqual={sameStringSet}
           display={
             template.parents && template.parents.length > 0 ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: 1,
-                  flexWrap: "wrap",
-                }}
-              >
+              <div className="flex flex-wrap gap-2">
                 {template.parents.map((parent, idx) => (
                   <span key={parent.id || idx}>
                     <GetReferenceUrlValue {...parent} />
                   </span>
                 ))}
-              </Box>
+              </div>
             ) : null
           }
           onSave={(value) => saveField({ parents: value })}
@@ -168,7 +130,7 @@ export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
               multiple
             />
           )}
-          size={12}
+          span="full"
         />
         <CommonEditableField<string[]>
           name={"Children"}
@@ -178,19 +140,13 @@ export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
           isEqual={sameStringSet}
           display={
             template.children && template.children.length > 0 ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: 1,
-                  flexWrap: "wrap",
-                }}
-              >
+              <div className="flex flex-wrap gap-2">
                 {template.children.map((child, idx) => (
                   <span key={child.id || idx}>
                     <GetReferenceUrlValue {...child} />
                   </span>
                 ))}
-              </Box>
+              </div>
             ) : null
           }
           onSave={(value) => saveField({ children: value })}
@@ -207,7 +163,7 @@ export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
               multiple
             />
           )}
-          size={12}
+          span="full"
         />
       </SidebarSection>
 
@@ -226,22 +182,22 @@ export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
           }
           onSave={(value) => saveConfiguration({ naming_convention: value })}
           renderEditor={({ value, onChange }) => (
-            <Box sx={{ width: "100%" }}>
+            <div className="w-full">
               <NamingConventionInput
                 templateId={template.id}
                 parents={template.parents || []}
                 value={value}
                 onChange={onChange}
               />
-            </Box>
+            </div>
           )}
-          size={12}
+          span="full"
         />
         <TemplateDocumentationField
           documentation={template.documentation}
           canEdit={canEdit}
           onSave={(documentation) => saveField({ documentation })}
-          size={12}
+          span="full"
         />
         <CommonEditableField<string[]>
           name={"Cloud Resource Types"}
@@ -271,7 +227,7 @@ export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
               multiple
             />
           )}
-          size={12}
+          span="full"
         />
         <CommonEditableField<IntegrationProviderType[]>
           name={"Integration Providers for One Resource Per Integration"}
@@ -306,7 +262,7 @@ export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
               getOptionLabel={getProviderDisplayName}
             />
           )}
-          size={12}
+          span="full"
         />
         <CommonEditableField<IntegrationProviderType[]>
           name={"Allowed Integration Providers"}
@@ -344,7 +300,7 @@ export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
               getOptionLabel={getProviderDisplayName}
             />
           )}
-          size={12}
+          span="full"
         />
         <CommonEditableField<string[]>
           name={"Required Configuration Variables"}
@@ -375,36 +331,11 @@ export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
               helperText="Press Enter to add a variable name"
             />
           )}
-          size={12}
+          span="full"
         />
       </SidebarSection>
 
-      <SidebarSection title="Details">
-        <CommonField
-          name="Created by"
-          value={
-            template.creator ? (
-              <Entity entity={{ ...template.creator, entityType: "user" }} />
-            ) : null
-          }
-          size={12}
-        />
-        <CommonField
-          name="Created"
-          value={<RelativeTime date={template.createdAt} />}
-          size={6}
-        />
-        <CommonField
-          name="Last Updated"
-          value={<RelativeTime date={template.updatedAt} />}
-          size={6}
-        />
-        <CommonField
-          name="Revision"
-          value={template.revisionNumber}
-          size={12}
-        />
-      </SidebarSection>
+      <SidebarDetailsSection entity={template} />
     </EntitySidebar>
   );
 };

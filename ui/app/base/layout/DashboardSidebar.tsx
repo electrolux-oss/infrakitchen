@@ -3,37 +3,35 @@ import * as React from "react";
 import { matchPath, useLocation } from "react-router";
 
 import { useConfig } from "@electrolux-oss/infrakitchen";
-import AccountTreeIcon from "@mui/icons-material/AccountTree";
-import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
-import ArticleIcon from "@mui/icons-material/Article";
-import BadgeIcon from "@mui/icons-material/Badge";
-import CodeIcon from "@mui/icons-material/Code";
-import ConstructionIcon from "@mui/icons-material/Construction";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import DiscountOutlinedIcon from "@mui/icons-material/DiscountOutlined";
-import DoneAllIcon from "@mui/icons-material/DoneAll";
-import EngineeringIcon from "@mui/icons-material/Engineering";
-import ExtensionIcon from "@mui/icons-material/Extension";
-import FolderIcon from "@mui/icons-material/Folder";
-import ImportContactsIcon from "@mui/icons-material/ImportContacts";
-import InventoryIcon from "@mui/icons-material/Inventory";
-import KeyIcon from "@mui/icons-material/Key";
-import LanIcon from "@mui/icons-material/Lan";
-import LayersIcon from "@mui/icons-material/Layers";
-import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
-import MemoryIcon from "@mui/icons-material/Memory";
-import PeopleIcon from "@mui/icons-material/People";
-import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
-import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
-import StorageIcon from "@mui/icons-material/Storage";
-import TerminalIcon from "@mui/icons-material/Terminal";
-import WorkspacesIcon from "@mui/icons-material/Workspaces";
-import Box from "@mui/material/Box";
-import Drawer from "@mui/material/Drawer";
-import List from "@mui/material/List";
-import { useTheme } from "@mui/material/styles";
-import Toolbar from "@mui/material/Toolbar";
-import useMediaQuery from "@mui/material/useMediaQuery";
+import { cn } from "@electrolux-oss/infrakitchen";
+import {
+  AccountTreeIcon,
+  AdminPanelSettingsIcon,
+  ArticleIcon,
+  BadgeIcon,
+  CodeIcon,
+  ConstructionIcon,
+  DashboardIcon,
+  DiscountOutlinedIcon,
+  DoneAllIcon,
+  EngineeringIcon,
+  ExtensionIcon,
+  FolderIcon,
+  ImportContactsIcon,
+  InventoryIcon,
+  KeyIcon,
+  LanIcon,
+  LayersIcon,
+  LibraryBooksIcon,
+  MemoryIcon,
+  PeopleIcon,
+  PlaylistAddCheckIcon,
+  ReceiptLongIcon,
+  StorageIcon,
+  TerminalIcon,
+  WorkspacesIcon,
+} from "@electrolux-oss/infrakitchen";
+import { breakpointUp, useMediaQuery } from "@electrolux-oss/infrakitchen";
 
 import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from "../../constants";
 import DashboardSidebarContext from "../../context/DashboardSidebarContext";
@@ -42,31 +40,24 @@ import { DashboardAdminSidebar } from "./DashboardAdminSidebar";
 import DashboardSidebarDividerItem from "./DashboardSidebarDividerItem";
 import DashboardSidebarPageItem from "./DashboardSidebarPageItem";
 import DashboardSidebarToggleItem from "./DashboardSidebarToggleItem";
-import {
-  getDrawerSxTransitionMixin,
-  getDrawerWidthTransitionMixin,
-} from "./mixins";
+import { drawerTransition } from "./mixins";
 
 export interface DashboardSidebarProps {
   expanded?: boolean;
   setExpanded: (expanded: boolean) => void;
   disableCollapsibleSidebar?: boolean;
-  container?: Element;
 }
 
 export default function DashboardSidebar({
   expanded = true,
   setExpanded,
   disableCollapsibleSidebar = false,
-  container,
 }: DashboardSidebarProps) {
-  const theme = useTheme();
-
   const { pathname } = useLocation();
   const { globalConfig } = useConfig();
 
-  const isOverSmViewport = useMediaQuery(theme.breakpoints.up("sm"));
-  const isOverMdViewport = useMediaQuery(theme.breakpoints.up("md"));
+  const isOverSmViewport = useMediaQuery(breakpointUp.sm);
+  const isOverMdViewport = useMediaQuery(breakpointUp.md);
 
   const [isFullyExpanded, setIsFullyExpanded] = React.useState(expanded);
   const [isFullyCollapsed, setIsFullyCollapsed] = React.useState(!expanded);
@@ -75,7 +66,7 @@ export default function DashboardSidebar({
     if (expanded) {
       const drawerWidthTransitionTimeout = setTimeout(() => {
         setIsFullyExpanded(true);
-      }, theme.transitions.duration.enteringScreen);
+      }, 225);
 
       return () => clearTimeout(drawerWidthTransitionTimeout);
     }
@@ -83,13 +74,13 @@ export default function DashboardSidebar({
     setIsFullyExpanded(false);
 
     return () => {};
-  }, [expanded, theme.transitions.duration.enteringScreen]);
+  }, [expanded]);
 
   React.useEffect(() => {
     if (!expanded) {
       const drawerWidthTransitionTimeout = setTimeout(() => {
         setIsFullyCollapsed(true);
-      }, theme.transitions.duration.leavingScreen);
+      }, 195);
 
       return () => clearTimeout(drawerWidthTransitionTimeout);
     }
@@ -97,7 +88,7 @@ export default function DashboardSidebar({
     setIsFullyCollapsed(false);
 
     return () => {};
-  }, [expanded, theme.transitions.duration.leavingScreen]);
+  }, [expanded]);
 
   // On phones the sidebar is a temporary overlay drawer: it is either fully
   // open or hidden, so it never uses the mini (icons-only) layout. Switching
@@ -175,38 +166,30 @@ export default function DashboardSidebar({
 
   const getDrawerContent = React.useCallback(
     (viewport: "phone" | "tablet" | "desktop") => (
-      <Box
-        component="nav"
+      <nav
         aria-label={`${viewport.charAt(0).toUpperCase()}${viewport.slice(1)}`}
-        sx={{
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          ...(hasDrawerTransitions
-            ? getDrawerSxTransitionMixin(isFullyExpanded, "padding")
-            : {}),
-        }}
+        className="flex h-full flex-col overflow-hidden"
+        style={
+          hasDrawerTransitions
+            ? { transition: drawerTransition(isFullyExpanded, "padding") }
+            : undefined
+        }
       >
-        <Toolbar />
-        <Box
-          sx={{
-            flex: 1,
-            minHeight: 0,
-            overflow: "auto",
-            scrollbarGutter: mini ? "stable" : "auto",
-            overflowX: "hidden",
-          }}
+        <div className="h-14 shrink-0 sm:h-16 max-sm:landscape:h-12" />
+        <div
+          className={cn(
+            mini ? "[scrollbar-gutter:stable]" : "[scrollbar-gutter:auto]",
+            "min-h-0 flex-1 overflow-auto overflow-x-hidden",
+          )}
         >
-          <List
-            dense
-            sx={{
-              padding: mini ? 0 : "0px 8px",
-              width: mini ? MINI_DRAWER_WIDTH : "auto",
-              // Same top padding in both modes, so items stay at the same
-              // vertical position when collapsing/expanding.
-              pt: 1,
-            }}
+          <ul
+            // Same top padding in both modes, so items stay at the same
+            // vertical position when collapsing/expanding.
+            className={cn(
+              "m-0 flex list-none flex-col pt-2",
+              mini ? "px-0" : "px-2",
+            )}
+            style={{ width: mini ? MINI_DRAWER_WIDTH : "auto" }}
           >
             <DashboardSidebarPageItem
               id="dashboard"
@@ -242,7 +225,7 @@ export default function DashboardSidebar({
               permissionKey="template"
               expanded={templatesExpanded}
               nestedNavigation={
-                <Box sx={{ pl: 1.25 }}>
+                <div className="pl-2.5">
                   {/* The parent "Templates" entry is only needed in the
                       collapsed flyout; when expanded, the group header itself
                       is the visible link. */}
@@ -267,7 +250,7 @@ export default function DashboardSidebar({
                     selected={!!matchPath("/source_code_versions/*", pathname)}
                     permissionKey="source_code_version"
                   />
-                </Box>
+                </div>
               }
             />
             <DashboardSidebarPageItem
@@ -312,7 +295,7 @@ export default function DashboardSidebar({
               icon={<LanIcon />}
               expanded={configurationsExpanded}
               nestedNavigation={
-                <Box sx={{ pl: 1.25 }}>
+                <div className="pl-2.5">
                   <DashboardSidebarPageItem
                     id="integrations"
                     title="Integrations"
@@ -361,7 +344,7 @@ export default function DashboardSidebar({
                     selected={!!matchPath("/tools/*", pathname)}
                     permissionKey="tool"
                   />
-                </Box>
+                </div>
               }
             />
 
@@ -371,7 +354,7 @@ export default function DashboardSidebar({
               icon={<ConstructionIcon />}
               expanded={operationsExpanded}
               nestedNavigation={
-                <Box sx={{ pl: 1.25 }}>
+                <div className="pl-2.5">
                   <DashboardSidebarPageItem
                     id="tasks"
                     title="Tasks"
@@ -396,7 +379,7 @@ export default function DashboardSidebar({
                     selected={!!matchPath("/workers/*", pathname)}
                     permissionKey="worker"
                   />
-                </Box>
+                </div>
               }
             />
 
@@ -406,7 +389,7 @@ export default function DashboardSidebar({
               icon={<AdminPanelSettingsIcon />}
               expanded={managementExpanded}
               nestedNavigation={
-                <Box sx={{ pl: 1.25 }}>
+                <div className="pl-2.5">
                   <DashboardSidebarPageItem
                     id="users"
                     title="Users"
@@ -432,7 +415,7 @@ export default function DashboardSidebar({
                     permissionKey="audit_log"
                   />
                   <DashboardAdminSidebar />
-                </Box>
+                </div>
               }
             />
 
@@ -442,15 +425,15 @@ export default function DashboardSidebar({
               icon={<ImportContactsIcon />}
               href="https://opensource.electrolux.one/infrakitchen/"
             />
-          </List>
-        </Box>
+          </ul>
+        </div>
         {viewport === "desktop" && !disableCollapsibleSidebar ? (
           <DashboardSidebarToggleItem
             expanded={expanded}
             setExpanded={setExpanded}
           />
         ) : null}
-      </Box>
+      </nav>
     ),
     [
       mini,
@@ -468,26 +451,29 @@ export default function DashboardSidebar({
     ],
   );
 
-  const getDrawerSharedSx = React.useCallback(
-    (isTemporary: boolean) => {
-      const drawerWidth = mini ? MINI_DRAWER_WIDTH : DRAWER_WIDTH;
+  const drawerWidth = mini ? MINI_DRAWER_WIDTH : DRAWER_WIDTH;
+  const widthTransition = drawerTransition(expanded, "width");
 
-      return {
-        displayPrint: "none",
-        width: drawerWidth,
-        flexShrink: 0,
-        ...getDrawerWidthTransitionMixin(expanded),
-        ...(isTemporary ? { position: "absolute" } : {}),
-        [`& .MuiDrawer-paper`]: {
-          position: "absolute",
-          width: drawerWidth,
-          boxSizing: "border-box",
-          backgroundImage: "none",
-          ...getDrawerWidthTransitionMixin(expanded),
-        },
-      };
-    },
-    [expanded, mini],
+  // A docked drawer: a spacer that reserves the width in the layout, with
+  // the panel absolutely positioned over the full height.
+  const renderPermanentDrawer = (
+    viewport: "tablet" | "desktop",
+    visibility: string,
+  ) => (
+    <div
+      className={cn(
+        "relative shrink-0 overflow-x-hidden print:hidden",
+        visibility,
+      )}
+      style={{ width: drawerWidth, transition: widthTransition }}
+    >
+      <div
+        className="absolute inset-y-0 left-0 z-[1200] box-border overflow-x-hidden border-r border-divider bg-canvas"
+        style={{ width: drawerWidth, transition: widthTransition }}
+      >
+        {getDrawerContent(viewport)}
+      </div>
+    </div>
   );
 
   const sidebarContextValue = React.useMemo(() => {
@@ -509,47 +495,40 @@ export default function DashboardSidebar({
 
   return (
     <DashboardSidebarContext.Provider value={sidebarContextValue}>
-      <Drawer
-        container={container}
-        variant="temporary"
-        open={expanded}
-        onClose={handleSetSidebarExpanded(false)}
-        ModalProps={{
-          keepMounted: true, // Better open performance on mobile.
-        }}
-        sx={{
-          display: {
-            xs: "block",
-            sm: disableCollapsibleSidebar ? "block" : "none",
-            md: "none",
-          },
-          ...getDrawerSharedSx(true),
-        }}
+      {/* Phones (and tablets without collapsing): an overlay drawer that
+          slides in over a dimmed backdrop. Kept mounted for fast opening. */}
+      <div
+        className={cn(
+          "print:hidden",
+          disableCollapsibleSidebar ? "block md:hidden" : "block sm:hidden",
+        )}
       >
-        {getDrawerContent("phone")}
-      </Drawer>
-      <Drawer
-        variant="permanent"
-        sx={{
-          display: {
-            xs: "none",
-            sm: disableCollapsibleSidebar ? "none" : "block",
-            md: "none",
-          },
-          ...getDrawerSharedSx(false),
-        }}
-      >
-        {getDrawerContent("tablet")}
-      </Drawer>
-      <Drawer
-        variant="permanent"
-        sx={{
-          display: { xs: "none", md: "block" },
-          ...getDrawerSharedSx(false),
-        }}
-      >
-        {getDrawerContent("desktop")}
-      </Drawer>
+        <div
+          aria-hidden
+          className={cn(
+            "fixed inset-0 z-[1200] bg-black/50 transition-opacity duration-200",
+            expanded ? "opacity-100" : "pointer-events-none opacity-0",
+          )}
+          onClick={handleSetSidebarExpanded(false)}
+        />
+        <div
+          className={cn(
+            "fixed inset-y-0 left-0 z-[1200] box-border overflow-x-hidden border-r border-divider bg-canvas shadow-[0_8px_10px_-5px_rgba(0,0,0,0.2),0_16px_24px_2px_rgba(0,0,0,0.14),0_6px_30px_5px_rgba(0,0,0,0.12)] transition-transform",
+            expanded ? "translate-x-0" : "-translate-x-full",
+          )}
+          style={{ width: DRAWER_WIDTH }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setExpanded(false);
+          }}
+        >
+          {getDrawerContent("phone")}
+        </div>
+      </div>
+      {renderPermanentDrawer(
+        "tablet",
+        disableCollapsibleSidebar ? "hidden" : "hidden sm:block md:hidden",
+      )}
+      {renderPermanentDrawer("desktop", "hidden md:block")}
     </DashboardSidebarContext.Provider>
   );
 }

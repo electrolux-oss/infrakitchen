@@ -1,20 +1,10 @@
 import React, { useEffect, forwardRef, useState, useCallback } from "react";
 
-import {
-  FormControl,
-  FormHelperText,
-  Autocomplete,
-  TextField,
-} from "@mui/material";
-
 import { InfraKitchenApi } from "../../../api/InfraKitchenApi";
 import { IkEntity } from "../../../types";
+import { Autocomplete, FormControl, FormHelperText } from "../../../ui";
 import { buildGraphqlFields } from "../../graphql/buildGraphqlFields";
 import { notifyError } from "../../hooks/useNotification";
-import {
-  getAutocompleteInputProps,
-  getAutocompleteTextFieldProps,
-} from "../../utils/autocompleteInput";
 
 import { getOptionLabel } from "./utils";
 
@@ -71,7 +61,7 @@ const ReferenceSearchInput = forwardRef<any, ReferenceSearchInputProps>(
       : [];
 
     const handleAutocompleteChange = (
-      _event: React.SyntheticEvent,
+      _event: React.SyntheticEvent | null,
       newValue: IkEntity | null,
     ) => {
       onChange(newValue ? newValue.id : null);
@@ -80,7 +70,7 @@ const ReferenceSearchInput = forwardRef<any, ReferenceSearchInputProps>(
     };
 
     const handleInputChange = (
-      _event: React.SyntheticEvent,
+      _event: React.SyntheticEvent | null,
       newInputValue: string,
       reason: string,
     ) => {
@@ -237,45 +227,24 @@ const ReferenceSearchInput = forwardRef<any, ReferenceSearchInputProps>(
           options={options}
           loading={loading}
           getOptionLabel={(option) => getOptionLabel(option, showFields)}
-          renderOption={(renderProps, option) => (
-            <li {...renderProps} key={option.id}>
-              {getOptionLabel(option, showFields)}
-            </li>
-          )}
+          getOptionKey={(option) => option.id}
           isOptionEqualToValue={(option, value) => option.id === value.id}
-          disableClearable={false}
           getOptionDisabled={isOptionDisabled}
           onChange={handleAutocompleteChange}
           onInputChange={handleInputChange}
           filterOptions={(x) => x}
-          renderInput={(params) => {
-            const inputProps = getAutocompleteInputProps(params);
-
-            return (
-              <TextField
-                {...params}
-                {...otherProps}
-                {...getAutocompleteTextFieldProps(params, {
-                  input: {
-                    ...inputProps,
-                    endAdornment: (
-                      <>{loading ? "..." : inputProps.endAdornment}</>
-                    ),
-                  },
-                })}
-                label={props.label}
-                error={props.error}
-              />
-            );
-          }}
+          label={props.label}
+          error={props.error}
+          required={otherProps.required}
+          name={otherProps.name}
+          onBlur={otherProps.onBlur}
+          placeholder={otherProps.placeholder}
         />
         <FormHelperText error={props.error}>
           {props.helpertext || ""}
         </FormHelperText>
         {warning && (
-          <FormHelperText sx={{ color: "warning.main" }}>
-            {warning}
-          </FormHelperText>
+          <FormHelperText className="text-warning">{warning}</FormHelperText>
         )}
       </FormControl>
     );

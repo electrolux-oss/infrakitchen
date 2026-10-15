@@ -1,15 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import CloseFullscreenIcon from "@mui/icons-material/CloseFullscreen";
-import FullscreenIcon from "@mui/icons-material/Fullscreen";
-import {
-  Box,
-  Dialog,
-  DialogContent,
-  IconButton,
-  Tooltip,
-  useColorScheme,
-} from "@mui/material";
 import {
   applyNodeChanges,
   Background,
@@ -19,8 +9,18 @@ import {
   NodeChange,
   ReactFlow,
 } from "@xyflow/react";
+
 import "@xyflow/react/dist/style.css";
 
+import { CloseFullscreenIcon, FullscreenIcon } from "../../../icons/material";
+import {
+  IconButton,
+  Tooltip,
+  Dialog,
+  DialogContent,
+  useColorScheme,
+} from "../../../ui";
+import { cn } from "../../../utils/cn";
 import { useConfig } from "../../context";
 import { fetchEntityTree } from "../tree/fetchEntityTree";
 import { DEFAULT_TREE_DEPTH, TreeDepthSelect } from "../tree/TreeDepthSelect";
@@ -109,7 +109,7 @@ export const EntityGraphViewTab = ({
   entity_name,
 }: GraphViewProps) => {
   const { ikApi } = useConfig();
-  const { mode } = useColorScheme();
+  const { resolvedMode: mode } = useColorScheme();
   const [tree, setTree] = useState<TreeResponse>();
   const [fullscreen, setFullscreen] = useState(false);
   const [depth, setDepth] = useState<number>(DEFAULT_TREE_DEPTH);
@@ -140,17 +140,12 @@ export const EntityGraphViewTab = ({
   );
 
   const graph = (
-    <Box
-      sx={{
-        position: "relative",
-        width: "100%",
-        height: fullscreen ? "100vh" : 480,
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: fullscreen ? 0 : "var(--template-surface-radius)",
-        backgroundColor: "background.paper",
-        overflow: "hidden",
-      }}
+    <div
+      className={cn(
+        fullscreen ? "h-[100vh]" : "h-120",
+        fullscreen ? "rounded-none" : "rounded-surface",
+        "relative w-full overflow-hidden border border-divider bg-paper",
+      )}
     >
       {tree && (
         <ReactFlow
@@ -182,23 +177,14 @@ export const EntityGraphViewTab = ({
       <TreeDepthSelect
         value={depth}
         onChange={setDepth}
-        sx={{ position: "absolute", top: 8, left: 8, zIndex: 10 }}
+        className="absolute top-2 left-2 z-10"
       />
       <Tooltip title={fullscreen ? "Exit fullscreen" : "Fullscreen"}>
         <IconButton
+          className="absolute top-2 right-2 z-10 border border-divider bg-paper hover:bg-hover"
           size="small"
           aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}
           onClick={() => setFullscreen((current) => !current)}
-          sx={{
-            position: "absolute",
-            top: 8,
-            right: 8,
-            zIndex: 10,
-            bgcolor: "background.paper",
-            border: "1px solid",
-            borderColor: "divider",
-            "&:hover": { bgcolor: "action.hover" },
-          }}
         >
           {fullscreen ? (
             <CloseFullscreenIcon fontSize="small" />
@@ -207,7 +193,7 @@ export const EntityGraphViewTab = ({
           )}
         </IconButton>
       </Tooltip>
-    </Box>
+    </div>
   );
 
   if (fullscreen) {
@@ -216,9 +202,9 @@ export const EntityGraphViewTab = ({
         open
         fullScreen
         onClose={() => setFullscreen(false)}
-        slotProps={{ paper: { sx: { bgcolor: "background.default" } } }}
+        className="bg-canvas"
       >
-        <DialogContent sx={{ p: 0, height: "100vh" }}>{graph}</DialogContent>
+        <DialogContent className="h-[100vh] p-0">{graph}</DialogContent>
       </Dialog>
     );
   }

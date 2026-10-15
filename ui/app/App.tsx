@@ -8,6 +8,7 @@ import {
 } from "react-router";
 
 import {
+  ColorSchemeProvider,
   ConfigProvider,
   EventProvider,
   GradientCircularProgress,
@@ -19,8 +20,6 @@ import {
   usePermissionProvider,
   useFilteredProtectedRoutes,
 } from "@electrolux-oss/infrakitchen";
-import Box from "@mui/material/Box";
-import CssBaseline from "@mui/material/CssBaseline";
 
 import { AuthProvider, useAuth } from "./base/auth/AuthContext";
 import { refreshAuth } from "./base/auth/refreshToken";
@@ -30,7 +29,6 @@ import {
 } from "./base/data/DataProvider";
 import DashboardLayout from "./base/layout/DashboardLayout";
 import SignInSide from "./sign-in-side/SignInSide";
-import AppTheme from "./theme/AppTheme";
 
 const unauthenticatedRouter = createBrowserRouter([
   { path: "/login", Component: SignInSide },
@@ -68,30 +66,21 @@ const PermissionFilteredRouter = () => {
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
+      <div className="flex h-[100vh] items-center justify-center">
         <GradientCircularProgress />
-      </Box>
+      </div>
     );
   }
 
   return <RouterProvider router={router} />;
 };
 
-export function InfrakitchenApp(props: { disableCustomTheme?: boolean }) {
+export function InfrakitchenApp() {
   return (
-    <AppTheme {...props}>
-      <CssBaseline enableColorScheme>
-        <PermissionFilteredRouter />
-        <GlobalNotificationPopup />
-      </CssBaseline>
-    </AppTheme>
+    <>
+      <PermissionFilteredRouter />
+      <GlobalNotificationPopup />
+    </>
   );
 }
 
@@ -100,16 +89,9 @@ const AuthGate = ({ dataProvider }: { dataProvider: any }) => {
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
+      <div className="flex h-[100vh] items-center justify-center">
         <GradientCircularProgress />
-      </Box>
+      </div>
     );
   }
 
@@ -118,13 +100,7 @@ const AuthGate = ({ dataProvider }: { dataProvider: any }) => {
     if (currentPath && currentPath !== "/login") {
       localStorage.setItem("redirectPath", currentPath);
     }
-    return (
-      <AppTheme>
-        <CssBaseline enableColorScheme>
-          <RouterProvider router={unauthenticatedRouter} />
-        </CssBaseline>
-      </AppTheme>
-    );
+    return <RouterProvider router={unauthenticatedRouter} />;
   }
 
   const storedRedirectPath = localStorage.getItem("redirectPath");
@@ -155,8 +131,10 @@ export const AppWrapper = () => {
     refreshAuth,
   );
   return (
-    <AuthProvider>
-      <AuthGate dataProvider={dataProvider} />
-    </AuthProvider>
+    <ColorSchemeProvider>
+      <AuthProvider>
+        <AuthGate dataProvider={dataProvider} />
+      </AuthProvider>
+    </ColorSchemeProvider>
   );
 };

@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Button, Divider, Grid, Stack } from "@mui/material";
-
 import { useConfig } from "../../common";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { Button } from "../../ui";
 import {
   FEATURE_FLAGS_QUERY,
   RELOAD_FEATURE_FLAGS_MUTATION,
@@ -118,9 +117,9 @@ export const FeatureFlagSection = () => {
     <BaseCard
       name="Feature Flags"
       description="Manage application feature toggles and configuration settings"
-      sx={{ mt: 4 }}
+      className="mt-8"
       actions={
-        <Stack direction="row" spacing={1}>
+        <div className="flex flex-row gap-2">
           <Button
             variant="contained"
             size="medium"
@@ -136,11 +135,11 @@ export const FeatureFlagSection = () => {
           >
             Reload
           </Button>
-        </Stack>
+        </div>
       }
     >
-      <Grid size={{ xs: 12 }}>
-        <Stack divider={<Divider />}>
+      <div className="col-span-full">
+        <div className="flex flex-col divide-y divide-divider">
           {featureFlags.map((flag) => (
             <FeatureFlagRow
               key={flag.name}
@@ -153,8 +152,8 @@ export const FeatureFlagSection = () => {
               onToggle={handleFeatureFlagToggle}
             />
           ))}
-        </Stack>
-      </Grid>
+        </div>
+      </div>
     </BaseCard>
   );
 };

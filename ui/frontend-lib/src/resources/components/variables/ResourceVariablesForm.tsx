@@ -2,12 +2,9 @@ import { ReactNode } from "react";
 
 import { Controller, useFormContext } from "react-hook-form";
 
-import { Typography, Chip, useTheme } from "@mui/material";
-import type { Theme } from "@mui/material/styles";
-
 import { VariableCard } from "../../../common/components/fields/VariableCard";
-import { solidChipColorSx } from "../../../common/utils/softChip";
 import { ValidationRule } from "../../../types";
+import { Chip } from "../../../ui";
 import { ResourceVariableSchema } from "../../types";
 import { validateResourceVariableValue } from "../../utils/validationRules";
 
@@ -36,7 +33,6 @@ export const ResourceVariableRow = ({
   hasDefault = false,
   children,
 }: ResourceVariableRowProps) => {
-  const theme = useTheme();
   const isDeleted = status === "deleted";
   const isNew = status === "new";
 
@@ -46,17 +42,9 @@ export const ResourceVariableRow = ({
       required={variable.required}
       type={variable.type}
       description={variable.description}
-      sx={
+      className={
         hasDefault
-          ? (theme: Theme) => ({
-              backgroundColor: "rgba(237, 108, 2, 0.04)",
-              // `theme.palette.mode` is frozen to the default scheme when
-              // CSS variables are enabled, so dark-mode styling must go
-              // through `applyStyles` instead.
-              ...theme.applyStyles("dark", {
-                backgroundColor: "rgba(255, 167, 38, 0.08)",
-              }),
-            })
+          ? "bg-[rgba(237,108,2,0.04)] dark:bg-[rgba(255,167,38,0.08)]"
           : undefined
       }
       chips={
@@ -64,28 +52,34 @@ export const ResourceVariableRow = ({
           {isNew && (
             <Chip
               label="Added"
-              sx={{ ml: 1, ...solidChipColorSx("info")(theme) }}
+              className="ml-2"
+              appearance="solid"
+              color="info"
             />
           )}
           {isDeleted && (
             <Chip
               label="Deleted"
-              sx={{ ml: 1, ...solidChipColorSx("warning")(theme) }}
+              className="ml-2"
+              appearance="solid"
+              color="warning"
             />
           )}
           {validationSummary && (
             <Chip
               label={validationSummary}
-              sx={{ ml: 1, ...solidChipColorSx("success")(theme) }}
+              className="ml-2"
+              appearance="solid"
+              color="success"
             />
           )}
         </>
       }
     >
       {isDeleted && (
-        <Typography variant="body2" sx={{ color: "warning.main", mb: 1 }}>
+        <p className="m-0 mb-2 text-body2 text-warning">
           This variable was deleted from the current schema.
-        </Typography>
+        </p>
       )}
       {children ?? (
         <ResourceVariableInput

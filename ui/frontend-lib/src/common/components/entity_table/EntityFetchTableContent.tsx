@@ -11,15 +11,9 @@ import {
   useRef,
 } from "react";
 
-import { Box } from "@mui/material";
-import {
-  GridColumnVisibilityModel,
-  GridPaginationModel,
-  GridSortModel,
-} from "@mui/x-data-grid";
-
 import { useConfig } from "../..";
 import { IkEntity } from "../../../types";
+import { ColumnVisibilityModel, PaginationModel, SortModel } from "../../../ui";
 import {
   buildGraphqlFields,
   GraphqlFieldMap,
@@ -57,16 +51,14 @@ interface EntityFetchTableContentProps {
   setData: Dispatch<SetStateAction<IkEntity[]>>;
   totalRows: number;
   setTotalRows: Dispatch<SetStateAction<number>>;
-  paginationModel: GridPaginationModel;
-  sortModel: GridSortModel;
-  columnVisibilityModel: GridColumnVisibilityModel;
+  paginationModel: PaginationModel;
+  sortModel: SortModel;
+  columnVisibilityModel: ColumnVisibilityModel;
   requestedFields: string[];
-  handleSortModelChange: (newSortModel: GridSortModel) => void;
-  handlePaginationModelChange: (
-    newPaginationModel: GridPaginationModel,
-  ) => void;
+  handleSortModelChange: (newSortModel: SortModel) => void;
+  handlePaginationModelChange: (newPaginationModel: PaginationModel) => void;
   handleColumnVisibilityModelChange: (
-    newColumnVisibilityModel: GridColumnVisibilityModel,
+    newColumnVisibilityModel: ColumnVisibilityModel,
   ) => void;
 }
 
@@ -146,11 +138,11 @@ export const EntityFetchTableContent = forwardRef<
         apiFilters = { ...(defaultFilterRef.current ?? defaultFilter) };
       }
 
-      let sort: NonNullable<GridSortModel[number]>;
+      let sort: NonNullable<SortModel[number]>;
       if (sortModel.length === 0) {
         sort = defaultSort ?? { field: "updated_at", sort: "desc" };
       } else {
-        sort = sortModel[0] as NonNullable<GridSortModel[number]>;
+        sort = sortModel[0] as NonNullable<SortModel[number]>;
       }
 
       const sortFieldMap = new Map(
@@ -248,13 +240,7 @@ export const EntityFetchTableContent = forwardRef<
   }, [fetchFilteredData]);
 
   return (
-    <Box
-      sx={{
-        maxWidth: "100%",
-        width: "100%",
-        alignSelf: "center",
-      }}
-    >
+    <div className="w-full max-w-full self-center">
       {hasFilters && <FilterPanel />}
       <EntityTable
         entityName={title}
@@ -265,10 +251,8 @@ export const EntityFetchTableContent = forwardRef<
         loading={loading}
         paginationModel={paginationModel}
         sortModel={sortModel}
-        filterModel={{ items: [], quickFilterValues: [] }}
         handleSortModelChange={handleSortModelChange}
         handlePaginationModelChange={handlePaginationModelChange}
-        setFilterModel={() => undefined}
         columnVisibilityModel={columnVisibilityModel}
         handleColumnVisibilityModelChange={handleColumnVisibilityModelChange}
         onRefresh={fetchFilteredData}
@@ -276,7 +260,7 @@ export const EntityFetchTableContent = forwardRef<
         quickFilters={quickFilters}
         onRowClick={onRowClick}
       />
-    </Box>
+    </div>
   );
 });
 

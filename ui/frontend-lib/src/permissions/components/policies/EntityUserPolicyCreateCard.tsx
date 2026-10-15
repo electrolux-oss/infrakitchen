@@ -2,19 +2,11 @@ import { useCallback, useId, useState } from "react";
 
 import { Controller, useForm } from "react-hook-form";
 
-import {
-  Box,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Typography,
-} from "@mui/material";
-
 import ReferenceSearchInput from "../../../common/components/inputs/ReferenceSearchInput";
 import { useConfig } from "../../../common/context/ConfigContext";
 import { notify, notifyError } from "../../../common/hooks/useNotification";
 import { IkEntity } from "../../../types";
+import { FormControl, InputLabel, MenuItem, Select } from "../../../ui";
 import { CREATE_ENTITY_POLICY_MUTATION } from "../../graphql";
 import { EntityPolicyCreate } from "../../types";
 
@@ -95,7 +87,7 @@ export const EntityUserPolicyCreateCard = (
   );
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 600, mx: "auto" }}>
+    <div className="mx-auto w-full max-w-150">
       <form id={resolvedFormId} onSubmit={handleSubmit(onSubmit)}>
         {!entityId && (
           <Controller
@@ -115,7 +107,6 @@ export const EntityUserPolicyCreateCard = (
                 helpertext={errors.entityId ? errors.entityId.message : ""}
                 value={field.value}
                 label="Select Resource"
-                sx={{ mb: 3 }}
               />
             )}
           />
@@ -137,7 +128,6 @@ export const EntityUserPolicyCreateCard = (
                 setBuffer={setBuffer}
                 value={field.value}
                 label="Select User"
-                sx={{ mb: 3 }}
               />
             )}
           />
@@ -147,7 +137,7 @@ export const EntityUserPolicyCreateCard = (
           control={control}
           rules={{ required: "Action is required" }}
           render={({ field, fieldState }) => (
-            <FormControl fullWidth sx={{ mb: 3 }}>
+            <FormControl className="mb-6" fullWidth>
               <InputLabel id="action-label">Action name</InputLabel>
               <Select
                 error={!!fieldState.error}
@@ -162,14 +152,14 @@ export const EntityUserPolicyCreateCard = (
                 ))}
               </Select>
               {fieldState.error && (
-                <Typography color="error" variant="caption">
+                <span className="text-caption text-error">
                   {fieldState.error.message}
-                </Typography>
+                </span>
               )}
             </FormControl>
           )}
         />
       </form>
-    </Box>
+    </div>
   );
 };

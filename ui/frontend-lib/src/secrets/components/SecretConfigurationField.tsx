@@ -3,14 +3,12 @@ import { useState } from "react";
 import { Control, FormProvider, useForm } from "react-hook-form";
 
 import {
-  Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-} from "@mui/material";
-
+} from "../../ui";
 import { GqlSecret } from "../graphql";
 import { SecretUpdate } from "../types";
 
@@ -75,11 +73,11 @@ export const SecretConfigurationField = ({
 
   return (
     <>
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
+      <div className="col-span-full mt-2 flex justify-end">
         <Button onClick={openDialog} disabled={!canEdit}>
           Edit Configuration
         </Button>
-      </Box>
+      </div>
 
       <Dialog open={dialogOpen} onClose={closeDialog} maxWidth="sm" fullWidth>
         <DialogTitle>Edit Secret Configuration</DialogTitle>

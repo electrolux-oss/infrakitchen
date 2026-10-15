@@ -1,16 +1,5 @@
 import { ReactNode, useState } from "react";
 
-import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
-import {
-  Alert,
-  AlertTitle,
-  Box,
-  Button,
-  Chip,
-  Stack,
-  Typography,
-} from "@mui/material";
-
 import { getDateValue } from "../../common/components/fields/CommonField";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -18,6 +7,8 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { useNow } from "../../common/hooks/useNow";
 import { formatTimeUntil } from "../../common/utils";
+import { HourglassEmptyIcon } from "../../icons/material";
+import { Alert, AlertTitle, Button, Chip } from "../../ui";
 import {
   CANCEL_QUEUED_TASK_MUTATION,
   GqlEntityQueueStatus,
@@ -105,20 +96,18 @@ const QueuedTaskRow = ({
   };
 
   return (
-    <Box>
-      <Box
-        sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}
-      >
+    <div>
+      <div className="flex flex-wrap items-center gap-2">
         <Chip
           size="small"
           label={running ? "Running" : "Queued"}
           color={running ? "info" : "default"}
           variant={running ? "filled" : "outlined"}
         />
-        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+        <p className="m-0 text-body2 font-medium">
           {taskLabel(task, entityName)}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" component="span">
+        </p>
+        <span className="text-body2 text-fg-muted">
           {running ? (
             <>
               started <RelativeTime date={task.startedAt || task.createdAt} />
@@ -131,25 +120,25 @@ const QueuedTaskRow = ({
               {requestedBy}
             </>
           )}
-        </Typography>
+        </span>
         {!running && canCancel && (
           <Button
+            className="ml-auto"
             size="small"
             color="inherit"
             onClick={handleCancel}
             disabled={isCancelling}
-            sx={{ ml: "auto" }}
           >
             {isCancelling ? "Cancelling..." : "Cancel"}
           </Button>
         )}
-      </Box>
+      </div>
       {!running && task.waitingReason && (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+        <p className="m-0 mt-0.5 text-body2 text-fg-muted">
           {waitingReasonText(task, entityName)[task.waitingReason]}
-        </Typography>
+        </p>
       )}
-    </Box>
+    </div>
   );
 };
 
@@ -183,12 +172,12 @@ export const EntityTaskQueueStatus = () => {
 
   return (
     <Alert
+      className="w-full"
       severity={noWorkers ? "warning" : "info"}
       icon={<HourglassEmptyIcon />}
-      sx={{ width: "100%" }}
     >
       <AlertTitle>{title}</AlertTitle>
-      <Stack spacing={1}>
+      <div className="flex flex-col gap-2">
         {status.tasks.map((task) => (
           <QueuedTaskRow
             key={task.id}
@@ -201,7 +190,7 @@ export const EntityTaskQueueStatus = () => {
             onCancelled={() => refreshEntity?.()}
           />
         ))}
-      </Stack>
+      </div>
     </Alert>
   );
 };

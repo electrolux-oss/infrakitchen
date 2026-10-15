@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 
-import { Box, Switch, Tooltip, Typography } from "@mui/material";
-
 import { Label } from "../../common/components/labels/Label";
+import { Switch, Tooltip } from "../../ui";
+import { cn } from "../../utils/cn";
 
 export interface FeatureFlagDTO {
   name: string;
@@ -52,53 +52,37 @@ export const FeatureFlagRow: React.FC<FeatureFlagRowProps> = ({
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 2,
-        py: 1,
-      }}
-    >
-      <Box sx={{ minWidth: 0 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography variant="subtitle2" sx={{ color: "text.primary" }}>
-            {displayName}
-          </Typography>
+    <div className="flex items-center justify-between gap-4 py-2">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <h6 className="m-0 text-subtitle2 text-fg">{displayName}</h6>
           {experimental && (
             <Tooltip title="This feature is still being tested and may change or be removed.">
               <Label label="Experimental" />
             </Tooltip>
           )}
-        </Box>
+        </div>
         {description && (
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            {description}
-          </Typography>
+          <span className="text-caption text-fg-muted">{description}</span>
         )}
-      </Box>
-      <Box sx={{ display: "flex", alignItems: "center" }}>
+      </div>
+      <div className="flex items-center">
         <Switch
           checked={getCurrentStatus()}
           onChange={handleToggle}
-          color="primary"
           disabled={loading}
-          slotProps={{
-            input: { "aria-label": `Toggle ${displayName} feature flag` },
-          }}
+          inputProps={{ "aria-label": `Toggle ${displayName} feature flag` }}
         />
-        <Typography
-          variant="body2"
-          sx={{
-            color: getCurrentStatus() ? "success.main" : "text.secondary",
-            fontWeight: 500,
-            minWidth: 60,
-          }}
+        <p
+          className={cn(
+            "m-0 text-body2",
+            getCurrentStatus() ? "text-success" : "text-fg-muted",
+            "min-w-15 font-medium",
+          )}
         >
           {getCurrentStatus() ? "Enabled" : "Disabled"}
-        </Typography>
-      </Box>
-    </Box>
+        </p>
+      </div>
+    </div>
   );
 };

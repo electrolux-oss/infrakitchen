@@ -1,19 +1,19 @@
 import { useState } from "react";
 
+import { EditAffordance } from "../../common/components/editors/EditAffordance";
 import {
-  Box,
+  CommonField,
+  FieldSpan,
+} from "../../common/components/fields/CommonField";
+import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
+import { MarkdownEditor } from "../../common/components/inputs/MarkdownEditor";
+import {
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  GridSize,
-} from "@mui/material";
-
-import { EditAffordance } from "../../common/components/editors/EditAffordance";
-import { CommonField } from "../../common/components/fields/CommonField";
-import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
-import { MarkdownEditor } from "../../common/components/inputs/MarkdownEditor";
+} from "../../ui";
 
 export interface TemplateDocumentationFieldProps {
   /** Current documentation markdown, if any. */
@@ -22,8 +22,8 @@ export interface TemplateDocumentationFieldProps {
   canEdit: boolean;
   /** Persists the new documentation. Should throw on failure. */
   onSave: (documentation: string) => Promise<void>;
-  /** Grid sizing for the underlying field cell. */
-  size?: GridSize | { xs: GridSize; md: GridSize } | undefined;
+  /** Width in the surrounding field grid. */
+  span?: FieldSpan;
 }
 
 /**
@@ -35,7 +35,7 @@ export const TemplateDocumentationField = ({
   documentation,
   canEdit,
   onSave,
-  size = 6,
+  span = "half",
 }: TemplateDocumentationFieldProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [draft, setDraft] = useState("");
@@ -67,18 +67,11 @@ export const TemplateDocumentationField = ({
       <CommonField
         name={"Documentation"}
         value={
-          <Box
-            sx={{
-              display: "inline-flex",
-              alignItems: "flex-start",
-              maxWidth: "100%",
-              // Reveal the edit affordance on hover/focus, like other fields.
-              "&:hover .doc-edit-action, &:focus-within .doc-edit-action": {
-                opacity: 1,
-              },
-            }}
+          <div
+            // Reveal the edit affordance on hover/focus, like other fields.
+            className="inline-flex max-w-full items-start [&:focus-within_.doc-edit-action]:opacity-100 [&:hover_.doc-edit-action]:opacity-100"
           >
-            <Box sx={{ position: "relative", minWidth: 0 }}>
+            <div className="relative min-w-0">
               {documentation ? (
                 <span>Documentation provided</span>
               ) : (
@@ -87,28 +80,18 @@ export const TemplateDocumentationField = ({
               {/* Overlay the edit affordance just past the end of the value
                   text, vertically centered on it, so it never makes the value
                   row taller and the label-to-value gap stays consistent. */}
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "100%",
-                  transform: "translateY(-50%)",
-                  display: "flex",
-                  alignItems: "center",
-                  pl: 0.5,
-                }}
-              >
+              <div className="absolute top-[50%] left-[100%] flex [transform:translateY(-50%)] items-center pl-1">
                 <EditAffordance
                   className="doc-edit-action"
                   onClick={openDialog}
                   ariaLabel="Edit documentation"
                   disabled={!canEdit}
                 />
-              </Box>
-            </Box>
-          </Box>
+              </div>
+            </div>
+          </div>
         }
-        size={size}
+        span={span}
       />
 
       <Dialog open={dialogOpen} onClose={closeDialog} maxWidth="md" fullWidth>

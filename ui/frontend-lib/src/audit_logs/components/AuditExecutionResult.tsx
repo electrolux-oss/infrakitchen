@@ -1,14 +1,6 @@
-import {
-  Box,
-  Chip,
-  ChipProps,
-  Divider,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-
 import { Label } from "../../common/components/labels/Label";
-import { CODE_FONT_FAMILY } from "../../common/theme";
+import { Divider, Chip, Tooltip, type ChipColor } from "../../ui";
+import { cn } from "../../utils/cn";
 import type { GqlAuditLog } from "../graphql";
 
 // Counts of a plan ("add") or apply ("added") with the affected resource addresses.
@@ -51,9 +43,9 @@ export interface AuditExecution {
 const TOFU_COUNT_RE = /^(\S+) (\+\d+) (~\d+) ([-]\d+)$/;
 
 const TOFU_CHUNK_COLOR: [RegExp, string][] = [
-  [/^\+/, "success.main"],
-  [/^~/, "warning.main"],
-  [/^-/, "error.main"],
+  [/^\+/, "text-success"],
+  [/^~/, "text-warning"],
+  [/^-/, "text-error"],
 ];
 
 const chunkColor = (chunk: string): string | null => {
@@ -126,7 +118,7 @@ export const formatExecutionSummary = (execution: AuditExecution): string =>
   formatExecutionSummarySegments(execution).join(" · ");
 
 // Planned actions in display order, with the color of their chip.
-const RESOURCE_ACTIONS: [string, string, ChipProps["color"]][] = [
+const RESOURCE_ACTIONS: [string, string, ChipColor][] = [
   ["create", "Create", "success"],
   ["update", "Update in-place", "warning"],
   ["replace", "Replace", "error"],
@@ -159,44 +151,34 @@ const ResourceActionGroup = ({
 }: {
   label: string;
   count: number;
-  color: ChipProps["color"];
+  color: ChipColor;
   addresses: string[];
 }) => {
   const shown = addresses.slice(0, MAX_ROWS_PER_GROUP);
   const hidden = addresses.length - shown.length;
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+    <div className="flex flex-col gap-1">
       <Chip
+        className="self-start font-semibold"
         label={`${count} ${label}`}
         color={color}
         variant="outlined"
         size="small"
-        sx={{
-          alignSelf: "flex-start",
-          fontWeight: 600,
-        }}
       />
       {shown.map((address) => (
-        <Typography
+        <span
+          className="ml-2 min-w-0 font-mono text-[0.8125rem] font-normal tracking-[0.01em] break-all"
           key={address}
-          variant="caption"
-          sx={{
-            fontFamily: CODE_FONT_FAMILY,
-            fontSize: "0.8125rem",
-            wordBreak: "break-all",
-            minWidth: 0,
-            ml: 1,
-          }}
         >
           {address}
-        </Typography>
+        </span>
       ))}
       {hidden > 0 && (
-        <Typography variant="caption" sx={{ color: "text.secondary", ml: 1 }}>
+        <span className="ml-2 text-caption text-fg-muted">
           {`+${hidden} more`}
-        </Typography>
+        </span>
       )}
-    </Box>
+    </div>
   );
 };
 
@@ -207,7 +189,7 @@ const ExecutionResources = ({ result }: { result: ChangeCounts }) => {
     ([action, label, color]): {
       label: string;
       count: number;
-      color: ChipProps["color"];
+      color: ChipColor;
       addresses: string[];
     }[] => {
       const addresses = result.resources?.[action] ?? [];
@@ -218,7 +200,7 @@ const ExecutionResources = ({ result }: { result: ChangeCounts }) => {
   );
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+    <div className="flex flex-col gap-3">
       {groups.map((group) => (
         <ResourceActionGroup
           key={group.label}
@@ -229,11 +211,11 @@ const ExecutionResources = ({ result }: { result: ChangeCounts }) => {
         />
       ))}
       {result.resources_truncated && (
-        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+        <span className="text-caption text-fg-muted">
           The list is truncated.
-        </Typography>
+        </span>
       )}
-    </Box>
+    </div>
   );
 };
 
@@ -272,44 +254,28 @@ const ExecutionTooltip = ({
   if (execution.error) rows.push(["Error", execution.error]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, py: 0.5 }}>
-      <Box
-        component="dl"
-        sx={{
-          m: 0,
-          display: "grid",
-          gridTemplateColumns: "auto 1fr",
-          columnGap: 1,
-        }}
-      >
+    <div className="flex flex-col gap-2 py-1">
+      <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-2">
         {rows.map(([label, value]) => (
-          <Box key={label} sx={{ display: "contents" }}>
-            <Box
-              component="dt"
-              sx={{
-                // Muted label style shared with the overview card fields:
-                // the value is the visual anchor, not the label.
-                fontWeight: 500,
-                fontSize: "0.8125rem",
-                color: "text.secondary",
-                textTransform: "capitalize",
-              }}
+          <div className="contents" key={label}>
+            <dt
+              // Muted label style shared with the overview card fields:
+              // the value is the visual anchor, not the label.
+              className="text-[0.8125rem] font-medium text-fg-muted capitalize"
             >
               {label}
-            </Box>
-            <Box component="dd" sx={{ m: 0, wordBreak: "break-word" }}>
-              {value}
-            </Box>
-          </Box>
+            </dt>
+            <dd className="m-0 [word-break:break-word]">{value}</dd>
+          </div>
         ))}
-      </Box>
+      </dl>
       {tofuResult && Object.keys(tofuResult.resources ?? {}).length > 0 && (
         <>
           <Divider />
           <ExecutionResources result={tofuResult} />
         </>
       )}
-    </Box>
+    </div>
   );
 };
 
@@ -327,39 +293,15 @@ export const AuditExecutionResult = ({
   const tofuResult = getTofuResult(execution);
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 0.5,
-        height: "100%",
-        minWidth: 0,
-      }}
-    >
+    <div className="flex h-full min-w-0 items-center gap-1">
       <Tooltip
         title={
           <ExecutionTooltip execution={execution} tofuResult={tofuResult} />
         }
         placement="bottom-start"
-        slotProps={{
-          tooltip: {
-            // Size to the content, capped so long resource addresses wrap
-            // instead of stretching the tooltip across the screen.
-            sx: {
-              width: "max-content",
-              maxWidth: 520,
-            },
-          },
-        }}
+        className="w-max max-w-[520px]"
       >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            minWidth: 0,
-          }}
-        >
+        <div className="flex min-w-0 items-center gap-2">
           <Label
             label={
               execution.status === "failed"
@@ -383,41 +325,35 @@ export const AuditExecutionResult = ({
             }
           />
           {segments.length > 0 && (
-            <Typography
-              variant="body2"
-              noWrap
-              sx={{
-                color:
-                  execution.status === "failed"
-                    ? "error.main"
-                    : execution.status === "warning"
-                      ? "warning.main"
-                      : "text.secondary",
-              }}
+            <p
+              className={cn(
+                "m-0 truncate text-body2",
+                execution.status === "failed"
+                  ? "text-error"
+                  : execution.status === "warning"
+                    ? "text-warning"
+                    : "text-fg-muted",
+              )}
             >
               {segments.map((seg, i) => (
                 <span key={i}>
                   {i > 0 && " · "}
                   {TOFU_COUNT_RE.test(seg) || /^destroyed \d+$/.test(seg)
                     ? seg.split(" ").map((chunk, j) => (
-                        <Box
+                        <span
+                          className={cn(j > 0 && "ml-1", chunkColor(chunk))}
                           key={j}
-                          component="span"
-                          sx={{
-                            color: chunkColor(chunk) ?? "inherit",
-                            ...(j > 0 ? { ml: 0.5 } : {}),
-                          }}
                         >
                           {chunk}
-                        </Box>
+                        </span>
                       ))
                     : seg}
                 </span>
               ))}
-            </Typography>
+            </p>
           )}
-        </Box>
+        </div>
       </Tooltip>
-    </Box>
+    </div>
   );
 };

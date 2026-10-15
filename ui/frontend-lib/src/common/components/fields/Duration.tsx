@@ -1,13 +1,13 @@
 import React from "react";
 
-import { Tooltip, Typography, TypographyProps } from "@mui/material";
+import { Tooltip } from "../../../ui";
+import { cn } from "../../../utils/cn";
 
 interface DurationProps {
   start: string | Date;
   end: string | Date;
-  component?: React.ElementType;
-  variant?: TypographyProps["variant"];
-  sx?: any;
+  /** Defaults to body2 in the muted text color. */
+  className?: string;
 }
 
 function formatDuration(start: string | Date, end: string | Date): string {
@@ -39,22 +39,16 @@ function formatDetailedDuration(
 export const Duration: React.FC<DurationProps> = ({
   start,
   end,
-  component = "span",
-  variant,
-  sx,
+  className,
 }) => {
   const startDate = start instanceof Date ? start : new Date(start);
   const endDate = end instanceof Date ? end : new Date(end);
 
   if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
     return (
-      <Typography
-        component={component}
-        variant={variant}
-        sx={sx || { color: "text.secondary" }}
-      >
+      <span className={cn("text-body2 text-fg-muted", className)}>
         Invalid date
-      </Typography>
+      </span>
     );
   }
 
@@ -63,21 +57,14 @@ export const Duration: React.FC<DurationProps> = ({
 
   return (
     <Tooltip title={detailedDuration}>
-      <Typography
-        component={component}
-        variant={variant}
-        sx={{
-          display: "inline-flex",
-          alignItems: "center",
-          cursor: "pointer",
-          textDecoration: "underline dashed",
-          textDecorationColor: "text.secondary",
-          textUnderlineOffset: "5px",
-          ...(sx || { color: "text.secondary" }),
-        }}
+      <span
+        className={cn(
+          "inline-flex cursor-pointer items-center text-body2 text-fg-muted underline decoration-fg-muted decoration-dashed underline-offset-[5px]",
+          className,
+        )}
       >
         {durationText}
-      </Typography>
+      </span>
     </Tooltip>
   );
 };

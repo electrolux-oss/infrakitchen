@@ -2,17 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import AddIcon from "@mui/icons-material/Add";
-import InputIcon from "@mui/icons-material/Input";
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Typography,
-  Link,
-} from "@mui/material";
-
 import { FilterProvider, PermissionWrapper } from "../../common";
 import { EntityCard } from "../../common/components/cards/EntityCard";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
@@ -22,7 +11,10 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import { entityCardGridSx } from "../../common/utils/entityCardGrid";
+import { ENTITY_CARD_GRID_CLASSES } from "../../common/utils/entityCardGrid";
+import { AddIcon, InputIcon } from "../../icons/material";
+import { Alert, Spinner, Button, Link } from "../../ui";
+import { cn } from "../../utils/cn";
 import { ENTITY_STATUS } from "../../utils/constants";
 import { templateColumns } from "../components/templateFilterConfig";
 import { GqlTemplate, TEMPLATE_LIST_FIELDS } from "../graphql";
@@ -83,7 +75,7 @@ export const TemplatesPage = () => {
   }, [fetchTemplates]);
 
   const actions = (
-    <Box>
+    <div>
       <PermissionWrapper
         requiredPermission="api:template"
         permissionAction="write"
@@ -95,31 +87,27 @@ export const TemplatesPage = () => {
           Create
         </Button>
         <Button
+          className="ml-2"
           onClick={() => navigate(`${linkPrefix}templates/import`)}
-          sx={{ ml: 1 }}
           startIcon={<InputIcon />}
         >
           Import
         </Button>
       </PermissionWrapper>
-    </Box>
+    </div>
   );
 
   const templateCardFields = (template: GqlTemplate) => {
     return (
       <>
-        <Box>
-          <Typography sx={{ display: "block", color: "text.secondary" }}>
-            Status
-          </Typography>
+        <div>
+          <p className="m-0 block text-body2 text-fg-muted">Status</p>
           <StatusChip status={template.status} compact />
-        </Box>
-        <Box>
-          <Typography sx={{ display: "block", color: "text.secondary" }}>
-            Last Updated
-          </Typography>{" "}
+        </div>
+        <div>
+          <p className="m-0 block text-body2 text-fg-muted">Last Updated</p>{" "}
           <RelativeTime date={template.updatedAt} />
-        </Box>
+        </div>
       </>
     );
   };
@@ -127,12 +115,12 @@ export const TemplatesPage = () => {
   if (error) {
     return (
       <PageContainer title="Templates" actions={actions}>
-        <Box sx={{ width: "100%", py: 4 }}>
-          <Alert severity="error" sx={{ mb: 2 }}>
+        <div className="w-full py-8">
+          <Alert className="mb-4" severity="error">
             {error}
           </Alert>
           <Button onClick={fetchTemplates}>Retry</Button>
-        </Box>
+        </div>
       </PageContainer>
     );
   }
@@ -146,7 +134,8 @@ export const TemplatesPage = () => {
             href="https://opensource.electrolux.one/infrakitchen/concepts/template"
             target="_blank"
             rel="noopener"
-            sx={{ color: "inherit", textDecoration: "underline" }}
+            color="inherit"
+            className="decoration-current"
           >
             Templates
           </Link>{" "}
@@ -156,7 +145,7 @@ export const TemplatesPage = () => {
       }
       actions={actions}
     >
-      <Box sx={{ width: "100%" }}>
+      <div className="w-full">
         <FilterProvider
           columns={templateColumns}
           storageKey={`filter_${entityName}s`}
@@ -166,24 +155,15 @@ export const TemplatesPage = () => {
           <FilterPanel />
         </FilterProvider>
         {loading ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "50vh",
-            }}
-          >
-            <CircularProgress />
-          </Box>
+          <div className="flex h-[50vh] items-center justify-center">
+            <Spinner />
+          </div>
         ) : templates.length === 0 ? (
-          <Box sx={{ textAlign: "center", py: 4 }}>
-            <Typography variant="h5" component="p">
-              No templates available
-            </Typography>
-          </Box>
+          <div className="py-8 text-center">
+            <p className="m-0 text-h5">No templates available</p>
+          </div>
         ) : (
-          <Box sx={{ ...entityCardGridSx(), mt: 3 }}>
+          <div className={cn(ENTITY_CARD_GRID_CLASSES, "mt-6")}>
             {templates.map((template) => {
               // The API serializes status with its display casing (e.g.
               // "DISABLED"); normalize before comparing against the lowercase
@@ -215,9 +195,9 @@ export const TemplatesPage = () => {
                 />
               );
             })}
-          </Box>
+          </div>
         )}
-      </Box>
+      </div>
     </PageContainer>
   );
 };

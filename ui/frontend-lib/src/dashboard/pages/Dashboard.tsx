@@ -1,9 +1,7 @@
-import RefreshIcon from "@mui/icons-material/Refresh";
-import { Box, Typography, IconButton, Tooltip } from "@mui/material";
-import CircularProgress from "@mui/material/CircularProgress";
-
 import PageContainer from "../../common/PageContainer";
 import { GoldenStateWidget } from "../../golden_state/GoldenStateWidget";
+import { RefreshIcon } from "../../icons/material";
+import { Spinner, IconButton, Tooltip } from "../../ui";
 import { GettingStartedContent } from "../components/GettingStarted";
 import { MyFavoritesWidget } from "../components/MyFavoritesWidget";
 import { RecentActivityWidget } from "../components/RecentActivityWidget";
@@ -38,28 +36,21 @@ export const DashboardPage = () => {
     <PageContainer
       title={
         <>
-          <Typography
-            variant="h5"
-            component="h1"
-            color="primary"
-            sx={{ fontWeight: 600 }}
-          >
-            Dashboard
-          </Typography>
+          <h1 className="m-0 text-h5 font-semibold text-primary">Dashboard</h1>
         </>
       }
       description="A quick overview of your infrastructure and recent activities"
       actions={
         <Tooltip title="Refresh">
           <IconButton
+            className="p-1.5"
             size="small"
-            sx={{ p: 0.75 }}
             aria-label="Refresh"
             onClick={() => void refetch()}
             disabled={refreshing}
           >
             {refreshing ? (
-              <CircularProgress size={16} />
+              <Spinner size={16} />
             ) : (
               <RefreshIcon fontSize="small" />
             )}
@@ -68,25 +59,16 @@ export const DashboardPage = () => {
       }
     >
       {" "}
-      <Box sx={{ width: "100%", mb: 3 }}>
+      <div className="mb-6 w-full">
         <GoldenStateWidget
           goldenStateReport={goldenStateReport}
           loading={loading}
           expandable
         />
-      </Box>
-      <Box
-        sx={{
-          display: "grid",
-          // Stack the widgets on small screens; side by side from md up.
-          gridTemplateColumns: {
-            xs: "minmax(0, 1fr)",
-            md: "minmax(300px, 30%) minmax(0, 1fr)",
-          },
-          gap: 3,
-          alignItems: "start",
-          width: "100%",
-        }}
+      </div>
+      <div
+        // Stack the widgets on small screens; side by side from md up.
+        className="grid w-full grid-cols-[minmax(0,_1fr)] items-start gap-6 md:grid-cols-[minmax(300px,_30%)_minmax(0,_1fr)]"
       >
         <MyFavoritesWidget favorites={favorites} loading={loading} />
         <RecentActivityWidget
@@ -97,7 +79,7 @@ export const DashboardPage = () => {
           total={activitiesTotal}
           onLoadMore={loadMoreActivities}
         />
-      </Box>
+      </div>
     </PageContainer>
   );
 };

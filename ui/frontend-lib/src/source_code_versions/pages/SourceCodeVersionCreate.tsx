@@ -8,8 +8,6 @@ import {
 } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import { Box, TextField, Button, MenuItem } from "@mui/material";
-
 import { LabelInput } from "../../common";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
@@ -19,6 +17,7 @@ import PageContainer from "../../common/PageContainer";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
 import { RefFolders } from "../../source_codes/types";
 import { IkEntity } from "../../types";
+import { Button, TextField, MenuItem } from "../../ui";
 import { VERSION_LIFECYCLE_STATE } from "../../utils";
 import { CREATE_SOURCE_CODE_VERSION_MUTATION } from "../graphql";
 import { SourceCodeVersionCreate } from "../types";
@@ -171,17 +170,9 @@ const SourceCodeVersionCreatePageInner = () => {
         </>
       }
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          flexDirection: "column",
-          width: "100%",
-          minWidth: 320,
-        }}
-      >
+      <div className="flex w-full min-w-80 flex-col items-center">
         <PropertyCard title="Version Definition">
-          <Box>
+          <div>
             <Controller
               name="templateId"
               control={control}
@@ -214,7 +205,6 @@ const SourceCodeVersionCreatePageInner = () => {
                 <TextField
                   {...field}
                   label="Description"
-                  variant="outlined"
                   error={!!errors.description}
                   helperText={
                     errors.description
@@ -265,11 +255,11 @@ const SourceCodeVersionCreatePageInner = () => {
                 />
               )}
             />
-          </Box>
+          </div>
         </PropertyCard>
 
         <PropertyCard title="Configuration">
-          <Box>
+          <div>
             <Controller
               name="sourceCodeVersion"
               control={control}
@@ -286,11 +276,9 @@ const SourceCodeVersionCreatePageInner = () => {
                       ? errors.sourceCodeVersion.message
                       : "Select git tag"
                   }
-                  slotProps={{
-                    select: {
-                      inputProps: {
-                        "aria-label": "Source git tag",
-                      },
+                  selectProps={{
+                    inputProps: {
+                      "aria-label": "Source git tag",
                     },
                   }}
                 >
@@ -318,11 +306,9 @@ const SourceCodeVersionCreatePageInner = () => {
                       ? errors.sourceCodeBranch.message
                       : "Select git branch"
                   }
-                  slotProps={{
-                    select: {
-                      inputProps: {
-                        "aria-label": "Source git branch",
-                      },
+                  selectProps={{
+                    inputProps: {
+                      "aria-label": "Source git branch",
                     },
                   }}
                 >
@@ -353,11 +339,9 @@ const SourceCodeVersionCreatePageInner = () => {
                       ? errors.sourceCodeFolder.message
                       : "Select directory path"
                   }
-                  slotProps={{
-                    select: {
-                      inputProps: {
-                        "aria-label": "Source directory path",
-                      },
+                  selectProps={{
+                    inputProps: {
+                      "aria-label": "Source directory path",
                     },
                   }}
                 >
@@ -376,7 +360,6 @@ const SourceCodeVersionCreatePageInner = () => {
                 <TextField
                   {...field}
                   label="Breaking Changes"
-                  variant="outlined"
                   error={!!errors.breakingChanges}
                   helperText={
                     errors.breakingChanges
@@ -410,9 +393,9 @@ const SourceCodeVersionCreatePageInner = () => {
                 </TextField>
               )}
             />
-          </Box>
+          </div>
         </PropertyCard>
-      </Box>
+      </div>
     </PageContainer>
   );
 };

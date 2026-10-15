@@ -1,11 +1,8 @@
 import React, { Dispatch } from "react";
 
-import { Launch } from "@mui/icons-material";
-import { Box, Link } from "@mui/material";
-import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
-import { TreeItem } from "@mui/x-tree-view/TreeItem";
-
 import { useConfig } from "../..";
+import { LaunchIcon } from "../../../icons/material";
+import { Link, TreeItem, TreeView } from "../../../ui";
 import StatusChip from "../../StatusChip";
 import { Entity } from "../entities/Entity";
 
@@ -15,8 +12,6 @@ export interface TreeViewItemProps {
   entity_name: string;
   tree: TreeResponse;
   setExpanded: Dispatch<React.SetStateAction<string[]>>;
-  setSelected: Dispatch<React.SetStateAction<string[]>>;
-  selected: string[];
   expanded: string[];
 }
 
@@ -47,14 +42,7 @@ const StyledTreeItem = ({
     <TreeItem
       itemId={nodeId}
       label={
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
-            minWidth: 0,
-          }}
-        >
+        <div className="flex min-w-0 items-center gap-3">
           <Entity
             entity={{
               id: entity_id,
@@ -66,36 +54,24 @@ const StyledTreeItem = ({
             }}
             showLabel
             noWrap
-            sx={{ minWidth: 0 }}
+            linkClassName="min-w-0"
           />
           <StatusChip
             status={status}
             state={state}
             compact
-            sx={{ fontSize: 15 }}
+            className="text-[15px]"
           />
           <Link
+            className="inline-flex"
             href={`${linkPrefix}${entity_name}s/${entity_id}`}
             target="_blank"
-            sx={{ display: "inline-flex" }}
             aria-label={`Open ${item.name} ${entity_name} in new tab`}
           >
-            <Launch sx={{ fontSize: 15, color: "text.secondary" }} />
+            <LaunchIcon className="text-[15px] text-fg-muted" />
           </Link>
-        </Box>
+        </div>
       }
-      sx={{
-        "& .MuiTreeItem-content": {
-          borderRadius: 1,
-          py: 0.25,
-          "&[data-selected], &[data-focused], &[data-selected][data-focused]": {
-            backgroundColor: "transparent",
-            "&:hover": {
-              backgroundColor: "transparent",
-            },
-          },
-        },
-      }}
     >
       {children}
     </TreeItem>
@@ -103,8 +79,7 @@ const StyledTreeItem = ({
 };
 
 export function EntityTreeViewItems(props: TreeViewItemProps) {
-  const { entity_name, tree, selected, expanded, setExpanded, setSelected } =
-    props;
+  const { entity_name, tree, expanded, setExpanded } = props;
   const { linkPrefix } = useConfig();
 
   const handleToggle = (
@@ -112,13 +87,6 @@ export function EntityTreeViewItems(props: TreeViewItemProps) {
     itemIds: string[],
   ) => {
     setExpanded(itemIds);
-  };
-
-  const handleSelect = (
-    _event: React.SyntheticEvent | null,
-    itemIds: string[],
-  ) => {
-    setSelected(itemIds);
   };
 
   const getTreeItems = (node: TreeResponse) => {
@@ -138,16 +106,14 @@ export function EntityTreeViewItems(props: TreeViewItemProps) {
   };
 
   return (
-    <Box sx={{ px: 1.5, pt: 1, pb: 0.75 }}>
-      <SimpleTreeView
+    <div className="px-3 pt-2 pb-1.5">
+      <TreeView
+        aria-label={`${entity_name} dependency tree`}
         expandedItems={expanded}
-        selectedItems={selected}
         onExpandedItemsChange={handleToggle}
-        onSelectedItemsChange={handleSelect}
-        multiSelect
       >
         {getTreeItems(tree)}
-      </SimpleTreeView>
-    </Box>
+      </TreeView>
+    </div>
   );
 }

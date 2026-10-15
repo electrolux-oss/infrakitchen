@@ -2,9 +2,6 @@ import { MouseEvent, useCallback, useMemo, useRef } from "react";
 
 import { useNavigate } from "react-router";
 
-import DoneAllIcon from "@mui/icons-material/DoneAll";
-import { Button } from "@mui/material";
-
 import {
   EntityFetchTable,
   EntityFetchTableRef,
@@ -14,6 +11,8 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { useNotificationProvider } from "../../common/context/NotificationContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import { DoneAllIcon } from "../../icons/material";
+import { Button } from "../../ui";
 import { userNotificationColumns } from "../components/userNotificationTableConfig";
 import { GqlUserNotification, USER_NOTIFICATION_FIELD_MAP } from "../graphql";
 

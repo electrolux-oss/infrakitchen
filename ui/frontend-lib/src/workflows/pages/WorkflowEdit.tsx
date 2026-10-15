@@ -2,30 +2,29 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
-import { useEffectOnce } from "react-use";
 
 import { json as jsonLang } from "@codemirror/lang-json";
 import { lintGutter } from "@codemirror/lint";
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  FormControl,
-  FormLabel,
-  Typography,
-  useColorScheme,
-} from "@mui/material";
 import CodeMirror from "@uiw/react-codemirror";
 
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context/ConfigContext";
+import { useEffectOnce } from "../../common/hooks/useEffectOnce";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 import { IkEntity } from "../../types";
+import {
+  Alert,
+  Button,
+  Chip,
+  FormControl,
+  FormLabel,
+  useColorScheme,
+} from "../../ui";
+import { cn } from "../../utils/cn";
 import { WorkflowStep } from "../components/WorkflowStep";
 import {
   GqlWorkflow,
@@ -42,7 +41,7 @@ interface JsonFieldProps {
 }
 
 const JsonField = ({ label, value, onChange, helperText }: JsonFieldProps) => {
-  const { mode } = useColorScheme();
+  const { resolvedMode } = useColorScheme();
   const [text, setText] = useState<string>(() =>
     JSON.stringify(value ?? {}, null, 2),
   );
@@ -70,29 +69,25 @@ const JsonField = ({ label, value, onChange, helperText }: JsonFieldProps) => {
   return (
     <FormControl fullWidth margin="normal" error={!!error}>
       <FormLabel>{label}</FormLabel>
-      <Box
-        sx={{
-          border: 1,
-          borderColor: "divider",
-          borderRadius: "var(--template-surface-radius)",
-        }}
-      >
+      <div className="rounded-surface border border-divider">
         <CodeMirror
           basicSetup={{ lineNumbers: true, foldGutter: false }}
           extensions={[jsonLang(), lintGutter()]}
           value={text}
           onChange={handleChange}
-          theme={mode === "dark" ? "dark" : "light"}
+          theme={resolvedMode}
         />
-      </Box>
+      </div>
       {(error || helperText) && (
-        <Typography
-          variant="caption"
-          color={error ? "error" : "text.secondary"}
-          sx={{ mt: 0.5 }}
+        <span
+          className={cn(
+            "text-caption",
+            error ? "text-error" : "text-fg-muted",
+            "mt-1",
+          )}
         >
           {error ?? helperText}
-        </Typography>
+        </span>
       )}
     </FormControl>
   );
@@ -213,7 +208,7 @@ const WorkflowEditPageInner = (props: { workflow: GqlWorkflow }) => {
         }
       >
         {!canEdit && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
+          <Alert className="mb-4" severity="warning">
             This workflow cannot be edited. Only pending or errored workflows
             are editable. Current status:{" "}
             <StatusChip status={workflow.status} />
@@ -237,16 +232,16 @@ const WorkflowEditPageInner = (props: { workflow: GqlWorkflow }) => {
             <PropertyCard
               key={step.id}
               title={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <div className="flex items-center gap-2">
                   <Chip
+                    className="min-w-7 font-bold"
                     label={idx + 1}
                     color="primary"
-                    sx={{ fontWeight: 700, minWidth: 28 }}
                   />
                   <span>
                     {step.template?.name ?? step.template.id.slice(0, 8)}
                   </span>
-                </Box>
+                </div>
               }
             >
               <Controller

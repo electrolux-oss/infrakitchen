@@ -1,13 +1,7 @@
 import { useState } from "react";
 
-import {
-  Avatar,
-  Box,
-  ButtonBase,
-  ClickAwayListener,
-  Grow,
-  Typography,
-} from "@mui/material";
+import { Avatar, ClickAwayListener } from "../../../ui";
+import { cn } from "../../../utils/cn";
 
 import { UserAvatar } from "./UserAvatar";
 
@@ -53,7 +47,7 @@ export const UserAvatarList = ({
 
   return (
     <ClickAwayListener onClickAway={() => setExpanded(false)}>
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+      <div className="flex flex-wrap gap-1">
         {list.slice(0, max).map((user) => (
           <UserAvatar
             key={user.id ?? user.identifier}
@@ -63,53 +57,46 @@ export const UserAvatarList = ({
         ))}
         {expanded &&
           overflow.map((user, index) => (
-            <Grow
+            <span
               key={user.id ?? user.identifier}
-              in
-              appear
-              timeout={180}
+              className="inline-flex transition-[opacity,scale] duration-[180ms] ease-out starting:scale-75 starting:opacity-0"
               style={{ transitionDelay: `${Math.min(index, 6) * 40}ms` }}
             >
-              <Box component="span" sx={{ display: "inline-flex" }}>
-                <UserAvatar
-                  id={user.id ?? undefined}
-                  identifier={user.identifier ?? undefined}
-                />
-              </Box>
-            </Grow>
+              <UserAvatar
+                id={user.id ?? undefined}
+                identifier={user.identifier ?? undefined}
+              />
+            </span>
           ))}
         {!expanded && overflowCount > 0 && (
-          <ButtonBase
+          <button
+            type="button"
+            className="inline-flex cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-inherit outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/35"
             onClick={() => setExpanded(true)}
             aria-expanded={false}
             aria-label={`Show all ${list.length} users`}
-            sx={{ borderRadius: "999px" }}
           >
             <Avatar
-              sx={{
-                fontSize: "inherit",
-                height: "1.5em",
-                minWidth: "1.5em",
-                width: "auto",
-                paddingX: overflowLabel.length > 3 ? 0.5 : 0,
-                boxSizing: "border-box",
-                borderRadius: "999px",
-                bgcolor: "grey.400",
-              }}
+              className={cn(
+                "text-[length:inherit]",
+                "h-[1.5em] w-auto min-w-[1.5em]",
+                overflowLabel.length > 3 ? "px-1" : "px-0",
+                "box-border rounded-full bg-grey-400",
+              )}
             >
-              <Typography
-                component="span"
-                sx={{
-                  fontSize: overflowLabel.length > 5 ? "0.6em" : "0.8em",
-                  whiteSpace: "nowrap",
-                }}
+              <span
+                className={cn(
+                  "text-body2",
+                  overflowLabel.length > 5 ? "text-[0.6em]" : "text-[0.8em]",
+                  "whitespace-nowrap",
+                )}
               >
                 {overflowLabel}
-              </Typography>
+              </span>
             </Avatar>
-          </ButtonBase>
+          </button>
         )}
-      </Box>
+      </div>
     </ClickAwayListener>
   );
 };

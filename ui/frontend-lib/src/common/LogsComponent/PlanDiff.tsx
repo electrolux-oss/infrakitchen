@@ -1,11 +1,9 @@
 import { Fragment, useMemo, useState } from "react";
 
-import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
-import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
-import { Box, ButtonBase, IconButton, Tooltip } from "@mui/material";
 import Ansi from "ansi-to-react";
 
-import { CODE_FONT_FAMILY } from "../theme";
+import { UnfoldLessIcon, UnfoldMoreIcon } from "../../icons/material";
+import { IconButton, Tooltip } from "../../ui";
 
 const ESC = String.fromCharCode(27);
 
@@ -33,12 +31,12 @@ const HEREDOC_OPEN_RE = /<<-?([A-Za-z_][A-Za-z0-9_]*)\s*$/;
 
 const leadingSpaces = (s: string): number => s.length - s.trimStart().length;
 
-const markerColor: Record<DiffMarker, "success" | "error" | "warning"> = {
-  "+": "success",
-  "-": "error",
-  "~": "warning",
-  "-/+": "warning",
-  "+/-": "warning",
+const markerColorClass: Record<DiffMarker, string> = {
+  "+": "text-success",
+  "-": "text-error",
+  "~": "text-warning",
+  "-/+": "text-warning",
+  "+/-": "text-warning",
 };
 
 const classifyLines = (lines: string[]): DiffLine[] => {
@@ -159,28 +157,17 @@ const DiffRow = ({ line }: { line: DiffLine }) => {
   const colorMarker = marker && !text.includes(ESC);
 
   return (
-    <Box
-      component="pre"
-      sx={{
-        m: 0,
-        px: 0.5,
-        fontFamily: "inherit",
-        fontSize: "0.8rem",
-        whiteSpace: "pre",
-      }}
-    >
+    <pre className="m-0 px-1 font-[inherit] text-[0.8rem] whitespace-pre">
       {colorMarker ? (
         <>
           {text.slice(0, markerCol)}
-          <Box component="span" sx={{ color: `${markerColor[marker]}.main` }}>
-            {marker}
-          </Box>
+          <span className={markerColorClass[marker]}>{marker}</span>
           {text.slice(markerCol + marker.length)}
         </>
       ) : (
         <Ansi>{text || " "}</Ansi>
       )}
-    </Box>
+    </pre>
   );
 };
 
@@ -198,24 +185,14 @@ export const PlanDiff = ({ lines }: { lines: string[] }) => {
       .map((line, offset) => <DiffRow key={start + offset} line={line} />);
 
   return (
-    <Box sx={{ fontFamily: CODE_FONT_FAMILY }}>
+    <div className="font-mono">
       {hasFolds && (
         // Zero-height sticky bar so the toggle floats over the diff without taking a row.
-        <Box
-          sx={{
-            position: "sticky",
-            top: 0,
-            zIndex: 1,
-            height: 0,
-            display: "flex",
-            justifyContent: "flex-end",
-          }}
-        >
+        <div className="sticky top-0 z-1 flex h-0 justify-end">
           <Tooltip
             title={showAll ? "Collapse unchanged lines" : "Expand all lines"}
           >
             <IconButton
-              size="small"
               aria-label={
                 showAll ? "Collapse unchanged lines" : "Expand all lines"
               }
@@ -223,15 +200,7 @@ export const PlanDiff = ({ lines }: { lines: string[] }) => {
                 setShowAll((prev) => !prev);
                 setExpandedFolds(new Set());
               }}
-              sx={{
-                mt: 0.5,
-                mr: 0.5,
-                bgcolor: "background.paper",
-                border: 1,
-                borderColor: "divider",
-                boxShadow: 1,
-                "&:hover": { bgcolor: "background.paper" },
-              }}
+              className="shadow-2 mt-1 mr-1 border border-divider bg-paper hover:bg-paper"
             >
               {showAll ? (
                 <UnfoldLessIcon fontSize="small" />
@@ -240,10 +209,10 @@ export const PlanDiff = ({ lines }: { lines: string[] }) => {
               )}
             </IconButton>
           </Tooltip>
-        </Box>
+        </div>
       )}
-      <Box sx={{ overflowX: "auto" }}>
-        <Box sx={{ width: "max-content", minWidth: "100%" }}>
+      <div className="overflow-x-auto">
+        <div className="w-max min-w-full">
           {showAll
             ? renderRange(0, parsed.length - 1)
             : segments.map((segment) => {
@@ -259,36 +228,23 @@ export const PlanDiff = ({ lines }: { lines: string[] }) => {
                 }
                 const count = segment.end - segment.start + 1;
                 return (
-                  <ButtonBase
+                  <button
+                    type="button"
                     key={segment.start}
                     onClick={() =>
                       setExpandedFolds((prev) =>
                         new Set(prev).add(segment.start),
                       )
                     }
-                    sx={{
-                      display: "flex",
-                      justifyContent: "flex-start",
-                      gap: 0.5,
-                      width: "100%",
-                      my: 0.25,
-                      px: 0.5,
-                      py: 0.25,
-                      borderRadius: 0.5,
-                      fontFamily: "inherit",
-                      fontSize: "0.75rem",
-                      color: "text.secondary",
-                      bgcolor: "action.selected",
-                      "&:hover": { bgcolor: "action.focus" },
-                    }}
+                    className="my-0.5 flex w-full cursor-pointer items-center justify-start gap-1 rounded-[2px] border-0 bg-selected px-1 py-0.5 font-[inherit] text-[0.75rem] text-fg-muted hover:bg-[hsla(0,0%,4%,0.12)] dark:hover:bg-[hsla(0,0%,96%,0.2)]"
                   >
-                    <UnfoldMoreIcon sx={{ fontSize: "1rem" }} />
+                    <UnfoldMoreIcon className="size-4!" />
                     {count} unchanged lines
-                  </ButtonBase>
+                  </button>
                 );
               })}
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };

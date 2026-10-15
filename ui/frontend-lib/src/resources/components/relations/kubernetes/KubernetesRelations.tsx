@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { Alert, Box, List, ListItem, Typography } from "@mui/material";
-
 import { useConfig, GradientCircularProgress } from "../../../../common";
 import { KUBERNETES_NAMESPACES_QUERY } from "../../../../providers/kubernetes/graphql";
+import { Alert, List, ListItem } from "../../../../ui";
 import { GqlResource } from "../../../graphql";
 
 import { DeploymentsDetails } from "./K8sDeployment";
@@ -54,28 +53,22 @@ export const KubernetesRelations = (props: { entity: GqlResource }) => {
   if (error) {
     return (
       <Alert severity="error">
-        <Typography variant="h5" component="p">
-          Error fetching k8s data
-        </Typography>
-        <Typography variant="body1">{error.message}</Typography>
+        <p className="m-0 text-h5">Error fetching k8s data</p>
+        <p className="m-0 text-body1">{error.message}</p>
       </Alert>
     );
   }
   return (
-    <Box sx={{ width: "100%", height: "100%", overflow: "auto" }}>
+    <div className="h-full w-full overflow-auto">
       {!loading && !error && (
-        <Box style={{ height: "auto", width: "100%" }}>
+        <div style={{ height: "auto", width: "100%" }}>
           {namespaces.length > 0 ? (
             <List>
               {namespaces.map((namespace) => (
                 <ListItem
+                  className="mb-2 block w-full"
                   key={namespace}
                   disablePadding
-                  sx={{
-                    width: "100%",
-                    display: "block",
-                    mb: 1,
-                  }}
                 >
                   <DeploymentsDetails
                     entityId={entity.id}
@@ -87,12 +80,10 @@ export const KubernetesRelations = (props: { entity: GqlResource }) => {
               ))}
             </List>
           ) : (
-            <Typography variant="body2">
-              No Kubernetes namespaces found.
-            </Typography>
+            <p className="m-0 text-body2">No Kubernetes namespaces found.</p>
           )}
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };

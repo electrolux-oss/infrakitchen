@@ -1,6 +1,4 @@
-import { Chip, Tooltip } from "@mui/material";
-
-import { solidChipColorSx } from "../../utils/softChip";
+import { Chip, Tooltip } from "../../../ui";
 
 interface PendingChangeBadgeProps {
   label?: string;
@@ -14,7 +12,8 @@ export const PendingChangeBadge = ({
       <Chip
         label={label.toUpperCase()}
         size="medium"
-        sx={solidChipColorSx("warning")}
+        appearance="solid"
+        color="warning"
       />
     </Tooltip>
   );

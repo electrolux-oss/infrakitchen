@@ -1,12 +1,11 @@
 import { useNavigate, useParams } from "react-router";
 
-import { Button, Tooltip } from "@mui/material";
-
 import { LogLiveTail, PermissionWrapper, useConfig } from "../../common";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { ScheduleApplyButton } from "../../common/components/buttons/ScheduleApplyButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
+import { Button, Tooltip } from "../../ui";
 import { TASK_QUEUE_STATUS_SELECTION } from "../../workers/graphql";
 import { ResourceContent } from "../components/ResourceContent";
 import { ResourceReviewView } from "../components/ResourceReviewView";

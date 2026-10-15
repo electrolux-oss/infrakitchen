@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 
-import { Box } from "@mui/material";
-
 import { useConfig } from "../../context";
 
 import { fetchEntityTree } from "./fetchEntityTree";
@@ -26,7 +24,6 @@ export const EntityTreeViewTab = ({
   const { ikApi } = useConfig();
 
   const [treeExpanded, setTreeExpanded] = useState<string[]>([]);
-  const [selected, setSelected] = useState<string[]>([]);
   const [tree, setTree] = useState<TreeResponse>();
   const [depth, setDepth] = useState<number>(DEFAULT_TREE_DEPTH);
 
@@ -34,41 +31,26 @@ export const EntityTreeViewTab = ({
     fetchEntityTree(ikApi, entity_name, entity_id, "children", depth).then(
       (tree) => {
         setTree(tree);
-        setSelected([tree.nodeId]);
         setTreeExpanded(getAllNodeIds(tree));
       },
     );
   }, [entity_id, entity_name, ikApi, depth]);
 
   return (
-    <Box
-      sx={{
-        width: "100%",
-        minHeight: 480,
-        textAlign: "left",
-        alignSelf: "flex-start",
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: "var(--template-surface-radius)",
-        backgroundColor: "background.paper",
-        overflow: "hidden",
-      }}
-    >
+    <div className="min-h-120 w-full self-start overflow-hidden rounded-surface border border-divider bg-paper text-left">
       <TreeDepthSelect
         value={depth}
         onChange={setDepth}
-        sx={{ px: 1.5, pt: 1.5 }}
+        className="px-3 pt-3"
       />
       {tree && (
         <EntityTreeViewItems
           entity_name={entity_name}
           tree={tree}
           setExpanded={setTreeExpanded}
-          setSelected={setSelected}
-          selected={selected}
           expanded={treeExpanded}
         />
       )}
-    </Box>
+    </div>
   );
 };

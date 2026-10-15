@@ -1,22 +1,10 @@
 import { forwardRef } from "react";
 
-import {
-  Add as AddIcon,
-  DeleteOutlined as DeleteOutlineIcon,
-} from "@mui/icons-material";
-import {
-  Box,
-  Button,
-  Chip,
-  IconButton,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-
-import { deleteIconButtonStyle } from "../../common/components/buttons/deleteIconButtonStyle";
-import { dashedAddButtonSx } from "../../common/utils/dashedAddButtonSx";
-import { solidChipColorSx } from "../../common/utils/softChip";
+import { deleteIconButtonClass } from "../../common/components/buttons/deleteIconButtonClass";
+import { dashedAddButtonClass } from "../../common/utils/dashedAddButton";
+import { AddIcon, DeleteOutlinedIcon } from "../../icons/material";
+import { Button, IconButton, Chip, Tooltip, TextField } from "../../ui";
+import { cn } from "../../utils/cn";
 import { CustomSecret } from "../types";
 
 interface CustomSecretInputProps {
@@ -56,76 +44,47 @@ const CustomSecretInput = forwardRef<any, CustomSecretInputProps>(
     };
 
     return (
-      <Box sx={{ mt: 2, px: 2 }}>
+      <div className="mt-4 px-4">
         {!hideHeader && (
           /* Section header: label, entry count */
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {label}
-            </Typography>
+          <div className="mb-2 flex items-center gap-2">
+            <p className="m-0 text-body2 font-semibold">{label}</p>
             <Chip
               label={String(currentValue.length)}
-              sx={solidChipColorSx("info", undefined, undefined, true)}
+              appearance="solid"
+              color="info"
+              compact
             />
-          </Box>
+          </div>
         )}
 
         {currentValue.length > 0 && (
-          <Box
-            sx={{
-              display: "flex",
-              flexWrap: "wrap",
-              alignItems: "center",
-              gap: 1,
-              pb: 0,
-              color: "text.secondary",
-            }}
-          >
+          <div className="flex flex-wrap items-center gap-2 pb-0 text-fg-muted">
             {/* Column captions shown once, instead of "Name"/"Value" labels on
                 every row. The trailing spacer reserves the remove-button width
                 so the captions align with the fields below. */}
-            <Typography
-              variant="caption"
-              sx={{ flex: "1 1 180px", minWidth: 160 }}
-            >
-              Name
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{ flex: "1 1 180px", minWidth: 160 }}
-            >
+            <span className="min-w-40 flex-[1_1_180px] text-caption">Name</span>
+            <span className="min-w-40 flex-[1_1_180px] text-caption">
               Value
-            </Typography>
-            <Box sx={{ flex: "0 0 auto", width: 30 }} />
-          </Box>
+            </span>
+            <div className="w-7.5 flex-none" />
+          </div>
         )}
 
         {currentValue.map((item, index) => (
-          <Box
-            key={index}
-            sx={{
-              display: "flex",
-              flexWrap: "wrap",
-              alignItems: "flex-start",
-              gap: 1,
-              pt: 0.25,
-            }}
-          >
+          <div className="flex flex-wrap items-start gap-2 pt-0.5" key={index}>
             <TextField
-              variant="outlined"
+              className="min-w-40 flex-[1_1_180px]"
               margin="dense"
               value={item.name}
               onChange={(e) => handleFieldChange(index, "name", e.target.value)}
               error={!!errors?.[item.name]?.[index]?.name}
               helperText={errors?.[item.name]?.[index]?.name?.message}
               required
-              slotProps={{
-                htmlInput: { "aria-label": `Secret name ${index + 1}` },
-              }}
-              sx={{ flex: "1 1 180px", minWidth: 160 }}
+              inputProps={{ "aria-label": `Secret name ${index + 1}` }}
             />
             <TextField
-              variant="outlined"
+              className="min-w-40 flex-[1_1_180px]"
               type="password"
               margin="dense"
               value={item.value}
@@ -135,36 +94,33 @@ const CustomSecretInput = forwardRef<any, CustomSecretInputProps>(
               error={!!errors?.[item.name]?.[index]?.value}
               helperText={errors?.[item.name]?.[index]?.value?.message}
               required
-              slotProps={{
-                htmlInput: { "aria-label": `Secret value ${index + 1}` },
-              }}
-              sx={{ flex: "1 1 180px", minWidth: 160 }}
+              inputProps={{ "aria-label": `Secret value ${index + 1}` }}
             />
             <Tooltip title="Remove">
               <IconButton
                 size="small"
-                sx={{ ...deleteIconButtonStyle, alignSelf: "center", my: 0.5 }}
+                className={cn(deleteIconButtonClass, "my-1 self-center")}
                 onClick={() => handleRemove(index)}
                 aria-label="Remove"
               >
-                <DeleteOutlineIcon fontSize="small" />
+                <DeleteOutlinedIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-          </Box>
+          </div>
         ))}
         {!hideHeader && (
           /* Add action sits under the rows, matching the other list editors. */
-          <Box sx={{ mt: 1 }}>
+          <div className="mt-2">
             <Button
               startIcon={<AddIcon />}
               onClick={handleAdd}
-              sx={dashedAddButtonSx}
+              className={dashedAddButtonClass}
             >
               Add
             </Button>
-          </Box>
+          </div>
         )}
-      </Box>
+      </div>
     );
   },
 );

@@ -1,7 +1,5 @@
 import { Control, Controller, FieldErrors } from "react-hook-form";
 
-import { TextField, Box } from "@mui/material";
-
 import { LabelInput } from "../../common";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { WiringRule } from "../../common/components/viewers/Wiring/types";
@@ -10,6 +8,7 @@ import {
   WiringCanvas,
 } from "../../common/components/viewers/Wiring/WiringCanvas";
 import { GqlTemplateShort } from "../../templates/graphql";
+import { TextField } from "../../ui";
 import { ConstantBlock, ConstantType, ExternalTemplate } from "../types";
 
 interface BlueprintFormFieldsProps {
@@ -57,7 +56,7 @@ export const BlueprintFormFields = ({
   return (
     <>
       <PropertyCard title="Blueprint Definition">
-        <Box>
+        <div>
           <Controller
             name="name"
             control={control}
@@ -66,7 +65,6 @@ export const BlueprintFormFields = ({
               <TextField
                 {...field}
                 label="Name"
-                variant="outlined"
                 error={!!errors.name}
                 helperText={
                   errors.name
@@ -75,9 +73,7 @@ export const BlueprintFormFields = ({
                 }
                 fullWidth
                 margin="normal"
-                slotProps={{
-                  htmlInput: { "aria-label": "Blueprint name" },
-                }}
+                inputProps={{ "aria-label": "Blueprint name" }}
               />
             )}
           />
@@ -88,7 +84,6 @@ export const BlueprintFormFields = ({
               <TextField
                 {...field}
                 label="Description"
-                variant="outlined"
                 error={!!errors.description}
                 helperText={
                   errors.description
@@ -99,9 +94,7 @@ export const BlueprintFormFields = ({
                 margin="normal"
                 multiline
                 minRows={2}
-                slotProps={{
-                  htmlInput: { "aria-label": "Blueprint description" },
-                }}
+                inputProps={{ "aria-label": "Blueprint description" }}
               />
             )}
           />
@@ -112,7 +105,7 @@ export const BlueprintFormFields = ({
             defaultValue={[]}
             render={({ field }) => <LabelInput errors={errors} {...field} />}
           />
-        </Box>
+        </div>
       </PropertyCard>
 
       <PropertyCard

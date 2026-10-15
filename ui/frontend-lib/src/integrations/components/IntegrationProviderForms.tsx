@@ -1,5 +1,6 @@
 import { Control, Controller, FieldErrors, useWatch } from "react-hook-form";
 
+import { InlineCode } from "../../common/components/code/InlineCode";
 import {
   Checkbox,
   FormControlLabel,
@@ -9,11 +10,7 @@ import {
   MenuItem,
   Select,
   TextField,
-  Typography,
-} from "@mui/material";
-
-import { InlineCode } from "../../common/components/code/InlineCode";
-import { CODE_FONT_FAMILY } from "../../common/theme";
+} from "../../ui";
 
 interface FormValues {
   configuration: object;
@@ -86,7 +83,7 @@ const GcpProviderFields = ({
               "Your Google Cloud Project ID"
             }
             required
-            slotProps={{ input: { readOnly: readonly } }}
+            readOnly={readonly}
           />
         )}
       />
@@ -123,14 +120,8 @@ const GcpProviderFields = ({
                   "Full provider resource name, e.g. //iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID"
                 }
                 required
-                slotProps={{
-                  input: {
-                    readOnly: readonly,
-                    sx: {
-                      fontFamily: CODE_FONT_FAMILY,
-                    },
-                  },
-                }}
+                readOnly={readonly}
+                inputClassName="font-mono"
               />
             )}
           />
@@ -153,7 +144,7 @@ const GcpProviderFields = ({
                     ?.message ||
                   "Optional. Service account to impersonate after federation. Leave empty to grant IAM roles directly to the federated principal."
                 }
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -186,31 +177,18 @@ const GcpProviderFields = ({
                     ?.gcp_wif_service_account_impersonation_url?.message ||
                   "Optional. Overrides the generated IAMCredentials impersonation endpoint when you need to supply the exact service_account_impersonation_url value."
                 }
-                slotProps={{
-                  input: {
-                    readOnly: readonly,
-                    sx: {
-                      fontFamily: CODE_FONT_FAMILY,
-                    },
-                  },
-                }}
+                readOnly={readonly}
+                inputClassName="font-mono"
               />
             )}
           />
-          <Typography
-            variant="caption"
-            sx={{
-              color: "text.secondary",
-              display: "block",
-              mt: 1,
-            }}
-          >
+          <span className="mt-2 block text-caption text-fg-muted">
             InfraKitchen issues a signed OIDC token for this integration. After
             saving, open the integration page to copy the{" "}
             <strong>Issuer URL</strong> for your GCP Workload Identity provider
             and, if InfraKitchen is not publicly reachable by GCP, download the{" "}
             <strong>JWKS</strong> to upload into the provider configuration.
-          </Typography>
+          </span>
         </>
       )}
       {authMethod !== "workload_identity_federation_oidc" && (
@@ -236,7 +214,7 @@ const GcpProviderFields = ({
                   ?.message || "JSON key for your GCP Service Account"
               }
               required
-              slotProps={{ input: { readOnly: readonly } }}
+              readOnly={readonly}
             />
           )}
         />
@@ -252,20 +230,13 @@ const GcpProviderFields = ({
                 control={<Checkbox {...field} checked={field.value} />}
                 label="Automatically create storage for OpenTofu/Terraform remote state management"
               />
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "text.secondary",
-                  display: "block",
-                  ml: 4,
-                }}
-              >
+              <span className="ml-8 block text-caption text-fg-muted">
                 Google storage bucket named{" "}
                 <InlineCode>
                   infrakitchen-{"{GCP Project ID}"}-bucket
                 </InlineCode>{" "}
                 will be created in <InlineCode>us</InlineCode> region.
-              </Typography>
+              </span>
             </>
           )}
         />
@@ -305,7 +276,7 @@ export const renderFieldsForProvider = (
                   (errors.configuration as any)?.aws_account?.message ||
                   "Your AWS Account ID (12-digit number)"
                 }
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -331,7 +302,7 @@ export const renderFieldsForProvider = (
                   (errors.configuration as any)?.aws_access_key_id?.message ||
                   "AWS Access Key ID from your IAM user (starts with AKIA)"
                 }
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -359,7 +330,7 @@ export const renderFieldsForProvider = (
                 error={
                   !!(errors.configuration as FieldErrors)?.aws_secret_access_key
                 }
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -378,7 +349,7 @@ export const renderFieldsForProvider = (
                   !!(errors.configuration as FieldErrors)?.aws_assumed_role_name
                 }
                 helperText="Optional: Role name to assume"
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -398,7 +369,7 @@ export const renderFieldsForProvider = (
                   !!(errors.configuration as FieldErrors)?.aws_session_duration
                 }
                 helperText="Duration for the assumed role session in seconds"
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -419,7 +390,7 @@ export const renderFieldsForProvider = (
                   (errors.configuration as any)?.aws_default_region?.message ||
                   "Default AWS region for resource management (default to us-east-1 if not specified)"
                 }
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -434,21 +405,14 @@ export const renderFieldsForProvider = (
                     control={<Checkbox {...field} checked={field.value} />}
                     label="Automatically create S3 bucket for OpenTofu/Terraform remote state management"
                   />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: "text.secondary",
-                      display: "block",
-                      ml: 4,
-                    }}
-                  >
+                  <span className="ml-8 block text-caption text-fg-muted">
                     S3 bucket named{" "}
                     <InlineCode>
                       infrakitchen-{"{AWS_ACCOUNT_ID}"}-bucket
                     </InlineCode>{" "}
                     will be created in <InlineCode>us-east-1</InlineCode>{" "}
                     region.
-                  </Typography>
+                  </span>
                 </>
               )}
             />
@@ -488,7 +452,7 @@ export const renderFieldsForProvider = (
                   "Azure Resource Manager Client ID"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -511,7 +475,7 @@ export const renderFieldsForProvider = (
                   "Azure Resource Manager Subscription ID"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -534,7 +498,7 @@ export const renderFieldsForProvider = (
                   "Azure Resource Manager Tenant ID"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -558,7 +522,7 @@ export const renderFieldsForProvider = (
                   "Azure Resource Manager Client Secret"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -586,7 +550,7 @@ export const renderFieldsForProvider = (
                   "Your Azure DevOps organization name"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -612,7 +576,7 @@ export const renderFieldsForProvider = (
                   "Personal Access Token for Azure DevOps"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -646,7 +610,7 @@ export const renderFieldsForProvider = (
                   "SSH private key for Azure DevOps repository access"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -675,7 +639,7 @@ export const renderFieldsForProvider = (
                     ?.message || "Your MongoDB Atlas Organization ID"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -700,7 +664,7 @@ export const renderFieldsForProvider = (
                     ?.message || "Your MongoDB Atlas API Public Key"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -726,7 +690,7 @@ export const renderFieldsForProvider = (
                     ?.message || "Your MongoDB Atlas API Private Key"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -753,7 +717,7 @@ export const renderFieldsForProvider = (
                   "PostgreSQL server hostname"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -775,7 +739,7 @@ export const renderFieldsForProvider = (
                   "PostgreSQL server port"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -796,7 +760,7 @@ export const renderFieldsForProvider = (
                   "Created if it does not exist, one database per integration"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -821,7 +785,7 @@ export const renderFieldsForProvider = (
                   "Existing database used to create the database when it does not exist"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -842,7 +806,7 @@ export const renderFieldsForProvider = (
                   "PostgreSQL user"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -864,7 +828,7 @@ export const renderFieldsForProvider = (
                   "PostgreSQL user password"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -923,7 +887,7 @@ export const renderFieldsForProvider = (
                     ?.message
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -950,7 +914,7 @@ export const renderFieldsForProvider = (
                   "Your Datadog API key for authentication"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -977,7 +941,7 @@ export const renderFieldsForProvider = (
                   "Your Datadog Application key"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -1010,7 +974,7 @@ export const renderFieldsForProvider = (
                   "The token will be securely stored and encrypted"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -1043,7 +1007,7 @@ export const renderFieldsForProvider = (
                     ?.message || "SSH private key for GitHub repository access"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -1072,7 +1036,7 @@ export const renderFieldsForProvider = (
                     ?.message
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -1097,7 +1061,7 @@ export const renderFieldsForProvider = (
                   "The token will be securely stored and encrypted"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -1131,7 +1095,7 @@ export const renderFieldsForProvider = (
                   "SSH private key for Bitbucket repository access"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -1158,7 +1122,7 @@ export const renderFieldsForProvider = (
                   "Email address associated with your Bitbucket account"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -1181,7 +1145,7 @@ export const renderFieldsForProvider = (
                   "App password or API token for Bitbucket access"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -1207,7 +1171,7 @@ export const renderFieldsForProvider = (
                   "Vault server domain or URL"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -1230,7 +1194,7 @@ export const renderFieldsForProvider = (
                   "Vault authentication token"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />
@@ -1257,7 +1221,7 @@ export const renderFieldsForProvider = (
                   "Bot User OAuth Token for Slack API authentication"
                 }
                 required
-                slotProps={{ input: { readOnly: readonly } }}
+                readOnly={readonly}
               />
             )}
           />

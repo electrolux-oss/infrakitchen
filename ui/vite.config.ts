@@ -1,6 +1,7 @@
 import { resolve } from "path";
 
 import { defineConfig } from "vite";
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 
 const DEFAULT_PORT = "7777";
@@ -9,7 +10,7 @@ const backendHost = process.env.BACKEND_HOST || "localhost";
 const frontendLibSource = resolve(__dirname, "frontend-lib/src/index.ts");
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       "@electrolux-oss/infrakitchen": frontendLibSource,
@@ -36,37 +37,16 @@ export default defineConfig({
     minify: true,
     rollupOptions: {
       output: {
+        // Only the runtime every page needs gets a named chunk. Everything else
+        // is left to the bundler so libraries used by lazy routes (editors,
+        // markdown, diff, graphs) load with those routes, not on first paint.
         manualChunks(id) {
-          if (id.includes("node_modules")) {
-            if (id.includes("date-fns") || id.includes("jwt-decode")) {
-              return "vendor-utils";
-            }
-            if (
-              id.includes("react-router") ||
-              id.includes("@remix-run") ||
-              id.includes("@react-router")
-            ) {
-              return "vendor-router";
-            }
-            if (
-              id.includes("@xyflow/") ||
-              id.includes("elkjs") ||
-              id.includes("d3-")
-            ) {
-              return "vendor-xyflow";
-            }
-            if (
-              id.includes("codemirror") ||
-              id.includes("@codemirror/") ||
-              id.includes("@uiw/react-codemirror") ||
-              id.includes("@lezer/")
-            ) {
-              return "vendor-codemirror";
-            }
-            if (id.includes("@mui/icons-material")) {
-              return "vendor-mui-icons";
-            }
-            return "vendor";
+          if (
+            /[\\/]node_modules[\\/](react|react-dom|scheduler|react-router)[\\/]/.test(
+              id,
+            )
+          ) {
+            return "vendor-react";
           }
         },
       },

@@ -1,7 +1,5 @@
 import { useMemo } from "react";
 
-import { Card, CardContent, Chip } from "@mui/material";
-
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
@@ -17,6 +15,7 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
 import { EntitySourceCodeVersions } from "../../source_code_versions/components/EntitySourceCodeVersions";
+import { Chip, Card, CardContent } from "../../ui";
 
 import { TemplateSidebar } from "./TemplateSidebar";
 
@@ -36,17 +35,12 @@ export const TemplateContent = () => {
           {
             label: "Documentation",
             content: (
-              <Card sx={{ position: "relative", overflow: "visible" }}>
+              <Card className="relative overflow-visible">
                 <Chip
+                  className="absolute -top-2.5 left-4 z-1"
                   label="Template Documentation"
                   color="info"
                   variant="filled"
-                  sx={{
-                    position: "absolute",
-                    top: -10,
-                    left: 16,
-                    zIndex: 1,
-                  }}
                 />
                 <CardContent>
                   <MarkdownViewer content={entity.documentation} />

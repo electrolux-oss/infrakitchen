@@ -8,6 +8,8 @@ export const EntityPoliciesTab = (props: {
   inheritedEntityIds?: string[];
 }) => (
   <BaseCard>
-    <EntityPoliciesBase {...props} />
+    <div className="col-span-full">
+      <EntityPoliciesBase {...props} />
+    </div>
   </BaseCard>
 );

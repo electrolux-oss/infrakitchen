@@ -1,6 +1,5 @@
-import RefreshIcon from "@mui/icons-material/Refresh";
-import { IconButton, Tooltip } from "@mui/material";
-
+import { RefreshIcon } from "../../../icons/material";
+import { IconButton, Tooltip } from "../../../ui";
 import { useEntityProvider } from "../../context/EntityContext";
 
 export const EntityRefreshButton = () => {

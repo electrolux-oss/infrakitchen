@@ -1,8 +1,9 @@
 import { FC } from "react";
 
-import { useColorScheme } from "@mui/material";
 import CodeMirror from "@uiw/react-codemirror";
 import { hcl } from "codemirror-lang-hcl";
+
+import { useColorScheme } from "../../../ui";
 
 export interface HclCodeViewerProps {
   value: string;
@@ -15,13 +16,12 @@ export const HclCodeViewer: FC<HclCodeViewerProps> = ({
   value,
   readOnly = true,
 }) => {
-  const { mode, systemMode } = useColorScheme();
-  const resolvedMode = mode === "system" ? systemMode : mode;
+  const { resolvedMode } = useColorScheme();
 
   return (
     <CodeMirror
       value={value}
-      theme={resolvedMode === "dark" ? "dark" : "light"}
+      theme={resolvedMode}
       extensions={hclExtensions}
       readOnly={readOnly}
       editable={!readOnly}

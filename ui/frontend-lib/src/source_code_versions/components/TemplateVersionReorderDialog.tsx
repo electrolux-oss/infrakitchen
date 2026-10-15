@@ -1,33 +1,28 @@
 import type { DragEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  IconButton,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  List,
-  MenuItem,
-  ListItemText,
-  Paper,
-  Stack,
-  Switch,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-
 import { useConfig } from "../../common";
-import { deleteIconButtonStyle } from "../../common/components/buttons/deleteIconButtonStyle";
+import { deleteIconButtonClass } from "../../common/components/buttons/deleteIconButtonClass";
 import { Entity } from "../../common/components/entities/Entity";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
+import { DeleteOutlinedIcon, DragIndicatorIcon } from "../../icons/material";
+import {
+  Spinner,
+  Switch,
+  Button,
+  IconButton,
+  Tooltip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  MenuItem,
+  ListItemText,
+  TextField,
+  List,
+} from "../../ui";
+import { cn } from "../../utils/cn";
 import {
   ENTITY_ACTION,
   ENTITY_STATUS,
@@ -359,100 +354,54 @@ export const TemplateVersionReorderDialog = ({
     >
       <DialogTitle>Manage Template Versions</DialogTitle>
       <DialogContent>
-        <Stack spacing={2} sx={{ pt: 1 }}>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-            }}
-          >
+        <div className="flex flex-col gap-4 pt-2">
+          <p className="m-0 text-body2 text-fg-muted">
             Reorder, update lifecycle state, enable/disable, or delete versions
-            for{" "}
-            <Box component="span" sx={{ fontWeight: "bold" }}>
-              {templateName}
-            </Box>
-            .
-          </Typography>
+            for <span className="font-bold">{templateName}</span>.
+          </p>
 
           {loading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-              <CircularProgress size={24} />
-            </Box>
+            <div className="flex justify-center py-8">
+              <Spinner size={24} />
+            </div>
           ) : (
-            <List
-              sx={{ p: 0, display: "flex", flexDirection: "column", gap: 1 }}
-            >
+            <List className="flex flex-col gap-2 p-0">
               {items.map((item, index) => (
-                <Paper
+                <div
+                  className={cn(
+                    "relative rounded-surface border border-divider bg-paper text-fg transition-opacity duration-[120ms]",
+                    draggedId === item.id && "opacity-40",
+                  )}
                   key={item.id}
                   ref={(el: HTMLDivElement | null) => {
                     if (el) rowRefs.current.set(item.id, el);
                     else rowRefs.current.delete(item.id);
                   }}
-                  variant="outlined"
                   onDragOver={(event) => handleDragOver(event, index)}
                   onDrop={handleDrop}
-                  sx={[
-                    {
-                      position: "relative",
-                      transition: "opacity 120ms ease",
-                    },
-                    draggedId === item.id
-                      ? {
-                          opacity: 0.4,
-                        }
-                      : {},
-                  ]}
                 >
                   {(dropIndicatorIndex === index ||
                     (dropIndicatorIndex === index + 1 &&
                       index === items.length - 1)) && (
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        left: 0,
-                        right: 0,
-                        ...(dropIndicatorIndex === index
-                          ? { top: -5 }
-                          : { bottom: -5 }),
-                        height: 2,
-                        borderRadius: 1,
-                        bgcolor: "primary.main",
-                        zIndex: 1,
-                        pointerEvents: "none",
-                      }}
+                    <div
+                      className={cn(
+                        "absolute right-0 left-0",
+                        dropIndicatorIndex === index
+                          ? "-top-1.25"
+                          : "-bottom-1.25",
+                        "pointer-events-none z-1 h-0.5 rounded-[8px] bg-primary",
+                      )}
                     />
                   )}
-                  <Box
-                    sx={{
-                      width: "100%",
-                      minHeight: 70,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1.5,
-                      px: 2,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: 24,
-                        height: 24,
-                        mr: 1.5,
-                        borderRadius: "50%",
-                        bgcolor: "action.selected",
-                        color: "text.secondary",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        flexShrink: 0,
-                      }}
-                    >
+                  <div className="flex min-h-17.5 w-full items-center gap-3 px-4">
+                    <div className="mr-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-selected text-[12px] font-semibold text-fg-muted">
                       {index + 1}
-                    </Box>
-                    <Box
-                      component="span"
+                    </div>
+                    <span
+                      className={cn(
+                        draggedId ? "cursor-grabbing" : "cursor-grab",
+                        "mr-3 inline-flex items-center",
+                      )}
                       draggable
                       onDragStart={(event) =>
                         handleDragStart(
@@ -462,21 +411,11 @@ export const TemplateVersionReorderDialog = ({
                         )
                       }
                       onDragEnd={handleDragEnd}
-                      sx={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        mr: 1.5,
-                        cursor: draggedId ? "grabbing" : "grab",
-                      }}
                     >
-                      <DragIndicatorIcon
-                        sx={{
-                          color: "text.secondary",
-                          pointerEvents: "none",
-                        }}
-                      />
-                    </Box>
+                      <DragIndicatorIcon className="pointer-events-none text-fg-muted" />
+                    </span>
                     <ListItemText
+                      className="my-0"
                       primary={
                         <Entity
                           entity={{
@@ -488,9 +427,9 @@ export const TemplateVersionReorderDialog = ({
                         />
                       }
                       secondary={`${item.resourcesCount || 0} resources`}
-                      sx={{ my: 0 }}
                     />
                     <TextField
+                      className="ml-4 min-w-45"
                       select
                       label="Lifecycle State"
                       value={
@@ -500,18 +439,12 @@ export const TemplateVersionReorderDialog = ({
                         handleLifecycleStateChange(item.id, event.target.value)
                       }
                       onClick={(event) => event.stopPropagation()}
-                      sx={{
-                        ml: 2,
-                        minWidth: 180,
-                      }}
-                      slotProps={{
-                        select: {
-                          renderValue: (value) => (
-                            <VersionLifecycleStateChip
-                              lifecycleState={value as string}
-                            />
-                          ),
-                        },
+                      selectProps={{
+                        renderValue: (value) => (
+                          <VersionLifecycleStateChip
+                            lifecycleState={value as string}
+                          />
+                        ),
                       }}
                     >
                       {Object.values(VERSION_LIFECYCLE_STATE).map((option) => (
@@ -542,15 +475,9 @@ export const TemplateVersionReorderDialog = ({
                           onChange={() => void handleToggleEnabled(item)}
                         />
                         {togglingId === item.id && (
-                          <CircularProgress
+                          <Spinner
+                            className="absolute top-[50%] left-[50%] mt-[-8px] ml-[-8px]"
                             size={16}
-                            sx={{
-                              position: "absolute",
-                              top: "50%",
-                              left: "50%",
-                              marginTop: "-8px",
-                              marginLeft: "-8px",
-                            }}
                           />
                         )}
                       </span>
@@ -560,7 +487,7 @@ export const TemplateVersionReorderDialog = ({
                         <span>
                           <IconButton
                             size="small"
-                            sx={deleteIconButtonStyle}
+                            className={deleteIconButtonClass}
                             disabled={
                               saving ||
                               deletingId === item.id ||
@@ -572,20 +499,20 @@ export const TemplateVersionReorderDialog = ({
                             }}
                           >
                             {deletingId === item.id ? (
-                              <CircularProgress size={16} color="inherit" />
+                              <Spinner size={16} color="inherit" />
                             ) : (
-                              <DeleteOutlineIcon fontSize="small" />
+                              <DeleteOutlinedIcon fontSize="small" />
                             )}
                           </IconButton>
                         </span>
                       </Tooltip>
                     )}
-                  </Box>
-                </Paper>
+                  </div>
+                </div>
               ))}
             </List>
           )}
-        </Stack>
+        </div>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={saving}>

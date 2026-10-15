@@ -1,11 +1,3 @@
-import CallSplitOutlinedIcon from "@mui/icons-material/CallSplitOutlined";
-import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
-import { Box } from "@mui/material";
-import {
-  GridColumnVisibilityModel,
-  GridRenderCellParams,
-} from "@mui/x-data-grid";
-
 import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
@@ -18,9 +10,14 @@ import { ColumnFilterSpec } from "../../common/components/filter_panel/FilterCon
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
+import {
+  CallSplitOutlinedIcon,
+  LocalOfferOutlinedIcon,
+} from "../../icons/material";
 import { GqlIntegrationShort } from "../../integrations/graphql";
 import { GqlSecretShort } from "../../secrets/graphql";
 import { toolColumn } from "../../tools/components/toolColumn";
+import { ColumnVisibilityModel, RenderCellParams } from "../../ui";
 import {
   ENTITY_STATE,
   ENTITY_STATUS,
@@ -30,7 +27,7 @@ import { GqlResourceShort } from "../graphql";
 
 // --- Column visibility defaults ---
 
-export const resourceDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
+export const resourceDefaultColumnVisibilityModel: ColumnVisibilityModel = {
   template: true,
   created_at: false,
   creator: false,
@@ -62,24 +59,14 @@ const nameValueFilter = (field: string): ColumnFilterSpec => ({
 const renderEntityList = (entities: Array<{ id: string }>) => {
   if (entities.length === 0) return null;
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexWrap: "wrap",
-        alignItems: "center",
-        columnGap: 0.5,
-      }}
-    >
+    <div className="flex flex-wrap items-center gap-x-1">
       {entities.map((entity, index) => (
-        <Box
-          key={entity.id}
-          sx={{ display: "inline-flex", alignItems: "center" }}
-        >
+        <div key={entity.id} className="inline-flex items-center">
           <Entity entity={entity} />
           {index < entities.length - 1 && ","}
-        </Box>
+        </div>
       ))}
-    </Box>
+    </div>
   );
 };
 
@@ -93,7 +80,7 @@ export const resourceColumns: EntityTableColumn[] = [
     sortable: false,
     align: "center",
     headerAlign: "center",
-    renderCell: (params: GridRenderCellParams) => (
+    renderCell: (params: RenderCellParams) => (
       <FavoriteButton
         componentId={String(params.row.id)}
         componentType="resource"
@@ -115,7 +102,7 @@ export const resourceColumns: EntityTableColumn[] = [
       valueType: "text",
       defaultOperator: "like",
     },
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: RenderCellParams) => {
       return <Entity entity={params.row} />;
     },
   },
@@ -137,7 +124,7 @@ export const resourceColumns: EntityTableColumn[] = [
       }),
     },
     valueGetter: (value: any) => value?.name || "",
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: RenderCellParams) => {
       const template = params.row.template;
       return <Entity entity={template} />;
     },
@@ -192,7 +179,7 @@ export const resourceColumns: EntityTableColumn[] = [
                 return {
                   label: ref || e.identifier,
                   value: e.id,
-                  icon: <RefIcon sx={{ fontSize: 15 }} color="action" />,
+                  icon: <RefIcon className="text-[15px]" color="action" />,
                   lifecycleState: e.lifecycleState,
                   breakingChanges: e.breakingChanges,
                   ...(templateId ? {} : { templateName: e.template?.name }),
@@ -286,7 +273,7 @@ export const resourceColumns: EntityTableColumn[] = [
       if (!scv) return "";
       return scv.sourceCodeVersion ?? scv.sourceCodeBranch;
     },
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: RenderCellParams) => {
       const scv = params.row.sourceCodeVersion;
       if (!scv) return null;
       return <Entity entity={scv} lifecycleVariant="dot" />;
@@ -309,7 +296,7 @@ export const resourceColumns: EntityTableColumn[] = [
       }),
     },
     valueGetter: (value: any) => value?.name || "",
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: RenderCellParams) => {
       const project = params.row.project;
       return <Entity entity={project} />;
     },
@@ -356,7 +343,7 @@ export const resourceColumns: EntityTableColumn[] = [
       },
     ],
     valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
-    renderCell: (params: GridRenderCellParams) => (
+    renderCell: (params: RenderCellParams) => (
       <StatusChip
         status={String(params.row.status).toLowerCase()}
         state={String(params.row.state).toLowerCase()}
@@ -366,8 +353,8 @@ export const resourceColumns: EntityTableColumn[] = [
   ...createdUpdatedColumns({
     createdField: "created_at",
     updatedField: "updated_at",
-    createdValue: (params: GridRenderCellParams) => params.row.createdAt,
-    updatedValue: (params: GridRenderCellParams) => params.row.updatedAt,
+    createdValue: (params: RenderCellParams) => params.row.createdAt,
+    updatedValue: (params: RenderCellParams) => params.row.updatedAt,
   }),
   userColumn(),
   {
@@ -385,7 +372,7 @@ export const resourceColumns: EntityTableColumn[] = [
       }),
     },
     valueGetter: (_value: any, row: any) => row.storage?.name || "",
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: RenderCellParams) => {
       const storage = params.row.storage;
       if (!storage) return null;
       return <Entity entity={storage} />;
@@ -407,7 +394,7 @@ export const resourceColumns: EntityTableColumn[] = [
       }),
     },
     valueGetter: (_value: any, row: any) => row.workspace?.name || "",
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: RenderCellParams) => {
       const workspace = params.row.workspace;
       if (!workspace) return null;
       return <Entity entity={workspace} />;
@@ -432,7 +419,7 @@ export const resourceColumns: EntityTableColumn[] = [
       (row.integrationIds || [])
         .map((i: GqlIntegrationShort) => i.name)
         .join(", "),
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: RenderCellParams) => {
       const integrations: GqlIntegrationShort[] =
         params.row.integrationIds || [];
       return renderEntityList(integrations);
@@ -455,7 +442,7 @@ export const resourceColumns: EntityTableColumn[] = [
     },
     valueGetter: (_value: any, row: any) =>
       (row.secretIds || []).map((s: GqlSecretShort) => s.name).join(", "),
-    renderCell: (params: GridRenderCellParams) =>
+    renderCell: (params: RenderCellParams) =>
       renderEntityList(params.row.secretIds || []),
   },
   {
@@ -465,7 +452,7 @@ export const resourceColumns: EntityTableColumn[] = [
     flex: 1,
     valueGetter: (_value: any, row: any) =>
       (row.parents || []).map((p: GqlResourceShort) => p.name).join(", "),
-    renderCell: (params: GridRenderCellParams) =>
+    renderCell: (params: RenderCellParams) =>
       renderEntityList(params.row.parents || []),
   },
   {
@@ -475,7 +462,7 @@ export const resourceColumns: EntityTableColumn[] = [
     flex: 1,
     valueGetter: (_value: any, row: any) =>
       (row.children || []).map((c: GqlResourceShort) => c.name).join(", "),
-    renderCell: (params: GridRenderCellParams) =>
+    renderCell: (params: RenderCellParams) =>
       renderEntityList(params.row.children || []),
   },
   {
@@ -486,7 +473,7 @@ export const resourceColumns: EntityTableColumn[] = [
     filter: nameValueFilter("variables"),
     valueGetter: (_value: any, row: any) =>
       (row.variables || []).map((v: { name: string }) => v.name).join(", "),
-    renderCell: (params: GridRenderCellParams) =>
+    renderCell: (params: RenderCellParams) =>
       (params.row.variables || [])
         .map((v: { name: string }) => v.name)
         .join(", ") || null,
@@ -499,7 +486,7 @@ export const resourceColumns: EntityTableColumn[] = [
     filter: nameValueFilter("outputs"),
     valueGetter: (_value: any, row: any) =>
       (row.outputs || []).map((o: { name: string }) => o.name).join(", "),
-    renderCell: (params: GridRenderCellParams) =>
+    renderCell: (params: RenderCellParams) =>
       (params.row.outputs || [])
         .map((o: { name: string }) => o.name)
         .join(", ") || null,
@@ -518,7 +505,7 @@ export const resourceColumns: EntityTableColumn[] = [
             `${tag.name}:${String(tag.value ?? "")}`,
         )
         .join(", "),
-    renderCell: (params: GridRenderCellParams) =>
+    renderCell: (params: RenderCellParams) =>
       (params.row.dependencyTags || [])
         .map(
           (tag: { name: string; value: unknown }) =>
@@ -539,7 +526,7 @@ export const resourceColumns: EntityTableColumn[] = [
             `${cfg.name}:${String(cfg.value ?? "")}`,
         )
         .join(", "),
-    renderCell: (params: GridRenderCellParams) =>
+    renderCell: (params: RenderCellParams) =>
       (params.row.dependencyConfig || [])
         .map(
           (cfg: { name: string; value: unknown }) =>

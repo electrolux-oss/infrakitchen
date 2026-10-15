@@ -1,12 +1,11 @@
 import { useState } from "react";
 
-import SyncIcon from "@mui/icons-material/Sync";
-import { Button, Tooltip } from "@mui/material";
-
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { SyncIcon } from "../../icons/material";
+import { Button, Tooltip } from "../../ui";
 import { GqlWorkspace, SYNC_WORKSPACE_METADATA_MUTATION } from "../graphql";
 
 /**

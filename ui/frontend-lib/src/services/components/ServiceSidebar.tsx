@@ -1,26 +1,26 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import { Box, Link, TextField, Typography } from "@mui/material";
-
 import { UserAvatar } from "../../common";
 import {
   EntitySidebar,
   SidebarSection,
 } from "../../common/components/cards/EntitySidebar";
+import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
+import { EditableNameField } from "../../common/components/editors/EditableNameField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import { MultiSelectEditor } from "../../common/components/editors/MultiSelectEditor";
-import { Entity } from "../../common/components/entities/Entity";
 import {
   CommonField,
   GetReferenceUrlValue,
 } from "../../common/components/fields/CommonField";
-import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { notify, notifyError } from "../../common/hooks/useNotification";
+import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
+import { notifyError } from "../../common/hooks/useNotification";
 import { SubscribeNotificationButton } from "../../resources/components/notifications/SubscribeNotificationButton";
+import { TextField, Link } from "../../ui";
 import { GqlUserShort, USERS_SHORT_QUERY } from "../../users/graphql";
 import { GqlService } from "../graphql";
 import {
@@ -42,15 +42,11 @@ const sameUserSet = (a: UserOption[] | null, b: UserOption[] | null) => {
 
 const ownersDisplay = (owners: UserOption[] | null) => {
   if (!owners || owners.length === 0) {
-    return (
-      <Typography variant="body2" sx={{ color: "text.secondary" }}>
-        None
-      </Typography>
-    );
+    return <p className="m-0 text-body2 text-fg-muted">None</p>;
   }
 
   return (
-    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+    <div className="flex flex-wrap gap-2">
       {owners.map((owner) => (
         <UserAvatar
           key={owner.id}
@@ -58,7 +54,7 @@ const ownersDisplay = (owners: UserOption[] | null) => {
           identifier={owner.identifier}
         />
       ))}
-    </Box>
+    </div>
   );
 };
 
@@ -77,7 +73,7 @@ export const ServiceSidebar = ({
   onSubscriptionChange,
 }: ServiceSidebarProps) => {
   const { ikApi } = useConfig();
-  const { actions, refreshEntity } = useEntityProvider();
+  const { actions } = useEntityProvider();
   const canEdit = actions.includes("edit");
 
   const { loading, isSubscribed, handleSubscribe, handleUnsubscribe } =
@@ -111,21 +107,10 @@ export const ServiceSidebar = ({
     }
   }, [ikApi]);
 
-  const saveField = useCallback(
-    async (input: ServiceUpdateFieldInput) => {
-      try {
-        await ikApi.graphqlRequest(UPDATE_SERVICE_MUTATION, {
-          id: service.id,
-          input,
-        });
-        notify("Service updated successfully", "success");
-        refreshEntity?.();
-      } catch (error) {
-        notifyError(error);
-        throw error;
-      }
-    },
-    [ikApi, service.id, refreshEntity],
+  const saveField = useEntityFieldSaver<ServiceUpdateFieldInput>(
+    UPDATE_SERVICE_MUTATION,
+    service.id,
+    "Service",
   );
 
   const ownerValues = useMemo<UserOption[]>(
@@ -156,24 +141,10 @@ export const ServiceSidebar = ({
           />
         }
       >
-        <CommonEditableField<string>
-          name={"Name"}
-          canEdit={canEdit}
+        <EditableNameField
           value={service.name}
-          ariaLabel="Edit name"
-          display={<span>{service.name}</span>}
+          canEdit={canEdit}
           onSave={(value) => saveField({ name: value })}
-          renderEditor={({ value, onChange }) => (
-            <TextField
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              slotProps={{ input: { "aria-label": "Name" } }}
-              fullWidth
-              margin="normal"
-              autoFocus
-            />
-          )}
-          size={12}
         />
         <CommonEditableField<string | null>
           name={"Display Name"}
@@ -186,13 +157,13 @@ export const ServiceSidebar = ({
             <TextField
               value={value ?? ""}
               onChange={(e) => onChange(e.target.value)}
-              slotProps={{ input: { "aria-label": "Display Name" } }}
+              aria-label="Display Name"
               fullWidth
               margin="normal"
               autoFocus
             />
           )}
-          size={12}
+          span="full"
         />
         <EditableDescriptionField
           value={service.description}
@@ -214,7 +185,7 @@ export const ServiceSidebar = ({
               <GetReferenceUrlValue {...service.project} entityName="project" />
             ) : null
           }
-          size={12}
+          span="full"
         />
         <CommonEditableField<UserOption[]>
           name={"Owners"}
@@ -238,7 +209,7 @@ export const ServiceSidebar = ({
               getOptionLabel={getUserLabel}
             />
           )}
-          size={12}
+          span="full"
         />
         <CommonEditableField<string>
           name={"Repository"}
@@ -248,10 +219,10 @@ export const ServiceSidebar = ({
           display={
             service.repositoryUrl ? (
               <Link
+                className="break-all"
                 href={service.repositoryUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                sx={{ wordBreak: "break-all" }}
               >
                 {service.repositoryUrl}
               </Link>
@@ -272,38 +243,17 @@ export const ServiceSidebar = ({
               value={value}
               onChange={(e) => onChange(e.target.value)}
               placeholder="https://github.com/org/repo"
-              slotProps={{ input: { "aria-label": "Repository URL" } }}
+              aria-label="Repository URL"
               fullWidth
               margin="normal"
               autoFocus
             />
           )}
-          size={12}
+          span="full"
         />
       </SidebarSection>
 
-      <SidebarSection title="Details">
-        <CommonField
-          name="Created by"
-          value={
-            service.creator ? (
-              <Entity entity={{ ...service.creator, entityType: "user" }} />
-            ) : null
-          }
-          size={12}
-        />
-        <CommonField
-          name="Created"
-          value={<RelativeTime date={service.createdAt} />}
-          size={6}
-        />
-        <CommonField
-          name="Last Updated"
-          value={<RelativeTime date={service.updatedAt} />}
-          size={6}
-        />
-        <CommonField name="Revision" value={service.revisionNumber} size={12} />
-      </SidebarSection>
+      <SidebarDetailsSection entity={service} />
     </EntitySidebar>
   );
 };

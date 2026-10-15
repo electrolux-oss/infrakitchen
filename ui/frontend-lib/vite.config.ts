@@ -1,12 +1,13 @@
 import { resolve } from 'path'
 
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), dts({ include: ['src'], outDir: 'dist', insertTypesEntry: true })],
+  plugins: [react(), tailwindcss(), dts({ include: ['src'], outDir: 'dist', insertTypesEntry: true })],
   build: {
     minify: true,
     sourcemap: false,

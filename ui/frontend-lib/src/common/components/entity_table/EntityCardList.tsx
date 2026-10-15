@@ -1,19 +1,22 @@
-import { Fragment, MouseEvent, ReactNode, RefObject } from "react";
+import { Fragment, MouseEvent, ReactNode } from "react";
 
-import { Box, LinearProgress, Skeleton, Typography } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import type { GridApi, GridColumnVisibilityModel } from "@mui/x-data-grid";
+import {
+  ColumnVisibilityModel,
+  LinearProgress,
+  renderCellContent,
+  Skeleton,
+} from "../../../ui";
+import { cn } from "../../../utils/cn";
 
 import type { EntityTableColumn } from "./EntityTable";
 
 export interface EntityCardListProps {
   rows: any[];
   columns: EntityTableColumn[];
-  columnVisibilityModel?: GridColumnVisibilityModel;
+  columnVisibilityModel?: ColumnVisibilityModel;
   loading: boolean;
   skeletonCount: number;
   emptyLabel: string;
-  apiRef: RefObject<GridApi | null>;
   onRowClick?: (row: any, event: MouseEvent) => void;
 }
 
@@ -39,34 +42,9 @@ const resolveRoles = (columns: EntityTableColumn[]) => {
 const isEmptyValue = (value: unknown) =>
   value === null || value === undefined || value === "" || value === false;
 
-// Renders one cell outside the DataGrid. Renderers in this codebase only read
-// `params.row` / `params.value`, so a minimal params object is enough.
-const renderValue = (
-  column: EntityTableColumn,
-  row: any,
-  apiRef: EntityCardListProps["apiRef"],
-): ReactNode => {
-  const field = column.field;
-  const rawValue = row?.[field];
-  const value = column.valueGetter
-    ? (column.valueGetter as any)(rawValue, row, column, apiRef)
-    : rawValue;
-  const formattedValue = column.valueFormatter
-    ? (column.valueFormatter as any)(value, row, column, apiRef)
-    : value;
-
-  if (column.renderCell) {
-    return column.renderCell({
-      id: row.id,
-      row,
-      field,
-      value,
-      formattedValue,
-      colDef: column,
-    } as any);
-  }
-  if (isEmptyValue(formattedValue)) return null;
-  return String(formattedValue);
+const renderValue = (column: EntityTableColumn, row: any): ReactNode => {
+  const value = renderCellContent(column, row, row?.id);
+  return value === "" ? null : value;
 };
 
 export const EntityCardList = ({
@@ -76,7 +54,6 @@ export const EntityCardList = ({
   loading,
   skeletonCount,
   emptyLabel,
-  apiRef,
   onRowClick,
 }: EntityCardListProps) => {
   const visibleColumns = columns.filter(
@@ -88,51 +65,46 @@ export const EntityCardList = ({
 
   if (loading && rows.length === 0) {
     return (
-      <Box>
+      <div>
         {Array.from({ length: Math.min(skeletonCount, 5) }).map((_, index) => (
-          <Box
+          <div
+            className={cn(
+              index === 0 ? "border-t-0" : "border-t",
+              "border-t-divider",
+              "px-4 py-3",
+            )}
             key={index}
-            sx={{
-              px: 2,
-              py: 1.5,
-              borderTop: index === 0 ? "none" : "1px solid",
-              borderTopColor: "divider",
-            }}
           >
             <Skeleton variant="text" width="60%" height={24} />
             <Skeleton variant="text" width="40%" />
             <Skeleton variant="text" width="50%" />
-          </Box>
+          </div>
         ))}
-      </Box>
+      </div>
     );
   }
 
   if (rows.length === 0) {
     return (
-      <Box sx={{ py: 6, textAlign: "center" }}>
-        <Typography variant="body2" color="text.secondary">
-          {emptyLabel}
-        </Typography>
-      </Box>
+      <div className="py-12 text-center">
+        <p className="m-0 text-body2 text-fg-muted">{emptyLabel}</p>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ position: "relative" }}>
+    <div className="relative">
       {loading && (
-        <LinearProgress
-          sx={{ position: "absolute", top: 0, left: 0, right: 0, height: 2 }}
-        />
+        <LinearProgress className="absolute top-0 right-0 left-0 h-0.5" />
       )}
-      <Box role="list">
+      <div role="list">
         {rows.map((row, index) => {
           let title: ReactNode = null;
           const badges: ReactNode[] = [];
           const meta: { column: EntityTableColumn; value: ReactNode }[] = [];
 
           roles.forEach(([column, role]) => {
-            const value = renderValue(column, row, apiRef);
+            const value = renderValue(column, row);
             if (isEmptyValue(value)) return;
             if (role === "title") title = value;
             else if (role === "badge")
@@ -141,87 +113,44 @@ export const EntityCardList = ({
           });
 
           return (
-            <Box
+            <div
               key={row.id ?? index}
               role="listitem"
               onClick={
                 onRowClick ? (event) => onRowClick(row, event) : undefined
               }
-              sx={{
-                px: 2,
-                py: 1.5,
-                borderTop: index === 0 ? "none" : "1px solid",
-                borderTopColor: "divider",
-                fontSize: "0.875rem",
-                ...(onRowClick && {
-                  cursor: "pointer",
-                  "&:hover": {
-                    backgroundColor: (theme) =>
-                      alpha(theme.palette.primary.main, 0.08),
-                  },
-                }),
-              }}
+              className={cn(
+                "px-4 py-3 text-[0.875rem]",
+                index > 0 && "border-t border-divider",
+                onRowClick && "cursor-pointer hover:bg-primary/8",
+              )}
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Box
-                  sx={{
-                    flex: 1,
-                    minWidth: 0,
-                    fontWeight: 500,
-                    overflowWrap: "anywhere",
-                  }}
-                >
+              <div className="flex items-center gap-2">
+                <div className="min-w-0 flex-1 font-medium wrap-anywhere">
                   {title}
-                </Box>
+                </div>
                 {badges.length > 0 && (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 0.5,
-                      flexShrink: 0,
-                    }}
-                  >
+                  <div className="flex shrink-0 items-center gap-1">
                     {badges}
-                  </Box>
+                  </div>
                 )}
-              </Box>
+              </div>
               {meta.length > 0 && (
-                <Box
-                  component="dl"
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: "auto minmax(0, 1fr)",
-                    columnGap: 1.5,
-                    rowGap: 0.75,
-                    alignItems: "center",
-                    m: 0,
-                    mt: 1,
-                  }}
-                >
+                <dl className="m-0 mt-2 grid grid-cols-[auto_minmax(0,_1fr)] items-center gap-x-3 gap-y-1.5">
                   {meta.map(({ column, value }) => (
                     <Fragment key={column.field}>
-                      <Typography
-                        component="dt"
-                        variant="caption"
-                        color="text.secondary"
-                      >
+                      <dt className="m-0 text-caption text-fg-muted">
                         {column.headerName}
-                      </Typography>
-                      <Box
-                        component="dd"
-                        sx={{ m: 0, minWidth: 0, overflowWrap: "anywhere" }}
-                      >
-                        {value}
-                      </Box>
+                      </dt>
+                      <dd className="m-0 min-w-0 wrap-anywhere">{value}</dd>
                     </Fragment>
                   ))}
-                </Box>
+                </dl>
               )}
-            </Box>
+            </div>
           );
         })}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };

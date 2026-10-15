@@ -1,7 +1,5 @@
 import { useCallback } from "react";
 
-import { TextField } from "@mui/material";
-
 import { OverviewCard } from "../../common/components/cards/OverviewCard";
 import { BooleanInlineField } from "../../common/components/editors/BooleanInlineField";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
@@ -17,6 +15,7 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { SlackSync } from "../../common/providers/slack/SlackSync";
+import { TextField } from "../../ui";
 import { GqlUser } from "../graphql";
 import {
   UserUpdateFieldInput,
@@ -80,7 +79,7 @@ export const UserOverview = ({ user }: UserAboutProps) => {
         value={user.deactivated}
         ariaLabel="Edit deactivated"
         onSave={(value) => saveField({ deactivated: value })}
-        size={6}
+        span="half"
       />
       {isServiceAccount && (
         <CommonEditableField<string>
@@ -95,7 +94,7 @@ export const UserOverview = ({ user }: UserAboutProps) => {
             <TextField
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              slotProps={{ input: { "aria-label": "Password" } }}
+              aria-label="Password"
               type="password"
               fullWidth
               margin="normal"
@@ -103,7 +102,7 @@ export const UserOverview = ({ user }: UserAboutProps) => {
               helperText="Password for the user"
             />
           )}
-          size={6}
+          span="half"
         />
       )}
       <CommonField

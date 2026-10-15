@@ -1,9 +1,5 @@
 import { useState } from "react";
 
-import EditIcon from "@mui/icons-material/Edit";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import { Button } from "@mui/material";
-
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
@@ -16,6 +12,8 @@ import { WiringRule } from "../../common/components/viewers/Wiring/types";
 import { WiringDiagram } from "../../common/components/viewers/Wiring/WiringDiagram";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
+import { EditIcon, VisibilityIcon } from "../../icons/material";
+import { Button } from "../../ui";
 import { GqlBlueprint } from "../graphql";
 
 import { BlueprintSidebar } from "./BlueprintSidebar";

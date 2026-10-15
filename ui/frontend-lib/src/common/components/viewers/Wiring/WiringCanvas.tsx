@@ -1,9 +1,5 @@
 import { useMemo, useState } from "react";
 
-import FullscreenIcon from "@mui/icons-material/Fullscreen";
-import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { Box, IconButton, Tooltip, useColorScheme } from "@mui/material";
 import {
   Background,
   Controls,
@@ -14,9 +10,17 @@ import {
 import "@xyflow/react/dist/style.css";
 import { useShallow } from "zustand/react/shallow";
 
+import {
+  FullscreenExitIcon,
+  FullscreenIcon,
+  InfoOutlinedIcon,
+} from "../../../../icons/material";
+import { IconButton, Tooltip, useColorScheme } from "../../../../ui";
+import { cn } from "../../../../utils/cn";
+
 import { ConstantNode } from "./ConstantNode";
 import { ExternalNode } from "./ExternalNode";
-import { DiagramNode, useCanvasPalette } from "./helpers";
+import { CANVAS_PALETTE, DiagramNode } from "./helpers";
 import { TemplateNode } from "./TemplateNode";
 import { useWiringCanvasGraph } from "./useWiringCanvasGraph";
 import {
@@ -56,8 +60,8 @@ function WiringCanvasInner({
   onConstantUpdate,
   onConstantDefaultValueUpdate,
 }: WiringCanvasProps) {
-  const { mode } = useColorScheme();
-  const palette = useCanvasPalette();
+  const { resolvedMode: mode } = useColorScheme();
+  const palette = CANVAS_PALETTE;
   const accent = palette.info.main;
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -117,29 +121,18 @@ function WiringCanvasInner({
   );
 
   return (
-    <Box
-      sx={{
-        width: "100%",
-        height: isFullscreen ? "100vh" : 600,
-        display: "flex",
-        border: isFullscreen ? "none" : `1px solid ${palette.divider}`,
-        borderRadius: isFullscreen ? 0 : "var(--template-surface-radius)",
-        overflow: "hidden",
-        "& .react-flow__handle": {
-          opacity: 1,
-          visibility: "visible",
-          pointerEvents: "all",
-        },
-        ...(isFullscreen && {
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 1300,
-          background: palette.background.default,
-        }),
-      }}
+    <div
+      className={cn(
+        "flex w-full overflow-hidden [&_.react-flow__handle]:[pointer-events:all] [&_.react-flow__handle]:visible [&_.react-flow__handle]:opacity-100",
+        isFullscreen
+          ? "fixed inset-0 z-1300 h-screen"
+          : "h-[600px] rounded-surface border",
+      )}
+      style={
+        isFullscreen
+          ? { background: palette.background.default }
+          : { borderColor: palette.divider }
+      }
     >
       <WiringCanvasSidebar
         selectedIds={selectedIds}
@@ -149,7 +142,7 @@ function WiringCanvasInner({
         onExternalTemplateAdd={onExternalTemplateAdd}
         onConstantAdd={onConstantAdd}
       />
-      <Box sx={{ flex: 1, minWidth: 0 }}>
+      <div className="min-w-0 flex-1">
         <ReactFlow<DiagramNode>
           nodes={nodes}
           edges={styledEdges}
@@ -195,8 +188,8 @@ function WiringCanvasInner({
               arrow
             >
               <InfoOutlinedIcon
+                className="cursor-help text-fg-muted"
                 fontSize="small"
-                sx={{ color: "text.secondary", cursor: "help" }}
               />
             </Tooltip>
             <Tooltip
@@ -217,8 +210,8 @@ function WiringCanvasInner({
             </Tooltip>
           </Panel>
         </ReactFlow>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }
 

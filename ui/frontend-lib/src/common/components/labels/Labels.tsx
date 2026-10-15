@@ -1,7 +1,7 @@
 import { FC, useState } from "react";
 
-import { Box, ClickAwayListener } from "@mui/material";
-
+import { ClickAwayListener } from "../../../ui";
+import { cn } from "../../../utils/cn";
 import { PlaceholderText } from "../fields/PlaceholderDescription";
 
 import { Label } from "./Label";
@@ -32,14 +32,7 @@ export const Labels: FC<LabelsProps> = ({
 
   return (
     <ClickAwayListener onClickAway={() => setExpanded(false)}>
-      <Box
-        sx={{
-          display: "flex",
-          gap: 0.5,
-          flexWrap: "wrap",
-          ...(margins && { marginTop: 1, marginBottom: 2 }),
-        }}
-      >
+      <div className={cn("flex flex-wrap gap-1", margins && "mt-2 mb-4")}>
         {labels.slice(0, max).map((label) => (
           <Label key={label} label={label} />
         ))}
@@ -57,10 +50,10 @@ export const Labels: FC<LabelsProps> = ({
             onKeyDown={(event) => event.stopPropagation()}
             aria-expanded={false}
             aria-label={`Show all ${labels.length} labels`}
-            sx={{ cursor: "pointer" }}
+            className="cursor-pointer"
           />
         )}
-      </Box>
+      </div>
     </ClickAwayListener>
   );
 };

@@ -1,8 +1,13 @@
-import SvgIcon from "@mui/material/SvgIcon";
-
 export function InfrakitchenLogo() {
   return (
-    <SvgIcon sx={{ height: 21, width: 100, mr: 2, border: "1px solid white" }}>
+    // A 24-unit outer svg around the drawing keeps the logo's size and
+    // placement in line with the other icons.
+    <svg
+      viewBox="0 0 24 24"
+      focusable="false"
+      aria-hidden
+      className="mr-4 inline-block h-[21px] w-[100px] shrink-0 fill-current text-[1.5rem] select-none [border:1px_solid_white]"
+    >
       <svg
         version="1.1"
         id="Layer_1"
@@ -333,7 +338,7 @@ M292.697021,764.778442
 z"
         />
       </svg>
-    </SvgIcon>
+    </svg>
   );
 }
 

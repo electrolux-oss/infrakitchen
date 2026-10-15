@@ -1,17 +1,16 @@
 import { useNavigate } from "react-router";
 
-import { Box, Chip, Grid } from "@mui/material";
-
 import {
   EntitySidebar,
   SidebarSection,
 } from "../../common/components/cards/EntitySidebar";
-import { Entity } from "../../common/components/entities/Entity";
+import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
 import { CommonField } from "../../common/components/fields/CommonField";
 import { Duration } from "../../common/components/fields/Duration";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import StatusChip from "../../common/StatusChip";
+import { Chip } from "../../ui";
 import { GqlWorkflow } from "../graphql";
 
 export interface WorkflowSidebarProps {
@@ -38,28 +37,26 @@ export const WorkflowSidebar = ({ workflow }: WorkflowSidebarProps) => {
   return (
     <EntitySidebar ariaLabel="Workflow details">
       <SidebarSection title="Status">
-        <Grid size={12}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <div className="col-span-full">
+          <div className="flex items-center gap-2">
             <StatusChip status={workflow.status} />
             <Chip label={workflow.action.toUpperCase()} variant="outlined" />
-          </Box>
-        </Grid>
+          </div>
+        </div>
         {workflow.errorMessage && (
           <CommonField
             name="Error"
             value={
               <Chip
+                className="h-auto whitespace-normal"
+                labelClassName="py-1"
                 label={workflow.errorMessage}
                 color="error"
                 size="small"
                 variant="outlined"
-                sx={{
-                  height: "auto",
-                  "& .MuiChip-label": { whiteSpace: "normal", py: 0.5 },
-                }}
               />
             }
-            size={12}
+            span="full"
           />
         )}
       </SidebarSection>
@@ -70,14 +67,14 @@ export const WorkflowSidebar = ({ workflow }: WorkflowSidebarProps) => {
             <CommonField
               name="Started"
               value={<RelativeTime date={workflow.startedAt} />}
-              size={6}
+              span="half"
             />
           )}
           {workflow.completedAt && (
             <CommonField
               name="Completed"
               value={<RelativeTime date={workflow.completedAt} />}
-              size={6}
+              span="half"
             />
           )}
           {workflow.startedAt && workflow.completedAt && (
@@ -89,7 +86,7 @@ export const WorkflowSidebar = ({ workflow }: WorkflowSidebarProps) => {
                   end={workflow.completedAt}
                 />
               }
-              size={12}
+              span="full"
             />
           )}
         </SidebarSection>
@@ -97,8 +94,8 @@ export const WorkflowSidebar = ({ workflow }: WorkflowSidebarProps) => {
 
       {templates.length > 0 && (
         <SidebarSection title="Templates" count={templates.length}>
-          <Grid size={12}>
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+          <div className="col-span-full">
+            <div className="flex flex-wrap gap-2">
               {templates.map((t) => (
                 <Chip
                   key={t.id}
@@ -107,27 +104,14 @@ export const WorkflowSidebar = ({ workflow }: WorkflowSidebarProps) => {
                   onClick={() => navigate(`${linkPrefix}templates/${t.id}`)}
                 />
               ))}
-            </Box>
-          </Grid>
+            </div>
+          </div>
         </SidebarSection>
       )}
 
-      <SidebarSection title="Details">
-        <CommonField
-          name="Created by"
-          value={
-            workflow.creator ? (
-              <Entity entity={{ ...workflow.creator, entityType: "user" }} />
-            ) : null
-          }
-          size={12}
-        />
-        <CommonField
-          name="Created"
-          value={<RelativeTime date={workflow.createdAt} />}
-          size={12}
-        />
-      </SidebarSection>
+      <SidebarDetailsSection
+        entity={{ creator: workflow.creator, createdAt: workflow.createdAt }}
+      />
     </EntitySidebar>
   );
 };

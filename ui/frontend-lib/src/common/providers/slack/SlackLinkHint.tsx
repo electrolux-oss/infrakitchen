@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router";
 
-import { Alert, Button, CircularProgress, Typography } from "@mui/material";
-
+import { Alert, Spinner, Button } from "../../../ui";
 import { useConfig } from "../../context/ConfigContext";
 import { usePermissionProvider } from "../../context/PermissionContext";
 import { notify } from "../../hooks/useNotification";
@@ -42,9 +41,9 @@ export const SlackLinkHint = ({
         action={
           canSetUp && (
             <Button
+              className="whitespace-nowrap"
               color="inherit"
               size="small"
-              sx={{ whiteSpace: "nowrap" }}
               onClick={() => navigate(`${linkPrefix}integrations/slack/setup`)}
             >
               Set up Slack
@@ -70,12 +69,12 @@ export const SlackLinkHint = ({
       severity={error ? "warning" : "info"}
       action={
         <Button
+          className="whitespace-nowrap"
           color="inherit"
           size="small"
-          sx={{ whiteSpace: "nowrap" }}
           onClick={handleLink}
           disabled={linking}
-          startIcon={linking ? <CircularProgress size={14} /> : undefined}
+          startIcon={linking ? <Spinner size={14} /> : undefined}
         >
           Link Slack account
         </Button>
@@ -85,11 +84,7 @@ export const SlackLinkHint = ({
         ? "Link your Slack account to receive Slack notifications."
         : "Link this user's Slack account to deliver Slack notifications."}
       {pendingNote && ` ${pendingNote}`}
-      {error && (
-        <Typography variant="caption" sx={{ display: "block", mt: 0.5 }}>
-          {error}
-        </Typography>
-      )}
+      {error && <span className="mt-1 block text-caption">{error}</span>}
     </Alert>
   );
 };

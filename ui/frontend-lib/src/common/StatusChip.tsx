@@ -1,12 +1,13 @@
 import React from "react";
 
-import BlockOutlinedIcon from "@mui/icons-material/BlockOutlined";
-import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
-import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
-import PendingOutlinedIcon from "@mui/icons-material/PendingOutlined";
-import { Tooltip, Box } from "@mui/material";
-import { SxProps, Theme } from "@mui/system";
-
+import {
+  BlockOutlinedIcon,
+  CancelOutlinedIcon,
+  CheckCircleOutlinedIcon,
+  PendingOutlinedIcon,
+} from "../icons/material";
+import { Tooltip } from "../ui";
+import { cn } from "../utils/cn";
 import {
   ENTITY_STATE,
   ENTITY_STATUS,
@@ -14,12 +15,13 @@ import {
   WORKER_STATUS,
 } from "../utils/constants";
 
-import { getStateColor } from "./utils";
+import { getStateColor, paletteTextClass } from "./utils";
 
 interface StatusChipProps {
   status: INTEGRATION_STATUS | ENTITY_STATUS | WORKER_STATUS | string;
   state?: ENTITY_STATE | string;
-  sx?: SxProps<Theme>;
+  /** Class names applied to the status icon. */
+  className?: string;
   compact?: boolean;
 }
 
@@ -29,66 +31,32 @@ const iconMap: Record<string, React.ComponentType<any>> = {
   "grey.400": BlockOutlinedIcon,
 };
 
-const getThemeColor = (theme: any, colorPath: string) => {
-  const [category, shade] = colorPath.split(".");
-  const palette = (theme.vars || theme).palette;
-
-  if (category === "text" || category === "background") {
-    return palette[category]?.[shade] || colorPath;
-  }
-
-  if (category === "grey") {
-    return palette.grey?.[shade] || colorPath;
-  }
-
-  return palette[category]?.[shade] || colorPath;
-};
-
 const renderIconWithText = (
   icon: React.ComponentType<any>,
   stateValue: string,
   colors: any,
   compact: boolean,
-  sx?: SxProps<Theme>,
+  className?: string,
 ) => {
   const Icon = icon;
+  const colorClass = paletteTextClass(colors.backgroundColor);
 
   if (compact) {
     return (
       <Tooltip title={stateValue.toUpperCase()}>
         <Icon
           fontSize="small"
-          sx={[
-            (theme: Theme) => ({
-              color: getThemeColor(theme, colors.backgroundColor),
-              cursor: "pointer",
-            }),
-            ...(Array.isArray(sx) ? sx : [sx]),
-          ]}
+          className={cn("cursor-pointer", colorClass, className)}
         />
       </Tooltip>
     );
   }
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
-      <Icon
-        fontSize="small"
-        sx={[
-          (theme: Theme) => ({
-            color: getThemeColor(theme, colors.backgroundColor),
-          }),
-          ...(Array.isArray(sx) ? sx : [sx]),
-        ]}
-      />
-      <Box
-        sx={(theme) => ({
-          color: getThemeColor(theme, colors.backgroundColor),
-        })}
-      >
-        {stateValue.toUpperCase()}
-      </Box>
-    </Box>
+    <div className="flex items-center gap-1.5">
+      <Icon fontSize="small" className={cn(colorClass, className)} />
+      <div className={colorClass}>{stateValue.toUpperCase()}</div>
+    </div>
   );
 };
 
@@ -96,14 +64,20 @@ const StatusChip = ({
   status,
   state,
   compact = false,
-  sx,
+  className,
 }: StatusChipProps) => {
   const colors = getStateColor(status, state);
   const stateValue = state ? `${state} [${status}]` : status;
 
   const IconComponent = iconMap[colors.backgroundColor] || PendingOutlinedIcon;
 
-  return renderIconWithText(IconComponent, stateValue, colors, compact, sx);
+  return renderIconWithText(
+    IconComponent,
+    stateValue,
+    colors,
+    compact,
+    className,
+  );
 };
 
 export default StatusChip;

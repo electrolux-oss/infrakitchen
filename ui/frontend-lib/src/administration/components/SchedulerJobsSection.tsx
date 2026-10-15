@@ -1,27 +1,22 @@
 import { useCallback, useEffect, useState } from "react";
 
-import DeleteIcon from "@mui/icons-material/Delete";
+import { useConfig } from "../../common";
+import { BaseCard } from "../../common/components/cards/BaseCard";
+import { notify, notifyError } from "../../common/hooks/useNotification";
+import { DeleteIcon } from "../../icons/material";
 import {
-  Box,
+  Divider,
   Button,
-  Card,
-  CardContent,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Divider,
-  Grid,
   MenuItem,
-  Stack,
   TextField,
-  Typography,
-} from "@mui/material";
-
-import { useConfig } from "../../common";
-import { BaseCard } from "../../common/components/cards/BaseCard";
-import { notify, notifyError } from "../../common/hooks/useNotification";
+  Card,
+  CardContent,
+} from "../../ui";
 import {
   CREATE_SCHEDULER_MUTATION,
   DELETE_SCHEDULER_MUTATION,
@@ -201,27 +196,24 @@ export const SchedulerJobsSection = () => {
       <BaseCard
         name="Scheduler Jobs"
         description="Create SQL scheduler jobs and manage reusable SQL templates"
-        sx={{ mt: 4 }}
+        className="mt-8"
       >
-        <Grid size={{ xs: 12 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+        <div className="col-span-full">
+          <h6 className="m-0 mb-4 text-subtitle1 font-semibold text-grey-500">
             Existing Jobs
-          </Typography>
+          </h6>
 
-          <Stack spacing={1.5}>
+          <div className="flex flex-col gap-3">
             {schedulerJobs.map((job) => (
               <Card key={job.id} variant="outlined">
                 <CardContent>
-                  <Stack spacing={1}>
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ color: "text.secondary" }}
-                    >
+                  <div className="flex flex-col gap-2">
+                    <h6 className="m-0 text-subtitle2 text-fg-muted">
                       {job.type} • {job.cron}
-                    </Typography>
+                    </h6>
 
                     {editingSchedulerJobId === job.id ? (
-                      <Stack spacing={1.5}>
+                      <div className="flex flex-col gap-3">
                         <TextField
                           select
                           label="Type"
@@ -253,7 +245,7 @@ export const SchedulerJobsSection = () => {
                             setEditingSchedulerScript(event.target.value)
                           }
                         />
-                        <Stack direction="row" spacing={1}>
+                        <div className="flex flex-row gap-2">
                           <Button
                             variant="contained"
                             onClick={handleUpdateSchedulerJob}
@@ -267,20 +259,14 @@ export const SchedulerJobsSection = () => {
                           >
                             Cancel
                           </Button>
-                        </Stack>
-                      </Stack>
+                        </div>
+                      </div>
                     ) : (
                       <>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            whiteSpace: "pre-wrap",
-                            wordBreak: "break-word",
-                          }}
-                        >
+                        <p className="m-0 text-body2 [word-break:break-word] whitespace-pre-wrap">
                           {job.script}
-                        </Typography>
-                        <Stack direction="row" spacing={1}>
+                        </p>
+                        <div className="flex flex-row gap-2">
                           <Button
                             onClick={() => handleStartEditSchedulerJob(job)}
                           >
@@ -293,29 +279,29 @@ export const SchedulerJobsSection = () => {
                           >
                             Delete
                           </Button>
-                        </Stack>
+                        </div>
                       </>
                     )}
-                  </Stack>
+                  </div>
                 </CardContent>
               </Card>
             ))}
 
             {!schedulerLoading && schedulerJobs.length === 0 && (
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              <p className="m-0 text-body2 text-fg-muted">
                 No scheduler jobs found.
-              </Typography>
+              </p>
             )}
-          </Stack>
-        </Grid>
+          </div>
+        </div>
 
-        <Grid size={{ xs: 12 }}>
-          <Divider sx={{ my: 1 }} />
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+        <div className="col-span-full">
+          <Divider className="my-2" />
+          <h6 className="m-0 mb-4 text-subtitle1 font-semibold text-grey-500">
             Create SQL Scheduler Job
-          </Typography>
+          </h6>
 
-          <Stack spacing={2}>
+          <div className="flex flex-col gap-4">
             <TextField
               fullWidth
               label="Cron expression"
@@ -330,57 +316,45 @@ export const SchedulerJobsSection = () => {
               value={newSchedulerScript}
               onChange={(event) => setNewSchedulerScript(event.target.value)}
             />
-            <Box>
-              <Typography
-                variant="subtitle2"
-                sx={{ color: "text.secondary", mb: 1 }}
-              >
+            <div>
+              <h6 className="m-0 mb-2 text-subtitle2 text-fg-muted">
                 SQL examples (click to paste)
-              </Typography>
-              <Stack direction="column" spacing={1}>
+              </h6>
+              <div className="flex flex-col gap-2">
                 {DEFAULT_SQL_EXAMPLES.map((example) => (
                   <Card
                     key={`${example.cron}-${example.script}`}
                     variant="outlined"
                   >
-                    <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>
-                      <Stack spacing={0.75}>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    <CardContent className="p-3 last:pb-3">
+                      <div className="flex flex-col gap-1.5">
+                        <p className="m-0 text-body2 font-semibold">
                           {example.description}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{ color: "text.secondary" }}
-                        >
+                        </p>
+                        <span className="text-caption text-fg-muted">
                           Cron: {example.cron}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            whiteSpace: "pre-wrap",
-                            wordBreak: "break-word",
-                          }}
-                        >
+                        </span>
+                        <p className="m-0 text-body2 [word-break:break-word] whitespace-pre-wrap">
                           {example.script}
-                        </Typography>
-                        <Box>
+                        </p>
+                        <div>
                           <Button
+                            className="normal-case"
                             onClick={() => {
                               setNewSchedulerScript(example.script);
                               setNewSchedulerCron(example.cron);
                             }}
-                            sx={{ textTransform: "none" }}
                           >
                             Use example
                           </Button>
-                        </Box>
-                      </Stack>
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
-              </Stack>
-            </Box>
-            <Box>
+              </div>
+            </div>
+            <div>
               <Button
                 variant="contained"
                 onClick={handleCreateSchedulerJob}
@@ -388,9 +362,9 @@ export const SchedulerJobsSection = () => {
               >
                 Create Job
               </Button>
-            </Box>
-          </Stack>
-        </Grid>
+            </div>
+          </div>
+        </div>
       </BaseCard>
 
       <Dialog

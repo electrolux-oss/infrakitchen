@@ -2,20 +2,13 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import AddIcon from "@mui/icons-material/Add";
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Typography,
-} from "@mui/material";
-
 import { PermissionWrapper } from "../../common";
 import { EntityCard } from "../../common/components/cards/EntityCard";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
+import { AddIcon } from "../../icons/material";
+import { Alert, Spinner, Button } from "../../ui";
 import { GqlService, SERVICES_QUERY } from "../graphql";
 
 interface ProjectServicesProps {
@@ -57,36 +50,28 @@ export const ProjectServices = ({ projectId }: ProjectServicesProps) => {
   const serviceCardFields = (service: GqlService) => {
     return (
       <>
-        <Box>
-          <Typography sx={{ display: "block", color: "text.secondary" }}>
-            Last Updated
-          </Typography>
+        <div>
+          <p className="m-0 block text-body2 text-fg-muted">Last Updated</p>
           <RelativeTime date={service.updatedAt} />
-        </Box>
+        </div>
       </>
     );
   };
 
   if (error) {
     return (
-      <Box sx={{ width: "100%", py: 2 }}>
-        <Alert severity="error" sx={{ mb: 2 }}>
+      <div className="w-full py-4">
+        <Alert className="mb-4" severity="error">
           {error}
         </Alert>
         <Button onClick={fetchServices}>Retry</Button>
-      </Box>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ width: "100%" }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "flex-end",
-          alignItems: "center",
-        }}
-      >
+    <div className="w-full">
+      <div className="flex items-center justify-end">
         <PermissionWrapper
           requiredPermission="api:service"
           permissionAction="write"
@@ -100,37 +85,18 @@ export const ProjectServices = ({ projectId }: ProjectServicesProps) => {
             Create Service
           </Button>
         </PermissionWrapper>
-      </Box>
+      </div>
 
       {loading ? (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            py: 6,
-          }}
-        >
-          <CircularProgress />
-        </Box>
+        <div className="flex items-center justify-center py-12">
+          <Spinner />
+        </div>
       ) : services.length === 0 ? (
-        <Box sx={{ textAlign: "center", py: 4 }}>
-          <Typography variant="h6" component="p">
-            This project has no services yet
-          </Typography>
-        </Box>
+        <div className="py-8 text-center">
+          <p className="m-0 text-h6">This project has no services yet</p>
+        </div>
       ) : (
-        <Box
-          sx={{
-            "--card-min-width": { xs: "240px", sm: "260px", md: "300px" },
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fill, minmax(var(--card-min-width), 1fr))",
-            gap: 2,
-            width: "100%",
-            mt: 3,
-          }}
-        >
+        <div className="mt-6 grid w-full grid-cols-[repeat(auto-fill,_minmax(var(--card-min-width),_1fr))] gap-4 [--card-min-width:240px] sm:[--card-min-width:260px] md:[--card-min-width:300px]">
           {services.map((service) => (
             <EntityCard
               key={service.id}
@@ -143,8 +109,8 @@ export const ProjectServices = ({ projectId }: ProjectServicesProps) => {
               entityFields={serviceCardFields(service)}
             />
           ))}
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };

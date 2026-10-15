@@ -2,22 +2,19 @@ import { useCallback, useId, useState } from "react";
 
 import { Controller, useForm } from "react-hook-form";
 
-import {
-  Box,
-  Checkbox,
-  FormControl,
-  FormControlLabel,
-  InputLabel,
-  MenuItem,
-  Select,
-  Typography,
-} from "@mui/material";
-
 import ReferenceSearchInput from "../../../common/components/inputs/ReferenceSearchInput";
 import { useConfig } from "../../../common/context/ConfigContext";
 import { notify, notifyError } from "../../../common/hooks/useNotification";
 import { CREATE_RESOURCE_POLICY_MUTATION } from "../../../resources/graphql";
 import { IkEntity } from "../../../types";
+import {
+  Checkbox,
+  FormControlLabel,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+} from "../../../ui";
 import { CREATE_ENTITY_POLICY_MUTATION } from "../../graphql";
 import { EntityPolicyCreate } from "../../types";
 
@@ -118,7 +115,7 @@ export const EntityRolePolicyCreateCard = (
   );
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 600, mx: "auto" }}>
+    <div className="mx-auto w-full max-w-150">
       <form id={resolvedFormId} onSubmit={handleSubmit(onSubmit)}>
         {!roleName && (
           <Controller
@@ -150,7 +147,6 @@ export const EntityRolePolicyCreateCard = (
                 setBuffer={setBuffer}
                 value={field.value}
                 label="Select Role"
-                sx={{ mb: 3 }}
               />
             )}
           />
@@ -173,7 +169,6 @@ export const EntityRolePolicyCreateCard = (
                 helpertext={errors.entityId ? errors.entityId.message : ""}
                 value={field.value}
                 label="Select Resource"
-                sx={{ mb: 3 }}
               />
             )}
           />
@@ -184,7 +179,7 @@ export const EntityRolePolicyCreateCard = (
           control={control}
           rules={{ required: "Action is required" }}
           render={({ field, fieldState }) => (
-            <FormControl fullWidth sx={{ mb: 3 }}>
+            <FormControl className="mb-6" fullWidth>
               <InputLabel id="action-label">Action name</InputLabel>
               <Select
                 error={!!fieldState.error}
@@ -199,9 +194,9 @@ export const EntityRolePolicyCreateCard = (
                 ))}
               </Select>
               {fieldState.error && (
-                <Typography color="error" variant="caption">
+                <span className="text-caption text-error">
                   {fieldState.error.message}
-                </Typography>
+                </span>
               )}
             </FormControl>
           )}
@@ -219,6 +214,6 @@ export const EntityRolePolicyCreateCard = (
           />
         )}
       </form>
-    </Box>
+    </div>
   );
 };

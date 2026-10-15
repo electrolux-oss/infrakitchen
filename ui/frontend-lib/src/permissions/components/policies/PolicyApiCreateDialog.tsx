@@ -2,21 +2,17 @@ import { useCallback } from "react";
 
 import { Controller, useForm } from "react-hook-form";
 
-import {
-  Box,
-  Button,
-  FormControl,
-  Checkbox,
-  FormGroup,
-  FormControlLabel,
-  Typography,
-  RadioGroup,
-  Radio,
-} from "@mui/material";
-
 import { CommonDialog } from "../../../common";
 import { useConfig } from "../../../common/context/ConfigContext";
 import { notify, notifyError } from "../../../common/hooks/useNotification";
+import {
+  Checkbox,
+  FormControlLabel,
+  Button,
+  FormControl,
+  RadioGroup,
+  Radio,
+} from "../../../ui";
 import { CREATE_API_POLICY_MUTATION } from "../../graphql/mutations";
 import { ApiPolicyCreate } from "../../types";
 
@@ -93,7 +89,7 @@ export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
   );
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 600, mx: "auto" }}>
+    <div className="mx-auto w-full max-w-150">
       <form id="policy-api-create-form" onSubmit={handleSubmit(onSubmit)}>
         <Controller
           name="selectedApiPermissions"
@@ -133,15 +129,13 @@ export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
             };
 
             return (
-              <Box sx={{ mt: 2, mb: 3 }}>
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  Select APIs and Actions:
-                </Typography>
-                <FormGroup>
+              <div className="mt-4 mb-6">
+                <p className="m-0 mb-2 text-body1">Select APIs and Actions:</p>
+                <div className="flex flex-col flex-wrap">
                   {globalConfig.entities.length === 0 && (
-                    <Typography variant="body2" color="textSecondary">
+                    <p className="m-0 text-body2 text-fg-muted">
                       No APIs available.
-                    </Typography>
+                    </p>
                   )}
                   {globalConfig.entities.map((apiName: string) => {
                     const isApiSelected = currentSelectedApiPermissions?.some(
@@ -153,16 +147,9 @@ export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
                       )?.actions || [];
 
                     return (
-                      <Box
+                      <div
+                        className="mb-3 rounded-surface border border-divider bg-paper p-3"
                         key={apiName}
-                        sx={{
-                          mb: 1.5,
-                          p: 1.5,
-                          border: "1px solid",
-                          borderColor: "divider",
-                          borderRadius: "var(--template-surface-radius)",
-                          bgcolor: "background.paper",
-                        }}
                       >
                         <FormControlLabel
                           control={
@@ -174,18 +161,13 @@ export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
                             />
                           }
                           label={
-                            <Typography
-                              variant="body1"
-                              sx={{
-                                fontWeight: "medium",
-                              }}
-                            >
+                            <p className="m-0 text-body1 font-medium">
                               {apiName}
-                            </Typography>
+                            </p>
                           }
                         />
                         {isApiSelected && (
-                          <Box sx={{ ml: 3, mt: 1 }}>
+                          <div className="mt-2 ml-6">
                             <FormControl component="fieldset">
                               <RadioGroup
                                 row
@@ -199,30 +181,29 @@ export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
                                 {actions.map((action) => (
                                   <FormControlLabel
                                     key={`${apiName}-${action.id}`}
-                                    value={action.id}
-                                    control={<Radio />}
+                                    control={<Radio value={action.id} />}
                                     label={action.name}
                                   />
                                 ))}
                               </RadioGroup>
                             </FormControl>
-                          </Box>
+                          </div>
                         )}
-                      </Box>
+                      </div>
                     );
                   })}
-                </FormGroup>
+                </div>
                 {fieldState.error && (
-                  <Typography color="error" variant="caption">
+                  <span className="text-caption text-error">
                     {fieldState.error.message}
-                  </Typography>
+                  </span>
                 )}
-              </Box>
+              </div>
             );
           }}
         />
       </form>
-    </Box>
+    </div>
   );
 };
 

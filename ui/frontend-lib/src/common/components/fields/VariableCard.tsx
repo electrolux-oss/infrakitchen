@@ -1,8 +1,7 @@
 import React, { ReactNode } from "react";
 
-import { Box, Chip, Grid, SxProps, Theme, Typography } from "@mui/material";
-
-import { solidChipColorSx } from "../../utils/softChip";
+import { Chip } from "../../../ui";
+import { cn } from "../../../utils/cn";
 import { CodeBlock } from "../code/CodeBlock";
 import { InlineCode } from "../code/InlineCode";
 
@@ -22,7 +21,7 @@ export interface VariableCardProps {
   footer?: ReactNode;
   /** Right column content (default value, input, ...) */
   children?: ReactNode;
-  sx?: SxProps<Theme>;
+  className?: string;
 }
 
 /**
@@ -37,68 +36,39 @@ export const VariableCard: React.FC<VariableCardProps> = ({
   chips,
   footer,
   children,
-  sx,
+  className,
 }) => (
-  <Box
-    sx={[
-      {
-        border: 1,
-        borderColor: "divider",
-        p: 2,
-        mb: 2,
-        borderRadius: "var(--template-surface-radius)",
-      },
-      ...(Array.isArray(sx) ? sx : [sx]),
-    ]}
+  <div
+    className={cn("mb-4 rounded-surface border border-divider p-4", className)}
   >
-    <Grid container sx={{ alignItems: "center" }}>
-      <Grid size={{ xs: 12, md: 8 }}>
-        <Typography
-          variant="body1"
-          component="span"
-          sx={{ fontWeight: 500, mr: 1 }}
-        >
-          {name}
-        </Typography>{" "}
+    <div className="grid grid-cols-1 items-center md:grid-cols-[2fr_1fr]">
+      <div className="min-w-0">
+        <span className="mr-2 text-body1 font-medium">{name}</span>{" "}
         {required ? (
-          <Chip label="required" sx={solidChipColorSx("error")} />
+          <Chip label="required" appearance="solid" color="error" />
         ) : (
-          <Chip label="optional" sx={solidChipColorSx("info")} />
+          <Chip label="optional" appearance="solid" color="info" />
         )}
         {chips}
         {type && (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "flex-start",
-              mt: 1,
-              gap: 1,
-            }}
-          >
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              Type:
-            </Typography>
+          <div className="mt-2 flex items-start gap-2">
+            <span className="text-caption text-fg-muted">Type:</span>
             {type.includes("\n") ? (
-              <CodeBlock disableCopy sx={{ maxHeight: 200, maxWidth: "100%" }}>
+              <CodeBlock disableCopy className="max-h-[200px] max-w-full">
                 {type}
               </CodeBlock>
             ) : (
               <InlineCode disableCopy>{type}</InlineCode>
             )}
-          </Box>
+          </div>
         )}
-        <Typography
-          variant="caption"
-          sx={{ color: "text.secondary", display: "block", mt: 1 }}
-        >
+        <span className="mt-2 block text-caption text-fg-muted">
           {description ? description : <PlaceholderDescription />}
-        </Typography>
+        </span>
         {footer}
-      </Grid>
+      </div>
 
-      <Grid size={{ xs: 12, md: 4 }} sx={{ mt: { xs: 1, md: 0 } }}>
-        {children}
-      </Grid>
-    </Grid>
-  </Box>
+      <div className="mt-2 min-w-0 md:mt-0">{children}</div>
+    </div>
+  </div>
 );

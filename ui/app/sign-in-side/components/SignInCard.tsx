@@ -1,40 +1,21 @@
 import React, { useState } from "react";
 
-import { useEffectOnce } from "react-use";
-
-import { notify } from "@electrolux-oss/infrakitchen";
-import { Icon } from "@iconify/react";
 import {
-  CircularProgress,
+  notify,
+  useEffectOnce,
+  Spinner,
+  Button,
   Menu,
   MenuItem,
-  menuItemClasses,
-} from "@mui/material";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import MuiCard from "@mui/material/Card";
-import { styled } from "@mui/material/styles";
-import Typography from "@mui/material/Typography";
+  Card,
+} from "@electrolux-oss/infrakitchen";
+import { Icon } from "@iconify/react";
+import icBaselineAccountCircleData from "@iconify-icons/ic/baseline-account-circle";
+import logosGoogleIconData from "@iconify-icons/logos/google-icon";
+import logosMicrosoftIconData from "@iconify-icons/logos/microsoft-icon";
+import octiconMarkGithub24Data from "@iconify-icons/octicon/mark-github-24";
 
 import { useAuth } from "../../base/auth/AuthContext";
-
-const Card = styled(MuiCard)(({ theme }) => ({
-  display: "flex",
-  flexDirection: "column",
-  alignSelf: "center",
-  width: "100%",
-  padding: theme.spacing(4),
-  gap: theme.spacing(2),
-  boxShadow:
-    "hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px",
-  [theme.breakpoints.up("sm")]: {
-    width: "520px",
-  },
-  ...theme.applyStyles("dark", {
-    boxShadow:
-      "hsla(220, 30%, 5%, 0.5) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.08) 0px 15px 35px -5px",
-  }),
-}));
 
 export default function SignInCard() {
   const [loading, setLoading] = useState(false);
@@ -83,80 +64,68 @@ export default function SignInCard() {
   });
 
   return (
-    <Card variant="outlined">
-      <Typography
-        component="h1"
-        variant="h5"
-        sx={{
-          width: "100%",
-        }}
-      >
-        Welcome to InfraKitchen
-      </Typography>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <Card
+      variant="outlined"
+      className="flex w-full flex-col gap-4 self-center p-8 shadow-[hsla(220,30%,5%,0.05)_0px_5px_15px_0px,hsla(220,25%,10%,0.05)_0px_15px_35px_-5px] sm:w-[520px] dark:shadow-[hsla(220,30%,5%,0.5)_0px_5px_15px_0px,hsla(220,25%,10%,0.08)_0px_15px_35px_-5px]"
+    >
+      <h1 className="m-0 w-full text-h5">Welcome to InfraKitchen</h1>
+      <div className="flex flex-col gap-4">
         {enabledProviders.includes("microsoft") && (
           <Button
+            className="justify-start gap-4"
             variant="outlined"
             type="submit"
             disabled={loading}
             fullWidth
-            sx={{
-              gap: "1rem",
-              justifyContent: "flex-start",
-            }}
             onClick={() => handleSubmit("microsoft")}
           >
-            {loading && <CircularProgress size={25} thickness={2} />}
-            <Icon icon="logos:microsoft-icon" width={24} height={24} />
+            {loading && <Spinner size={25} />}
+            <Icon icon={logosMicrosoftIconData} ssr width={24} height={24} />
             Log in with Microsoft
           </Button>
         )}
         {enabledProviders.includes("github") && (
           <Button
+            className="justify-start gap-4"
             variant="outlined"
             type="submit"
             disabled={loading}
             fullWidth
-            sx={{
-              gap: "1rem",
-              justifyContent: "flex-start",
-            }}
             onClick={() => handleSubmit("github")}
           >
-            {loading && <CircularProgress size={25} thickness={2} />}
-            <Icon icon="octicon:mark-github-24" width={24} height={24} />
+            {loading && <Spinner size={25} />}
+            <Icon icon={octiconMarkGithub24Data} ssr width={24} height={24} />
             Log in with GitHub
           </Button>
         )}
         {enabledProviders.includes("google") && (
           <Button
+            className="justify-start gap-4"
             variant="outlined"
             type="submit"
             disabled={loading}
             fullWidth
-            sx={{
-              gap: "1rem",
-              justifyContent: "flex-start",
-            }}
             onClick={() => handleSubmit("google")}
           >
-            {loading && <CircularProgress size={25} thickness={2} />}
-            <Icon icon="logos:google-icon" width={24} height={24} />
+            {loading && <Spinner size={25} />}
+            <Icon icon={logosGoogleIconData} ssr width={24} height={24} />
             Log in with Google
           </Button>
         )}
         {enabledProviders.includes("guest") && (
           <Button
+            className="justify-start gap-4"
             variant="outlined"
             disabled={loading}
             fullWidth
-            sx={{
-              gap: "1rem",
-              justifyContent: "flex-start",
-            }}
             onClick={handleGuestClick}
           >
-            <Icon icon="ic:baseline-account-circle" width={24} height={24} />
+            <Icon
+              icon={icBaselineAccountCircleData}
+              ssr
+              width={24}
+              height={24}
+            />
             Log in as a Guest
           </Button>
         )}
@@ -169,18 +138,7 @@ export default function SignInCard() {
               vertical: "bottom",
               horizontal: "left",
             }}
-            sx={{
-              [`& .${menuItemClasses.root}`]: {
-                fontSize: "0.875rem",
-              },
-            }}
-            slotProps={{
-              paper: {
-                sx: {
-                  width: anchorEl ? anchorEl.offsetWidth : undefined,
-                },
-              },
-            }}
+            matchAnchorWidth
           >
             <MenuItem onClick={() => handleGuestSelect("guest_default")}>
               Guest Login (Default User)
@@ -193,7 +151,7 @@ export default function SignInCard() {
             </MenuItem>
           </Menu>
         )}
-      </Box>
+      </div>
     </Card>
   );
 }

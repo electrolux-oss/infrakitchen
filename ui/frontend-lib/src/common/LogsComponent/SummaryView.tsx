@@ -7,32 +7,30 @@ import {
   useState,
 } from "react";
 
-import ArrowForwardIosSharpIcon from "@mui/icons-material/ArrowForwardIosSharp";
-import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
-import ErrorOutlinedIcon from "@mui/icons-material/ErrorOutlined";
-import PendingOutlinedIcon from "@mui/icons-material/PendingOutlined";
+import Ansi from "ansi-to-react";
+
+import type { IconProps } from "../../icons/createIcon";
 import {
+  ArrowForwardIosSharpIcon,
+  CheckCircleOutlinedIcon,
+  ErrorOutlinedIcon,
+  PendingOutlinedIcon,
+} from "../../icons/material";
+import { GqlLog, buildLogsQuery } from "../../logs/graphql";
+import { LogEntity } from "../../types";
+import {
+  Alert,
+  AlertTitle,
+  Button,
+  Chip,
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Alert,
-  AlertTitle,
-  Box,
-  Button,
-  Chip,
-  Stack,
-  type SvgIconProps,
-  Typography,
-  accordionSummaryClasses,
-} from "@mui/material";
-import Ansi from "ansi-to-react";
-
-import { GqlLog, buildLogsQuery } from "../../logs/graphql";
-import { LogEntity } from "../../types";
+} from "../../ui";
+import { cn } from "../../utils/cn";
 import { ENTITY_ACTION } from "../../utils/constants";
 import { RelativeTime } from "../components/fields/RelativeTime";
 import { useConfig } from "../context";
-import { CODE_FONT_FAMILY } from "../theme";
 
 import { LogLine } from "./LogLine";
 import { ANSI_ESCAPE_RE, PlanDiff } from "./PlanDiff";
@@ -126,7 +124,7 @@ const parseResourceHeader = (
 
 const executionStatusIcons: Record<
   ExecutionStatus,
-  { color: "error" | "info" | "success"; icon: ComponentType<SvgIconProps> }
+  { color: "error" | "info" | "success"; icon: ComponentType<IconProps> }
 > = {
   [ExecutionStatus.ERROR]: { color: "error", icon: ErrorOutlinedIcon },
   [ExecutionStatus.IN_PROGRESS]: { color: "info", icon: PendingOutlinedIcon },
@@ -135,6 +133,12 @@ const executionStatusIcons: Record<
     icon: CheckCircleOutlinedIcon,
   },
 };
+
+const STATUS_TEXT = {
+  error: "text-error",
+  info: "text-info",
+  success: "text-success",
+} as const;
 
 const stripBoxPrefix = (s: string): string => s.replace(/^[│╷╵]\s*/, "");
 
@@ -366,32 +370,15 @@ const ExecutionStatusIcon = ({
   const { icon: Icon, color } = executionStatusIcons[status];
   const icon = <Icon color={color} fontSize="small" />;
   const label = showLabel && (
-    <Typography
-      component="span"
-      color={`${color}.main`}
-      sx={{
-        fontWeight: 500,
-      }}
-    >
+    <span className={cn("text-body2 font-medium", STATUS_TEXT[color])}>
       {status}
-    </Typography>
+    </span>
   );
   const durationText = duration && (
-    <Typography
-      component="span"
-      variant="caption"
-      sx={{
-        color: "text.secondary",
-      }}
-    >
-      {duration}
-    </Typography>
+    <span className="text-caption text-fg-muted">{duration}</span>
   );
   return (
-    <Box
-      component="span"
-      sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}
-    >
+    <span className="inline-flex items-center gap-1">
       {iconFirst ? (
         <>
           {icon}
@@ -405,7 +392,7 @@ const ExecutionStatusIcon = ({
           {icon}
         </>
       )}
-    </Box>
+    </span>
   );
 };
 
@@ -544,52 +531,17 @@ export const SummaryView = (props: {
     };
 
   return (
-    <Box
-      sx={{
-        height: "calc(100vh - 300px)",
-        minHeight: 400,
-        maxHeight: "80vh",
-        overflowY: "auto",
-        p: 1,
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <div className="flex h-[calc(100vh_-_300px)] max-h-[80vh] min-h-100 flex-col overflow-y-auto p-2">
       {!loaded ? (
-        <Typography
-          sx={{
-            color: "text.secondary",
-          }}
-        >
-          Loading...
-        </Typography>
+        <p className="m-0 text-body2 text-fg-muted">Loading...</p>
       ) : allLogs.length === 0 ? (
-        <Typography
-          sx={{
-            color: "text.secondary",
-          }}
-        >
-          No logs available.
-        </Typography>
+        <p className="m-0 text-body2 text-fg-muted">No logs available.</p>
       ) : (
         <>
-          <Stack
-            direction="row"
-            sx={{
-              alignItems: "center",
-              justifyContent: "space-between",
-              px: 0.5,
-              mb: 2,
-            }}
-          >
-            <Typography variant="body2">
-              <Box component="span" sx={{ fontWeight: 600 }}>
-                Status:
-              </Box>{" "}
-              <Box
-                component="span"
-                sx={{ display: "inline-flex", verticalAlign: "middle" }}
-              >
+          <div className="mb-4 flex flex-row items-center justify-between px-1">
+            <p className="m-0 text-body2">
+              <span className="font-semibold">Status:</span>{" "}
+              <span className="inline-flex align-middle">
                 {overallStatus !== undefined && (
                   <ExecutionStatusIcon
                     status={overallStatus}
@@ -599,20 +551,14 @@ export const SummaryView = (props: {
                 )}
                 {allLogs.length > 0 && (
                   <RelativeTime
+                    className="ml-3 flex items-center text-[0.8rem] text-fg-muted"
                     date={allLogs[allLogs.length - 1].createdAt}
-                    sx={{
-                      color: "text.secondary",
-                      ml: 1.5,
-                      fontSize: "0.8rem",
-                      display: "flex",
-                      alignItems: "center",
-                    }}
                   />
                 )}
-              </Box>
-            </Typography>
+              </span>
+            </p>
             {changes.length > 0 && (
-              <Stack direction="row" spacing={1}>
+              <div className="flex flex-row gap-2">
                 {Object.values(ExecutionAction).map((action) => {
                   const count = changes.filter(
                     (c) => c.action === action,
@@ -627,20 +573,20 @@ export const SummaryView = (props: {
                     />
                   );
                 })}
-              </Stack>
+              </div>
             )}
-          </Stack>
+          </div>
           {fatalErrorLines.length > 0 && (
             <Alert
+              className="mb-4"
               severity="error"
-              sx={{ mb: 2 }}
               action={
                 onOpenLogs && (
                   <Button
+                    className="shrink-0 whitespace-nowrap"
                     color="inherit"
                     size="small"
                     onClick={onOpenLogs}
-                    sx={{ whiteSpace: "nowrap", flexShrink: 0 }}
                   >
                     View full logs
                   </Button>
@@ -648,133 +594,66 @@ export const SummaryView = (props: {
               }
             >
               <AlertTitle>Fatal error</AlertTitle>
-              <Box
-                sx={{
-                  fontFamily: CODE_FONT_FAMILY,
-                  fontSize: "0.8rem",
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                }}
-              >
+              <div className="font-mono text-[0.8rem] [word-break:break-word] whitespace-pre-wrap">
                 {fatalErrorLines.map((line, index) => (
                   <div key={`fatal-${index}`}>
                     <Ansi>{line || " "}</Ansi>
                   </div>
                 ))}
-              </Box>
+              </div>
             </Alert>
           )}
           {changes.length === 0 && fatalErrorLines.length === 0 ? (
-            <Typography
-              sx={{
-                color: "text.secondary",
-              }}
-            >
+            <p className="m-0 text-body2 text-fg-muted">
               No changes in summary.
-            </Typography>
+            </p>
           ) : (
             changes.map((change) => (
               <Accordion
+                className="[&:last-of-type]:rounded-b-none"
                 key={change.id}
                 expanded={expanded === change.id}
                 onChange={handleAccordionChange(change.id)}
-                variant="outlined"
-                disableGutters
-                sx={{
-                  "& + &": { borderTop: 0 },
-                  "&:last-of-type": {
-                    borderBottomLeftRadius: 0,
-                    borderBottomRightRadius: 0,
-                  },
-                }}
               >
                 <AccordionSummary
+                  iconFirst
+                  contentClassName="my-0 ml-2"
+                  className="min-h-0 py-1 hover:bg-hover"
                   expandIcon={
-                    <ArrowForwardIosSharpIcon sx={{ fontSize: "0.9rem" }} />
+                    <ArrowForwardIosSharpIcon className="text-[0.9rem]" />
                   }
-                  sx={{
-                    flexDirection: "row-reverse",
-                    minHeight: 0,
-                    py: 0.5,
-                    "&:hover": { bgcolor: "action.hover" },
-                    [`&.${accordionSummaryClasses.expanded}`]: {
-                      minHeight: 0,
-                    },
-                    [`& .${accordionSummaryClasses.expandIconWrapper}.${accordionSummaryClasses.expanded}`]:
-                      {
-                        transform: "rotate(90deg)",
-                      },
-                    [`& .${accordionSummaryClasses.content}`]: {
-                      margin: "0 0 0 8px !important",
-                    },
-                  }}
                 >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: 1,
-                      width: "100%",
-                    }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <div className="flex w-full items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
                       <Chip
+                        className="min-w-25 font-semibold"
                         label={change.action}
                         color={getActionColor(change.action)}
                         variant="outlined"
-                        sx={{ minWidth: 100, fontWeight: 600 }}
                       />
-                      <Typography
-                        sx={{
-                          fontFamily: CODE_FONT_FAMILY,
-                          fontSize: "0.85rem",
-                          fontWeight: 500,
-                        }}
-                      >
+                      <p className="m-0 font-mono text-[0.85rem] font-medium">
                         {change.resourceType}.{change.resourceName}
-                      </Typography>
-                    </Box>
+                      </p>
+                    </div>
                     {change.duration && change.executionStatus && (
                       <ExecutionStatusIcon
                         status={change.executionStatus}
                         duration={change.duration}
                       />
                     )}
-                  </Box>
+                  </div>
                 </AccordionSummary>
-                <AccordionDetails
-                  sx={{
-                    p: 1.5,
-                    fontFamily: CODE_FONT_FAMILY,
-                    fontSize: "0.8rem",
-                    bgcolor: "action.hover",
-                  }}
-                >
+                <AccordionDetails className="bg-hover p-3 font-mono text-[0.8rem]">
                   <PlanDiff lines={change.rawLines} />
                   {change.errorLines && change.errorLines.length > 0 && (
-                    <Box
-                      sx={{
-                        p: 1.5,
-                        fontFamily: CODE_FONT_FAMILY,
-                        fontSize: "0.8rem",
-                        borderTop: "2px solid",
-                        borderColor: "error.main",
-                        bgcolor: "error.lighter",
-                        overflowX: "auto",
-                      }}
-                    >
-                      <Typography
-                        variant="caption"
-                        color="error"
-                        sx={{ fontWeight: 700, display: "block", mb: 0.5 }}
-                      >
+                    <div className="overflow-x-auto border-t-2 border-error p-3 font-mono text-[0.8rem]">
+                      <span className="mb-1 block font-sans text-caption font-bold text-error">
                         Error
-                      </Typography>
+                      </span>
                       {change.errorLines.map((line, i) => (
                         <LogLine key={`${change.id}-err-${i}`} line={line} />
                       ))}
-                    </Box>
+                    </div>
                   )}
                 </AccordionDetails>
               </Accordion>
@@ -782,6 +661,6 @@ export const SummaryView = (props: {
           )}
         </>
       )}
-    </Box>
+    </div>
   );
 };

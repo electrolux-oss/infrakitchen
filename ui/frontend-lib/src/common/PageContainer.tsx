@@ -1,34 +1,9 @@
 "use client";
 import * as React from "react";
 
-import Box from "@mui/material/Box";
-import Container, { ContainerProps } from "@mui/material/Container";
-import Stack from "@mui/material/Stack";
-import { styled } from "@mui/material/styles";
-import Typography from "@mui/material/Typography";
-
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
 
-const PageContentHeader = styled("div")(({ theme }) => ({
-  display: "flex",
-  flexDirection: "row",
-  justifyContent: "space-between",
-  flexWrap: "wrap",
-  gap: theme.spacing(2),
-}));
-
-const PageHeaderToolbar = styled("div")(({ theme }) => ({
-  display: "flex",
-  flexDirection: "row",
-  flexWrap: "wrap",
-  gap: theme.spacing(1),
-  marginLeft: "auto",
-}));
-
-export interface PageContainerProps extends Omit<
-  ContainerProps,
-  "title" | "maxWidth"
-> {
+export interface PageContainerProps {
   children?: React.ReactNode;
   title?: React.ReactNode;
   description?: React.ReactNode;
@@ -58,75 +33,35 @@ export default function PageContainer(props: PageContainerProps) {
   );
 
   return (
-    <Container
-      maxWidth={false}
-      sx={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <Stack sx={{ flex: 1, my: 2, minHeight: 0 }} spacing={2}>
-        <Stack>
+    <div className="box-border flex w-full flex-1 flex-col px-4 sm:px-6">
+      <div className="my-4 flex min-h-0 flex-1 flex-col gap-4">
+        <div className="flex flex-col">
           {banner}
-          <PageContentHeader sx={{ mt: 2 }}>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                minWidth: 0,
-                overflowWrap: "anywhere",
-              }}
-            >
+          <div className="mt-4 flex flex-row flex-wrap justify-between gap-4">
+            <div className="flex min-w-0 flex-col wrap-anywhere">
               {title ? (
-                <Typography
-                  variant="h5"
-                  component="h1"
-                  sx={{ fontWeight: 600 }}
-                >
-                  {title}
-                </Typography>
+                <h1 className="m-0 text-h5 font-semibold">{title}</h1>
               ) : null}
               {description ? (
-                <Typography
-                  sx={{
-                    color: "text.secondary",
-                    mt: 1,
-                  }}
-                >
+                <p className="m-0 mt-2 text-body2 text-fg-muted">
                   {description}
-                </Typography>
+                </p>
               ) : null}
-            </Box>
-            <PageHeaderToolbar>{actions}</PageHeaderToolbar>
-          </PageContentHeader>
-        </Stack>
-        <Box
-          sx={{
-            overflowY: "auto",
-            minHeight: 0,
-            minWidth: 0,
-            display: "flex",
-            alignItems: "center",
-            flexDirection: "column",
-          }}
-        >
+            </div>
+            <div className="ml-auto flex flex-row flex-wrap gap-2">
+              {actions}
+            </div>
+          </div>
+        </div>
+        <div className="flex min-h-0 min-w-0 flex-col items-center overflow-y-auto">
           {children}
-        </Box>
+        </div>
         {bottomActions ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              width: "100%",
-              gap: 2,
-            }}
-          >
+          <div className="flex w-full items-center justify-center gap-4">
             {bottomActions}
-          </Box>
+          </div>
         ) : null}
-      </Stack>
-    </Container>
+      </div>
+    </div>
   );
 }

@@ -1,12 +1,18 @@
-import IconButton from "@mui/material/IconButton";
-import { styled } from "@mui/material/styles";
+import { IconButton, IconButtonProps } from "../../../ui";
+import { cn } from "../../../utils/cn";
 
-export const ExpandIconButton = styled(IconButton)<{ expanded: boolean }>(
-  ({ theme, expanded }) => ({
-    padding: "8px 8px",
-    transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-    transition: theme.transitions.create("transform", {
-      duration: theme.transitions.duration.shortest,
-    }),
-  }),
+/** IconButton whose icon turns upside down while `expanded`. */
+export const ExpandIconButton = ({
+  expanded,
+  className,
+  ...props
+}: IconButtonProps & { expanded: boolean }) => (
+  <IconButton
+    className={cn(
+      "p-2 transition-transform duration-150",
+      expanded ? "rotate-180" : "rotate-0",
+      className,
+    )}
+    {...props}
+  />
 );

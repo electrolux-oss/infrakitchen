@@ -3,15 +3,6 @@ import { useCallback, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import {
-  Box,
-  MenuItem,
-  TextField,
-  Button,
-  Autocomplete,
-  Chip,
-} from "@mui/material";
-
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import { MarkdownEditor } from "../../common/components/inputs/MarkdownEditor";
@@ -20,6 +11,7 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { IkEntity } from "../../types";
+import { Autocomplete, Button, MenuItem, TextField } from "../../ui";
 import { CREATE_TEMPLATE_WITH_SCV_MUTATION } from "../../use_cases/graphql";
 import { GqlTemplate } from "../graphql";
 import { TemplateImportRequest } from "../types";
@@ -110,7 +102,7 @@ export const TemplateImportPage = () => {
       }
     >
       <PropertyCard title="Template Source Configuration">
-        <Box>
+        <div>
           <Controller
             name="sourceCodeLanguage"
             control={control}
@@ -126,12 +118,10 @@ export const TemplateImportPage = () => {
                 margin="normal"
                 error={!!errors.sourceCodeLanguage}
                 helperText={errors.sourceCodeLanguage?.message}
-                slotProps={{
-                  select: {
-                    inputProps: {
-                      "aria-label": "Template Type",
-                      id: "sourceCodeLanguage",
-                    },
+                selectProps={{
+                  inputProps: {
+                    "aria-label": "Template Type",
+                    id: "sourceCodeLanguage",
                   },
                 }}
               >
@@ -252,10 +242,10 @@ export const TemplateImportPage = () => {
               />
             )}
           />
-        </Box>
+        </div>
       </PropertyCard>
       <PropertyCard title="Template Metadata">
-        <Box>
+        <div>
           <Controller
             name="name"
             control={control}
@@ -281,36 +271,18 @@ export const TemplateImportPage = () => {
               <Autocomplete
                 multiple
                 freeSolo
-                options={[]}
+                options={[] as string[]}
                 value={field.value}
                 onChange={(_event, newValue) => field.onChange(newValue)}
-                renderValue={(value: readonly string[], getTagProps) =>
-                  value.map((option: string, index: number) => {
-                    const { key, ...rest } = getTagProps({ index });
-                    return (
-                      <Chip
-                        key={key}
-                        {...rest}
-                        variant="outlined"
-                        label={option}
-                      />
-                    );
-                  })
+                label="Labels"
+                error={!!errors.labels}
+                helperText={
+                  errors.labels
+                    ? errors.labels.message
+                    : "Add labels and press Enter"
                 }
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Labels"
-                    error={!!errors.labels}
-                    helperText={
-                      errors.labels
-                        ? errors.labels.message
-                        : "Add labels and press Enter"
-                    }
-                    fullWidth
-                    margin="normal"
-                  />
-                )}
+                fullWidth
+                margin="normal"
               />
             )}
           />
@@ -330,11 +302,9 @@ export const TemplateImportPage = () => {
                 placeholder="Enter a description for this template"
                 multiline
                 margin="normal"
-                slotProps={{
-                  htmlInput: {
-                    "aria-label": "Template description",
-                    id: "description",
-                  },
+                inputProps={{
+                  "aria-label": "Template description",
+                  id: "description",
                 }}
               />
             )}
@@ -355,7 +325,7 @@ export const TemplateImportPage = () => {
               />
             )}
           />
-        </Box>
+        </div>
       </PropertyCard>
     </PageContainer>
   );

@@ -1,40 +1,29 @@
-import { Box, Chip } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { useConfig } from "../../common";
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import { createdUpdatedColumns } from "../../common/components/entity_table/tableColumns";
 import { getProviderValue } from "../../common/components/fields/CommonField";
 import { PROVIDER_DISPLAY_NAMES } from "../../common/utils";
-import { solidChipColorSx } from "../../common/utils/softChip";
+import { Chip } from "../../ui";
+import { RenderCellParams } from "../../ui";
 
-const UserIdentifierCell = (params: GridRenderCellParams) => {
+const UserIdentifierCell = (params: RenderCellParams) => {
   const { currentUser } = useConfig();
   const isCurrentUser = currentUser?.id === params.row.id;
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 0.5,
-        height: "100%",
-      }}
-    >
+    <div className="flex h-full items-center gap-1">
       <Entity entity={{ ...params.row, entityType: "user" }} />
       {isCurrentUser ? (
         <Chip
           label="You"
           variant="filled"
-          sx={(theme) => ({
-            ...solidChipColorSx("info")(theme),
-            height: 18,
-            fontSize: "0.625rem",
-          })}
+          className="h-4.5 text-[0.625rem]"
+          appearance="solid"
+          color="info"
         />
       ) : null}
-    </Box>
+    </div>
   );
 };
 
@@ -60,7 +49,7 @@ export const userColumns: EntityTableColumn[] = [
       valueType: "text",
       defaultOperator: "like",
     },
-    renderCell: (params: GridRenderCellParams) => (
+    renderCell: (params: RenderCellParams) => (
       <UserIdentifierCell {...params} />
     ),
   },
@@ -73,18 +62,10 @@ export const userColumns: EntityTableColumn[] = [
     field: "email",
     headerName: "Email",
     flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <Box
-        sx={{
-          display: "flex",
-          height: "100%",
-          wordBreak: "break-all",
-          whiteSpace: "normal",
-          alignItems: "center",
-        }}
-      >
+    renderCell: (params: RenderCellParams) => (
+      <div className="flex h-full items-center break-all whitespace-normal">
         {params.value}
-      </Box>
+      </div>
     ),
   },
   {
@@ -101,16 +82,10 @@ export const userColumns: EntityTableColumn[] = [
         value: provider,
       })),
     },
-    renderCell: (params: GridRenderCellParams) => (
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          height: "100%",
-        }}
-      >
+    renderCell: (params: RenderCellParams) => (
+      <div className="flex h-full items-center">
         {getProviderValue(params.value, 18)}
-      </Box>
+      </div>
     ),
   },
   ...createdUpdatedColumns(),
@@ -146,20 +121,12 @@ export const userColumns: EntityTableColumn[] = [
     sortField: "primary_account.identifier",
     valueGetter: (_value: any, row: any) =>
       (row.secondaryAccounts || []).map((u: any) => u.identifier).join(", "),
-    renderCell: (params: GridRenderCellParams) => (
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 0.5,
-          alignItems: "center",
-          height: "100%",
-        }}
-      >
+    renderCell: (params: RenderCellParams) => (
+      <div className="flex h-full flex-wrap items-center gap-1">
         {(params.row.secondaryAccounts || []).map((u: any) => (
           <Entity key={u.id} entity={{ ...u, entityType: "user" }} />
         ))}
-      </Box>
+      </div>
     ),
   },
   {
@@ -169,20 +136,12 @@ export const userColumns: EntityTableColumn[] = [
     sortField: "primary_account.identifier",
     valueGetter: (_value: any, row: any) =>
       (row.primaryAccount || []).map((u: any) => u.identifier).join(", "),
-    renderCell: (params: GridRenderCellParams) => (
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 0.5,
-          alignItems: "center",
-          height: "100%",
-        }}
-      >
+    renderCell: (params: RenderCellParams) => (
+      <div className="flex h-full flex-wrap items-center gap-1">
         {(params.row.primaryAccount || []).map((u: any) => (
           <Entity key={u.id} entity={{ ...u, entityType: "user" }} />
         ))}
-      </Box>
+      </div>
     ),
   },
 ];

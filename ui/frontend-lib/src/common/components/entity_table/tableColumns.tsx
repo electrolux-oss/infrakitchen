@@ -1,5 +1,4 @@
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
+import { RenderCellParams } from "../../../ui";
 import { Entity } from "../entities/Entity";
 import { RelativeTime } from "../fields/RelativeTime";
 import { serverSearchReference } from "../filter_panel/referenceLoaders";
@@ -23,7 +22,7 @@ export interface RelativeTimeColumnOptions {
    * property (e.g. field "created_at" but `row.createdAt`). Defaults to
    * `params.value`, which matches when the field and row property agree.
    */
-  value?: (params: GridRenderCellParams) => string | Date | null | undefined;
+  value?: (params: RenderCellParams) => string | Date | null | undefined;
   /** Fixed column width; defaults to {@link RELATIVE_TIME_COLUMN_WIDTH}. */
   width?: number;
 }
@@ -34,12 +33,8 @@ export interface CreatedUpdatedColumnOptions {
   updatedField?: string;
   createdSortField?: string;
   updatedSortField?: string;
-  createdValue?: (
-    params: GridRenderCellParams,
-  ) => string | Date | null | undefined;
-  updatedValue?: (
-    params: GridRenderCellParams,
-  ) => string | Date | null | undefined;
+  createdValue?: (params: RenderCellParams) => string | Date | null | undefined;
+  updatedValue?: (params: RenderCellParams) => string | Date | null | undefined;
 }
 
 /** A single "relative time" column (e.g. Created, Last Updated, Time). */
@@ -54,7 +49,7 @@ export const relativeTimeColumn = (
   align: "right",
   headerAlign: "right",
   ...(options.sortField ? { sortField: options.sortField } : {}),
-  renderCell: (params: GridRenderCellParams) => {
+  renderCell: (params: RenderCellParams) => {
     const date = options.value
       ? options.value(params)
       : (params.value as string | Date | null | undefined);
@@ -93,7 +88,7 @@ export const labelsColumn = (labelsEntity: string): EntityTableColumn => ({
     labelsEntity,
   },
   valueGetter: (_value: any, row: any) => (row.labels || []).join(", "),
-  renderCell: (params: GridRenderCellParams) => (
+  renderCell: (params: RenderCellParams) => (
     <Labels labels={params.row.labels || []} />
   ),
 });
@@ -153,7 +148,7 @@ export const userColumn = (
           },
         }),
     valueGetter: (_value: any, row: any) => getUser(row)?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: RenderCellParams) => {
       const user = getUser(params.row);
       if (!user?.id) return null;
       return <Entity entity={{ ...user, entityType: "user" }} hideName />;
@@ -163,9 +158,7 @@ export const userColumn = (
 
 /**
  * Right alignment for columns whose value is a number, following the usual
- * convention that digits line up by place value. Spread into a column def
- * rather than using DataGrid's `type: "number"`, which would also swap in
- * numeric filter operators that these server-side filters don't use.
+ * convention that digits line up by place value. Spread into a column def.
  */
 export const NUMERIC_COLUMN_ALIGN = {
   align: "right",

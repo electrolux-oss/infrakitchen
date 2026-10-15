@@ -3,8 +3,6 @@ import { useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router";
 
-import { Box, Button, TextField } from "@mui/material";
-
 import { LabelInput, MultiSelectEditor } from "../../common";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
@@ -12,6 +10,7 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { IkEntity } from "../../types";
+import { Button, TextField } from "../../ui";
 import { GqlUserShort, USERS_SHORT_QUERY } from "../../users/graphql";
 import { CREATE_SERVICE_MUTATION } from "../graphql";
 import { ServiceCreateRequest } from "../types";
@@ -104,17 +103,9 @@ export const ServiceCreatePage = () => {
         </>
       }
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          flexDirection: "column",
-          width: "100%",
-          minWidth: 320,
-        }}
-      >
+      <div className="flex w-full min-w-80 flex-col items-center">
         <PropertyCard title="Service Definition">
-          <Box>
+          <div>
             <Controller
               name="name"
               control={control}
@@ -124,7 +115,6 @@ export const ServiceCreatePage = () => {
                   {...field}
                   label="Name"
                   required
-                  variant="outlined"
                   error={!!errors.name}
                   helperText={
                     errors.name
@@ -133,11 +123,7 @@ export const ServiceCreatePage = () => {
                   }
                   fullWidth
                   margin="normal"
-                  slotProps={{
-                    htmlInput: {
-                      "aria-label": "Service name",
-                    },
-                  }}
+                  inputProps={{ "aria-label": "Service name" }}
                 />
               )}
             />
@@ -149,15 +135,10 @@ export const ServiceCreatePage = () => {
                   {...field}
                   value={field.value ?? ""}
                   label="Display Name"
-                  variant="outlined"
                   helperText="Optional human-friendly name"
                   fullWidth
                   margin="normal"
-                  slotProps={{
-                    htmlInput: {
-                      "aria-label": "Service display name",
-                    },
-                  }}
+                  inputProps={{ "aria-label": "Service display name" }}
                 />
               )}
             />
@@ -168,7 +149,6 @@ export const ServiceCreatePage = () => {
                 <TextField
                   {...field}
                   label="Description"
-                  variant="outlined"
                   error={!!errors.description}
                   helperText={
                     errors.description
@@ -177,11 +157,7 @@ export const ServiceCreatePage = () => {
                   }
                   fullWidth
                   margin="normal"
-                  slotProps={{
-                    htmlInput: {
-                      "aria-label": "Service description",
-                    },
-                  }}
+                  inputProps={{ "aria-label": "Service description" }}
                 />
               )}
             />
@@ -222,7 +198,6 @@ export const ServiceCreatePage = () => {
                   {...field}
                   value={field.value ?? ""}
                   label="Repository URL"
-                  variant="outlined"
                   placeholder="https://github.com/org/repo"
                   error={!!errors.repositoryUrl}
                   helperText={
@@ -232,11 +207,7 @@ export const ServiceCreatePage = () => {
                   }
                   fullWidth
                   margin="normal"
-                  slotProps={{
-                    htmlInput: {
-                      "aria-label": "Service repository URL",
-                    },
-                  }}
+                  inputProps={{ "aria-label": "Service repository URL" }}
                 />
               )}
             />
@@ -246,11 +217,11 @@ export const ServiceCreatePage = () => {
               defaultValue={[]}
               render={({ field }) => <LabelInput errors={errors} {...field} />}
             />
-          </Box>
+          </div>
         </PropertyCard>
 
         <PropertyCard title="Service Owners">
-          <Box>
+          <div>
             <Controller
               name="owners"
               control={control}
@@ -267,9 +238,9 @@ export const ServiceCreatePage = () => {
                 />
               )}
             />
-          </Box>
+          </div>
         </PropertyCard>
-      </Box>
+      </div>
     </PageContainer>
   );
 };

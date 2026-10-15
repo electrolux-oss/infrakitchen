@@ -1,12 +1,16 @@
 import { forwardRef } from "react";
 
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
-import CloseIcon from "@mui/icons-material/Close";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import { Box, Typography, IconButton, Theme } from "@mui/material";
 import { toast } from "sonner";
+
+import {
+  CheckCircleOutlinedIcon,
+  CloseIcon,
+  ErrorOutlinedIcon,
+  InfoOutlinedIcon,
+  WarningAmberIcon,
+} from "../../../icons/material";
+import { IconButton } from "../../../ui";
+import { cn } from "../../../utils/cn";
 
 export type SnackbarVariant =
   "success" | "error" | "warning" | "info" | "default";
@@ -18,29 +22,20 @@ interface NotificationContentProps {
   title?: string;
 }
 
-const variantConfig = (theme: Theme, variant: SnackbarVariant) =>
-  ({
-    default: {
-      color: theme.palette.grey[700],
-    },
-    success: {
-      color: theme.palette.success.dark,
-    },
-    error: {
-      color: theme.palette.error.dark,
-    },
-    warning: {
-      color: theme.palette.warning.dark,
-    },
-    info: {
-      color: theme.palette.info.dark,
-    },
-  })[variant];
+// The light palette's dark shades (themePrimitives), in both color schemes
+// so the white text keeps its contrast.
+const VARIANT_BG: Record<SnackbarVariant, string> = {
+  default: "bg-grey-700",
+  success: "bg-tint-green-700",
+  error: "bg-tint-red-800",
+  warning: "bg-tint-orange-800",
+  info: "bg-tint-blue-700",
+};
 
 const variantIcons = {
   default: InfoOutlinedIcon,
-  success: CheckCircleOutlineIcon,
-  error: ErrorOutlineIcon,
+  success: CheckCircleOutlinedIcon,
+  error: ErrorOutlinedIcon,
   warning: WarningAmberIcon,
   info: InfoOutlinedIcon,
 };
@@ -54,66 +49,37 @@ export const NotificationContent = forwardRef<
   const iconColor = "#fff";
 
   return (
-    <Box
+    <div
       ref={ref}
-      sx={(theme) => {
-        const config = variantConfig(theme, variant);
-        return {
-          p: 1.5,
-          minWidth: { xs: "300px", sm: "400px" },
-          backgroundColor: config.color,
-          borderRadius: "var(--template-surface-radius)",
-          boxShadow: 3,
-          color: iconColor,
-          display: "flex",
-          alignItems: "flex-start",
-        };
-      }}
+      className={cn(
+        "flex min-w-[300px] items-start rounded-surface p-3 text-white shadow-[0_3px_3px_-2px_rgba(0,0,0,0.2),0_3px_4px_0_rgba(0,0,0,0.14),0_1px_8px_0_rgba(0,0,0,0.12)] sm:min-w-[400px]",
+        VARIANT_BG[variant],
+      )}
     >
-      <DynamicIcon sx={{ mr: 2, mt: 0.5, flexShrink: 0, color: iconColor }} />
+      <DynamicIcon className="mt-1 mr-4 shrink-0 text-white" />
 
-      <Box sx={{ flexGrow: 1, minWidth: 0, pr: 1 }}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-          }}
-        >
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+      <div className="min-w-0 grow pr-2">
+        <div className="flex items-start justify-between">
+          <div className="grow">
+            <h6 className="m-0 text-subtitle2 font-bold text-grey-500">
               {title}
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                mt: 0.5,
-                wordWrap: "break-word",
-                color: "rgba(255, 255, 255, 0.9)",
-              }}
-            >
+            </h6>
+            <p className="m-0 mt-1 text-body2 wrap-break-word text-[rgba(255,_255,_255,_0.9)]">
               {message}
-            </Typography>
-          </Box>
+            </p>
+          </div>
 
           <IconButton
+            style={{ color: iconColor }}
+            className="ml-2 opacity-80 hover:bg-white/10 hover:opacity-100"
             onClick={() => closeSnackbar(id)}
             size="small"
-            sx={{
-              ml: 1,
-              color: iconColor,
-              opacity: 0.8,
-              "&:hover": {
-                opacity: 1,
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-              },
-            }}
           >
             <CloseIcon fontSize="small" />
           </IconButton>
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 });
 

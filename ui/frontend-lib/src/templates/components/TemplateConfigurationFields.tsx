@@ -1,10 +1,9 @@
 import { Control, Controller, FieldErrors, FieldValues } from "react-hook-form";
 
-import { Autocomplete, Chip, TextField } from "@mui/material";
-
 import { getProviderDisplayName } from "../../common/utils";
+import { Autocomplete } from "../../ui";
 import { INTEGRATION_PROVIDER_OPTIONS } from "../constants";
-import { IntegrationProviderType, TemplateConfig } from "../types";
+import { TemplateConfig } from "../types";
 
 export type TemplateConfigurationControl = Control<
   { configuration: TemplateConfig } & FieldValues
@@ -30,36 +29,15 @@ export const TemplateConfigurationFields = ({
           value={field.value || []}
           onChange={(_event, newValue) => field.onChange(newValue)}
           getOptionLabel={(option) => getProviderDisplayName(option)}
-          renderValue={(
-            value: readonly IntegrationProviderType[],
-            getTagProps,
-          ) =>
-            value.map((option: IntegrationProviderType, index: number) => {
-              const { key, ...rest } = getTagProps({ index });
-              return (
-                <Chip
-                  key={key}
-                  {...rest}
-                  variant="outlined"
-                  label={getProviderDisplayName(option)}
-                />
-              );
-            })
+          label="Integration Providers to filter on"
+          error={!!errors.configuration?.one_resource_per_integration}
+          helperText={
+            errors.configuration?.one_resource_per_integration
+              ? errors.configuration.one_resource_per_integration.message
+              : "Enforce one resource per integration for selected providers (empty means all providers)"
           }
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Integration Providers to filter on"
-              error={!!errors.configuration?.one_resource_per_integration}
-              helperText={
-                errors.configuration?.one_resource_per_integration
-                  ? errors.configuration.one_resource_per_integration.message
-                  : "Enforce one resource per integration for selected providers (empty means all providers)"
-              }
-              fullWidth
-              margin="normal"
-            />
-          )}
+          fullWidth
+          margin="normal"
         />
       )}
     />
@@ -73,37 +51,15 @@ export const TemplateConfigurationFields = ({
           value={field.value || []}
           onChange={(_event, newValue) => field.onChange(newValue)}
           getOptionLabel={(option) => getProviderDisplayName(option)}
-          renderValue={(
-            value: readonly IntegrationProviderType[],
-            getTagProps,
-          ) =>
-            value.map((option: IntegrationProviderType, index: number) => {
-              const { key, ...rest } = getTagProps({ index });
-              return (
-                <Chip
-                  key={key}
-                  {...rest}
-                  variant="outlined"
-                  label={getProviderDisplayName(option)}
-                />
-              );
-            })
+          label="Allowed Integration Providers"
+          error={!!errors.configuration?.allowed_provider_integration_types}
+          helperText={
+            errors.configuration?.allowed_provider_integration_types
+              ? errors.configuration.allowed_provider_integration_types.message
+              : "Restrict template usage to selected providers (empty means all providers)"
           }
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Allowed Integration Providers"
-              error={!!errors.configuration?.allowed_provider_integration_types}
-              helperText={
-                errors.configuration?.allowed_provider_integration_types
-                  ? errors.configuration.allowed_provider_integration_types
-                      .message
-                  : "Restrict template usage to selected providers (empty means all providers)"
-              }
-              fullWidth
-              margin="normal"
-            />
-          )}
+          fullWidth
+          margin="normal"
         />
       )}
     />
@@ -114,26 +70,13 @@ export const TemplateConfigurationFields = ({
         <Autocomplete
           multiple
           freeSolo
-          options={[]}
+          options={[] as string[]}
           value={field.value || []}
           onChange={(_event, newValue) => field.onChange(newValue)}
-          renderValue={(value: readonly string[], getTagProps) =>
-            value.map((option: string, index: number) => {
-              const { key, ...rest } = getTagProps({ index });
-              return (
-                <Chip key={key} {...rest} variant="outlined" label={option} />
-              );
-            })
-          }
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Required Configuration Variables"
-              helperText="Dependency config variable names that must be provided when creating a resource"
-              fullWidth
-              margin="normal"
-            />
-          )}
+          label="Required Configuration Variables"
+          helperText="Dependency config variable names that must be provided when creating a resource"
+          fullWidth
+          margin="normal"
         />
       )}
     />

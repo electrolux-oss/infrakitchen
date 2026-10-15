@@ -1,14 +1,13 @@
 import { FC, useMemo, useState } from "react";
 
-import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
-import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
-import { Box, Chip, Typography, useColorScheme } from "@mui/material";
-import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
-import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import CodeMirror from "@uiw/react-codemirror";
 
 import { HclCodeViewer } from "../../common/components/viewers/HclCodeViewer";
-import { CODE_FONT_FAMILY } from "../../common/theme";
+import {
+  DescriptionOutlinedIcon,
+  FolderOutlinedIcon,
+} from "../../icons/material";
+import { Chip, TreeItem, TreeView, useColorScheme } from "../../ui";
 
 interface CodeSnapshotTabProps {
   codeSnapshot: string | null | undefined;
@@ -121,41 +120,24 @@ function renderTreeItems(nodes: TreeNode[]) {
         key={node.path}
         itemId={node.path}
         label={
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 0.75,
-              py: 0.25,
-              width: "100%",
-              pr: 1,
-            }}
-          >
+          <div className="flex w-full items-center gap-1.5 py-0.5 pr-2">
             {isFolder ? (
               <FolderOutlinedIcon fontSize="small" color="action" />
             ) : (
               <DescriptionOutlinedIcon fontSize="small" color="action" />
             )}
-            <Typography
-              variant="body2"
-              sx={{ fontFamily: CODE_FONT_FAMILY, fontSize: 13 }}
-            >
+            <p className="m-0 font-mono text-[13px] font-normal">
               {isFolder ? node.name : node.name.replace(/@[^/]+$/, "")}
-            </Typography>
+            </p>
             {!isFolder && node.file?.ref && (
               <Chip
+                className="ml-auto h-4.5 font-mono text-[11px]"
                 label={displayRef(node.file.ref)}
                 variant="outlined"
-                sx={{
-                  ml: "auto",
-                  height: 18,
-                  fontSize: 11,
-                  fontFamily: CODE_FONT_FAMILY,
-                  "& .MuiChip-label": { px: 0.75 },
-                }}
+                labelClassName="px-1.5"
               />
             )}
-          </Box>
+          </div>
         }
       >
         {isFolder ? renderTreeItems(node.children) : null}
@@ -184,10 +166,7 @@ export const CodeSnapshotTab: FC<CodeSnapshotTabProps> = ({
   codeSnapshot,
   defaultRef,
 }) => {
-  const { mode, systemMode } = useColorScheme();
-  const resolvedMode = mode === "system" ? systemMode : mode;
-  const colorMode: "light" | "dark" =
-    resolvedMode === "dark" ? "dark" : "light";
+  const { resolvedMode: colorMode } = useColorScheme();
 
   const files = useMemo(
     () => parseCodeSnapshot(codeSnapshot, defaultRef),
@@ -209,43 +188,19 @@ export const CodeSnapshotTab: FC<CodeSnapshotTabProps> = ({
 
   if (files.length === 0) {
     return (
-      <Typography
-        variant="body2"
-        sx={{
-          color: "text.secondary",
-          p: 2,
-        }}
-      >
+      <p className="m-0 p-4 text-body2 text-fg-muted">
         No code files found in snapshot.
-      </Typography>
+      </p>
     );
   }
 
   const selectedFile = selected ? filesByPath.get(selected) : undefined;
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        border: 1,
-        borderColor: "divider",
-        borderRadius: "var(--template-surface-radius)",
-        overflow: "hidden",
-        minHeight: 400,
-      }}
-    >
-      <Box
-        sx={{
-          width: 300,
-          flexShrink: 0,
-          borderRight: 1,
-          borderColor: "divider",
-          bgcolor: "background.default",
-          overflow: "auto",
-          py: 0.5,
-        }}
-      >
-        <SimpleTreeView
+    <div className="flex min-h-100 overflow-hidden rounded-surface border border-divider">
+      <div className="w-75 shrink-0 overflow-auto border-r border-divider bg-canvas py-1">
+        <TreeView
+          aria-label="Files"
           defaultExpandedItems={defaultExpanded}
           selectedItems={selected}
           onSelectedItemsChange={(_e, itemId) => {
@@ -254,55 +209,33 @@ export const CodeSnapshotTab: FC<CodeSnapshotTabProps> = ({
           }}
         >
           {renderTreeItems(tree.children)}
-        </SimpleTreeView>
-      </Box>
-      <Box
-        sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}
-      >
+        </TreeView>
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col">
         {selectedFile ? (
           <>
-            <Box
-              sx={{
-                px: 1.5,
-                py: 1,
-                borderBottom: 1,
-                borderColor: "divider",
-                bgcolor: "background.default",
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-              }}
-            >
-              <Typography
-                variant="subtitle2"
-                sx={{ fontFamily: CODE_FONT_FAMILY }}
-              >
+            <div className="flex items-center gap-2 border-b border-divider bg-canvas px-3 py-2">
+              <h6 className="m-0 font-mono text-subtitle2 text-grey-500">
                 {selectedFile.filename.replace(/@[^/]+$/, "")}
-              </Typography>
+              </h6>
               {selectedFile.ref && (
                 <Chip
+                  className="font-mono"
                   label={displayRef(selectedFile.ref)}
                   variant="outlined"
-                  sx={{ fontFamily: CODE_FONT_FAMILY }}
                 />
               )}
-            </Box>
-            <Box sx={{ flex: 1, overflow: "auto" }}>
+            </div>
+            <div className="flex-1 overflow-auto">
               {renderFileViewer(selectedFile, colorMode)}
-            </Box>
+            </div>
           </>
         ) : (
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              p: 2,
-            }}
-          >
+          <p className="m-0 p-4 text-body2 text-fg-muted">
             Select a file to view its contents.
-          </Typography>
+          </p>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };

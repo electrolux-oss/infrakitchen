@@ -1,20 +1,15 @@
-import LaunchIcon from "@mui/icons-material/Launch";
+import { InfrakitchenLogo } from "../../../icons/InfrakitchenLogo";
+import { LaunchIcon } from "../../../icons/material";
 import {
   Alert,
-  Box,
-  CircularProgress,
+  Divider,
+  Spinner,
   Dialog,
   DialogContent,
   DialogTitle,
-  Divider,
   Link,
-  Stack,
-  Typography,
-} from "@mui/material";
-
-import { InfrakitchenLogo } from "../../../icons/InfrakitchenLogo";
+} from "../../../ui";
 import { useConfig } from "../../context/ConfigContext";
-import { CODE_FONT_FAMILY } from "../../theme";
 
 const flattenObject = (object: Record<string, unknown>) => {
   const result: Record<string, unknown> = {};
@@ -54,37 +49,24 @@ const InfoRow = ({
   const displayValue = formatValue(value);
 
   return (
-    <Stack direction="row" spacing={2} sx={{ alignItems: "flex-start" }}>
-      <Typography
-        sx={{ color: "text.secondary", minWidth: 120, flexShrink: 0 }}
-      >
-        {label}
-      </Typography>
+    <div className="flex flex-row items-start gap-4">
+      <p className="m-0 min-w-30 shrink-0 text-body2 text-fg-muted">{label}</p>
       {url ? (
         <Link
+          className="inline-flex items-center gap-1 font-mono [word-break:break-word]"
           href={url}
           target="_blank"
           rel="noreferrer"
-          underline="hover"
-          sx={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 0.5,
-            fontFamily: CODE_FONT_FAMILY,
-            wordBreak: "break-word",
-          }}
         >
           {displayValue}
-          <LaunchIcon sx={{ fontSize: 14 }} />
+          <LaunchIcon className="text-[14px]" />
         </Link>
       ) : (
-        <Typography
-          sx={{ fontFamily: CODE_FONT_FAMILY, wordBreak: "break-word" }}
-        >
+        <p className="m-0 font-mono text-body2 [word-break:break-word]">
           {displayValue}
-        </Typography>
+        </p>
       )}
-    </Stack>
+    </div>
   );
 };
 
@@ -105,18 +87,14 @@ const HostInfoRow = ({
     .join("\n");
 
   return (
-    <Stack direction="row" spacing={2} sx={{ alignItems: "flex-start" }}>
-      <Typography
-        sx={{ color: "text.secondary", minWidth: 120, flexShrink: 0 }}
-      >
+    <div className="flex flex-row items-start gap-4">
+      <p className="m-0 min-w-30 shrink-0 text-body2 text-fg-muted">
         Host info
-      </Typography>
-      <Typography
-        sx={{ m: 0, whiteSpace: "pre-wrap", fontFamily: CODE_FONT_FAMILY }}
-      >
+      </p>
+      <p className="m-0 font-mono text-body2 whitespace-pre-wrap">
         {`${platform} (${arch})\n${formattedString}`}
-      </Typography>
-    </Stack>
+      </p>
+    </div>
   );
 };
 
@@ -126,54 +104,29 @@ export const ServerInfoDialog = ({ open, onClose }: ServerInfoDialogProps) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              "& svg": { width: 28, height: 28, mr: 0 },
-            }}
-          >
+        <div className="flex flex-row items-center gap-3">
+          <div className="flex items-center [&_svg]:mr-0 [&_svg]:h-7 [&_svg]:w-7">
             <InfrakitchenLogo />
-          </Box>
-          <Typography component="span" variant="h6">
-            About InfraKitchen
-          </Typography>
-        </Stack>
+          </div>
+          <span className="text-h6">About InfraKitchen</span>
+        </div>
       </DialogTitle>
       <DialogContent dividers>
-        <Stack spacing={2.5}>
+        <div className="flex flex-col gap-5">
           {serverInfoLoading ? (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                py: 4,
-              }}
-            >
-              <CircularProgress size={24} />
-            </Box>
+            <div className="flex items-center justify-center py-8">
+              <Spinner size={24} />
+            </div>
           ) : serverInfoError ? (
             <Alert severity="error">{serverInfoError}</Alert>
           ) : serverInfo ? (
             <>
               {/* Release identification: what build is running. */}
-              <Box>
-                <Typography
-                  variant="subtitle2"
-                  sx={{
-                    mb: 1,
-                    color: "text.secondary",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                  }}
-                >
+              <div>
+                <h6 className="m-0 mb-2 text-[0.75rem] font-semibold tracking-[0.08em] text-fg-muted uppercase">
                   Build
-                </Typography>
-                <Stack spacing={1}>
+                </h6>
+                <div className="flex flex-col gap-2">
                   <InfoRow
                     label="Version"
                     value={serverInfo.version}
@@ -189,38 +142,28 @@ export const ServerInfoDialog = ({ open, onClose }: ServerInfoDialogProps) => {
                     value={serverInfo.sourceCommitShort}
                     url={serverInfo.sourceUrl}
                   />
-                </Stack>
-              </Box>
+                </div>
+              </div>
 
               <Divider />
 
               {/* Runtime environment: where the server runs. */}
-              <Box>
-                <Typography
-                  variant="subtitle2"
-                  sx={{
-                    mb: 1,
-                    color: "text.secondary",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                  }}
-                >
+              <div>
+                <h6 className="m-0 mb-2 text-[0.75rem] font-semibold tracking-[0.08em] text-fg-muted uppercase">
                   Server
-                </Typography>
-                <Stack spacing={1}>
+                </h6>
+                <div className="flex flex-col gap-2">
                   <InfoRow label="Python" value={serverInfo.python} />
                   <HostInfoRow hostMetadata={serverInfo.hostMetadata} />
-                </Stack>
-              </Box>
+                </div>
+              </div>
             </>
           ) : (
-            <Typography color="textSecondary">
+            <p className="m-0 text-body2 text-fg-muted">
               No server info available.
-            </Typography>
+            </p>
           )}
-        </Stack>
+        </div>
       </DialogContent>
     </Dialog>
   );

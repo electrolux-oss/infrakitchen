@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router";
 
-import Button from "@mui/material/Button";
 import { toast } from "sonner";
 
 import { ApiClientError } from "../../errors";
+import { Button } from "../../ui";
 import { SnackbarVariant, DependencyError } from "../components/notifications";
 import { ErrorWithStatusCode } from "../components/notifications/ErrorWithStatusCode";
 
@@ -19,21 +19,8 @@ const NotifyLinkButton = ({
   const navigate = useNavigate();
   return (
     <Button
+      className="ml-auto min-w-20 px-4 text-[0.85rem] font-semibold whitespace-nowrap text-inherit underline hover:bg-transparent hover:underline"
       variant="text"
-      sx={{
-        fontWeight: 600,
-        fontSize: "0.85rem",
-        textDecoration: "underline",
-        color: "inherit",
-        whiteSpace: "nowrap",
-        marginLeft: "auto",
-        minWidth: 80,
-        px: 2,
-        "&:hover": {
-          backgroundColor: "transparent",
-          textDecoration: "underline",
-        },
-      }}
       onClick={() => {
         toast.dismiss();
         onClick?.();

@@ -2,19 +2,18 @@ import { useEffect, useState } from "react";
 
 import { Control, Controller, useFormContext, useWatch } from "react-hook-form";
 
+import { GradientCircularProgress, useConfig } from "../../common";
+import { notify, notifyError } from "../../common/hooks/useNotification";
+import { useSourceCodeVersionConfigContext } from "../../source_code_versions/context/SourceCodeVersionConfigContext";
+import { GqlTemplateShort } from "../../templates/graphql";
 import {
+  Button,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   FormHelperText,
-  Button,
-} from "@mui/material";
-
-import { GradientCircularProgress, useConfig } from "../../common";
-import { notify, notifyError } from "../../common/hooks/useNotification";
-import { useSourceCodeVersionConfigContext } from "../../source_code_versions/context/SourceCodeVersionConfigContext";
-import { GqlTemplateShort } from "../../templates/graphql";
+} from "../../ui";
 import {
   SOURCE_CODE_VERSION_TEMPLATE_OUTPUTS_QUERY,
   GqlSourceOutputConfigTemplate,
@@ -156,7 +155,7 @@ export const ConfigReferenceInput = ({
           )}
         />
       )}
-      <Button onClick={handleDeleteTemplateSelection} sx={{ mt: 2 }}>
+      <Button className="mt-4" onClick={handleDeleteTemplateSelection}>
         Clear
       </Button>
     </>

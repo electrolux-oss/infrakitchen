@@ -1,8 +1,7 @@
 import { MouseEvent } from "react";
 
-import DoneIcon from "@mui/icons-material/Done";
-import MarkEmailUnreadOutlinedIcon from "@mui/icons-material/MarkEmailUnreadOutlined";
-import { IconButton, Tooltip } from "@mui/material";
+import { DoneIcon, MarkEmailUnreadOutlinedIcon } from "../../icons/material";
+import { IconButton, Tooltip } from "../../ui";
 
 interface ReadToggleButtonProps {
   isRead: boolean;
@@ -17,20 +16,12 @@ export const ReadToggleButton = ({
   return (
     <Tooltip title={label}>
       <IconButton
+        className="focus-visible:opacity-100 [li_&]:opacity-0 [@media(hover:none)]:[li_&]:opacity-100 [li:hover_&]:opacity-100 [tr_&]:opacity-0 [@media(hover:none)]:[tr_&]:opacity-100 [tr:hover_&]:opacity-100"
         size="small"
         aria-label={label}
         onClick={(event: MouseEvent) => {
           event.stopPropagation();
           onClick();
-        }}
-        sx={{
-          // Shown only on row hover; && outranks the theme's ListItem button opacity
-          ".MuiListItem-root &&, .MuiDataGrid-row &&": { opacity: 0 },
-          ".MuiListItem-root:hover &&, .MuiDataGrid-row:hover &&, &&:focus-visible":
-            { opacity: 1 },
-          "@media (hover: none)": {
-            ".MuiListItem-root &&, .MuiDataGrid-row &&": { opacity: 1 },
-          },
         }}
       >
         {isRead ? (

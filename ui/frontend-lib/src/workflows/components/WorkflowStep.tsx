@@ -1,29 +1,26 @@
 import { useState } from "react";
 
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Box,
-  Chip,
-  LinearProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from "@mui/material";
-
 import { Entity } from "../../common/components/entities/Entity";
 import { GetReferenceUrlValue } from "../../common/components/fields/CommonField";
 import { Duration } from "../../common/components/fields/Duration";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { AbstractChip } from "../../common/components/labels/AbstractChip";
 import StatusChip from "../../common/StatusChip";
-import { CODE_FONT_FAMILY } from "../../common/theme";
+import { ExpandMoreIcon } from "../../icons/material";
+import {
+  Chip,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  LinearProgress,
+} from "../../ui";
+import { cn } from "../../utils/cn";
 import { GqlWorkflowStep } from "../graphql";
 
 interface WorkflowStepProps {
@@ -39,90 +36,55 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
   const externalInputs = step.parentResourceIds;
 
   return (
-    <Box sx={{ width: "100%" }}>
-      <Box
+    <div className="w-full">
+      <div
+        className={cn(
+          "border",
+          step.status === "error"
+            ? "border-error"
+            : step.status === "done"
+              ? "border-success"
+              : "border-divider",
+          "mb-4 overflow-hidden rounded-surface",
+        )}
         key={step.id}
-        sx={{
-          mb: 2,
-          border: 1,
-          borderColor:
-            step.status === "error"
-              ? "error.main"
-              : step.status === "done"
-                ? "success.main"
-                : "divider",
-          borderRadius: "var(--template-surface-radius)",
-          overflow: "hidden",
-        }}
       >
         {/* Step header */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            px: 2,
-            py: 1.5,
-            borderBottom: 1,
-            borderColor: "divider",
-            bgcolor: "background.default",
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <div className="flex items-center justify-between border-b border-divider bg-canvas px-4 py-3">
+          <div className="flex items-center gap-4">
             <Chip
+              className="min-w-7 font-bold"
               label={step.position + 1}
               color="primary"
-              sx={{ fontWeight: 700, minWidth: 28 }}
             />
             {templateName ? (
               <Entity entity={step.template} />
             ) : (
-              <Typography
-                variant="subtitle2"
-                sx={{ fontFamily: CODE_FONT_FAMILY }}
-              >
+              <h6 className="m-0 font-mono text-subtitle2 text-grey-500">
                 {step.template?.id.slice(0, 8)}…
-              </Typography>
+              </h6>
             )}
             {step.template?.abstract && <AbstractChip />}
             <StatusChip status={step.status} />
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          </div>
+          <div className="flex items-center gap-4">
             {step.startedAt && (
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "text.secondary",
-                }}
-              >
+              <span className="text-caption text-fg-muted">
                 <RelativeTime date={step.startedAt} />
-              </Typography>
+              </span>
             )}
-          </Box>
-        </Box>
+          </div>
+        </div>
 
         {step.status === "in_progress" && <LinearProgress />}
 
         {/* Step detail fields */}
-        <Box sx={{ px: 2, py: 1.5 }}>
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr 1fr" },
-              gap: 2,
-            }}
-          >
+        <div className="px-4 py-3">
+          <div className="grid grid-cols-[1fr] gap-4 sm:grid-cols-[1fr_1fr_1fr]">
             {/* Resource */}
-            <Box>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "text.secondary",
-                }}
-              >
-                Resource
-              </Typography>
-              <Box sx={{ mt: 0.5 }}>
+            <div>
+              <span className="text-caption text-fg-muted">Resource</span>
+              <div className="mt-1">
                 {step.resource?.id != null ? (
                   <GetReferenceUrlValue
                     id={step.resource.id}
@@ -132,32 +94,22 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                     }
                   />
                 ) : (
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: "text.disabled",
-                    }}
-                  >
+                  <p className="m-0 text-body2 text-fg-disabled">
                     {workflowAction === "destroy"
                       ? "Resource removed"
                       : "Not created yet"}
-                  </Typography>
+                  </p>
                 )}
-              </Box>
-            </Box>
+              </div>
+            </div>
 
             {/* SCV */}
             {step.sourceCodeVersion?.id && (
-              <Box>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: "text.secondary",
-                  }}
-                >
+              <div>
+                <span className="text-caption text-fg-muted">
                   Source Code Version
-                </Typography>
-                <Box sx={{ mt: 0.5 }}>
+                </span>
+                <div className="mt-1">
                   <Entity
                     entity={{
                       ...step.sourceCodeVersion,
@@ -167,47 +119,27 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                         step.sourceCodeVersion.id.slice(0, 8) + "…",
                     }}
                   />
-                </Box>
-              </Box>
+                </div>
+              </div>
             )}
 
             {/* Duration */}
             {step.startedAt && step.completedAt && (
-              <Box>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: "text.secondary",
-                  }}
-                >
-                  Duration
-                </Typography>
-                <Box sx={{ mt: 0.5 }}>
+              <div>
+                <span className="text-caption text-fg-muted">Duration</span>
+                <div className="mt-1">
                   <Duration start={step.startedAt} end={step.completedAt} />
-                </Box>
-              </Box>
+                </div>
+              </div>
             )}
 
             {/* Parents */}
             {step.parentResourceIds && step.parentResourceIds.length > 0 && (
-              <Box sx={{ mt: 1.5 }}>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: "text.secondary",
-                    fontWeight: 600,
-                  }}
-                >
+              <div className="mt-3">
+                <span className="text-caption font-semibold text-fg-muted">
                   Parent Resources
-                </Typography>
-                <Box
-                  sx={{
-                    display: "flex",
-                    gap: 1,
-                    flexWrap: "wrap",
-                    mt: 0.5,
-                  }}
-                >
+                </span>
+                <div className="mt-1 flex flex-wrap gap-2">
                   {step.parentResourceIds.map((res) => (
                     <Chip
                       key={res.id}
@@ -222,65 +154,30 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                       variant="outlined"
                     />
                   ))}
-                </Box>
-              </Box>
+                </div>
+              </div>
             )}
 
             {/* External inputs from workflow wiring (read-only) */}
             {externalInputs && externalInputs.length > 0 && (
-              <Box sx={{ mt: 1.5 }}>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: "text.secondary",
-                    fontWeight: 600,
-                  }}
-                >
+              <div className="mt-3">
+                <span className="text-caption font-semibold text-fg-muted">
                   External Inputs (Read-only)
-                </Typography>
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 0.75,
-                    mt: 0.5,
-                  }}
-                >
+                </span>
+                <div className="mt-1 flex flex-col gap-1.5">
                   {externalInputs.map((resource) => (
-                    <Box
+                    <div
+                      className="flex items-center justify-between gap-2 rounded-surface border border-divider bg-paper px-2 py-1.5"
                       key={`external-${resource.id}`}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 1,
-                        px: 1,
-                        py: 0.75,
-                        border: 1,
-                        borderColor: "divider",
-                        borderRadius: "var(--template-surface-radius)",
-                        bgcolor: "background.paper",
-                      }}
                     >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 0.75,
-                        }}
-                      >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: "text.secondary",
-                          }}
-                        >
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-caption text-fg-muted">
                           {resource.template?.name ??
                             resource.template?.id ??
                             "External"}
-                        </Typography>
+                        </span>
                         {resource.template?.abstract && <AbstractChip />}
-                      </Box>
+                      </div>
                       <GetReferenceUrlValue
                         id={resource.id}
                         entityName="resource"
@@ -288,32 +185,19 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                           resource.name ?? resource.id.slice(0, 8) + "…"
                         }
                       />
-                    </Box>
+                    </div>
                   ))}
-                </Box>
-              </Box>
+                </div>
+              </div>
             )}
 
             {/* integrations */}
             {step.integrationIds && step.integrationIds.length > 0 && (
-              <Box sx={{ mt: 1.5 }}>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: "text.secondary",
-                    fontWeight: 600,
-                  }}
-                >
+              <div className="mt-3">
+                <span className="text-caption font-semibold text-fg-muted">
                   Integrations
-                </Typography>
-                <Box
-                  sx={{
-                    display: "flex",
-                    gap: 1,
-                    flexWrap: "wrap",
-                    mt: 0.5,
-                  }}
-                >
+                </span>
+                <div className="mt-1 flex flex-wrap gap-2">
                   {step.integrationIds.map((integration) => (
                     <Chip
                       key={integration.id}
@@ -322,52 +206,34 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                       variant="outlined"
                     />
                   ))}
-                </Box>
-              </Box>
+                </div>
+              </div>
             )}
-          </Box>
+          </div>
 
           {/* Error message */}
           {step.errorMessage && (
-            <Box
-              sx={{
-                mt: 1.5,
-                p: 1.5,
-                bgcolor: "error.main",
-                color: "error.contrastText",
-                borderRadius: "var(--template-surface-radius)",
-                fontSize: 13,
-                fontFamily: CODE_FONT_FAMILY,
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-              }}
-            >
+            <div className="mt-3 rounded-surface bg-error p-3 font-mono text-[13px] [word-break:break-word] whitespace-pre-wrap text-error-contrast">
               {step.errorMessage}
-            </Box>
+            </div>
           )}
           {/* Resolved variables (collapsible) */}
           {hasVars && (
             <Accordion
+              standalone
+              className="mt-3"
               expanded={expandedVars === step.id}
               onChange={() =>
                 setExpandedVars((prev) => (prev === step.id ? null : step.id))
               }
-              elevation={0}
-              sx={{
-                mt: 1.5,
-                border: 1,
-                borderColor: "divider",
-                borderRadius: "var(--template-surface-radius)",
-                "&:before": { display: "none" },
-              }}
             >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                <span className="text-caption font-semibold">
                   Resolved Variables (
                   {Object.keys(step.resolvedVariables || {}).length})
-                </Typography>
+                </span>
               </AccordionSummary>
-              <AccordionDetails sx={{ p: 0 }}>
+              <AccordionDetails className="p-0">
                 <TableContainer>
                   <Table size="small">
                     <TableHead>
@@ -381,30 +247,16 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                         ([key, value]) => (
                           <TableRow key={key}>
                             <TableCell>
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  fontFamily: CODE_FONT_FAMILY,
-                                  fontSize: 12,
-                                }}
-                              >
+                              <p className="m-0 font-mono text-[12px] font-normal">
                                 {key}
-                              </Typography>
+                              </p>
                             </TableCell>
                             <TableCell>
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  fontFamily: CODE_FONT_FAMILY,
-                                  fontSize: 12,
-                                  maxWidth: 400,
-                                  wordBreak: "break-all",
-                                }}
-                              >
+                              <p className="m-0 max-w-100 font-mono text-[12px] font-normal break-all">
                                 {typeof value === "object"
                                   ? JSON.stringify(value)
                                   : String(value)}
-                              </Typography>
+                              </p>
                             </TableCell>
                           </TableRow>
                         ),
@@ -415,8 +267,8 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
               </AccordionDetails>
             </Accordion>
           )}
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };

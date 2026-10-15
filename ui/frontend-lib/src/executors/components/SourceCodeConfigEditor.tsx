@@ -1,29 +1,26 @@
 import { useCallback, useMemo, useState } from "react";
 
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import { CommonField } from "../../common/components/fields/CommonField";
+import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
+import { useConfig } from "../../common/context";
+import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
+import { notify, notifyError } from "../../common/hooks/useNotification";
+import { EditOutlinedIcon } from "../../icons/material";
+import { GqlSourceCode, SOURCE_CODE_QUERY } from "../../source_codes/graphql";
+import { RefFolders } from "../../source_codes/types";
 import {
   Autocomplete,
-  Box,
+  Spinner,
   Button,
-  CircularProgress,
+  IconButton,
+  Tooltip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  IconButton,
   MenuItem,
   TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-
-import { CommonField } from "../../common/components/fields/CommonField";
-import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
-import { useConfig } from "../../common/context";
-import { useEntityProvider } from "../../common/context/EntityContext";
-import { notify, notifyError } from "../../common/hooks/useNotification";
-import { GqlSourceCode, SOURCE_CODE_QUERY } from "../../source_codes/graphql";
-import { RefFolders } from "../../source_codes/types";
+} from "../../ui";
 import {
   ExecutorUpdateFieldInput,
   EXECUTOR_UPDATE_MUTATION,
@@ -49,23 +46,11 @@ export const SourceCodeConfigEditor = ({
   canEdit,
 }: SourceCodeConfigEditorProps) => {
   const { ikApi } = useConfig();
-  const { refreshEntity } = useEntityProvider();
 
-  const saveField = useCallback(
-    async (input: ExecutorUpdateFieldInput) => {
-      try {
-        await ikApi.graphqlRequest(EXECUTOR_UPDATE_MUTATION, {
-          id: executor.id,
-          input,
-        });
-        notify("Executor updated successfully", "success");
-        refreshEntity?.();
-      } catch (error) {
-        notifyError(error);
-        throw error;
-      }
-    },
-    [ikApi, executor.id, refreshEntity],
+  const saveField = useEntityFieldSaver<ExecutorUpdateFieldInput>(
+    EXECUTOR_UPDATE_MUTATION,
+    executor.id,
+    "Executor",
   );
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -174,53 +159,39 @@ export const SourceCodeConfigEditor = ({
   return (
     <CommonField
       name={"Source Code Configuration"}
-      size={12}
+      span="full"
       value={
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: 0.5,
-            "&:hover .source-config-edit, &:focus-within .source-config-edit": {
-              opacity: 1,
-            },
-          }}
-        >
-          <Box sx={{ minWidth: 0 }}>
+        <div className="flex items-start gap-1 [&:focus-within_.source-config-edit]:opacity-100 [&:hover_.source-config-edit]:opacity-100">
+          <div className="min-w-0">
             {executor.sourceCodeVersion ? (
-              <Typography variant="body2">
+              <p className="m-0 text-body2">
                 Git Tag: {executor.sourceCodeVersion}
-              </Typography>
+              </p>
             ) : executor.sourceCodeBranch ? (
-              <Typography variant="body2">
+              <p className="m-0 text-body2">
                 Branch: {executor.sourceCodeBranch}
-              </Typography>
+              </p>
             ) : (
-              <Typography variant="body2" sx={{ color: "text.disabled" }}>
+              <p className="m-0 text-body2 text-fg-disabled">
                 No tag or branch selected
-              </Typography>
+              </p>
             )}
-            <Typography variant="body2">
+            <p className="m-0 text-body2">
               Directory Path:{" "}
               {executor.sourceCodeFolder ? (
                 executor.sourceCodeFolder
               ) : (
                 <PlaceholderText />
               )}
-            </Typography>
-          </Box>
+            </p>
+          </div>
           {canEdit ? (
             <Tooltip title="Edit">
               <IconButton
-                className="source-config-edit"
+                className="source-config-edit opacity-0 [transition:opacity_0.15s_ease-in-out] focus-visible:opacity-100"
                 size="small"
                 onClick={openDialog}
                 aria-label="Edit source code configuration"
-                sx={{
-                  opacity: 0,
-                  transition: "opacity 0.15s ease-in-out",
-                  "&:focus-visible": { opacity: 1 },
-                }}
               >
                 <EditOutlinedIcon fontSize="small" />
               </IconButton>
@@ -236,11 +207,11 @@ export const SourceCodeConfigEditor = ({
             <DialogTitle>Edit Source Code Configuration</DialogTitle>
             <DialogContent>
               {loading ? (
-                <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
-                  <CircularProgress />
-                </Box>
+                <div className="flex justify-center p-6">
+                  <Spinner />
+                </div>
               ) : (
-                <Box sx={{ pt: 1 }}>
+                <div className="pt-2">
                   <Autocomplete
                     options={gitTags}
                     value={version}
@@ -248,15 +219,10 @@ export const SourceCodeConfigEditor = ({
                     getOptionLabel={(option) =>
                       `${option} - ${gitTagMessages[option] || ""}`
                     }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Select Git Tag"
-                        fullWidth
-                        margin="normal"
-                        helperText="Select a git tag (clears the selected branch)"
-                      />
-                    )}
+                    label="Select Git Tag"
+                    fullWidth
+                    margin="normal"
+                    helperText="Select a git tag (clears the selected branch)"
                   />
                   <Autocomplete
                     options={gitBranches}
@@ -265,15 +231,10 @@ export const SourceCodeConfigEditor = ({
                     getOptionLabel={(option) =>
                       `${option} - ${gitBranchMessages[option] || ""}`
                     }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Select Git Branch"
-                        fullWidth
-                        margin="normal"
-                        helperText="Select a git branch (clears the selected tag)"
-                      />
-                    )}
+                    label="Select Git Branch"
+                    fullWidth
+                    margin="normal"
+                    helperText="Select a git branch (clears the selected tag)"
                   />
                   <TextField
                     select
@@ -295,7 +256,7 @@ export const SourceCodeConfigEditor = ({
                       </MenuItem>
                     ))}
                   </TextField>
-                </Box>
+                </div>
               )}
             </DialogContent>
             <DialogActions>
@@ -311,7 +272,7 @@ export const SourceCodeConfigEditor = ({
               </Button>
             </DialogActions>
           </Dialog>
-        </Box>
+        </div>
       }
     />
   );

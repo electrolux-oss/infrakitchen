@@ -1,16 +1,9 @@
 import { FC, forwardRef, useState } from "react";
 
-import {
-  alpha,
-  Box,
-  FormControl,
-  FormHelperText,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
-import { useColorScheme } from "@mui/material/styles";
-import MDEditor from "@uiw/react-md-editor";
+import MDEditor from "@uiw/react-md-editor/nohighlight";
+
+import { FormControl, FormHelperText, useColorScheme } from "../../../ui";
+import { cn } from "../../../utils/cn";
 
 const MAX_BYTES = 65_535;
 
@@ -32,7 +25,7 @@ const formatBytes = (n: number) => {
 };
 
 /**
- * Markdown editor with split editor/preview, integrated with MUI theme
+ * Markdown editor with split editor/preview, styled like the form fields
  * and react-hook-form's Controller.
  */
 const MarkdownEditorInner: FC<MarkdownEditorProps> = ({
@@ -46,53 +39,34 @@ const MarkdownEditorInner: FC<MarkdownEditorProps> = ({
   minHeight = 200,
   disabled = false,
 }) => {
-  const theme = useTheme();
-  // `theme.palette.mode` is frozen to the default scheme when CSS variables
-  // are enabled, so resolve the live mode via `useColorScheme` instead (same
-  // pattern as `ThemeSwitcher`/`GraphViewNode`).
-  const { mode } = useColorScheme();
-  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-  const preferredMode = prefersDarkMode ? "dark" : "light";
-  const colorMode = !mode || mode === "system" ? preferredMode : mode;
+  const { resolvedMode: colorMode } = useColorScheme();
   const bytes = new Blob([value || ""]).size;
   const overLimit = bytes > MAX_BYTES;
   const [focused, setFocused] = useState(false);
 
   const hasError = error || overLimit;
-  const labelColor = hasError
-    ? "error.main"
-    : focused
-      ? "primary.main"
-      : "text.secondary";
-  const borderColor = hasError
-    ? "error.main"
-    : focused
-      ? "primary.main"
-      : "divider";
-
   return (
-    <FormControl fullWidth sx={{ my: 2 }} error={hasError} disabled={disabled}>
+    <FormControl
+      className="my-4"
+      fullWidth
+      error={hasError}
+      disabled={disabled}
+    >
       {label && (
-        <Typography
-          component="label"
-          variant="body2"
-          sx={{
-            display: "block",
-            color: labelColor,
-            fontSize: `calc(${theme.typography.body1.fontSize} * 0.75)`,
-            fontWeight: theme.typography.body1.fontWeight,
-            fontFamily: theme.typography.body1.fontFamily,
-            lineHeight: 1.4375,
-            mb: 0.5,
-            transition: theme.transitions.create("color", {
-              duration: theme.transitions.duration.shorter,
-            }),
-          }}
+        <label
+          className={cn(
+            "mb-1 block text-[0.75rem] leading-[1.4375] transition-colors duration-200",
+            hasError
+              ? "text-error"
+              : focused
+                ? "text-primary"
+                : "text-fg-muted",
+          )}
         >
           {label}
-        </Typography>
+        </label>
       )}
-      <Box
+      <div
         data-color-mode={colorMode}
         onFocus={() => setFocused(true)}
         onBlur={(e) => {
@@ -101,28 +75,15 @@ const MarkdownEditorInner: FC<MarkdownEditorProps> = ({
             onBlur?.();
           }
         }}
-        sx={{
-          borderRadius: "var(--template-surface-radius)",
-          border: 1,
-          borderColor,
-          overflow: "hidden",
-          boxShadow:
-            focused && !hasError
-              ? `0 0 0 3px ${alpha(theme.palette.primary.main, 0.25)}`
-              : "none",
-          transition: theme.transitions.create(["border-color", "box-shadow"], {
-            duration: theme.transitions.duration.shorter,
-          }),
-          "& .w-md-editor": {
-            boxShadow: "none",
-            borderRadius: 0,
-            backgroundColor: "transparent",
-          },
-          "& .w-md-editor-toolbar": {
-            borderRadius: 0,
-            backgroundColor: "transparent",
-          },
-        }}
+        className={cn(
+          "overflow-hidden rounded-surface border transition-[border-color,box-shadow] duration-200",
+          "[&_.w-md-editor]:rounded-none [&_.w-md-editor]:bg-transparent [&_.w-md-editor]:shadow-none [&_.w-md-editor-toolbar]:rounded-none [&_.w-md-editor-toolbar]:bg-transparent",
+          hasError
+            ? "border-error"
+            : focused
+              ? "border-primary shadow-[0_0_0_3px] shadow-primary/25"
+              : "border-divider",
+        )}
       >
         <MDEditor
           value={value || ""}
@@ -135,27 +96,22 @@ const MarkdownEditorInner: FC<MarkdownEditorProps> = ({
             disabled,
           }}
         />
-      </Box>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          mt: 0.5,
-        }}
-      >
+      </div>
+      <div className="mt-1 flex items-baseline justify-between">
         {helperText ? (
-          <FormHelperText sx={{ m: 0 }}>{helperText}</FormHelperText>
+          <FormHelperText className="m-0">{helperText}</FormHelperText>
         ) : (
           <span />
         )}
-        <Typography
-          variant="caption"
-          color={overLimit ? "error" : "text.secondary"}
+        <span
+          className={cn(
+            "text-caption",
+            overLimit ? "text-error" : "text-fg-muted",
+          )}
         >
           {formatBytes(bytes)} / {formatBytes(MAX_BYTES)}
-        </Typography>
-      </Box>
+        </span>
+      </div>
     </FormControl>
   );
 };

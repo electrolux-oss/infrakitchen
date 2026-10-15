@@ -1,44 +1,38 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import SearchIcon from "@mui/icons-material/Search";
-import TableRowsIcon from "@mui/icons-material/TableRows";
-import TimelineIcon from "@mui/icons-material/Timeline";
-import {
-  Alert,
-  Box,
-  InputAdornment,
-  TextField,
-  ToggleButton,
-  ToggleButtonGroup,
-  Tooltip,
-} from "@mui/material";
-import {
-  DataGrid,
-  GridColDef,
-  GridFilterModel,
-  GridPaginationModel,
-  GridRenderCellParams,
-  GridSortModel,
-} from "@mui/x-data-grid";
-
 import { AuditExecutionResult } from "../../../audit_logs/components/AuditExecutionResult";
 import { buildAuditLogsQuery, GqlAuditLog } from "../../../audit_logs/graphql";
 import { CommonDialog, useConfig } from "../../../common";
 import GradientCircularProgress from "../../../common/GradientCircularProgress";
 import { useHashParams } from "../../../common/hooks/useHashParams";
+import {
+  SearchIcon,
+  TableRowsIcon,
+  TimelineIcon,
+} from "../../../icons/material";
 import { REVISION_FIELDS, GqlRevision } from "../../../revision/graphql";
 import { AuditLogEntity } from "../../../types";
+import {
+  Alert,
+  Tooltip,
+  InputAdornment,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+} from "../../../ui";
+import {
+  DataTable,
+  DataTableColumn,
+  PaginationModel,
+  RenderCellParams,
+  SortModel,
+} from "../../../ui";
 import {
   LogActionButtons,
   ACTIONS_WITH_LOGS,
 } from "../../LogsComponent/LogActionButtons";
 import { LogsDialog } from "../../LogsComponent/LogsDialog";
 import { Entity } from "../entities/Entity";
-import {
-  dataGridDefaultProps,
-  dataGridPaginationSlotProps,
-  dataGridSx,
-} from "../entity_table/dataGridStyles";
 import {
   RELATIVE_TIME_COLUMN_WIDTH,
   USER_AVATAR_COLUMN_WIDTH,
@@ -147,16 +141,13 @@ export const Audit = ({
     return matchingRow?.action ?? null;
   }, [auditLogs, selectedAuditLogId]);
 
-  const [filterModel, setFilterModel] = useState<GridFilterModel>({
-    items: [],
-    quickFilterValues: [],
-  });
+  const [quickFilterValues, setQuickFilterValues] = useState<string[]>([]);
 
-  const [sortModel, setSortModel] = useState<GridSortModel>([
+  const [sortModel, setSortModel] = useState<SortModel>([
     { field: "createdAt", sort: "desc" },
   ]);
 
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+  const [paginationModel, setPaginationModel] = useState<PaginationModel>({
     page: 0,
     pageSize: 10,
   });
@@ -167,18 +158,16 @@ export const Audit = ({
         .split(" ")
         .map((s) => s.trim())
         .filter(Boolean);
-      setFilterModel((prev) => ({ ...prev, quickFilterValues: tokens }));
+      setQuickFilterValues(tokens);
     }, 150);
     return () => clearTimeout(id);
   }, [search]);
 
-  const handleSortModelChange = (newSortModel: GridSortModel) => {
+  const handleSortModelChange = (newSortModel: SortModel) => {
     setSortModel(newSortModel);
   };
 
-  const handlePaginationModelChange = (
-    newPaginationModel: GridPaginationModel,
-  ) => {
+  const handlePaginationModelChange = (newPaginationModel: PaginationModel) => {
     setPaginationModel(newPaginationModel);
   };
 
@@ -217,7 +206,7 @@ export const Audit = ({
     [hashParams, setHashParams, useVersionId, entityId],
   );
 
-  const columns: GridColDef<AuditLogEntity>[] = useMemo(
+  const columns: DataTableColumn<AuditLogEntity>[] = useMemo(
     () => [
       ...(showRevisionColumn
         ? [
@@ -225,7 +214,7 @@ export const Audit = ({
               field: "revisionNumber",
               headerName: "",
               flex: 0.25,
-              renderCell: (params: GridRenderCellParams<AuditLogEntity>) => {
+              renderCell: (params: RenderCellParams<AuditLogEntity>) => {
                 const rev = params.row.revisionNumber;
                 if (!rev) return null;
                 return (
@@ -238,7 +227,7 @@ export const Audit = ({
                   />
                 );
               },
-            } as GridColDef<AuditLogEntity>,
+            } as DataTableColumn<AuditLogEntity>,
           ]
         : []),
       {
@@ -251,16 +240,8 @@ export const Audit = ({
         headerName: "Result",
         flex: 3,
         sortable: false,
-        renderCell: (params: GridRenderCellParams<AuditLogEntity>) => (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1,
-              height: "100%",
-              minWidth: 0,
-            }}
-          >
+        renderCell: (params: RenderCellParams<AuditLogEntity>) => (
+          <div className="flex h-full min-w-0 items-center gap-2">
             <AuditExecutionResult log={params.row} />
             <LogActionButtons
               action={params.row.action}
@@ -268,7 +249,7 @@ export const Audit = ({
               onOpenSummary={() => openDialog(params.row.id, "summary")}
               onOpenLogs={() => openDialog(params.row.id, "logs")}
             />
-          </Box>
+          </div>
         ),
       },
       {
@@ -276,7 +257,7 @@ export const Audit = ({
         headerName: "User",
         // Avatar-only cell, so the column only needs to fit the avatar.
         width: USER_AVATAR_COLUMN_WIDTH,
-        renderCell: (params: GridRenderCellParams<AuditLogEntity>) => {
+        renderCell: (params: RenderCellParams<AuditLogEntity>) => {
           const creator = params.row.creator;
           if (!creator) {
             return "System";
@@ -292,7 +273,7 @@ export const Audit = ({
         width: RELATIVE_TIME_COLUMN_WIDTH,
         align: "right",
         headerAlign: "right",
-        renderCell: (params: GridRenderCellParams<AuditLogEntity>) => (
+        renderCell: (params: RenderCellParams<AuditLogEntity>) => (
           <RelativeTime date={params.value} compact />
         ),
       },
@@ -307,85 +288,54 @@ export const Audit = ({
   );
 
   return (
-    <Box>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 1,
-          mb: 1,
-          flexWrap: "wrap",
-        }}
-      >
+    <div>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <TextField
+          className="w-80 max-w-full"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search audit events…"
           size="small"
-          slotProps={{
-            input: {
-              spellCheck: false,
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon
-                    fontSize="small"
-                    sx={{ color: "text.secondary" }}
-                  />
-                </InputAdornment>
-              ),
-            },
-          }}
-          sx={{ width: 320, maxWidth: "100%" }}
+          startAdornment={
+            <InputAdornment position="start">
+              <SearchIcon className="text-fg-muted" fontSize="small" />
+            </InputAdornment>
+          }
+          inputProps={{ spellCheck: false }}
         />
         {showTimelineView && (
           <ToggleButtonGroup
+            className="[&>button]:py-1"
             value={viewMode}
             exclusive
             onChange={(_, value) => value && setViewMode(value)}
             size="small"
-            sx={{ "& .MuiToggleButton-root": { py: 0.5 } }}
           >
             <ToggleButton value="table">
               <Tooltip title="Table view">
-                <TableRowsIcon sx={{ fontSize: "1rem" }} />
+                <TableRowsIcon className="text-[1rem]" />
               </Tooltip>
             </ToggleButton>
             <ToggleButton value="timeline">
               <Tooltip title="Timeline view">
-                <TimelineIcon sx={{ fontSize: "1rem" }} />
+                <TimelineIcon className="text-[1rem]" />
               </Tooltip>
             </ToggleButton>
           </ToggleButtonGroup>
         )}
-      </Box>
-      <Box
-        sx={{
-          width: "100%",
-          overflowX: "auto",
-          minHeight: 300,
-          border: 1,
-          borderColor: "divider",
-          borderRadius: "var(--template-surface-radius)",
-          bgcolor: "background.paper",
-        }}
-      >
+      </div>
+      <div className="min-h-75 w-full overflow-x-auto rounded-surface border border-divider bg-paper">
         {viewMode === "table" ? (
-          <DataGrid
+          <DataTable
             rows={auditLogs}
             columns={columns}
-            pagination
-            disableRowSelectionOnClick
+            className="md:min-h-[380px]"
             sortModel={sortModel}
             onSortModelChange={handleSortModelChange}
             paginationModel={paginationModel}
             onPaginationModelChange={handlePaginationModelChange}
             pageSizeOptions={[10, 25, 50, 100]}
-            filterModel={filterModel}
-            onFilterModelChange={setFilterModel}
-            {...dataGridDefaultProps}
-            sx={{ ...dataGridSx, bgcolor: "background.paper" }}
-            slotProps={dataGridPaginationSlotProps("audit-pagination-label")}
+            quickFilterValues={quickFilterValues}
           />
         ) : (
           <RevisionTimelines
@@ -446,18 +396,11 @@ export const Audit = ({
           }}
           content={
             revisionDialogLoading ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: "60vh",
-                }}
-              >
+              <div className="flex h-[60vh] items-center justify-center">
                 <GradientCircularProgress />
-              </Box>
+              </div>
             ) : revisionDialogRight ? (
-              <Box sx={{ height: "60vh" }}>
+              <div className="h-[60vh]">
                 <DiffEditor
                   originalText={
                     revisionDialogLeft
@@ -470,13 +413,13 @@ export const Audit = ({
                     2,
                   )}
                 />
-              </Box>
+              </div>
             ) : (
               <Alert severity="warning">No diff available</Alert>
             )
           }
         />
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };

@@ -10,19 +10,15 @@ import {
 import { useNavigate } from "react-router";
 
 import {
+  Divider,
+  Button,
+  Chip,
+  Tooltip,
   Card,
   CardContent,
   CardHeader,
-  Box,
-  Chip,
-  Divider,
   CardActions,
-  Button,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-
-import { solidChipColorSx } from "../../utils/softChip";
+} from "../../../ui";
 import { PermissionWrapper } from "../../wrappers";
 import { PlaceholderDescription } from "../fields/PlaceholderDescription";
 import { Labels } from "../labels/Labels";
@@ -151,155 +147,89 @@ export const EntityCard = ({
   }, [name]);
   return (
     <Card
+      // The card is a CSS grid item; without this, the grid applies a
+      // content-based automatic minimum and a long title can inflate the
+      // whole row's track width instead of shrinking to it.
+      className="relative flex h-full min-w-0 cursor-pointer flex-col gap-2.5 overflow-visible outline-none [transition:transform_150ms_ease-in-out,_box-shadow_150ms_ease-in-out,_border-color_150ms_ease-in-out] hover:-translate-y-0.5 hover:border-fg-disabled hover:shadow-[0_6px_16px_rgba(0,0,0,0.08)] focus-visible:shadow-[0_0_0_2px]"
       ref={cardRef}
       onClick={handleCardClick}
       onKeyDown={handleCardKeyDown}
       role="button"
       tabIndex={0}
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "10px",
-        height: "100%",
-        transition:
-          "transform 150ms ease-in-out, box-shadow 150ms ease-in-out, border-color 150ms ease-in-out",
-        position: "relative",
-        overflow: "visible",
-        // The card is a CSS grid item; without this, the grid applies a
-        // content-based automatic minimum and a long title can inflate the
-        // whole row's track width instead of shrinking to it.
-        minWidth: 0,
-        cursor: "pointer",
-        outline: "none",
-        "&:focus-visible": {
-          boxShadow: "0 0 0 2px",
-        },
-        "&:hover": {
-          borderColor: "text.disabled",
-          boxShadow: "0 6px 16px rgba(0, 0, 0, 0.08)",
-          transform: "translateY(-2px)",
-        },
-      }}
     >
       {" "}
       {isRecentlyUpdated && (
         <Chip
           label="Updated"
           variant="filled"
-          sx={(theme) => ({
-            ...solidChipColorSx("success")(theme),
-            position: "absolute",
-            top: -10,
-            left: 16,
-            zIndex: 1,
-          })}
+          className="absolute -top-2.5 left-4 z-1"
+          appearance="solid"
+          color="success"
         />
       )}
       <CardHeader
+        className="mb-0"
         title={
-          <Box
-            sx={{
-              display: "flex",
-              gap: 1.5,
-              alignItems: "center",
-              minWidth: 0,
-            }}
-          >
+          <div className="flex min-w-0 items-center gap-3">
             {icon}
             <Tooltip title={isTitleTruncated ? name : ""} arrow>
-              <Typography
-                component="span"
-                ref={titleRef}
-                variant="inherit"
-                noWrap
-                sx={{ flex: 1, minWidth: 0 }}
-              >
+              <span className="min-w-0 flex-1 truncate" ref={titleRef}>
                 {name}
-              </Typography>
+              </span>
             </Tooltip>
-          </Box>
+          </div>
         }
         subheader={
           <Tooltip
             title={isDescriptionTruncated ? description || "" : ""}
             arrow
           >
-            <Typography
-              component="span"
+            <span
               ref={descriptionRef}
-              sx={(theme) => ({
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-                // Reserve two description lines so every card header (and the
-                // divider below it) has the same height regardless of how many
-                // lines the description actually renders.
-                minHeight: `${Number(theme.typography.body2.lineHeight ?? 1.43) * 2}em`,
-              })}
+              // Reserve two description lines (2 x body2 line-height 1.43) so
+              // every card header (and the divider below it) has the same
+              // height regardless of how many lines the description renders.
+              className="line-clamp-2 min-h-[2.86em] text-body2"
             >
               {description ? description : <PlaceholderDescription />}
-            </Typography>
+            </span>
           </Tooltip>
         }
         action={
-          <Box
+          <div
+            className="flex items-center gap-1"
             onClick={(e: ReactMouseEvent) => e.stopPropagation()}
-            sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
           >
             {" "}
             {chip && (
               <Chip
                 label={chip.toUpperCase()}
                 variant="filled"
-                sx={(theme) => ({
-                  ...solidChipColorSx(chipColor)(theme),
-                  height: 18,
-                  fontSize: "0.625rem",
-                })}
+                className="h-4.5 text-[0.625rem]"
+                appearance="solid"
+                color={chipColor}
               />
             )}
             {headerAction}
-          </Box>
+          </div>
         }
-        sx={{
-          mb: 0,
-          // MUI's header content slot is `flex: 1 1 auto` with no min-width,
-          // so a long nowrap title would keep the whole row from shrinking and
-          // overflow the card edge instead of ellipsizing. Let it shrink.
-          "& .MuiCardHeader-content": { minWidth: 0 },
-        }}
       />
-      <CardContent sx={{ flexGrow: 1, pb: 1.5 }}>
-        <Divider sx={{ mb: 1.5 }} />
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: 14,
-          }}
-        >
-          {entityFields}
-        </Box>
+      <CardContent className="grow pb-3">
+        <Divider className="mb-3" />
+        <div className="flex justify-between text-[14px]">{entityFields}</div>
         {labels.length > 0 && (
-          <Box sx={{ mt: 1.5 }}>
+          <div className="mt-3">
             <Labels labels={labels} max={labelsMax} margins={false} />
-          </Box>
+          </div>
         )}
       </CardContent>
-      <CardActions sx={{ pt: 0, px: 1, flexDirection: "column", gap: 1.5 }}>
-        <Box
-          sx={{
-            display: "flex",
-            gap: 1,
-            width: "100%",
-            justifyContent: "center",
-            // Reserve the action row even when there is no create button (e.g.
-            // disabled templates, or users without write permission) so cards
-            // keep a uniform footprint next to their neighbors. Button height
-            // is 36px (small), so equal to a present button.
-            minHeight: 36,
-          }}
+      <CardActions className="flex-col gap-3 px-2 pt-0">
+        <div
+          // Reserve the action row even when there is no create button (e.g.
+          // disabled templates, or users without write permission) so cards
+          // keep a uniform footprint next to their neighbors. Button height
+          // is 36px (small), so equal to a present button.
+          className="flex min-h-9 w-full justify-center gap-2"
         >
           {createButtonName && (
             <PermissionWrapper
@@ -307,17 +237,17 @@ export const EntityCard = ({
               permissionAction="write"
             >
               <Button
+                className="flex-1"
                 variant="contained"
                 onClick={handleCreateClick}
-                sx={{ flex: 1 }}
               >
                 {createButtonName}
               </Button>
             </PermissionWrapper>
           )}
-        </Box>{" "}
+        </div>{" "}
         {secondaryAction ? (
-          <Box sx={{ width: "100%" }}>{secondaryAction}</Box>
+          <div className="w-full">{secondaryAction}</div>
         ) : null}
       </CardActions>
     </Card>

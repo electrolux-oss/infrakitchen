@@ -3,43 +3,17 @@ import * as React from "react";
 import { Link } from "react-router";
 
 import {
-  CODE_FONT_FAMILY,
   Label,
   NotificationBell,
   ServerInfoDialog,
   useConfig,
+  IconButton,
+  Tooltip,
 } from "@electrolux-oss/infrakitchen";
-import MenuIcon from "@mui/icons-material/Menu";
-import MenuOpenIcon from "@mui/icons-material/MenuOpen";
-import MuiAppBar from "@mui/material/AppBar";
-import Box from "@mui/material/Box";
-import IconButton from "@mui/material/IconButton";
-import Stack from "@mui/material/Stack";
-import { styled } from "@mui/material/styles";
-import Toolbar from "@mui/material/Toolbar";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
+import { MenuIcon, MenuOpenIcon } from "@electrolux-oss/infrakitchen";
 
 import ThemeSwitcher from "./ThemeSwitcher";
 import UserSidebar from "./UserSidebar";
-
-const AppBar = styled(MuiAppBar)(({ theme }) => ({
-  borderWidth: 0,
-  borderBottomWidth: 1,
-  borderStyle: "solid",
-  borderColor: (theme.vars ?? theme).palette.divider,
-  // Header shares the grey canvas color with the sidebar and content.
-  backgroundColor: (theme.vars ?? theme).palette.background.default,
-  boxShadow: "none",
-  zIndex: theme.zIndex.drawer + 1,
-}));
-
-const LogoContainer = styled("div")({
-  position: "relative",
-  display: "flex",
-  alignItems: "center",
-  "& svg": { width: 32, height: 32, marginLeft: 10 },
-});
 
 export interface DashboardHeaderProps {
   logo?: React.ReactNode;
@@ -81,19 +55,10 @@ export default function DashboardHeader({
         >
           <div>
             <IconButton
+              className="border-0 bg-transparent hover:bg-transparent"
               size="small"
               aria-label={`${isExpanded ? collapseMenuActionText : expandMenuActionText} navigation menu`}
               onClick={handleMenuOpen}
-              sx={(theme) => ({
-                border: "none",
-                backgroundColor: "transparent",
-                "&:hover": { backgroundColor: "transparent" },
-                ...theme.applyStyles("dark", {
-                  border: "none",
-                  backgroundColor: "transparent",
-                  "&:hover": { backgroundColor: "transparent" },
-                }),
-              })}
             >
               {isExpanded ? <MenuOpenIcon /> : <MenuIcon />}
             </IconButton>
@@ -105,118 +70,61 @@ export default function DashboardHeader({
   );
 
   return (
-    <AppBar color="inherit" position="absolute" sx={{ displayPrint: "none" }}>
-      <Toolbar
-        variant="dense"
-        sx={{
-          backgroundColor: "inherit",
-          mx: { xs: -0.75, sm: -1 },
-        }}
-      >
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            width: "100%",
-            minWidth: 0,
-          }}
-        >
-          <Stack
-            direction="row"
-            sx={{
-              alignItems: "center",
-              minWidth: 0,
-            }}
-          >
-            <Box sx={{ mr: 1, display: { xs: "block", md: "none" } }}>
-              {getMenuIcon(menuOpen)}
-            </Box>
+    // Header shares the grey canvas color with the sidebar and content, and
+    // sits above the drawers.
+    <header className="absolute top-0 right-0 left-auto z-[1201] box-border flex w-full shrink-0 flex-col border-0 border-b border-solid border-divider bg-canvas text-fg print:hidden">
+      <div className="relative -mx-1.5 flex min-h-12 items-center bg-inherit px-4 sm:-mx-2 sm:px-6">
+        <div className="flex w-full min-w-0 flex-row items-center justify-between">
+          <div className="flex min-w-0 flex-row items-center">
+            <div className="mr-2 block md:hidden">{getMenuIcon(menuOpen)}</div>
             <Link to="/" style={{ textDecoration: "none" }}>
-              {logo ? <LogoContainer>{logo}</LogoContainer> : null}
+              {logo ? (
+                <div className="relative flex items-center [&_svg]:ml-2.5 [&_svg]:size-8">
+                  {logo}
+                </div>
+              ) : null}
             </Link>
-            <Stack
-              direction="row"
-              sx={{
-                alignItems: "center",
-              }}
-            >
+            <div className="flex flex-row items-center">
               {title ? (
                 <Link to="/" style={{ textDecoration: "none" }}>
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      color: "text.primary",
-                      fontWeight: 600,
-                      fontSize: { xs: "1.125rem", sm: "1.375rem" }, // 18px / 22px
-                      letterSpacing: "-0.02em",
-                      ml: 0,
-                      whiteSpace: "nowrap",
-                      lineHeight: 1,
-                    }}
+                  <h5
+                    // 18px / 22px
+                    className="m-0 ml-0 text-[1.125rem] leading-[1] font-semibold tracking-[-0.02em] whitespace-nowrap text-fg sm:text-[1.375rem]"
                   >
                     {title}
-                  </Typography>
+                  </h5>
                 </Link>
               ) : null}
               {serverInfo ? (
                 <Label
                   component="button"
                   onClick={handleServerInfoOpen}
+                  className="ml-4 hidden self-end hover:bg-selected focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary sm:inline-flex dark:hover:bg-selected"
                   label={
-                    <Box
-                      component="span"
-                      sx={{ fontFamily: CODE_FONT_FAMILY }}
-                    >{`v${String(serverInfo.version).replace(
+                    <span className="font-mono">{`v${String(
+                      serverInfo.version,
+                    ).replace(
                       /^v/,
                       "",
-                    )}-${serverInfo.sourceCommitShort}`}</Box>
+                    )}-${serverInfo.sourceCommitShort}`}</span>
                   }
-                  sx={{
-                    display: { xs: "none", sm: "inline-flex" },
-                    alignSelf: "flex-end",
-                    ml: 2,
-                    cursor: "pointer",
-                    "&:hover": {
-                      backgroundColor: "action.selected",
-                    },
-                    "&:focus-visible": {
-                      outline: "2px solid",
-                      outlineColor: "primary.main",
-                      outlineOffset: "1px",
-                    },
-                  }}
                 />
               ) : null}
-            </Stack>
-          </Stack>
-          <Stack
-            direction="row"
-            spacing={0.25}
-            sx={{
-              alignItems: "center",
-              marginLeft: "auto",
-              flexShrink: 0,
-            }}
-          >
-            <Stack
-              direction="row"
-              spacing={-0.5}
-              sx={{
-                alignItems: "center",
-              }}
-            >
+            </div>
+          </div>
+          <div className="ml-auto flex shrink-0 flex-row items-center gap-0.5">
+            <div className="flex flex-row items-center -space-x-1">
               <ThemeSwitcher />
               <NotificationBell />
-            </Stack>
+            </div>
             <UserSidebar />
-          </Stack>
-        </Stack>
+          </div>
+        </div>
         <ServerInfoDialog
           open={serverInfoOpen}
           onClose={handleServerInfoClose}
         />
-      </Toolbar>
-    </AppBar>
+      </div>
+    </header>
   );
 }

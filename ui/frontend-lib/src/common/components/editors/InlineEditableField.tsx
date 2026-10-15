@@ -2,10 +2,9 @@ import { ReactNode, useState } from "react";
 
 import { createPortal } from "react-dom";
 
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
-import { Box, CircularProgress, IconButton, Tooltip } from "@mui/material";
-
+import { CheckIcon, CloseIcon } from "../../../icons/material";
+import { Spinner, IconButton, Tooltip } from "../../../ui";
+import { cn } from "../../../utils/cn";
 import { PlaceholderText } from "../fields/PlaceholderDescription";
 
 import { EditAffordance } from "./EditAffordance";
@@ -126,27 +125,19 @@ export function InlineEditableField<T>({
 
   if (editing) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-          width: "100%",
-        }}
-      >
-        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+      <div className="flex w-full items-center gap-2">
+        <div className="min-w-0 grow">
           {renderEditor({ value: draft, onChange: setDraft })}
-        </Box>
-        <Box sx={{ display: "flex", alignItems: "center" }}>
+        </div>
+        <div className="flex items-center">
           {saving ? (
-            <CircularProgress size={20} sx={{ mx: 1 }} />
+            <Spinner className="mx-2" size={20} />
           ) : (
             <>
               <Tooltip title="Save">
                 <span>
                   <IconButton
                     size="small"
-                    color="success"
                     onClick={save}
                     aria-label="Save change"
                   >
@@ -157,7 +148,6 @@ export function InlineEditableField<T>({
               <Tooltip title="Cancel">
                 <IconButton
                   size="small"
-                  color="error"
                   onClick={cancel}
                   aria-label="Cancel edit"
                 >
@@ -166,8 +156,8 @@ export function InlineEditableField<T>({
               </Tooltip>
             </>
           )}
-        </Box>
-      </Box>
+        </div>
+      </div>
     );
   }
 
@@ -180,15 +170,7 @@ export function InlineEditableField<T>({
   const affordance = (
     // Keeps its own space and never shrinks. The negative block margin stops
     // the icon buttons from making a single-line row taller than its text.
-    <Box
-      component="span"
-      sx={{
-        flexShrink: 0,
-        display: "inline-flex",
-        alignItems: "center",
-        my: -0.75,
-      }}
-    >
+    <span className="-my-1.5 inline-flex shrink-0 items-center">
       {lock && (
         <LockAffordance
           locked={lock.locked}
@@ -209,34 +191,28 @@ export function InlineEditableField<T>({
           revealOnHover={!inLabel}
         />
       )}
-    </Box>
+    </span>
   );
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 0.5,
-        maxWidth: "100%",
+    <div
+      className={cn(
+        "flex max-w-full items-center gap-1",
         // Beside the value the edit affordance is revealed on hover/focus for
         // a cleaner default view; in the label it is always visible.
-        ...(!inLabel && {
-          "&:hover .inline-edit-action, &:focus-within .inline-edit-action": {
-            opacity: 1,
-          },
-        }),
-      }}
+        !inLabel &&
+          "[&:focus-within_.inline-edit-action]:opacity-100 [&:hover_.inline-edit-action]:opacity-100",
+      )}
     >
       {/* The value shrinks and wraps (it can be a long unbroken string such as
           a storage path) so it never overflows the container. */}
-      <Box sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
+      <div className="min-w-0 wrap-anywhere">
         {display ?? <PlaceholderText text={placeholder} />}
-      </Box>
+      </div>
       {inLabel
         ? affordanceContainer && createPortal(affordance, affordanceContainer)
         : affordance}
-    </Box>
+    </div>
   );
 }
 

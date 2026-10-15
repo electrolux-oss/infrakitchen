@@ -1,8 +1,7 @@
 import { useId } from "react";
 
-import { Button } from "@mui/material";
-
 import { CommonDialog } from "../../../common";
+import { Button } from "../../../ui";
 
 import { EntityRolePolicyCreateCard } from "./EntityRolePoliciesCreateCard";
 import { EntityUserPolicyCreateCard } from "./EntityUserPolicyCreateCard";

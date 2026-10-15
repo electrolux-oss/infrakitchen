@@ -1,10 +1,4 @@
-export const UNREAD_DOT_SX = {
-  width: 8,
-  height: 8,
-  flexShrink: 0,
-  borderRadius: "50%",
-  bgcolor: "error.main",
-} as const;
+export const UNREAD_DOT_CLASSES = "h-2 w-2 shrink-0 rounded-full bg-error";
 
 /** "approval_required" -> "Approval required" */
 export const humanizeNotificationValue = (value?: string | null) => {

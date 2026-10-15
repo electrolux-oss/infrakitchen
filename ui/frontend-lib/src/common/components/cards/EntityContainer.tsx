@@ -1,8 +1,7 @@
 import { ReactNode } from "react";
 
-import { Alert, Box, CircularProgress } from "@mui/material";
-
 import { NotFoundPage } from "../../../dashboard/pages/NotFound";
+import { Alert, Spinner } from "../../../ui";
 import { useEntityProvider } from "../../context/EntityContext";
 import PageContainer from "../../PageContainer";
 import EntityActions from "../entities/EntityActions";
@@ -23,16 +22,9 @@ export const EntityContainer = (props: EntityContainerProps) => {
   if (loading) {
     return (
       <PageContainer title="Loading...">
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: 300,
-          }}
-        >
-          <CircularProgress />
-        </Box>
+        <div className="flex h-75 items-center justify-center">
+          <Spinner />
+        </div>
       </PageContainer>
     );
   }
@@ -44,7 +36,7 @@ export const EntityContainer = (props: EntityContainerProps) => {
   if (error) {
     return (
       <PageContainer title="Error">
-        <Alert severity="error" sx={{ width: "100%" }}>
+        <Alert className="w-full" severity="error">
           {error}
         </Alert>
       </PageContainer>
@@ -54,7 +46,7 @@ export const EntityContainer = (props: EntityContainerProps) => {
   if (!entity) {
     return (
       <PageContainer title="Not Found">
-        <Alert severity="warning" sx={{ width: "100%" }}>
+        <Alert className="w-full" severity="warning">
           Entity not found
         </Alert>
       </PageContainer>

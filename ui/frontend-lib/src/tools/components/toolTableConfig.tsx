@@ -1,7 +1,3 @@
-import DeleteIcon from "@mui/icons-material/Delete";
-import { Button, Chip, Stack } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
@@ -9,6 +5,9 @@ import {
   userColumn,
 } from "../../common/components/entity_table/tableColumns";
 import StatusChip from "../../common/StatusChip";
+import { DeleteIcon } from "../../icons/material";
+import { Button, Chip } from "../../ui";
+import { RenderCellParams } from "../../ui";
 import {
   Tool,
   TOOL_ARCH_OPTIONS,
@@ -40,7 +39,7 @@ export const toolColumns = (actions: ToolRowActions): EntityTableColumn[] => [
       selectOptions: TOOL_NAMES,
     },
     fetchFields: ["name", "entityName"],
-    renderCell: (params: GridRenderCellParams) => (
+    renderCell: (params: RenderCellParams) => (
       <Entity
         entity={{
           ...params.row,
@@ -97,17 +96,13 @@ export const toolColumns = (actions: ToolRowActions): EntityTableColumn[] => [
         { label: "disabled", value: "disabled" },
       ],
     },
-    renderCell: (params: GridRenderCellParams) => (
-      <Stack
-        direction="row"
-        spacing={0.5}
-        sx={{ alignItems: "center", height: "100%" }}
-      >
+    renderCell: (params: RenderCellParams) => (
+      <div className="flex h-full flex-row items-center gap-1">
         <StatusChip status={toolStatus(params.row as Tool)} />
         {params.row.isDefault && (
           <Chip size="small" label="default" color="primary" />
         )}
-      </Stack>
+      </div>
     ),
   },
   {
@@ -143,14 +138,12 @@ export const toolColumns = (actions: ToolRowActions): EntityTableColumn[] => [
     filterable: false,
     hideable: false,
     align: "right",
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: RenderCellParams) => {
       const tool = params.row as Tool;
       const status = toolStatus(tool);
       return (
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{ justifyContent: "flex-end", alignItems: "center", height: 1 }}
+        <div
+          className="flex h-full flex-row items-center justify-end gap-2"
           // buttons must not also open the tool page via the row click
           onClick={(event) => event.stopPropagation()}
         >
@@ -191,7 +184,7 @@ export const toolColumns = (actions: ToolRowActions): EntityTableColumn[] => [
               Delete
             </Button>
           )}
-        </Stack>
+        </div>
       );
     },
   },

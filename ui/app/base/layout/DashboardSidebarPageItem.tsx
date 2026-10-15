@@ -2,23 +2,21 @@ import * as React from "react";
 
 import { Link } from "react-router";
 
-import { Label, usePermissionProvider } from "@electrolux-oss/infrakitchen";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import Box from "@mui/material/Box";
-import Collapse from "@mui/material/Collapse";
-import Grow from "@mui/material/Grow";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import Paper from "@mui/material/Paper";
-import { type Theme, SxProps } from "@mui/material/styles";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
+import {
+  cn,
+  Collapse,
+  ExpandMoreIcon,
+  Label,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
+  usePermissionProvider,
+} from "@electrolux-oss/infrakitchen";
 
-import type {} from "@mui/material/themeCssVarsAugmentation";
 import { MINI_DRAWER_WIDTH } from "../../constants";
 import DashboardSidebarContext from "../../context/DashboardSidebarContext";
+
+import { SIDEBAR_ITEM_CLASS, SIDEBAR_ITEM_SELECTED_CLASS } from "./mixins";
 
 export interface DashboardSidebarPageItemProps {
   id: string;
@@ -79,10 +77,13 @@ export default function DashboardSidebarPageItem({
     }
   }, [isHovered, flyoutTop]);
 
-  const handleMiniMouseEnter = React.useCallback((e) => {
-    setFlyoutTop(e.currentTarget.getBoundingClientRect().top);
-    setIsHovered(true);
-  }, []);
+  const handleMiniMouseEnter = React.useCallback(
+    (e: React.MouseEvent<HTMLLIElement>) => {
+      setFlyoutTop(e.currentTarget.getBoundingClientRect().top);
+      setIsHovered(true);
+    },
+    [],
+  );
 
   const handleMiniMouseLeave = React.useCallback(() => {
     setIsHovered(false);
@@ -94,33 +95,20 @@ export default function DashboardSidebarPageItem({
     }
   }, [onPageItemClick, id, nestedNavigation]);
 
-  let nestedNavigationCollapseSx: SxProps<Theme> = { display: "none" };
+  let expandIconClass = "hidden";
   if (mini && fullyCollapsed) {
-    nestedNavigationCollapseSx = {
-      fontSize: 18,
-      position: "absolute",
-      top: "41.5%",
-      right: "2px",
-      transform: "translateY(-50%) rotate(-90deg)",
-    };
+    expandIconClass =
+      "absolute top-[41.5%] right-0.5 size-[18px]! -translate-y-1/2 -rotate-90";
   } else if (!mini && fullyExpanded) {
-    nestedNavigationCollapseSx = {
-      ml: 0.5,
-      fontSize: 20,
-      transform: `rotate(${expanded ? 0 : -90}deg)`,
-      transition: (theme: Theme) =>
-        theme.transitions.create("transform", {
-          easing: theme.transitions.easing.sharp,
-          duration: 100,
-        }),
-    };
+    expandIconClass = cn(
+      "ml-1 size-5! shrink-0 transition-transform duration-100 ease-[cubic-bezier(0.4,0,0.6,1)]",
+      !expanded && "-rotate-90",
+    );
   }
 
   const hasExternalHref = href
     ? href.startsWith("http://") || href.startsWith("https://")
     : false;
-
-  const LinkComponent = hasExternalHref ? "a" : Link;
 
   const miniNestedNavigationSidebarContextValue = React.useMemo(() => {
     return {
@@ -140,151 +128,128 @@ export default function DashboardSidebarPageItem({
     return null;
   }
 
+  const itemClassName = cn(
+    SIDEBAR_ITEM_CLASS,
+    mini && "h-[34px]",
+    selected && SIDEBAR_ITEM_SELECTED_CLASS,
+    disabled && "pointer-events-none opacity-40",
+  );
+
+  // In mini mode a group parent only reveals its children on hover; it
+  // neither navigates nor toggles.
+  const navigates = Boolean(href) && !(nestedNavigation && mini);
+  const clickable = !(nestedNavigation && mini);
+
+  const content = (
+    <>
+      {icon || mini ? (
+        <div
+          className={cn(
+            mini &&
+              "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
+          )}
+        >
+          <ListItemIcon
+            className={cn("mr-0 flex items-center", mini && "justify-center")}
+          >
+            {icon}
+          </ListItemIcon>
+        </div>
+      ) : null}
+      {!mini ? (
+        <ListItemText className="z-1 whitespace-nowrap" primary={title} />
+      ) : null}
+      {label && !mini ? (
+        <Label className="ml-2 shrink-0" label={label} />
+      ) : null}
+      {action && !mini && fullyExpanded ? action : null}
+      {nestedNavigation ? <ExpandMoreIcon className={expandIconClass} /> : null}
+    </>
+  );
+
+  const button = navigates ? (
+    hasExternalHref ? (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={itemClassName}
+        aria-current={selected ? "page" : undefined}
+        onClick={handleClick}
+      >
+        {content}
+      </a>
+    ) : (
+      <Link
+        to={href!}
+        className={itemClassName}
+        aria-current={selected ? "page" : undefined}
+        onClick={handleClick}
+      >
+        {content}
+      </Link>
+    )
+  ) : (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-expanded={nestedNavigation ? expanded : undefined}
+      aria-label={nestedNavigation && mini ? title : undefined}
+      className={itemClassName}
+      onClick={clickable ? handleClick : undefined}
+      onKeyDown={(event) => {
+        if (clickable && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault();
+          handleClick();
+        }
+      }}
+    >
+      {content}
+    </div>
+  );
+
   return (
     <React.Fragment>
-      <ListItem
-        disablePadding
+      <li
+        className="block overflow-x-hidden"
         {...(nestedNavigation && mini
           ? {
               onMouseEnter: handleMiniMouseEnter,
               onMouseLeave: handleMiniMouseLeave,
             }
           : {})}
-        sx={{
-          display: "block",
-          py: 0,
-          px: 0,
-          overflowX: "hidden",
-        }}
       >
         <Tooltip
           title={mini && !nestedNavigation ? title : ""}
           placement="right"
         >
-          <ListItemButton
-            selected={selected}
-            disabled={disabled}
-            {...(nestedNavigation && mini ? { "aria-label": title } : {})}
-            sx={{
-              height: mini ? 34 : "auto",
-              mx: 0,
-            }}
-            {...(nestedNavigation && !mini
-              ? {
-                  onClick: handleClick,
-                  // A parent can also be a page: navigate AND toggle children.
-                  ...(href
-                    ? {
-                        LinkComponent,
-                        ...(hasExternalHref
-                          ? {
-                              target: "_blank",
-                              rel: "noopener noreferrer",
-                            }
-                          : {}),
-                        to: href,
-                      }
-                    : {}),
-                }
-              : {})}
-            {...(!nestedNavigation
-              ? {
-                  LinkComponent,
-                  ...(hasExternalHref
-                    ? {
-                        target: "_blank",
-                        rel: "noopener noreferrer",
-                      }
-                    : {}),
-                  to: href,
-                  onClick: handleClick,
-                }
-              : {})}
-          >
-            {icon || mini ? (
-              <Box
-                sx={
-                  mini
-                    ? {
-                        position: "absolute",
-                        left: "50%",
-                        top: "50%",
-                        transform: "translate(-50%, -50%)",
-                      }
-                    : {}
-                }
-              >
-                <ListItemIcon
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: mini ? "center" : "auto",
-                  }}
-                >
-                  {icon}
-                </ListItemIcon>
-              </Box>
-            ) : null}
-            {!mini ? (
-              <ListItemText
-                primary={title}
-                sx={{
-                  whiteSpace: "nowrap",
-                  zIndex: 1,
-                }}
-              />
-            ) : null}
-            {label && !mini ? (
-              <Label label={label} sx={{ ml: 1, flexShrink: 0 }} />
-            ) : null}
-            {action && !mini && fullyExpanded ? action : null}
-            {nestedNavigation ? (
-              <ExpandMoreIcon sx={nestedNavigationCollapseSx} />
-            ) : null}
-          </ListItemButton>
+          {button}
         </Tooltip>
-        {nestedNavigation && mini ? (
-          <Grow in={isHovered}>
-            <Box
-              sx={{
-                position: "fixed",
-                left: MINI_DRAWER_WIDTH - 2,
-                top: flyoutTop,
-                pl: "6px",
-              }}
+        {nestedNavigation && mini && isHovered ? (
+          <div
+            className="fixed z-[1300] pl-1.5 transition-[opacity,scale] duration-200 ease-out starting:scale-75 starting:opacity-0"
+            style={{ left: MINI_DRAWER_WIDTH - 2, top: flyoutTop }}
+          >
+            <div
+              ref={flyoutPaperRef}
+              className="rounded-surface bg-paper py-[1.6px] text-fg shadow-dropdown"
             >
-              <Paper
-                ref={flyoutPaperRef}
-                elevation={8}
-                sx={{
-                  pt: 0.2,
-                  pb: 0.2,
-                }}
-              >
-                <Typography
-                  variant="body2"
-                  sx={{
-                    px: 2,
-                    py: 1,
-                    fontWeight: 500,
-                    color: "text.secondary",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {title}
-                </Typography>
+              <p className="m-0 px-4 py-2 text-body2 font-medium whitespace-nowrap text-fg-muted">
+                {title}
+              </p>
+              <ul className="m-0 list-none p-0">
                 <DashboardSidebarContext.Provider
                   value={miniNestedNavigationSidebarContextValue}
                 >
                   {nestedNavigation}
                 </DashboardSidebarContext.Provider>
-              </Paper>
-            </Box>
-          </Grow>
+              </ul>
+            </div>
+          </div>
         ) : null}
-      </ListItem>
+      </li>
       {nestedNavigation && !mini ? (
-        <Collapse in={expanded} timeout="auto" unmountOnExit>
+        <Collapse in={expanded} unmountOnExit>
           {nestedNavigation}
         </Collapse>
       ) : null}

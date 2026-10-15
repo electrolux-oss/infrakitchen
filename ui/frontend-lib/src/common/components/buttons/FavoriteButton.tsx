@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import { IconButton } from "@mui/material";
-
 import {
   CREATE_FAVORITE_MUTATION,
   DELETE_FAVORITE_MUTATION,
 } from "../../../favorites/graphql";
+import { FavoriteBorderIcon, FavoriteIcon } from "../../../icons/material";
+import { IconButton } from "../../../ui";
+import { cn } from "../../../utils/cn";
 import { useConfig } from "../../context/ConfigContext";
 import { notifyError } from "../../hooks/useNotification";
 
@@ -71,29 +70,18 @@ export const FavoriteButton = ({
 
   return (
     <IconButton
+      className={cn(
+        "border-0 bg-transparent outline-none hover:bg-transparent",
+        format === "table" && "size-5 min-w-0 p-0",
+      )}
       size="small"
       aria-label={ariaLabel}
       onClick={handleAddFavorite}
       disabled={submittingState}
-      disableRipple={format === "table"}
-      sx={{
-        border: "none",
-        outline: "none",
-        backgroundColor: "transparent",
-        "&.MuiButtonBase-root": { backgroundColor: "transparent" },
-        "&:hover": { backgroundColor: "transparent" },
-        "&:hover.MuiButtonBase-root": { backgroundColor: "transparent" },
-        ...(format === "table" && {
-          p: 0,
-          minWidth: 0,
-          width: 20,
-          height: 20,
-        }),
-      }}
     >
       {favoriteState ? (
         <FavoriteIcon
-          sx={{ color: "primary.main" }}
+          className="text-primary"
           fontSize={format === "table" ? "small" : "medium"}
         />
       ) : (

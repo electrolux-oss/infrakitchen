@@ -1,13 +1,6 @@
 import { ReactNode, useEffect, useMemo, useState } from "react";
 
-import {
-  Autocomplete,
-  AutocompleteRenderValue,
-  Chip,
-  SxProps,
-  TextField,
-  Theme,
-} from "@mui/material";
+import { Autocomplete } from "../../../ui";
 
 export interface AsyncAutocompleteOption {
   label: string;
@@ -24,7 +17,7 @@ interface AsyncAutocompleteMultiProps {
   multiple?: boolean;
   freeSolo?: boolean;
   placeholder?: string;
-  sx?: SxProps<Theme>;
+  className?: string;
   /** Custom rendering for an option's label, used in the dropdown list and the selected value/chip. */
   renderOptionContent?: (option: AsyncAutocompleteOption) => ReactNode;
 }
@@ -37,7 +30,7 @@ export const AutocompleteSelect = ({
   multiple = true,
   freeSolo = true,
   placeholder,
-  sx,
+  className,
   renderOptionContent,
 }: AsyncAutocompleteMultiProps) => {
   const [options, setOptions] =
@@ -87,47 +80,19 @@ export const AutocompleteSelect = ({
     );
 
     return (
-      <Autocomplete
+      <Autocomplete<AsyncAutocompleteOption, true, boolean>
         multiple
         freeSolo={freeSolo}
-        size="small"
         options={options}
         loading={loading}
         value={selectedOptions}
         getOptionLabel={getOptionLabel}
         isOptionEqualToValue={isSameOption}
-        onChange={(_e, newValue) =>
-          onChange((newValue as AutocompleteValue[]).map(toStoredValue))
-        }
-        renderOption={
-          renderOptionContent
-            ? (props, option) => (
-                <li {...props} key={getOptionLabel(option)}>
-                  {getContent(option)}
-                </li>
-              )
-            : undefined
-        }
-        renderValue={(
-          tagValue: AutocompleteRenderValue<
-            AsyncAutocompleteOption,
-            true,
-            boolean
-          >,
-          getItemProps,
-        ) =>
-          tagValue.map((option, index) => {
-            const { key, ...rest } = getItemProps({ index });
-            return <Chip key={key} label={getContent(option)} {...rest} />;
-          })
-        }
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            placeholder={selectedValues.length === 0 ? placeholder : ""}
-          />
-        )}
-        sx={sx}
+        onChange={(_e, newValue) => onChange(newValue.map(toStoredValue))}
+        renderOption={renderOptionContent}
+        renderValue={getContent}
+        placeholder={placeholder}
+        className={className}
       />
     );
   }
@@ -138,41 +103,18 @@ export const AutocompleteSelect = ({
       : null;
 
   return (
-    <Autocomplete
+    <Autocomplete<AsyncAutocompleteOption, false, boolean>
       freeSolo={freeSolo}
-      size="small"
       options={options}
       loading={loading}
       value={selectedOption}
       getOptionLabel={getOptionLabel}
       isOptionEqualToValue={isSameOption}
       onChange={(_e, newValue) => onChange(toStoredValue(newValue))}
-      renderOption={
-        renderOptionContent
-          ? (props, option) => (
-              <li {...props} key={getOptionLabel(option)}>
-                {getContent(option)}
-              </li>
-            )
-          : undefined
-      }
-      renderValue={
-        renderOptionContent
-          ? (option, getItemProps) => {
-              if (!option) return null;
-              const { onDelete: _onDelete, ...itemProps } = getItemProps();
-              return (
-                <span {...itemProps} style={{ display: "inline-flex" }}>
-                  {getContent(option)}
-                </span>
-              );
-            }
-          : undefined
-      }
-      renderInput={(params) => (
-        <TextField {...params} placeholder={placeholder} />
-      )}
-      sx={sx}
+      renderOption={renderOptionContent}
+      renderValue={renderOptionContent ? getContent : undefined}
+      placeholder={placeholder}
+      className={className}
     />
   );
 };

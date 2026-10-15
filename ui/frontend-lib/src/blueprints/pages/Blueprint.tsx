@@ -1,12 +1,11 @@
 import { useNavigate, useParams } from "react-router";
 
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import { Button } from "@mui/material";
-
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { useConfig } from "../../common/context/ConfigContext";
 import { EntityProvider } from "../../common/context/EntityContext";
+import { PlayArrowIcon } from "../../icons/material";
+import { Button } from "../../ui";
 import { BlueprintContent } from "../components/BlueprintContent";
 import { BLUEPRINT_FIELDS } from "../graphql";
 

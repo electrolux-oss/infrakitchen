@@ -1,21 +1,18 @@
 import React, { useEffect, useState } from "react";
 
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useConfig, GradientCircularProgress } from "../../../../common";
+import { notifyError } from "../../../../common/hooks/useNotification";
+import { ExpandMoreIcon } from "../../../../icons/material";
+import { KUBERNETES_DEPLOYMENTS_QUERY } from "../../../../providers/kubernetes/graphql";
 import {
+  Alert,
+  ListItemText,
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Typography,
-  Alert,
   List,
   ListItem,
-  ListItemText,
-  ButtonBase,
-} from "@mui/material";
-
-import { useConfig, GradientCircularProgress } from "../../../../common";
-import { notifyError } from "../../../../common/hooks/useNotification";
-import { KUBERNETES_DEPLOYMENTS_QUERY } from "../../../../providers/kubernetes/graphql";
+} from "../../../../ui";
 
 import { PodDetailsDialog } from "./PodDetailsDialog";
 
@@ -90,50 +87,41 @@ export const DeploymentsDetails = (props: DeploymentsDetailsProps) => {
     <>
       <Accordion expanded={expanded} onChange={handleToggleExpand}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="body1" sx={{ fontWeight: "bold" }}>
-            Namespace: {namespace}
-          </Typography>
+          <p className="m-0 text-body1 font-bold">Namespace: {namespace}</p>
         </AccordionSummary>
         <AccordionDetails>
           {loadingDeployments && <GradientCircularProgress />}
           {errorDeployments && (
             <Alert severity="error">
-              <Typography variant="body2">
+              <p className="m-0 text-body2">
                 Error fetching deployments for {namespace}:{" "}
                 {errorDeployments.message}
-              </Typography>
+              </p>
             </Alert>
           )}
           {!loadingDeployments && !errorDeployments && (
             <>
               {deployments.length > 0 ? (
                 <List dense>
-                  <Typography variant="body2" gutterBottom>
-                    Deployments:
-                  </Typography>
+                  <p className="m-0 mb-[0.35em] text-body2">Deployments:</p>
                   {deployments.map((deployment) => (
-                    <ListItem key={deployment} disablePadding sx={{ pl: 2 }}>
+                    <ListItem className="pl-4" key={deployment} disablePadding>
                       {/* Make the ListItem clickable */}
-                      <ButtonBase
+                      <button
+                        type="button"
+                        className="inline-flex w-full cursor-pointer items-center justify-center justify-start rounded-surface border-0 bg-transparent p-0 p-1 text-left text-inherit outline-none hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/35"
                         onClick={() => handleDeploymentClick(deployment)}
-                        sx={{
-                          width: "100%",
-                          textAlign: "left",
-                          p: 0.5,
-                          borderRadius: "var(--template-surface-radius)",
-                          "&:hover": { backgroundColor: "action.hover" },
-                        }}
                       >
                         <ListItemText primary={deployment} />
-                      </ButtonBase>
+                      </button>
                     </ListItem>
                   ))}
                 </List>
               ) : (
                 expanded && (
-                  <Typography variant="body2">
+                  <p className="m-0 text-body2">
                     No deployments found in this namespace.
-                  </Typography>
+                  </p>
                 )
               )}
             </>

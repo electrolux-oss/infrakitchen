@@ -1,7 +1,5 @@
 import { useMemo, useState } from "react";
 
-import { Box } from "@mui/material";
-
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
@@ -114,10 +112,10 @@ export const ProjectContent = () => {
     {
       label: "Settings",
       content: (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <div className="flex flex-col gap-4">
           <ProjectSettings project={entity} />
           <DangerZoneCard />
-        </Box>
+        </div>
       ),
       requiredPermission: `project:${entity.id}`,
       permissionAction: "write",

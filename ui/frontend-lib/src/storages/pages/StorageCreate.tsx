@@ -9,8 +9,6 @@ import {
 } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import { Box, TextField, Button, MenuItem } from "@mui/material";
-
 import { LabelInput } from "../../common";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
@@ -18,6 +16,7 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { IkEntity } from "../../types";
+import { Button, TextField, MenuItem } from "../../ui";
 import { renderFieldsForProvider } from "../components/StorageProviderForms";
 import { CREATE_STORAGE_MUTATION } from "../graphql";
 import { StorageCreate } from "../types";
@@ -89,17 +88,9 @@ const StorageCreatePageInner = () => {
         </>
       }
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          flexDirection: "column",
-          width: "100%",
-          minWidth: 320,
-        }}
-      >
+      <div className="flex w-full min-w-80 flex-col items-center">
         <PropertyCard title="Storage Definition">
-          <Box>
+          <div>
             <Controller
               name="name"
               control={control}
@@ -108,7 +99,6 @@ const StorageCreatePageInner = () => {
                 <TextField
                   {...field}
                   label="Name"
-                  variant="outlined"
                   error={!!errors.name}
                   helperText={
                     errors.name ? errors.name.message : "Provide a unique name"
@@ -125,7 +115,6 @@ const StorageCreatePageInner = () => {
                 <TextField
                   {...field}
                   label="Description"
-                  variant="outlined"
                   error={!!errors.description}
                   helperText={
                     errors.description
@@ -152,7 +141,6 @@ const StorageCreatePageInner = () => {
                   {...field}
                   select
                   label="Storage Provider"
-                  variant="outlined"
                   error={!!errors.storageProvider}
                   helperText={
                     errors.storageProvider
@@ -211,7 +199,6 @@ const StorageCreatePageInner = () => {
                   select
                   disabled
                   label="Storage Type"
-                  variant="outlined"
                   error={!!errors.storageType}
                   helperText={
                     errors.storageType
@@ -229,19 +216,19 @@ const StorageCreatePageInner = () => {
                 </TextField>
               )}
             />
-          </Box>
+          </div>
         </PropertyCard>
 
         <PropertyCard title="Configuration">
-          <Box>
+          <div>
             {renderFieldsForProvider(
               selectedProvider,
               control as Control<any>,
               errors,
             )}
-          </Box>
+          </div>
         </PropertyCard>
-      </Box>
+      </div>
     </PageContainer>
   );
 };

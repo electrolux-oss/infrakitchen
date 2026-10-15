@@ -1,11 +1,7 @@
-import { useCallback } from "react";
-
-import { TextField } from "@mui/material";
-
 import { OverviewCard } from "../../common/components/cards/OverviewCard";
 import { BooleanInlineField } from "../../common/components/editors/BooleanInlineField";
-import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
+import { EditableNameField } from "../../common/components/editors/EditableNameField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import {
   CommonField,
@@ -14,10 +10,8 @@ import {
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { Labels } from "../../common/components/labels/Labels";
-import { useConfig } from "../../common/context";
-import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
-import { notify, notifyError } from "../../common/hooks/useNotification";
+import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import { GqlAuthProvider } from "../graphql";
 import {
   AuthProviderUpdateFieldInput,
@@ -31,53 +25,27 @@ export interface AuthProviderAboutProps {
 export const AuthProviderOverview = ({
   authProvider,
 }: AuthProviderAboutProps) => {
-  const { ikApi } = useConfig();
-  const { refreshEntity } = useEntityProvider();
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = checkActionPermission("api:auth_provider", "write");
 
-  const saveField = useCallback(
-    async (input: AuthProviderUpdateFieldInput) => {
-      try {
-        await ikApi.graphqlRequest(UPDATE_AUTH_PROVIDER_MUTATION, {
-          id: authProvider.id,
-          input,
-        });
-        notify("Auth Provider updated successfully", "success");
-        refreshEntity?.();
-      } catch (error) {
-        notifyError(error);
-        throw error;
-      }
-    },
-    [ikApi, authProvider.id, refreshEntity],
+  const saveField = useEntityFieldSaver<AuthProviderUpdateFieldInput>(
+    UPDATE_AUTH_PROVIDER_MUTATION,
+    authProvider.id,
+    "Auth Provider",
   );
 
   return (
     <OverviewCard name={authProvider.name}>
-      <CommonEditableField<string>
-        name={"Name"}
-        canEdit={canEdit}
+      <EditableNameField
         value={authProvider.name}
-        ariaLabel="Edit name"
-        display={<span>{authProvider.name}</span>}
+        canEdit={canEdit}
         onSave={(value) => saveField({ name: value })}
-        renderEditor={({ value, onChange }) => (
-          <TextField
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            slotProps={{ input: { "aria-label": "Name" } }}
-            fullWidth
-            margin="normal"
-            autoFocus
-          />
-        )}
-        size={6}
+        span="half"
       />
       <CommonField
         name={"Auth Provider Type"}
         value={getProviderValue(authProvider.authProvider)}
-        size={6}
+        span="half"
       />{" "}
       <EditableDescriptionField
         value={authProvider.description}
@@ -90,7 +58,7 @@ export const AuthProviderOverview = ({
         value={authProvider.enabled}
         ariaLabel="Edit enabled status"
         onSave={(value) => saveField({ enabled: value })}
-        size={6}
+        span="half"
       />{" "}
       <EditableTagsField
         name="Filter By Domain"
@@ -98,7 +66,7 @@ export const AuthProviderOverview = ({
         canEdit={canEdit}
         onSave={(value) => saveField({ filterByDomain: value })}
         helperText="Add domains and press Enter"
-        size={6}
+        span="half"
         display={
           authProvider.filterByDomain &&
           authProvider.filterByDomain.length > 0 ? (
@@ -111,12 +79,12 @@ export const AuthProviderOverview = ({
       <CommonField
         name={"Created"}
         value={<RelativeTime date={authProvider.createdAt} />}
-        size={6}
+        span="half"
       />
       <CommonField
         name={"Last Updated"}
         value={<RelativeTime date={authProvider.updatedAt} />}
-        size={6}
+        span="half"
       />
     </OverviewCard>
   );

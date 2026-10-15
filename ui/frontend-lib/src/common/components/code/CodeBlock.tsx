@@ -1,24 +1,22 @@
 import { FC, ReactNode, useCallback, useEffect, useRef, useState } from "react";
 
-import CheckIcon from "@mui/icons-material/Check";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import { Box, SxProps, Theme, Tooltip } from "@mui/material";
-
+import { CheckIcon, ContentCopyIcon } from "../../../icons/material";
+import { Tooltip } from "../../../ui";
+import { cn } from "../../../utils/cn";
 import { notifyError } from "../../hooks/useNotification";
-import { CODE_FONT_FAMILY } from "../../theme";
 import { copyToClipboard } from "../../utils/clipboard";
 
 interface CodeBlockProps {
   children: ReactNode;
   /** Disables the copy button; copy is enabled by default. */
   disableCopy?: boolean;
-  sx?: SxProps<Theme>;
+  className?: string;
 }
 
 export const CodeBlock: FC<CodeBlockProps> = ({
   children,
   disableCopy = false,
-  sx,
+  className,
 }) => {
   const preRef = useRef<HTMLPreElement>(null);
   const timerRef = useRef<number | undefined>(undefined);
@@ -43,66 +41,28 @@ export const CodeBlock: FC<CodeBlockProps> = ({
   }, []);
 
   return (
-    <Box sx={{ position: "relative" }}>
-      <Box
-        component="pre"
+    <div className="relative">
+      <pre
         ref={preRef}
-        sx={{
-          m: 0,
-          p: 1,
-          pr: 3,
-          fontSize: "0.75rem",
-          fontFamily: CODE_FONT_FAMILY,
-          bgcolor: "action.hover",
-          borderRadius: "var(--template-code-radius)",
-          overflow: "auto",
-          whiteSpace: "pre-wrap",
-          wordBreak: "break-word",
-          ...sx,
-        }}
+        className={cn(
+          "m-0 overflow-auto rounded-code bg-hover p-2 pr-6 font-mono text-[0.75rem] [word-break:break-word] whitespace-pre-wrap",
+          className,
+        )}
       >
         {children}
-      </Box>
+      </pre>
       {!disableCopy && (
         <Tooltip title={copied ? "Copied" : "Copy"}>
-          <Box
-            component="button"
+          <button
+            className="absolute top-1 right-1 inline-flex cursor-pointer items-center rounded-[4px] border-0 p-0.5 leading-[0] text-fg-muted opacity-65 [background:none] [transition:opacity_120ms_ease] hover:bg-selected hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary [&_svg]:text-[1rem]"
             type="button"
             aria-label={copied ? "Copied to clipboard" : "Copy to clipboard"}
             onClick={handleCopy}
-            sx={{
-              position: "absolute",
-              top: 4,
-              right: 4,
-              display: "inline-flex",
-              alignItems: "center",
-              padding: "2px",
-              border: "none",
-              borderRadius: "4px",
-              background: "none",
-              color: "text.secondary",
-              opacity: 0.65,
-              cursor: "pointer",
-              lineHeight: 0,
-              transition: "opacity 120ms ease",
-              "&:hover": {
-                opacity: 1,
-                backgroundColor: "action.selected",
-              },
-              "&:focus-visible": {
-                outline: "2px solid",
-                outlineColor: "primary.main",
-                outlineOffset: "1px",
-              },
-              "& svg": {
-                fontSize: "1rem",
-              },
-            }}
           >
             {copied ? <CheckIcon /> : <ContentCopyIcon />}
-          </Box>
+          </button>
         </Tooltip>
       )}
-    </Box>
+    </div>
   );
 };

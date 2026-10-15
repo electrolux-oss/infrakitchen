@@ -1,15 +1,10 @@
-import { ReactNode, useCallback } from "react";
+import { ReactNode } from "react";
 
-import CallSplitOutlinedIcon from "@mui/icons-material/CallSplitOutlined";
-import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
-import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
-import { Box, Grid, MenuItem, TextField } from "@mui/material";
-
-import { Entity } from "../../common";
 import {
   EntitySidebar,
   SidebarSection,
 } from "../../common/components/cards/EntitySidebar";
+import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
 import { InlineCode } from "../../common/components/code/InlineCode";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
@@ -19,13 +14,16 @@ import {
   CommonField,
   GetReferenceUrlValue,
 } from "../../common/components/fields/CommonField";
-import { RelativeTime } from "../../common/components/fields/RelativeTime";
-import { useConfig } from "../../common/context";
-import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
-import { notify, notifyError } from "../../common/hooks/useNotification";
+import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import StatusChip from "../../common/StatusChip";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
+import {
+  CallSplitOutlinedIcon,
+  FolderOutlinedIcon,
+  LocalOfferOutlinedIcon,
+} from "../../icons/material";
+import { MenuItem, TextField } from "../../ui";
 import { VERSION_LIFECYCLE_STATE } from "../../utils/constants";
 import { GqlSourceCodeVersion } from "../graphql";
 import {
@@ -40,10 +38,10 @@ export interface SourceCodeVersionSidebarProps {
 /** Git ref / path value rendered as inline code next to its icon. */
 const codeValue = (icon: ReactNode, value?: string | null) =>
   value ? (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}>
+    <div className="flex min-w-0 items-center gap-1">
       {icon}
       <InlineCode>{value}</InlineCode>
-    </Box>
+    </div>
   ) : null;
 
 /**
@@ -54,28 +52,15 @@ const codeValue = (icon: ReactNode, value?: string | null) =>
 export const SourceCodeVersionSidebar = ({
   source_code_version,
 }: SourceCodeVersionSidebarProps) => {
-  const { ikApi } = useConfig();
-  const { refreshEntity } = useEntityProvider();
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = checkActionPermission("api:source_code_version", "write");
   const lifecycleState =
     source_code_version.lifecycleState || VERSION_LIFECYCLE_STATE.UNKNOWN;
 
-  const saveField = useCallback(
-    async (input: SourceCodeVersionUpdateFieldInput) => {
-      try {
-        await ikApi.graphqlRequest(UPDATE_SOURCE_CODE_VERSION_MUTATION, {
-          id: source_code_version.id,
-          input,
-        });
-        notify("Source code version updated successfully", "success");
-        refreshEntity?.();
-      } catch (error) {
-        notifyError(error);
-        throw error;
-      }
-    },
-    [ikApi, source_code_version.id, refreshEntity],
+  const saveField = useEntityFieldSaver<SourceCodeVersionUpdateFieldInput>(
+    UPDATE_SOURCE_CODE_VERSION_MUTATION,
+    source_code_version.id,
+    "Source code version",
   );
 
   return (
@@ -94,9 +79,9 @@ export const SourceCodeVersionSidebar = ({
       </SidebarSection>
 
       <SidebarSection title="Status">
-        <Grid size={12}>
+        <div className="col-span-full">
           <StatusChip status={source_code_version.status} />
-        </Grid>
+        </div>
         <CommonEditableField<string>
           name="Lifecycle State"
           canEdit={canEdit}
@@ -116,7 +101,7 @@ export const SourceCodeVersionSidebar = ({
               select
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              slotProps={{ input: { "aria-label": "Lifecycle State" } }}
+              aria-label="Lifecycle State"
               fullWidth
               margin="normal"
               autoFocus
@@ -128,7 +113,7 @@ export const SourceCodeVersionSidebar = ({
               ))}
             </TextField>
           )}
-          size={12}
+          span="full"
         />
         <CommonEditableField<string>
           name="Breaking Changes"
@@ -145,13 +130,13 @@ export const SourceCodeVersionSidebar = ({
             <TextField
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              slotProps={{ input: { "aria-label": "Breaking Changes" } }}
+              aria-label="Breaking Changes"
               fullWidth
               margin="normal"
               autoFocus
             />
           )}
-          size={12}
+          span="full"
         />
       </SidebarSection>
 
@@ -163,7 +148,7 @@ export const SourceCodeVersionSidebar = ({
               <GetReferenceUrlValue {...source_code_version.template} />
             ) : null
           }
-          size={12}
+          span="full"
         />
       </SidebarSection>
 
@@ -182,7 +167,7 @@ export const SourceCodeVersionSidebar = ({
               />
             ) : null
           }
-          size={12}
+          span="full"
         />
         <CommonField
           name="Directory"
@@ -190,7 +175,7 @@ export const SourceCodeVersionSidebar = ({
             <FolderOutlinedIcon fontSize="small" color="action" />,
             source_code_version.sourceCodeFolder,
           )}
-          size={12}
+          span="full"
         />
         <CommonField
           name="Branch"
@@ -198,7 +183,7 @@ export const SourceCodeVersionSidebar = ({
             <CallSplitOutlinedIcon fontSize="small" color="action" />,
             source_code_version.sourceCodeBranch,
           )}
-          size={6}
+          span="half"
         />
         <CommonField
           name="Tag"
@@ -206,38 +191,11 @@ export const SourceCodeVersionSidebar = ({
             <LocalOfferOutlinedIcon fontSize="small" color="action" />,
             source_code_version.sourceCodeVersion,
           )}
-          size={6}
+          span="half"
         />
       </SidebarSection>
 
-      <SidebarSection title="Details">
-        <CommonField
-          name="Created by"
-          value={
-            source_code_version.creator ? (
-              <Entity
-                entity={{ ...source_code_version.creator, entityType: "user" }}
-              />
-            ) : null
-          }
-          size={12}
-        />
-        <CommonField
-          name="Created"
-          value={<RelativeTime date={source_code_version.createdAt} />}
-          size={6}
-        />
-        <CommonField
-          name="Last Updated"
-          value={<RelativeTime date={source_code_version.updatedAt} />}
-          size={6}
-        />
-        <CommonField
-          name="Revision"
-          value={source_code_version.revisionNumber}
-          size={12}
-        />
-      </SidebarSection>
+      <SidebarDetailsSection entity={source_code_version} />
     </EntitySidebar>
   );
 };

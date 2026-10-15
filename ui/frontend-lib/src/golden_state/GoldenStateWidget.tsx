@@ -2,30 +2,22 @@ import { useState } from "react";
 
 import { Link as RouterLink } from "react-router";
 
-import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
-import CloseFullscreenIcon from "@mui/icons-material/CloseFullscreen";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
-import OpenInFullIcon from "@mui/icons-material/OpenInFull";
-import SecurityIcon from "@mui/icons-material/Security";
-import UpdateIcon from "@mui/icons-material/Update";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import {
-  alpha,
-  Box,
-  Chip,
-  CircularProgress,
-  Divider,
-  IconButton,
-  Link,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-
 import { FilterClause } from "../common/components/filter_panel/FilterConfig";
 import {
   GoldenStateProjectReport,
   GoldenStateSummary,
 } from "../dashboard/types";
+import {
+  CheckCircleOutlinedIcon,
+  CloseFullscreenIcon,
+  ErrorOutlinedIcon,
+  OpenInFullIcon,
+  SecurityIcon,
+  UpdateIcon,
+  WarningAmberIcon,
+} from "../icons/material";
+import { Divider, Spinner, IconButton, Chip, Tooltip, Link } from "../ui";
+import { cn } from "../utils/cn";
 import { VERSION_LIFECYCLE_STATE } from "../utils/constants";
 
 export interface GoldenStateWidgetProps {
@@ -41,6 +33,17 @@ export function getScoreChipColor(
   if (score >= 70) return "warning";
   return "error";
 }
+
+// Tinted card surface per score color (static so Tailwind can see it).
+const SCORE_CARD_CLASSES: Record<
+  ReturnType<typeof getScoreChipColor>,
+  string
+> = {
+  success: "bg-success/16 border-success/40",
+  warning: "bg-warning/16 border-warning/40",
+  error: "bg-error/16 border-error/40",
+  info: "bg-info/16 border-info/40",
+};
 
 function buildProjectResourcesUrl(
   project: GoldenStateProjectReport,
@@ -117,60 +120,33 @@ function ProjectHeatMapTile({
   ]);
 
   return (
-    <Box
-      component={RouterLink}
+    <RouterLink
       to={projectPageResourcesUrl}
-      sx={(theme) => ({
-        display: "flex",
-        flexDirection: "column",
-        gap: 1,
-        minHeight: 128,
-        p: 1.5,
-        borderRadius: 1.5,
-        color: "text.primary",
-        textDecoration: "none",
-        backgroundColor: alpha(theme.palette[scoreColor].main, 0.16),
-        border: `1px solid ${alpha(theme.palette[scoreColor].main, 0.4)}`,
-        transition: "transform 120ms ease, box-shadow 120ms ease",
-        "&:hover": {
-          transform: "translateY(-1px)",
-          boxShadow: theme.shadows[2],
-        },
-      })}
+      className={cn(
+        "flex min-h-32 flex-col gap-2 rounded-[12px] border p-3 text-fg no-underline [transition:transform_120ms_ease,box-shadow_120ms_ease] hover:[transform:translateY(-1px)] hover:shadow-[var(--ik-shadow-2)]",
+        SCORE_CARD_CLASSES[scoreColor],
+      )}
     >
       <Link
+        className="leading-[1.3] font-semibold"
         component={RouterLink}
         to={resourcesUrl}
-        underline="hover"
         variant="body2"
-        sx={{ color: "inherit", lineHeight: 1.3, fontWeight: 600 }}
+        color="inherit"
       >
         {project.projectName}
       </Link>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-          flexWrap: "wrap",
-        }}
-      >
+      <div className="flex flex-wrap items-center gap-2">
         <Chip label={`${project.score}%`} color={scoreColor} variant="filled" />
-        <Typography variant="caption" color="text.secondary">
+        <span className="text-caption text-fg-muted">
           {project.compliant}/{comparable} at golden state
-        </Typography>
-      </Box>
+        </span>
+      </div>
 
-      <Box
-        sx={{
-          mt: "auto",
-          display: "grid",
-          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-          gap: 0.75,
-        }}
-      >
+      <div className="mt-auto grid grid-cols-[repeat(2,_minmax(0,_1fr))] gap-1.5">
         {project.compliant > 0 && (
           <Chip
+            className="justify-start"
             component={RouterLink}
             clickable
             to={activeResourcesUrl}
@@ -179,11 +155,11 @@ function ProjectHeatMapTile({
             size="small"
             color="success"
             variant="outlined"
-            sx={{ justifyContent: "flex-start" }}
           />
         )}
         {project.updateAvailable > 0 && (
           <Chip
+            className="justify-start"
             component={RouterLink}
             clickable
             to={previewResourcesUrl}
@@ -192,11 +168,11 @@ function ProjectHeatMapTile({
             size="small"
             color="info"
             variant="outlined"
-            sx={{ justifyContent: "flex-start" }}
           />
         )}
         {project.deprecated > 0 && (
           <Chip
+            className="justify-start"
             component={RouterLink}
             clickable
             to={deprecatedResourcesUrl}
@@ -205,31 +181,30 @@ function ProjectHeatMapTile({
             size="small"
             color="warning"
             variant="outlined"
-            sx={{ justifyContent: "flex-start" }}
           />
         )}
         {project.critical > 0 && (
           <Chip
+            className="justify-start"
             component={RouterLink}
             clickable
             to={archivedResourcesUrl}
-            icon={<ErrorOutlineIcon />}
+            icon={<ErrorOutlinedIcon />}
             label={project.critical}
             size="small"
             color="error"
             variant="outlined"
-            sx={{ justifyContent: "flex-start" }}
           />
         )}
         {project.noGolden > 0 && (
           <Chip
+            className="col-[1_/_-1] justify-start"
             label={`${project.noGolden} no golden`}
             variant="outlined"
-            sx={{ gridColumn: "1 / -1", justifyContent: "flex-start" }}
           />
         )}
-      </Box>
-    </Box>
+      </div>
+    </RouterLink>
   );
 }
 
@@ -243,17 +218,17 @@ export const GoldenStateWidget = ({
   if (!goldenStateReport && !loading) return null;
 
   return (
-    <Box sx={{ width: "100%" }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-        <SecurityIcon sx={{ color: "primary.main", fontSize: 20 }} />
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+    <div className="w-full">
+      <div className="mb-3 flex items-center gap-2">
+        <SecurityIcon className="text-[20px] text-primary" />
+        <h6 className="m-0 text-subtitle1 font-semibold text-grey-500">
           Golden State Compliance
-        </Typography>
+        </h6>
         {goldenStateReport ? (
           <Chip
+            className="ml-auto font-bold"
             label={`${goldenStateReport.overallScore}%`}
             color={getScoreChipColor(goldenStateReport.overallScore)}
-            sx={{ fontWeight: 700, ml: "auto" }}
           />
         ) : null}
         {expandable ? (
@@ -275,77 +250,48 @@ export const GoldenStateWidget = ({
             </IconButton>
           </Tooltip>
         ) : null}
-      </Box>
-      <Divider sx={{ mb: 1.5 }} />
-      <Box
-        sx={{
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: "var(--template-surface-radius)",
-          backgroundColor: "background.paper",
-          p: 2,
-          maxHeight: expanded ? "none" : 400,
-          overflowY: expanded ? "visible" : "auto",
-        }}
+      </div>
+      <Divider className="mb-3" />
+      <div
+        className={cn(
+          expanded ? "max-h-none" : "max-h-100",
+          expanded ? "overflow-y-visible" : "overflow-y-auto",
+          "rounded-surface border border-divider bg-paper p-4",
+        )}
       >
         {loading ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              py: 2,
-            }}
-          >
-            <CircularProgress size={24} />
-          </Box>
+          <div className="flex items-center justify-center py-4">
+            <Spinner size={24} />
+          </div>
         ) : goldenStateReport && goldenStateReport.projects.length === 0 ? (
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              py: 3,
-              color: "text.secondary",
-            }}
-          >
-            <SecurityIcon sx={{ fontSize: 36, mb: 1, opacity: 0.5 }} />
-            <Typography variant="body2" sx={{ textAlign: "center" }}>
+          <div className="flex flex-col items-center py-6 text-fg-muted">
+            <SecurityIcon className="mb-2 text-[36px] opacity-50" />
+            <p className="m-0 text-center text-body2">
               No resources to evaluate.
-            </Typography>
-            <Typography variant="caption" sx={{ textAlign: "center" }}>
+            </p>
+            <span className="text-center text-caption">
               Create resources with templates that have an Active version to see
               compliance.
-            </Typography>
-          </Box>
+            </span>
+          </div>
         ) : (
-          <Box>
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1.5 }}>
+          <div>
+            <div className="mb-3 flex flex-wrap gap-2">
               <Chip label="90-100%" color="success" variant="outlined" />
               <Chip label="70-89%" color="warning" variant="outlined" />
               <Chip label="0-69%" color="error" variant="outlined" />
-            </Box>
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "1fr",
-                  sm: "repeat(2, minmax(0, 1fr))",
-                  lg: "repeat(3, minmax(0, 1fr))",
-                },
-                gap: 1.5,
-              }}
-            >
+            </div>
+            <div className="grid grid-cols-[1fr] gap-3 sm:grid-cols-[repeat(2,_minmax(0,_1fr))] lg:grid-cols-[repeat(3,_minmax(0,_1fr))]">
               {goldenStateReport?.projects.map((project) => (
                 <ProjectHeatMapTile
                   key={project.projectId ?? "__unassigned"}
                   project={project}
                 />
               ))}
-            </Box>
-          </Box>
+            </div>
+          </div>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };

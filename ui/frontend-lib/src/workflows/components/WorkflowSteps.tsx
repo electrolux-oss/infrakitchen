@@ -1,5 +1,3 @@
-import { Box, Typography } from "@mui/material";
-
 import { GqlWorkflowStep } from "../graphql";
 
 import { WorkflowStep } from "./WorkflowStep";
@@ -15,22 +13,14 @@ export const WorkflowSteps = ({
 }: WorkflowStepsProps) => {
   if (steps.length === 0) {
     return (
-      <Typography
-        variant="body2"
-        sx={{
-          color: "text.secondary",
-          py: 2,
-        }}
-      >
-        No workflow steps.
-      </Typography>
+      <p className="m-0 py-4 text-body2 text-fg-muted">No workflow steps.</p>
     );
   }
 
   const sorted = [...steps].sort((a, b) => a.position - b.position);
 
   return (
-    <Box sx={{ width: "100%" }}>
+    <div className="w-full">
       {sorted.map((step) => {
         return (
           <WorkflowStep
@@ -40,6 +30,6 @@ export const WorkflowSteps = ({
           />
         );
       })}
-    </Box>
+    </div>
   );
 };

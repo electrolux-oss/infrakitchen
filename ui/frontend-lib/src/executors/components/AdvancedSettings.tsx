@@ -1,17 +1,13 @@
-import { useCallback } from "react";
-
-import { TextField } from "@mui/material";
-
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import {
   CommonField,
   GetReferenceUrlValue,
 } from "../../common/components/fields/CommonField";
-import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
-import { notify, notifyError } from "../../common/hooks/useNotification";
+import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
+import { TextField } from "../../ui";
 import {
   ExecutorUpdateFieldInput,
   EXECUTOR_UPDATE_MUTATION,
@@ -25,27 +21,15 @@ export interface AdvancedSettingsProps {
 }
 
 export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
-  const { ikApi } = useConfig();
-  const { refreshEntity, userEntityPermissions } = useEntityProvider();
+  const { userEntityPermissions } = useEntityProvider();
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = checkActionPermission("api:executor", "write");
   const canEditSource = userEntityPermissions.includes("admin");
 
-  const saveField = useCallback(
-    async (input: ExecutorUpdateFieldInput) => {
-      try {
-        await ikApi.graphqlRequest(EXECUTOR_UPDATE_MUTATION, {
-          id: executor.id,
-          input,
-        });
-        notify("Executor updated successfully", "success");
-        refreshEntity?.();
-      } catch (error) {
-        notifyError(error);
-        throw error;
-      }
-    },
-    [ikApi, executor.id, refreshEntity],
+  const saveField = useEntityFieldSaver<ExecutorUpdateFieldInput>(
+    EXECUTOR_UPDATE_MUTATION,
+    executor.id,
+    "Executor",
   );
   return (
     <BaseCard>
@@ -56,7 +40,7 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
             <GetReferenceUrlValue {...executor.sourceCode} />
           ) : null
         }
-        size={12}
+        span="full"
       />
       <SourceCodeConfigEditor executor={executor} canEdit={canEditSource} />
       <CommonEditableField<string>
@@ -77,7 +61,7 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
             helperText="Enter command arguments (e.g., -var-file=prod.tfvars)"
           />
         )}
-        size={12}
+        span="full"
       />
     </BaseCard>
   );

@@ -2,12 +2,11 @@ import { useCallback, useState } from "react";
 
 import { Controller, useForm } from "react-hook-form";
 
-import { Box, Button } from "@mui/material";
-
 import { CommonDialog, useConfig } from "../../common";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { IkEntity } from "../../types";
+import { Button } from "../../ui";
 import { LINK_USER_ACCOUNT_MUTATION } from "../graphql";
 
 interface PolicyCreateProps {
@@ -34,7 +33,7 @@ export const LinkUserAccount = (props: PolicyCreateProps) => {
   );
 
   return (
-    <Box sx={{ width: "100%" }}>
+    <div className="w-full">
       <form>
         <Controller
           name="secondary_account"
@@ -70,7 +69,7 @@ export const LinkUserAccount = (props: PolicyCreateProps) => {
           )}
         />
       </form>
-    </Box>
+    </div>
   );
 };
 

@@ -20,7 +20,9 @@ const compat = new FlatCompat({
 });
 
 export default defineConfig([
+  { ignores: ["**/dist/**", "**/node_modules/**"] },
   {
+    files: ["**/*.{js,jsx,ts,tsx}"],
     extends: fixupConfigRules(
       compat.extends(
         "eslint:recommended",
@@ -96,6 +98,28 @@ export default defineConfig([
             },
           ],
           pathGroupsExcludedImportTypes: ["react"],
+        },
+      ],
+
+      // UI comes from frontend-lib/src/ui (daisyUI + Tailwind) and the color
+      // scheme from its ColorSchemeProvider; MUI and Emotion are not installed.
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              regex: "^@(mui|emotion)/",
+              message:
+                "MUI was removed. Use frontend-lib/src/ui (@electrolux-oss/infrakitchen): its components, useColorScheme, and Tailwind classes instead of sx.",
+            },
+          ],
+        },
+      ],
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "JSXAttribute[name.name='sx']",
+          message: "The sx prop was MUI's; use className with Tailwind.",
         },
       ],
 

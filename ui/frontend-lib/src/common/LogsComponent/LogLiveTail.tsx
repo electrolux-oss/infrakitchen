@@ -1,24 +1,15 @@
-import React, {
-  useEffect,
-  useRef,
-  useState,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 
-import {
-  CloseFullscreen,
-  FitScreen,
-  Fullscreen,
-  Terminal,
-} from "@mui/icons-material";
-import Box from "@mui/material/Box";
-import IconButton from "@mui/material/IconButton";
-import { alpha, keyframes, useTheme } from "@mui/material/styles";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
 import Ansi from "ansi-to-react";
 
+import {
+  CloseFullscreenIcon,
+  FitScreenIcon,
+  FullscreenIcon,
+  TerminalIcon,
+} from "../../icons/material";
+import { IconButton, Tooltip } from "../../ui";
+import { cn } from "../../utils/cn";
 import { useLocalStorage } from "../context";
 import { useConfig } from "../context/ConfigContext";
 import { useEntityProvider } from "../context/EntityContext";
@@ -28,14 +19,8 @@ import { CODE_FONT_FAMILY } from "../theme";
 const MAX_LOG_MESSAGES = 1000;
 const BATCH_INTERVAL = 100; // milliseconds
 
-const spin = keyframes`
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-`;
-
 export const LogLiveTail = () => {
   const { ikApi, webSocketEnabled, globalConfig } = useConfig();
-  const theme = useTheme();
   const { entity } = useEntityProvider();
   const { get, setKey } = useLocalStorage<Record<string, unknown>>();
   const isMinimizedSaved = get("log_live_tail_minimized") as
@@ -154,15 +139,6 @@ export const LogLiveTail = () => {
   }, [flushPendingMessages]);
 
   // Expanding ring around the minimized icon while logs are arriving.
-  const activityColor = theme.palette.success.main;
-  const ripple = useMemo(
-    () => keyframes`
-      0% { box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18), 0 0 0 0 ${alpha(activityColor, 0.55)}; }
-      70% { box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18), 0 0 0 12px ${alpha(activityColor, 0)}; }
-      100% { box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18), 0 0 0 0 ${alpha(activityColor, 0)}; }
-    `,
-    [activityColor],
-  );
   const showActivity = isMinimized && isReceivingLogs;
 
   const subscriptionEnabled = !!webSocketEnabled && !!globalConfig?.websocket;
@@ -209,91 +185,43 @@ export const LogLiveTail = () => {
   }
 
   return (
-    <Box
+    <div
+      className={cn(
+        "shadow-[0_12px_40px_rgba(0,0,0,0.18)] motion-reduce:[animation:none]",
+        showActivity && "animate-[log-tail-ripple_1.6s_ease-out_infinite]",
+        cn(
+          isMinimized ? "rounded-full" : "rounded-surface",
+          "border",
+          showActivity ? "border-success" : "border-divider",
+          isMinimized ? "cursor-pointer" : "cursor-default",
+          "fixed right-5 bottom-5 z-1300 flex flex-col overflow-hidden bg-paper",
+        ),
+      )}
       ref={containerRef}
       onClick={isMinimized ? () => setIsMinimized(false) : undefined}
-      sx={{
-        position: "fixed",
-        bottom: 20,
-        right: 20,
-        // Minimized collapses to a compact icon-only FAB so it barely covers
-        // page content; expanded uses the user-resizable dimensions.
+      // Minimized collapses to a compact icon-only FAB so it barely covers
+      // page content; expanded uses the user-resizable dimensions.
+      style={{
         width: isMinimized ? 44 : dimensions.width,
         height: isMinimized ? 44 : dimensions.height,
-        zIndex: 1300,
-        display: "flex",
-        flexDirection: "column",
-        boxShadow: "0 12px 40px rgba(0, 0, 0, 0.18)",
-        borderRadius: isMinimized ? "50%" : "var(--template-surface-radius)",
-        border: "1px solid",
-        borderColor: showActivity ? "success.main" : "divider",
-        bgcolor: "background.paper",
-        overflow: "hidden",
-        cursor: isMinimized ? "pointer" : "default",
-        animation: showActivity
-          ? `${ripple} 1.6s ease-out infinite`
-          : undefined,
-        "@media (prefers-reduced-motion: reduce)": { animation: "none" },
       }}
     >
       {!isMinimized && (
-        <Box
+        <div
+          className="absolute top-0 left-0 z-10 flex h-5 w-5 cursor-nwse-resize items-start justify-start before:absolute before:top-0.5 before:left-0.5 before:h-0 before:w-0 before:border-b-8 before:border-l-8 before:border-transparent before:opacity-30 before:content-[''] hover:bg-hover"
           onMouseDown={startResizing}
-          sx={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: 20,
-            height: 20,
-            cursor: "nwse-resize",
-            zIndex: 10,
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "flex-start",
-            "&:hover": { bgcolor: "action.hover" },
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              top: 2,
-              left: 2,
-              width: 0,
-              height: 0,
-              borderLeft: "8px solid",
-              borderBottom: "8px solid",
-              borderColor: "transparent",
-              opacity: 0.3,
-            },
-          }}
         />
       )}
       {isMinimized ? (
-        <Box
+        <div
+          className="relative flex h-full w-full items-center justify-center"
           role="button"
           aria-label="Open log stream"
-          sx={{
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            position: "relative",
-          }}
         >
           {showActivity && (
-            <Box
+            <div
+              className="absolute inset-0.5 animate-spin rounded-full border-2 border-transparent border-t-success border-r-success motion-reduce:[animation:none]"
               aria-hidden
-              sx={{
-                position: "absolute",
-                inset: 2,
-                borderRadius: "50%",
-                border: "2px solid transparent",
-                borderTopColor: "success.main",
-                borderRightColor: "success.main",
-                animation: `${spin} 1s linear infinite`,
-                "@media (prefers-reduced-motion: reduce)": {
-                  animation: "none",
-                },
-              }}
             />
           )}
           <Tooltip
@@ -301,113 +229,61 @@ export const LogLiveTail = () => {
               isReceivingLogs ? "Log Stream — receiving logs" : "Log Stream"
             }
           >
-            <Terminal
+            <TerminalIcon
               fontSize="small"
-              sx={{
-                color: showActivity ? "success.main" : "text.secondary",
-                transition: "color 0.3s",
-              }}
+              className={cn(
+                "[transition:color_0.3s]",
+                showActivity ? "text-success" : "text-fg-muted",
+              )}
             />
           </Tooltip>
-        </Box>
+        </div>
       ) : (
         <>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              px: 1.5,
-              py: 0.75,
-              borderBottom: 1,
-              borderColor: "divider",
-              cursor: "default",
-            }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                minWidth: 0,
-              }}
-            >
-              <Terminal fontSize="small" sx={{ color: "text.secondary" }} />
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: 600,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
+          <div className="flex cursor-default items-center justify-between border-b border-divider px-3 py-1.5">
+            <div className="flex min-w-0 items-center gap-2">
+              <TerminalIcon className="text-fg-muted" fontSize="small" />
+              <p className="m-0 overflow-hidden text-body2 font-semibold text-ellipsis whitespace-nowrap">
                 Log Stream
-              </Typography>
+              </p>
               {isReceivingLogs && (
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    bgcolor: "success.main",
-                    animation: "log-tail-pulse 1.2s ease-in-out infinite",
-                    flexShrink: 0,
-                  }}
-                />
+                <div className="h-2 w-2 shrink-0 [animation:log-tail-pulse_1.2s_ease-in-out_infinite] rounded-full bg-success" />
               )}
-            </Box>{" "}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 0.25,
-                borderLeft: "1px solid",
-                borderColor: "divider",
-                pl: 1,
-              }}
-            >
+            </div>{" "}
+            <div className="flex items-center gap-0.5 border-l border-divider pl-2">
               <Tooltip title="Medium size">
                 <IconButton
+                  className="text-fg-muted"
                   size="small"
-                  color="inherit"
                   onClick={() => applyPresetSize(0.6)}
-                  sx={{ color: "text.secondary" }}
                 >
-                  <FitScreen fontSize="small" />
+                  <FitScreenIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
               <Tooltip title="Large size">
                 <IconButton
+                  className="text-fg-muted"
                   size="small"
-                  color="inherit"
                   onClick={() => applyPresetSize(0.85)}
-                  sx={{ color: "text.secondary" }}
                 >
-                  <Fullscreen fontSize="small" />
+                  <FullscreenIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
               <Tooltip title="Minimize">
                 <IconButton
+                  className="text-fg-muted"
                   size="small"
                   aria-label="Minimize"
-                  color="inherit"
                   onClick={() => setIsMinimized(true)}
-                  sx={{ color: "text.secondary" }}
                 >
-                  <CloseFullscreen fontSize="small" />
+                  <CloseFullscreenIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
-            </Box>
-          </Box>
-          <Box
+            </div>
+          </div>
+          <div
+            className="grow overflow-auto bg-[#1e1e1e] text-[#fff]"
             ref={scrollContainerRef}
-            sx={{
-              flexGrow: 1,
-              overflow: "auto",
-              bgcolor: "#1e1e1e",
-              color: "#fff",
-            }}
           >
             <pre
               style={{
@@ -445,9 +321,9 @@ export const LogLiveTail = () => {
                       }
                     `}
             </style>
-          </Box>
+          </div>
         </>
       )}
-    </Box>
+    </div>
   );
 };

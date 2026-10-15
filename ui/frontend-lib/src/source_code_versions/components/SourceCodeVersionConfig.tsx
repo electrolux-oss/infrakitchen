@@ -2,10 +2,9 @@ import { useCallback, useEffect, useMemo } from "react";
 
 import { Control, useFieldArray, useFormContext } from "react-hook-form";
 
-import { Box, Alert, Button, CircularProgress } from "@mui/material";
-
 import { useConfig } from "../../common";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { Alert, Spinner, Button } from "../../ui";
 import { ENTITY_STATUS } from "../../utils";
 import { REPLACE_VALIDATION_RULES_MUTATION } from "../../validation_rules/graphql";
 import { useSourceCodeVersionConfigContext } from "../context/SourceCodeVersionConfigContext";
@@ -396,23 +395,16 @@ export const SourceCodeVersionConfig = () => {
 
   if (isLoading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-        <CircularProgress size={28} />
-      </Box>
+      <div className="flex justify-center py-8">
+        <Spinner size={28} />
+      </div>
     );
   }
 
   return (
-    <Box sx={{ width: "100%", pt: 1 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 2,
-        }}
-      >
-        <Box sx={{ flexGrow: 1 }}>
+    <div className="w-full pt-2">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="grow">
           {sourceCodeVersion && (
             <>
               {sourceCodeVersion.status !== ENTITY_STATUS.DONE && (
@@ -430,34 +422,28 @@ export const SourceCodeVersionConfig = () => {
                 )}
             </>
           )}
-        </Box>
+        </div>
         {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
           sourceCodeVersion.variables &&
           sourceCodeVersion.variables.length > 0 && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <div className="flex items-center gap-4">
               <ReferenceSelector />
-            </Box>
+            </div>
           )}
-      </Box>
+      </div>
 
       {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
         sourceCodeVersion.variables &&
         sourceCodeVersion.variables.length > 0 && (
           <>
             <ConfigList control={control as Control<any>} fields={fields} />
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                mt: 3,
-              }}
-            >
+            <div className="mt-6 flex justify-center">
               <Button variant="contained" onClick={handleSubmit(onSubmit)}>
                 Save
               </Button>
-            </Box>
+            </div>
           </>
         )}
-    </Box>
+    </div>
   );
 };

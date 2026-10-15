@@ -8,8 +8,6 @@ import {
 } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import { Box, TextField, Button, MenuItem } from "@mui/material";
-
 import { LabelInput } from "../../common";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
@@ -17,6 +15,7 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { IkEntity } from "../../types";
+import { Button, TextField, MenuItem } from "../../ui";
 import { CREATE_SOURCE_CODE_MUTATION } from "../graphql";
 import { SourceCodeCreate } from "../types";
 
@@ -82,17 +81,9 @@ const SourceCodeCreatePageInner = () => {
         </>
       }
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          flexDirection: "column",
-          width: "100%",
-          minWidth: 320,
-        }}
-      >
+      <div className="flex w-full min-w-80 flex-col items-center">
         <PropertyCard title="Repository Details">
-          <Box>
+          <div>
             <Controller
               name="description"
               control={control}
@@ -100,7 +91,6 @@ const SourceCodeCreatePageInner = () => {
                 <TextField
                   {...field}
                   label="Description"
-                  variant="outlined"
                   error={!!errors.description}
                   helperText={
                     errors.description
@@ -109,11 +99,7 @@ const SourceCodeCreatePageInner = () => {
                   }
                   fullWidth
                   margin="normal"
-                  slotProps={{
-                    htmlInput: {
-                      "aria-label": "Source code description",
-                    },
-                  }}
+                  inputProps={{ "aria-label": "Source code description" }}
                 />
               )}
             />
@@ -128,7 +114,6 @@ const SourceCodeCreatePageInner = () => {
                   {...field}
                   label="Repository URL"
                   required
-                  variant="outlined"
                   error={!!errors.sourceCodeUrl}
                   helperText={
                     errors.sourceCodeUrl
@@ -137,11 +122,7 @@ const SourceCodeCreatePageInner = () => {
                   }
                   fullWidth
                   margin="normal"
-                  slotProps={{
-                    htmlInput: {
-                      "aria-label": "Repository URL",
-                    },
-                  }}
+                  inputProps={{ "aria-label": "Repository URL" }}
                 />
               )}
             />
@@ -161,11 +142,9 @@ const SourceCodeCreatePageInner = () => {
                   margin="normal"
                   error={!!errors.sourceCodeProvider}
                   helperText={errors.sourceCodeProvider?.message}
-                  slotProps={{
-                    select: {
-                      inputProps: {
-                        "aria-label": "Repository provider",
-                      },
+                  selectProps={{
+                    inputProps: {
+                      "aria-label": "Repository provider",
                     },
                   }}
                 >
@@ -190,11 +169,9 @@ const SourceCodeCreatePageInner = () => {
                   margin="normal"
                   error={!!errors.sourceCodeLanguage}
                   helperText={errors.sourceCodeLanguage?.message}
-                  slotProps={{
-                    select: {
-                      inputProps: {
-                        "aria-label": "Source code language",
-                      },
+                  selectProps={{
+                    inputProps: {
+                      "aria-label": "Source code language",
                     },
                   }}
                 >
@@ -242,9 +219,9 @@ const SourceCodeCreatePageInner = () => {
               defaultValue={[]}
               render={({ field }) => <LabelInput {...field} errors={errors} />}
             />
-          </Box>
+          </div>
         </PropertyCard>
-      </Box>
+      </div>
     </PageContainer>
   );
 };

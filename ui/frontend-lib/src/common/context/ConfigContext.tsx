@@ -6,10 +6,9 @@ import {
   useCallback,
 } from "react";
 
-import { useEffectOnce } from "react-use";
-
 import { InfraKitchenApi } from "../../api/InfraKitchenApi";
 import { GqlUserShort, USER_SHORT_FIELDS } from "../../users/graphql";
+import { useEffectOnce } from "../hooks/useEffectOnce";
 import { notifyError } from "../hooks/useNotification";
 
 export interface ServerInfo {

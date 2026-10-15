@@ -1,24 +1,15 @@
 import React, { useEffect, useState } from "react";
 
-import LaunchIcon from "@mui/icons-material/Launch";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  IconButton,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-
+import { LaunchIcon, WarningAmberIcon } from "../../../icons/material";
 import {
   GqlResourceTreeNode,
   RESOURCE_TREE_QUERY,
 } from "../../../resources/graphql";
+import { Alert, Spinner, Button, IconButton, Tooltip } from "../../../ui";
+import { cn } from "../../../utils/cn";
 import { useConfig } from "../../context";
 import StatusChip from "../../StatusChip";
-import { getStateColor } from "../../utils";
+import { getStateColor, paletteBgClass } from "../../utils";
 import { ConfirmNameField } from "../fields/ConfirmNameField";
 
 import { CommonDialog } from "./CommonDialog";
@@ -47,71 +38,44 @@ const ResourceRow = ({
   const colors = getStateColor(resource.status, resource.state);
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 1.5,
-        py: 0.75,
-        px: 1,
-        pl: 1 + depth * 2,
-        borderRadius: "var(--template-surface-radius)",
-        "&:hover": { bgcolor: "action.hover" },
-      }}
+    <div
+      className="flex items-center gap-3 rounded-surface px-2 py-1.5 hover:bg-hover"
+      style={{ paddingLeft: (1 + depth * 2) * 8 }}
     >
       <Tooltip title={resource.status} arrow>
-        <Box
-          sx={{
-            flexShrink: 0,
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            bgcolor: colors.borderColor,
-          }}
+        <span
+          className={cn(
+            "block h-2 w-2 shrink-0 rounded-full",
+            paletteBgClass(colors.borderColor),
+          )}
         />
       </Tooltip>
       {/* name + template */}
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography
-          variant="body2"
-          sx={{
-            fontWeight: 500,
-            lineHeight: 1.2,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
+      <div className="min-w-0 flex-1">
+        <p className="m-0 overflow-hidden text-body2 leading-[1.2] font-medium text-ellipsis whitespace-nowrap">
           {resource.name}
-        </Typography>
+        </p>
         {resource.templateName && (
-          <Typography
-            variant="caption"
-            sx={{
-              color: "text.secondary",
-              lineHeight: 1.2,
-            }}
-          >
+          <span className="text-caption leading-[1.2] text-fg-muted">
             {resource.templateName}
-          </Typography>
+          </span>
         )}
-      </Box>
+      </div>
       <StatusChip status={resource.status} state={resource.state} compact />
       <Tooltip title="Open in new tab" arrow>
         <IconButton
+          className="shrink-0 text-fg-muted"
           size="small"
-          component="a"
           href={`${linkPrefix}resources/${resource.id}`}
           target="_blank"
           rel="noopener noreferrer"
-          sx={{ flexShrink: 0, color: "text.secondary" }}
           aria-label={`Open ${resource.name}`}
           onClick={(e) => e.stopPropagation()}
         >
-          <LaunchIcon sx={{ fontSize: 14 }} />
+          <LaunchIcon className="text-[14px]" />
         </IconButton>
       </Tooltip>
-    </Box>
+    </div>
   );
 };
 
@@ -169,71 +133,43 @@ export const CascadeDestroyDialog = ({
       onClose={onClose}
       title="Confirmation"
       content={
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <div className="flex flex-col gap-4">
           <Alert severity="error" icon={<WarningAmberIcon />}>
             This will permanently destroy <strong>{entityName}</strong> and
             every resource that depends on it. This cannot be undone.
           </Alert>
 
-          <Box>
-            <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+          <div>
+            <h6 className="m-0 mb-1 text-subtitle2 text-grey-500">
               {treeLoading
                 ? "Loading affected resources…"
                 : `${allResources.length} resource${allResources.length === 1 ? "" : "s"} will be destroyed`}
-            </Typography>
+            </h6>
 
-            <Box
-              sx={{
-                border: 1,
-                borderColor: "divider",
-                borderRadius: "var(--template-surface-radius)",
-                overflow: "hidden",
-                maxHeight: 260,
-                overflowY: "auto",
-              }}
-            >
+            <div className="max-h-65 overflow-hidden overflow-y-auto rounded-surface border border-divider">
               {treeLoading ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 1.5,
-                    py: 3,
-                  }}
-                >
-                  <CircularProgress size={16} />
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: "text.secondary",
-                    }}
-                  >
+                <div className="flex items-center justify-center gap-3 py-6">
+                  <Spinner size={16} />
+                  <p className="m-0 text-body2 text-fg-muted">
                     Fetching dependency tree…
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
               ) : tree ? (
                 renderTreeRows(tree)
               ) : (
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: "text.secondary",
-                    p: 2,
-                  }}
-                >
+                <p className="m-0 p-4 text-body2 text-fg-muted">
                   Could not load resource tree.
-                </Typography>
+                </p>
               )}
-            </Box>
-          </Box>
+            </div>
+          </div>
 
           <ConfirmNameField
             name={entityName}
             value={confirmValue}
             onChange={setConfirmValue}
           />
-        </Box>
+        </div>
       }
       actions={
         <Button

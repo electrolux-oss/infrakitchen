@@ -1,22 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Box, Card, CardContent } from "@mui/material";
-import {
-  DataGrid,
-  GridColDef,
-  GridPaginationModel,
-  GridSortModel,
-} from "@mui/x-data-grid";
-
 import { useConfig } from "../../../common";
 import { buildLogsQuery, GqlLog } from "../../../logs/graphql";
 import { LogEntity } from "../../../types";
+import { Card, CardContent } from "../../../ui";
+import {
+  DataTable,
+  DataTableColumn,
+  PaginationModel,
+  SortModel,
+} from "../../../ui";
 import { LogActionButtons } from "../../LogsComponent/LogActionButtons";
 import { LogsDialog } from "../../LogsComponent/LogsDialog";
-import {
-  dataGridDefaultProps,
-  dataGridSx,
-} from "../entity_table/dataGridStyles";
 import { RELATIVE_TIME_COLUMN_WIDTH } from "../entity_table/tableColumns";
 import { RelativeTime } from "../fields/RelativeTime";
 
@@ -43,11 +38,11 @@ export const EntityLogs = ({
     entityId: string;
   } | null>(null);
 
-  const [sortModel, setSortModel] = useState<GridSortModel>([
+  const [sortModel, setSortModel] = useState<SortModel>([
     { field: "createdAt", sort: "desc" },
   ]);
 
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+  const [paginationModel, setPaginationModel] = useState<PaginationModel>({
     page: 0,
     pageSize: 10,
   });
@@ -99,21 +94,14 @@ export const EntityLogs = ({
     fetchLogHeads();
   }, [fetchLogHeads]);
 
-  const columns: GridColDef<LogEntity>[] = useMemo(
+  const columns: DataTableColumn<LogEntity>[] = useMemo(
     () => [
       {
         field: "data",
         headerName: "Action",
         flex: 1,
         renderCell: (params) => (
-          <Box
-            sx={{
-              fontWeight: 500,
-              fontSize: "0.875rem",
-            }}
-          >
-            {params.value}
-          </Box>
+          <div className="text-[0.875rem] font-medium">{params.value}</div>
         ),
       },
       {
@@ -163,26 +151,23 @@ export const EntityLogs = ({
   );
 
   return (
-    <Box>
+    <div>
       <Card>
         <CardContent>
-          <Box sx={{ width: "100%", overflowX: "auto" }}>
-            <DataGrid
+          <div className="w-full overflow-x-auto">
+            <DataTable
               rows={logHeads}
               columns={columns}
               loading={loading}
               getRowId={(row) => row.id}
-              pagination
-              disableRowSelectionOnClick
-              {...dataGridDefaultProps}
+              className="md:min-h-[380px]"
               sortModel={sortModel}
               onSortModelChange={setSortModel}
               paginationModel={paginationModel}
               onPaginationModelChange={setPaginationModel}
               pageSizeOptions={[10, 25, 50, 100]}
-              sx={{ ...dataGridSx }}
             />
-          </Box>
+          </div>
         </CardContent>
       </Card>
       {selectedLog && (
@@ -197,6 +182,6 @@ export const EntityLogs = ({
           }
         />
       )}
-    </Box>
+    </div>
   );
 };

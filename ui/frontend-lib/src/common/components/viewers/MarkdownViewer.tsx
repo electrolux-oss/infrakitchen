@@ -2,158 +2,97 @@ import { FC } from "react";
 
 import ReactMarkdown from "react-markdown";
 
+import remarkGfm from "remark-gfm";
+
 import {
-  Box,
-  Link,
-  SxProps,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Theme,
-  Typography,
-} from "@mui/material";
-import remarkGfm from "remark-gfm";
-
-import { CODE_FONT_FAMILY } from "../../theme";
+  Link,
+} from "../../../ui";
+import { cn } from "../../../utils/cn";
 import { InlineCode } from "../code/InlineCode";
 
 interface MarkdownViewerProps {
   content: string;
-  sx?: SxProps<Theme>;
+  className?: string;
   /** Hide the copy affordance on inline code (e.g. read-only contexts). */
   disableInlineCodeCopy?: boolean;
 }
 
 /**
- * Renders Markdown content using MUI typography components.
+ * Renders Markdown content with the app's typography styles.
  * Supports GitHub Flavored Markdown (tables, strikethrough, task lists).
  */
 export const MarkdownViewer: FC<MarkdownViewerProps> = ({
   content,
-  sx,
+  className,
   disableInlineCodeCopy = false,
 }) => {
   return (
-    <Box
-      sx={{
-        "& > *:first-of-type": { mt: 0 },
-        "& > *:last-child": { mb: 0 },
-        ...sx,
-      }}
+    <div
+      className={cn(
+        "[&>*:first-of-type]:mt-0 [&>*:last-child]:mb-0",
+        className,
+      )}
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
           h1: ({ children }) => (
-            <Typography variant="h5" component="h1" sx={{ mt: 3, mb: 1.5 }}>
-              {children}
-            </Typography>
+            <h1 className="m-0 mt-6 mb-3 text-h5">{children}</h1>
           ),
           h2: ({ children }) => (
-            <Typography variant="h6" component="h2" sx={{ mt: 3, mb: 1.25 }}>
-              {children}
-            </Typography>
+            <h2 className="m-0 mt-6 mb-2.5 text-h6">{children}</h2>
           ),
           h3: ({ children }) => (
-            <Typography
-              variant="subtitle1"
-              component="h3"
-              sx={{ mt: 2.5, mb: 1, fontWeight: 600 }}
-            >
+            <h3 className="m-0 mt-5 mb-2 text-subtitle1 font-semibold text-grey-500">
               {children}
-            </Typography>
+            </h3>
           ),
           h4: ({ children }) => (
-            <Typography
-              variant="subtitle2"
-              component="h4"
-              sx={{ mt: 2, mb: 0.75, fontWeight: 600 }}
-            >
+            <h4 className="m-0 mt-4 mb-1.5 text-subtitle2 font-semibold text-grey-500">
               {children}
-            </Typography>
+            </h4>
           ),
           h5: ({ children }) => (
-            <Typography
-              variant="subtitle2"
-              component="h5"
-              sx={{ mt: 2, mb: 0.75, fontWeight: 600 }}
-            >
+            <h5 className="m-0 mt-4 mb-1.5 text-subtitle2 font-semibold text-grey-500">
               {children}
-            </Typography>
+            </h5>
           ),
           h6: ({ children }) => (
-            <Typography
-              variant="subtitle2"
-              component="h6"
-              sx={{ mt: 2, mb: 0.75, fontWeight: 600 }}
-            >
+            <h6 className="m-0 mt-4 mb-1.5 text-subtitle2 font-semibold text-grey-500">
               {children}
-            </Typography>
+            </h6>
           ),
           p: ({ children }) => (
-            <Typography variant="body2" sx={{ mb: 1.5, lineHeight: 1.7 }}>
-              {children}
-            </Typography>
+            <p className="m-0 mb-3 text-body2 leading-[1.7]">{children}</p>
           ),
           a: ({ href, children }) => (
             <Link href={href} target="_blank" rel="noopener noreferrer">
               {children}
             </Link>
           ),
-          ul: ({ children }) => (
-            <Box component="ul" sx={{ pl: 3, mb: 1.5 }}>
-              {children}
-            </Box>
-          ),
-          ol: ({ children }) => (
-            <Box component="ol" sx={{ pl: 3, mb: 1.5 }}>
-              {children}
-            </Box>
-          ),
+          ul: ({ children }) => <ul className="mb-3 pl-6">{children}</ul>,
+          ol: ({ children }) => <ol className="mb-3 pl-6">{children}</ol>,
           li: ({ children }) => (
-            <Box component="li" sx={{ mb: 0.5, lineHeight: 1.7 }}>
-              {children}
-            </Box>
+            <li className="mb-1 leading-[1.7]">{children}</li>
           ),
           blockquote: ({ children }) => (
-            <Box
-              component="blockquote"
-              sx={{
-                borderLeft: 4,
-                borderColor: "divider",
-                pl: 2,
-                ml: 0,
-                my: 1.5,
-                color: "text.secondary",
-                fontStyle: "italic",
-              }}
-            >
+            <blockquote className="my-3 ml-0 border-l-4 border-divider pl-4 text-fg-muted italic">
               {children}
-            </Box>
+            </blockquote>
           ),
           code: ({ className, children }) => {
             const isBlock = /language-/.test(className || "");
             if (isBlock) {
               return (
-                <Box
-                  component="pre"
-                  sx={{
-                    backgroundColor: "action.hover",
-                    borderRadius: "var(--template-code-radius)",
-                    p: 1.5,
-                    overflow: "auto",
-                    fontFamily: CODE_FONT_FAMILY,
-                    fontSize: "0.85em",
-                    mb: 1.5,
-                  }}
-                >
-                  <Box component="code" sx={{ fontFamily: "inherit" }}>
-                    {children}
-                  </Box>
-                </Box>
+                <pre className="mb-3 overflow-auto rounded-code bg-hover p-3 font-mono text-[0.85em]">
+                  <code className="font-[inherit]">{children}</code>
+                </pre>
               );
             }
             return (
@@ -164,7 +103,7 @@ export const MarkdownViewer: FC<MarkdownViewerProps> = ({
           },
           pre: ({ children }) => <>{children}</>,
           table: ({ children }) => (
-            <TableContainer sx={{ my: 1.5 }}>
+            <TableContainer className="my-3">
               <Table size="small">{children}</Table>
             </TableContainer>
           ),
@@ -172,36 +111,21 @@ export const MarkdownViewer: FC<MarkdownViewerProps> = ({
           tbody: ({ children }) => <TableBody>{children}</TableBody>,
           tr: ({ children }) => <TableRow>{children}</TableRow>,
           th: ({ children }) => (
-            <TableCell sx={{ fontWeight: 600 }}>{children}</TableCell>
+            <TableCell className="font-semibold">{children}</TableCell>
           ),
           td: ({ children }) => <TableCell>{children}</TableCell>,
-          hr: () => (
-            <Box
-              component="hr"
-              sx={{
-                border: 0,
-                borderTop: 1,
-                borderColor: "divider",
-                my: 2,
-              }}
-            />
-          ),
+          hr: () => <hr className="my-4 border-0 border-t border-divider" />,
           img: ({ src, alt }) => (
-            <Box
-              component="img"
+            <img
+              className="h-auto max-w-full rounded-surface"
               src={src}
               alt={alt}
-              sx={{
-                maxWidth: "100%",
-                height: "auto",
-                borderRadius: "var(--template-surface-radius)",
-              }}
             />
           ),
         }}
       >
         {content}
       </ReactMarkdown>
-    </Box>
+    </div>
   );
 };

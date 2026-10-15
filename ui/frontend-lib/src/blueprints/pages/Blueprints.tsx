@@ -1,12 +1,11 @@
 import { useNavigate } from "react-router";
 
-import AddIcon from "@mui/icons-material/Add";
-import { Box, Button } from "@mui/material";
-
 import { PermissionWrapper } from "../../common";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import { useConfig } from "../../common/context/ConfigContext";
 import PageContainer from "../../common/PageContainer";
+import { AddIcon } from "../../icons/material";
+import { Button } from "../../ui";
 import { blueprintColumns } from "../components/blueprintTableConfig";
 import { BLUEPRINT_FIELD_MAP } from "../graphql";
 
@@ -15,7 +14,7 @@ export const BlueprintsPage = () => {
   const navigate = useNavigate();
 
   const actions = (
-    <Box>
+    <div>
       <PermissionWrapper
         requiredPermission="api:blueprint"
         permissionAction="write"
@@ -27,7 +26,7 @@ export const BlueprintsPage = () => {
           Create
         </Button>
       </PermissionWrapper>
-    </Box>
+    </div>
   );
 
   return (

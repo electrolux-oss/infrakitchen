@@ -1,9 +1,10 @@
 import { Icon } from "@iconify/react";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import { Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import ixLogData from "@iconify-icons/ix/log";
 
 import { AuditExecutionResult } from "../../../audit_logs/components/AuditExecutionResult";
+import { AutoAwesomeIcon } from "../../../icons/material";
 import { AuditLogEntity } from "../../../types";
+import { IconButton, Tooltip } from "../../../ui";
 import { RelativeTime } from "../fields/RelativeTime";
 import { RevisionChip } from "../labels/RevisionChip";
 
@@ -25,14 +26,8 @@ export const RevisionTimeline = ({
   onOpenDialog,
 }: RevisionTimelineProps) => {
   return (
-    <Box sx={{ mb: 3 }}>
-      <Stack
-        direction="row"
-        spacing={1}
-        sx={{
-          alignItems: "center",
-        }}
-      >
+    <div className="mb-6">
+      <div className="flex flex-row items-center gap-2">
         <RevisionChip
           revision={revision}
           variant="outlined"
@@ -42,44 +37,27 @@ export const RevisionTimeline = ({
               : undefined
           }
         />
-        <RelativeTime date={logs[0].createdAt} sx={{ fontSize: "0.75rem" }} />
-      </Stack>
-      <Box sx={{ mt: 3 }}>
+        <RelativeTime className="text-[0.75rem]" date={logs[0].createdAt} />
+      </div>
+      <div className="mt-6">
         <HorizontalTimeline
           items={[...logs].reverse()}
           renderItem={(log) => (
             <>
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: 500,
-                  mt: 0.5,
-                }}
-              >
-                {log.action}
-              </Typography>
-              <RelativeTime date={log.createdAt} sx={{ fontSize: "0.7rem" }} />
-              <Box sx={{ mt: 0.5 }}>
+              <p className="m-0 mt-1 text-body2 font-medium">{log.action}</p>
+              <RelativeTime className="text-[0.7rem]" date={log.createdAt} />
+              <div className="mt-1">
                 <AuditExecutionResult log={log} hideSummary />
-              </Box>
+              </div>
               {actionsWithLogs.includes(log.action) && (
-                <Stack
-                  direction="row"
-                  spacing={0.25}
-                  sx={{
-                    mt: 0.25,
-                    "& .MuiIconButton-root": {
-                      border: "none",
-                    },
-                  }}
-                >
+                <div className="mt-0.5 flex flex-row gap-0.5 [&_.d-btn]:border-0">
                   {log.action !== "sync" && (
                     <Tooltip title="Summary">
                       <IconButton
                         size="small"
                         onClick={() => onOpenDialog(log.id, "summary")}
                       >
-                        <AutoAwesomeIcon sx={{ fontSize: "1rem" }} />
+                        <AutoAwesomeIcon className="text-[1rem]" />
                       </IconButton>
                     </Tooltip>
                   )}
@@ -88,15 +66,15 @@ export const RevisionTimeline = ({
                       size="small"
                       onClick={() => onOpenDialog(log.id, "logs")}
                     >
-                      <Icon icon="ix:log" width={16} />
+                      <Icon icon={ixLogData} ssr width={16} />
                     </IconButton>
                   </Tooltip>
-                </Stack>
+                </div>
               )}
             </>
           )}
         />
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };

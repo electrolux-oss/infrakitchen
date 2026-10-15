@@ -2,15 +2,14 @@ import { useMemo } from "react";
 
 import { useNavigate } from "react-router";
 
-import { Chip } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context";
 import { NOTIFICATION_SUBSCRIPTION_FIELD_MAP } from "../../notifications";
+import { Chip } from "../../ui";
+import { RenderCellParams } from "../../ui";
 
 interface ResourceNotificationSubscribersTableProps {
   resourceId: string;
@@ -31,7 +30,7 @@ export const ResourceNotificationSubscribersTable = ({
         headerName: "User",
         flex: 1,
         sortField: "user.identifier",
-        renderCell: (params: GridRenderCellParams) => {
+        renderCell: (params: RenderCellParams) => {
           const user = params.row.user;
           if (!user) return "Unknown";
           return <Entity entity={{ ...user, entityType: "user" }} />;
@@ -41,11 +40,11 @@ export const ResourceNotificationSubscribersTable = ({
         field: "createdAt",
         headerName: "Subscribed",
         width: RELATIVE_TIME_COLUMN_WIDTH,
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <RelativeTime
+            className="flex justify-end"
             date={params.value}
             compact
-            sx={{ display: "flex", justifyContent: "flex-end" }}
           />
         ),
       },
@@ -57,7 +56,7 @@ export const ResourceNotificationSubscribersTable = ({
               headerName: "Source",
               sortable: false,
               flex: 1,
-              renderCell: (params: GridRenderCellParams) => {
+              renderCell: (params: RenderCellParams) => {
                 const isInherited = params.row.entityType === "project";
                 const projectNotificationsPath = `${linkPrefix}projects/${projectId}/notifications`;
 

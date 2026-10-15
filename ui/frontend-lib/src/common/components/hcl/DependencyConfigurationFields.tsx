@@ -9,8 +9,6 @@ import {
   RegisterOptions,
 } from "react-hook-form";
 
-import { Box } from "@mui/material";
-
 import { PropertyCard } from "../cards/PropertyCard";
 import TagInput from "../inputs/TagInput";
 
@@ -57,8 +55,8 @@ export const DependencyConfigurationFields = <
 >) => {
   return (
     <PropertyCard title="Dependency Configuration">
-      <Box>
-        <Box ref={dependencyTagsSectionRef}>
+      <div>
+        <div ref={dependencyTagsSectionRef}>
           <Controller
             name={dependencyTagsName}
             control={control}
@@ -72,8 +70,8 @@ export const DependencyConfigurationFields = <
               />
             )}
           />
-        </Box>
-        <Box ref={dependencyConfigSectionRef}>
+        </div>
+        <div ref={dependencyConfigSectionRef}>
           <Controller
             name={dependencyConfigName}
             control={control}
@@ -90,8 +88,8 @@ export const DependencyConfigurationFields = <
               </>
             )}
           />
-        </Box>
-      </Box>
+        </div>
+      </div>
     </PropertyCard>
   );
 };

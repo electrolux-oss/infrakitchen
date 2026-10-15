@@ -3,15 +3,6 @@ import { useCallback, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import {
-  TextField,
-  FormControlLabel,
-  Checkbox,
-  Box,
-  Button,
-  Typography,
-} from "@mui/material";
-
 import { LabelInput } from "../../common";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
@@ -20,6 +11,7 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { IkEntity } from "../../types";
+import { Checkbox, FormControlLabel, Button, TextField } from "../../ui";
 import {
   TemplateConfigurationFields,
   TemplateConfigurationControl,
@@ -98,7 +90,7 @@ export const TemplateCreatePage = () => {
       }
     >
       <PropertyCard title="Template Definition">
-        <Box>
+        <div>
           <Controller
             name="name"
             control={control}
@@ -108,18 +100,13 @@ export const TemplateCreatePage = () => {
                 {...field}
                 label="Name"
                 required
-                variant="outlined"
                 error={!!errors.name}
                 helperText={
                   errors.name ? errors.name.message : "Name of the template"
                 }
                 fullWidth
                 margin="normal"
-                slotProps={{
-                  htmlInput: {
-                    "aria-label": "Template name",
-                  },
-                }}
+                inputProps={{ "aria-label": "Template name" }}
               />
             )}
           />
@@ -130,7 +117,6 @@ export const TemplateCreatePage = () => {
               <TextField
                 {...field}
                 label="Description"
-                variant="outlined"
                 error={!!errors.description}
                 helperText={
                   errors.description
@@ -139,11 +125,7 @@ export const TemplateCreatePage = () => {
                 }
                 fullWidth
                 margin="normal"
-                slotProps={{
-                  htmlInput: {
-                    "aria-label": "Template description",
-                  },
-                }}
+                inputProps={{ "aria-label": "Template description" }}
               />
             )}
           />
@@ -172,7 +154,6 @@ export const TemplateCreatePage = () => {
                 {...field}
                 label="Template Key"
                 required
-                variant="outlined"
                 error={!!errors.template}
                 helperText={
                   errors.template
@@ -181,11 +162,7 @@ export const TemplateCreatePage = () => {
                 }
                 fullWidth
                 margin="normal"
-                slotProps={{
-                  htmlInput: {
-                    "aria-label": "Template key",
-                  },
-                }}
+                inputProps={{ "aria-label": "Template key" }}
               />
             )}
           />
@@ -235,33 +212,25 @@ export const TemplateCreatePage = () => {
             defaultValue={[]}
             render={({ field }) => <LabelInput errors={errors} {...field} />}
           />
-        </Box>
+        </div>
       </PropertyCard>
       <PropertyCard title="Template Configuration">
-        <Box>
+        <div>
           <Controller
             name="abstract"
             control={control}
             render={({ field }) => (
-              <Box>
+              <div>
                 <FormControlLabel
                   control={<Checkbox {...field} checked={field.value} />}
                   label="Abstract Template"
                 />
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: "text.secondary",
-                    display: "block",
-                    mt: -1,
-                    mb: 1,
-                  }}
-                >
+                <span className="-mt-2 mb-2 block text-caption text-fg-muted">
                   Abstract templates represent reusable entities such as Org,
                   Team, or Project. They do not provision infrastructure
                   directly, but provide values for other templates.
-                </Typography>
-              </Box>
+                </span>
+              </div>
             )}
           />
           <Controller
@@ -290,7 +259,7 @@ export const TemplateCreatePage = () => {
             control={control as unknown as TemplateConfigurationControl}
             errors={errors}
           />
-        </Box>
+        </div>
       </PropertyCard>
     </PageContainer>
   );

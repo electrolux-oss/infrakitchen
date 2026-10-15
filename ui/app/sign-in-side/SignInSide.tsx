@@ -1,84 +1,26 @@
-import Box from "@mui/material/Box";
-import CssBaseline from "@mui/material/CssBaseline";
-import Stack from "@mui/material/Stack";
-
 import ThemeSwitcher from "../base/layout/ThemeSwitcher";
-import AppTheme from "../theme/AppTheme";
 
 import Content from "./components/Content";
 import SignInCard from "./components/SignInCard";
 
-export default function SignInSide(props: { disableCustomTheme?: boolean }) {
+export default function SignInSide() {
   return (
-    <AppTheme {...props}>
-      <CssBaseline enableColorScheme />
-      <Box
-        sx={{
-          position: "fixed",
-          top: "1rem",
-          right: "1rem",
-          zIndex: (theme) => theme.zIndex.appBar + 1,
-        }}
-      >
+    <>
+      <div className="fixed top-4 right-4 z-[calc(var(--ik-z-appbar)+1)]">
         <ThemeSwitcher />
-      </Box>
-      <Stack
-        direction="column"
-        component="main"
-        sx={[
-          {
-            justifyContent: "center",
-            // Use dynamic viewport height to avoid iOS Safari bars, but allow page to grow if content increases.
-            minHeight: { xs: "100dvh", sm: "100vh" },
-            position: "relative",
-            pb: "env(safe-area-inset-bottom)",
-          },
-          (theme) => ({
-            "&::before": {
-              content: '""',
-              display: "block",
-              position: "absolute",
-              zIndex: -1,
-              inset: 0,
-              // Fallback base color to avoid visible band beneath radial gradient.
-              backgroundColor: "hsl(0, 0%, 100%)",
-              backgroundImage:
-                "radial-gradient(ellipse at 50% 50%, hsl(210, 100%, 97%), hsl(0, 0%, 100%))",
-              backgroundRepeat: "no-repeat",
-              backgroundSize: "140% 140%", // Oversize to ensure coverage at edges
-              backgroundAttachment: "fixed",
-              ...theme.applyStyles("dark", {
-                backgroundColor: "hsl(220, 30%, 5%)",
-                backgroundImage:
-                  "radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.55), hsl(220, 30%, 5%))",
-              }),
-            },
-          }),
-        ]}
+      </div>
+      <main
+        // Dynamic viewport height avoids iOS Safari bars; the page can still
+        // grow. The ::before layer paints the radial backdrop.
+        className="relative flex min-h-dvh flex-col justify-center pb-[env(safe-area-inset-bottom)] before:absolute before:inset-0 before:-z-1 before:block before:bg-white before:bg-[radial-gradient(ellipse_at_50%_50%,hsl(210,100%,97%),hsl(0,0%,100%))] before:bg-[length:140%_140%] before:bg-fixed before:bg-no-repeat before:content-[''] sm:min-h-screen dark:before:bg-[hsl(220,30%,5%)] dark:before:bg-[radial-gradient(at_50%_50%,hsla(210,100%,16%,0.55),hsl(220,30%,5%))]"
       >
-        <Stack
-          direction={{ xs: "column-reverse", lg: "row" }}
-          sx={{
-            justifyContent: "center",
-            gap: { xs: 6, sm: 12 },
-            p: 2,
-            mx: "auto",
-          }}
-        >
-          <Stack
-            direction={{ xs: "column-reverse", lg: "row" }}
-            sx={{
-              justifyContent: "center",
-              gap: { xs: 3, sm: 6 },
-              p: { xs: 2, sm: 4 },
-              m: "auto",
-            }}
-          >
+        <div className="mx-auto flex flex-col-reverse justify-center gap-12 p-4 sm:gap-24 lg:flex-row">
+          <div className="m-auto flex flex-col-reverse justify-center gap-6 p-4 sm:gap-12 sm:p-8 lg:flex-row">
             <Content />
             <SignInCard />
-          </Stack>
-        </Stack>
-      </Stack>
-    </AppTheme>
+          </div>
+        </div>
+      </main>
+    </>
   );
 }

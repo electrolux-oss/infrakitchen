@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo } from "react";
 import type { DragEvent } from "react";
 
-import { useTheme } from "@mui/material";
 import { Connection, Edge, useStoreApi } from "@xyflow/react";
 
 import { parseSourceHandle, parseTargetHandle } from "./helpers";
@@ -57,7 +56,6 @@ export function useWiringCanvasGraph(
     onConstantDefaultValueUpdate,
   } = params;
 
-  const theme = useTheme();
   const rfStore = useStoreApi();
 
   const selectedIds = useMemo(
@@ -101,7 +99,6 @@ export function useWiringCanvasGraph(
       selectedTemplates,
       externalTemplates,
       constants,
-      theme,
     });
 
     useStore.setState({ nodes: nextNodes, edges: nextEdges });
@@ -116,7 +113,6 @@ export function useWiringCanvasGraph(
     onConstantUpdate,
     onConstantDefaultValueUpdate,
     wiring,
-    theme,
     useStore,
   ]);
 

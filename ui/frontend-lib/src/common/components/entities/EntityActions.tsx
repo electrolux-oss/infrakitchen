@@ -2,14 +2,15 @@ import { useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import ContentPasteIcon from "@mui/icons-material/ContentPaste";
-import EditIcon from "@mui/icons-material/Edit";
-import PendingActionsIcon from "@mui/icons-material/PendingActions";
-import RedoIcon from "@mui/icons-material/Redo";
-import SyncIcon from "@mui/icons-material/Sync";
-import UpdateIcon from "@mui/icons-material/Update";
-import { Button, Tooltip } from "@mui/material";
-
+import {
+  ContentPasteIcon,
+  EditIcon,
+  PendingActionsIcon,
+  RedoIcon,
+  SyncIcon,
+  UpdateIcon,
+} from "../../../icons/material";
+import { Button, Tooltip } from "../../../ui";
 import { ENTITY_ACTION } from "../../../utils/constants";
 import { useConfig } from "../../context/ConfigContext";
 import { useEntityProvider } from "../../context/EntityContext";
@@ -136,10 +137,10 @@ export function EntityActions(props: EntityActionsProps) {
       {actions.includes("edit") && showEditAction && (
         <Tooltip title="Edit configuration">
           <Button
+            className="min-w-0 px-2"
             onClick={() =>
               navigate(`${linkPrefix}${entity_name}s/${entity_id}/edit`)
             }
-            sx={{ minWidth: 0, px: 1 }}
           >
             <EditIcon />
           </Button>

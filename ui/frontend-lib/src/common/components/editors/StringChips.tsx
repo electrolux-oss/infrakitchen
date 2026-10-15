@@ -1,16 +1,5 @@
-import { Box } from "@mui/material";
-
-const chipBoxSx = {
-  display: "inline-block",
-  backgroundColor: "primary.dark",
-  color: "primary.contrastText",
-  borderRadius: "var(--template-surface-radius)",
-  px: 1,
-  py: 0.5,
-  mr: 0.5,
-  mb: 0.5,
-  fontSize: "0.875rem",
-} as const;
+const CHIP_CLASS =
+  "mr-1 mb-1 inline-block rounded-surface bg-primary-dark px-2 py-1 text-body2 text-primary-contrast";
 
 export interface StringChipsProps {
   values: string[];
@@ -23,13 +12,13 @@ export const StringChips = ({ values, format }: StringChipsProps) => {
     return null;
   }
   return (
-    <Box>
+    <div>
       {values.map((value) => (
-        <Box key={value} component="span" sx={chipBoxSx}>
+        <span key={value} className={CHIP_CLASS}>
           {format ? format(value) : value}
-        </Box>
+        </span>
       ))}
-    </Box>
+    </div>
   );
 };
 

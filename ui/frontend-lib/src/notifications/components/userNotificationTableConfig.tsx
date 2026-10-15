@@ -1,13 +1,15 @@
-import { Box, Stack, Typography } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import { relativeTimeColumn } from "../../common/components/entity_table/tableColumns";
+import { RenderCellParams } from "../../ui";
 import { EVENT_TYPE } from "../../utils";
+import { cn } from "../../utils/cn";
 import { GqlUserNotification } from "../graphql";
 
-import { humanizeNotificationValue, UNREAD_DOT_SX } from "./notificationFormat";
+import {
+  humanizeNotificationValue,
+  UNREAD_DOT_CLASSES,
+} from "./notificationFormat";
 import { ReadToggleButton } from "./ReadToggleButton";
 
 const NOTIFICATION_STATUS_OPTIONS = ["info", "success", "warning", "error"];
@@ -53,41 +55,37 @@ export const userNotificationColumns = (
         ],
       },
     ],
-    renderCell: (params: GridRenderCellParams<GqlUserNotification>) => {
+    renderCell: (params: RenderCellParams<GqlUserNotification>) => {
       const { title, message, readAt } = params.row;
       const isUnread = !readAt;
       return (
-        <Stack
-          direction="row"
-          sx={{ gap: 1.5, alignItems: "center", minWidth: 0, height: "100%" }}
-        >
-          <Box
+        <div className="flex h-full min-w-0 flex-row items-center gap-3">
+          <div
             aria-label={isUnread ? "Unread" : undefined}
-            sx={{
-              ...UNREAD_DOT_SX,
-              visibility: isUnread ? "visible" : "hidden",
-            }}
+            className={cn(
+              UNREAD_DOT_CLASSES,
+              isUnread ? "visible" : "invisible",
+            )}
           />
-          <Stack sx={{ minWidth: 0 }}>
-            <Typography
-              variant="body2"
-              noWrap
-              sx={{ fontWeight: isUnread ? 600 : 400 }}
+          <div className="flex min-w-0 flex-col">
+            <p
+              className={cn(
+                "m-0 truncate text-body2",
+                isUnread ? "font-semibold" : "font-normal",
+              )}
             >
               {title || message}
-            </Typography>
+            </p>
             {title && title !== message && (
-              <Typography
-                variant="caption"
-                noWrap
+              <span
+                className="truncate text-caption text-fg-muted"
                 title={message}
-                sx={{ color: "text.secondary" }}
               >
                 {message}
-              </Typography>
+              </span>
             )}
-          </Stack>
-        </Stack>
+          </div>
+        </div>
       );
     },
   },
@@ -105,7 +103,7 @@ export const userNotificationColumns = (
       defaultOperator: "in",
       options: NOTIFICATION_ENTITY_TYPE_OPTIONS,
     },
-    renderCell: (params: GridRenderCellParams<GqlUserNotification>) => {
+    renderCell: (params: RenderCellParams<GqlUserNotification>) => {
       const { entityId, entityType, entityName } = params.row;
       if (!entityId) return null;
       // The row click opens the entity (on the right tab) and marks the notification read
@@ -130,7 +128,7 @@ export const userNotificationColumns = (
       defaultOperator: "in",
       options: Object.values(EVENT_TYPE),
     },
-    renderCell: (params: GridRenderCellParams) =>
+    renderCell: (params: RenderCellParams) =>
       humanizeNotificationValue(params.value),
   },
   {
@@ -145,7 +143,7 @@ export const userNotificationColumns = (
       defaultOperator: "in",
       options: NOTIFICATION_STATUS_OPTIONS,
     },
-    renderCell: (params: GridRenderCellParams) =>
+    renderCell: (params: RenderCellParams) =>
       humanizeNotificationValue(params.value),
   },
   relativeTimeColumn("createdAt", "Received", { sortField: "created_at" }),
@@ -155,7 +153,7 @@ export const userNotificationColumns = (
     width: 60,
     sortable: false,
     hideable: false,
-    renderCell: (params: GridRenderCellParams<GqlUserNotification>) => (
+    renderCell: (params: RenderCellParams<GqlUserNotification>) => (
       <ReadToggleButton
         isRead={!!params.row.readAt}
         onClick={() => onToggleRead(params.row)}

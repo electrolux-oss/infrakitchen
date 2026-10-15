@@ -163,5 +163,5 @@ export interface FilterState {
 }
 
 export interface FilterPanelProps {
-  sx?: Record<string, any>;
+  className?: string;
 }

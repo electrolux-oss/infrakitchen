@@ -1,4 +1,4 @@
-import { Autocomplete, Chip, TextField } from "@mui/material";
+import { Autocomplete } from "../../../ui";
 
 export interface StringTagEditorProps {
   value: string[];
@@ -16,32 +16,20 @@ export const StringTagEditor = ({
   <Autocomplete
     multiple
     freeSolo
-    options={[]}
+    options={[] as string[]}
     value={value}
     onChange={(_event, newValue) =>
       // Trim whitespace, drop empties, and prevent duplicates.
       onChange(
-        (newValue as string[])
+        newValue
           .map((v) => v.trim())
           .filter((v, index, arr) => v.length > 0 && arr.indexOf(v) === index),
       )
     }
-    size="small"
-    renderValue={(items: readonly string[], getTagProps) =>
-      items.map((option: string, index: number) => {
-        const { key, ...rest } = getTagProps({ index });
-        return <Chip key={key} {...rest} variant="outlined" label={option} />;
-      })
-    }
-    renderInput={(params) => (
-      <TextField
-        {...params}
-        aria-label={label}
-        placeholder="Add a label..."
-        helperText={helperText}
-        fullWidth
-      />
-    )}
+    aria-label={label}
+    placeholder="Add a label..."
+    helperText={helperText}
+    fullWidth
   />
 );
 

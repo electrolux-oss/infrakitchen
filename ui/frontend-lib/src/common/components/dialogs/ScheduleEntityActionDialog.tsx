@@ -1,21 +1,17 @@
 import { useEffect, useState } from "react";
 
 import {
-  Box,
-  Button,
-  FormHelperText,
-  MenuItem,
-  Stack,
-  TextField,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from "@mui/material";
-
-import {
   CANCEL_SCHEDULED_ENTITY_ACTION_MUTATION,
   GqlScheduledResourceAction,
 } from "../../../resources/graphql";
+import {
+  Button,
+  FormHelperText,
+  MenuItem,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+} from "../../../ui";
 import { useConfig } from "../../context/ConfigContext";
 import { notify, notifyError } from "../../hooks/useNotification";
 import { useNow } from "../../hooks/useNow";
@@ -180,19 +176,14 @@ export function ScheduleEntityActionDialog({
     <CommonDialog
       title={scheduledAction ? "Reschedule Apply" : "Schedule Apply"}
       content={
-        <Stack spacing={2} sx={{ pt: 1 }}>
+        <div className="flex flex-col gap-4 pt-2">
           {scheduledAction && (
-            <Typography
-              variant="body2"
-              sx={{ color: "warning.main", fontWeight: 500 }}
-            >
+            <p className="m-0 text-body2 font-medium text-warning">
               {scheduledAction.cron ? (
                 <>
                   Repeats{" "}
-                  <Box component="span" sx={{ fontFamily: CODE_FONT_FAMILY }}>
-                    {scheduledAction.cron}
-                  </Box>{" "}
-                  ({scheduledAction.timezone ?? "UTC"}), next run{" "}
+                  <span className="font-mono">{scheduledAction.cron}</span> (
+                  {scheduledAction.timezone ?? "UTC"}), next run{" "}
                   {getDateValue(scheduledAction.runAt)}.
                 </>
               ) : (
@@ -200,7 +191,7 @@ export function ScheduleEntityActionDialog({
                   Currently scheduled for {getDateValue(scheduledAction.runAt)}.
                 </>
               )}
-            </Typography>
+            </p>
           )}
           <ToggleButtonGroup
             value={mode}
@@ -217,10 +208,10 @@ export function ScheduleEntityActionDialog({
 
           {isRecurring ? (
             <>
-              <Typography variant="body2" color="textSecondary">
+              <p className="m-0 text-body2 text-fg-muted">
                 Run an apply on this {entityType} repeatedly on a cron schedule.
                 A run is skipped if the previous one is still in progress.
-              </Typography>
+              </p>
               <TextField
                 select
                 label="Repeat"
@@ -242,7 +233,7 @@ export function ScheduleEntityActionDialog({
                   Custom cron expression
                 </MenuItem>
               </TextField>
-              <Box>
+              <div>
                 <TextField
                   label="Cron expression"
                   value={cron}
@@ -252,38 +243,30 @@ export function ScheduleEntityActionDialog({
                   }}
                   placeholder="0 2 * * *"
                   fullWidth
-                  slotProps={{
-                    htmlInput: { style: { fontFamily: CODE_FONT_FAMILY } },
-                  }}
+                  inputProps={{ style: { fontFamily: CODE_FONT_FAMILY } }}
                 />
                 <FormHelperText>
                   minute hour day-of-month month day-of-week, evaluated in{" "}
                   {timeZone}.
                 </FormHelperText>
-              </Box>
+              </div>
             </>
           ) : (
             <>
-              <Typography variant="body2" color="textSecondary">
+              <p className="m-0 text-body2 text-fg-muted">
                 Choose when to automatically run an apply on this {entityType}.
                 Times are shown in your local time zone.
-              </Typography>
+              </p>
 
-              <Box>
-                <Typography
-                  variant="caption"
-                  component="div"
-                  sx={{ fontWeight: 600, color: "text.secondary", mb: 1 }}
-                >
+              <div>
+                <div className="m-0 mb-2 text-caption font-semibold text-fg-muted">
                   Pick a time
-                </Typography>
+                </div>
                 <TextField
                   type="datetime-local"
                   value={runAt}
                   onChange={(event) => setRunAt(event.target.value)}
-                  slotProps={{
-                    htmlInput: { min: minRunAt },
-                  }}
+                  inputProps={{ min: minRunAt }}
                   fullWidth
                   autoFocus
                   error={isPast}
@@ -298,10 +281,10 @@ export function ScheduleEntityActionDialog({
                     {getDateValue(new Date(runAt))}.
                   </FormHelperText>
                 ) : null}
-              </Box>
+              </div>
             </>
           )}
-        </Stack>
+        </div>
       }
       actions={
         <>

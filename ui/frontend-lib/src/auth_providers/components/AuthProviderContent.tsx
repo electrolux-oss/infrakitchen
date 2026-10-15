@@ -1,5 +1,3 @@
-import { Box } from "@mui/material";
-
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import {
@@ -33,11 +31,9 @@ export const AuthProviderContent = () => {
   ];
 
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
-    >
+    <div className="flex w-full flex-col gap-4">
       <AuthProviderOverview authProvider={entity} />
       <TabbedContent tabs={tabs} />
-    </Box>
+    </div>
   );
 };

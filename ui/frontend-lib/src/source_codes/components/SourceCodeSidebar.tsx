@@ -1,12 +1,11 @@
-import { useCallback, useState } from "react";
-
-import { Box, Grid } from "@mui/material";
+import { useState } from "react";
 
 import { Entity, IconField } from "../../common";
 import {
   EntitySidebar,
   SidebarSection,
 } from "../../common/components/cards/EntitySidebar";
+import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
@@ -15,12 +14,10 @@ import {
   getRemoteUrlValue,
 } from "../../common/components/fields/CommonField";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
-import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context";
-import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
-import { notify, notifyError } from "../../common/hooks/useNotification";
+import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import StatusChip from "../../common/StatusChip";
 import { IkEntity } from "../../types";
 import { GqlSourceCode } from "../graphql";
@@ -40,7 +37,6 @@ export interface SourceCodeSidebarProps {
  */
 export const SourceCodeSidebar = ({ sourceCode }: SourceCodeSidebarProps) => {
   const { ikApi } = useConfig();
-  const { refreshEntity } = useEntityProvider();
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = checkActionPermission("api:source_code", "write");
 
@@ -48,21 +44,10 @@ export const SourceCodeSidebar = ({ sourceCode }: SourceCodeSidebarProps) => {
     {},
   );
 
-  const saveField = useCallback(
-    async (input: SourceCodeUpdateFieldInput) => {
-      try {
-        await ikApi.graphqlRequest(UPDATE_SOURCE_CODE_MUTATION, {
-          id: sourceCode.id,
-          input,
-        });
-        notify("Source code updated successfully", "success");
-        refreshEntity?.();
-      } catch (error) {
-        notifyError(error);
-        throw error;
-      }
-    },
-    [ikApi, sourceCode.id, refreshEntity],
+  const saveField = useEntityFieldSaver<SourceCodeUpdateFieldInput>(
+    UPDATE_SOURCE_CODE_MUTATION,
+    sourceCode.id,
+    "Source code",
   );
 
   return (
@@ -81,31 +66,31 @@ export const SourceCodeSidebar = ({ sourceCode }: SourceCodeSidebarProps) => {
       </SidebarSection>
 
       <SidebarSection title="Status">
-        <Grid size={12}>
+        <div className="col-span-full">
           <StatusChip status={sourceCode.status} />
-        </Grid>
+        </div>
       </SidebarSection>
 
       <SidebarSection title="Repository">
         <CommonField
           name={"URL"}
           value={
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <div className="flex items-center gap-2">
               {IconField(sourceCode.sourceCodeProvider)}
               {getRemoteUrlValue(sourceCode.sourceCodeUrl)}
-            </Box>
+            </div>
           }
-          size={12}
+          span="full"
         />
         <CommonField
           name={"Type"}
           value={
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <div className="flex items-center gap-2">
               {IconField(sourceCode.sourceCodeLanguage)}
               {sourceCode.sourceCodeLanguage}
-            </Box>
+            </div>
           }
-          size={12}
+          span="full"
         />
         <CommonField
           name={"Default Branch"}
@@ -116,7 +101,7 @@ export const SourceCodeSidebar = ({ sourceCode }: SourceCodeSidebarProps) => {
               <PlaceholderText text="Not synced" />
             )
           }
-          size={12}
+          span="full"
         />
         <CommonEditableField<string | null>
           name={"Integration"}
@@ -143,36 +128,11 @@ export const SourceCodeSidebar = ({ sourceCode }: SourceCodeSidebarProps) => {
               helpertext="Select credentials for the source code"
             />
           )}
-          size={12}
+          span="full"
         />
       </SidebarSection>
 
-      <SidebarSection title="Details">
-        <CommonField
-          name="Created by"
-          value={
-            sourceCode.creator ? (
-              <Entity entity={{ ...sourceCode.creator, entityType: "user" }} />
-            ) : null
-          }
-          size={12}
-        />
-        <CommonField
-          name="Created"
-          value={<RelativeTime date={sourceCode.createdAt} />}
-          size={6}
-        />
-        <CommonField
-          name="Last Updated"
-          value={<RelativeTime date={sourceCode.updatedAt} />}
-          size={6}
-        />
-        <CommonField
-          name="Revision"
-          value={sourceCode.revisionNumber}
-          size={12}
-        />
-      </SidebarSection>
+      <SidebarDetailsSection entity={sourceCode} />
     </EntitySidebar>
   );
 };

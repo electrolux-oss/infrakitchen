@@ -2,17 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import AddIcon from "@mui/icons-material/Add";
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Link,
-  Typography,
-} from "@mui/material";
-
 import { FilterProvider, PermissionWrapper } from "../../common";
 import { EntityCard } from "../../common/components/cards/EntityCard";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
@@ -23,6 +12,8 @@ import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 import { getScoreChipColor } from "../../golden_state/GoldenStateWidget";
+import { AddIcon } from "../../icons/material";
+import { Alert, Spinner, Button, Chip, Link } from "../../ui";
 import { projectColumns } from "../components/projectTableConfig";
 import { GqlProject, PROJECT_LIST_FIELDS } from "../graphql";
 
@@ -82,7 +73,7 @@ export const ProjectsPage = () => {
   }, [fetchProjects]);
 
   const actions = (
-    <Box>
+    <div>
       <PermissionWrapper
         requiredPermission="api:project"
         permissionAction="write"
@@ -94,45 +85,37 @@ export const ProjectsPage = () => {
           Create
         </Button>
       </PermissionWrapper>
-    </Box>
+    </div>
   );
 
   const projectCardFields = (project: GqlProject) => {
     return (
       <>
-        <Box>
-          <Typography sx={{ display: "block", color: "text.secondary" }}>
-            Status
-          </Typography>
+        <div>
+          <p className="m-0 block text-body2 text-fg-muted">Status</p>
           <StatusChip status={project.status} compact />
-        </Box>
-        <Box>
-          <Typography sx={{ display: "block", color: "text.secondary" }}>
-            Resources
-          </Typography>
-          <Typography>{project.resourcesCount}</Typography>
-        </Box>
-        <Box>
-          <Typography sx={{ display: "block", color: "text.secondary" }}>
-            Golden State
-          </Typography>
+        </div>
+        <div>
+          <p className="m-0 block text-body2 text-fg-muted">Resources</p>
+          <p className="m-0 text-body2">{project.resourcesCount}</p>
+        </div>
+        <div>
+          <p className="m-0 block text-body2 text-fg-muted">Golden State</p>
           {project.goldenState ? (
             <Chip
+              className="font-semibold"
               label={`${project.goldenState.score}%`}
               color={getScoreChipColor(project.goldenState.score)}
               variant="outlined"
-              sx={{ fontWeight: 600 }}
             />
           ) : (
-            <Typography>-</Typography>
+            <p className="m-0 text-body2">-</p>
           )}
-        </Box>
-        <Box>
-          <Typography sx={{ display: "block", color: "text.secondary" }}>
-            Last Updated
-          </Typography>{" "}
+        </div>
+        <div>
+          <p className="m-0 block text-body2 text-fg-muted">Last Updated</p>{" "}
           <RelativeTime date={project.updatedAt} />
-        </Box>
+        </div>
       </>
     );
   };
@@ -140,12 +123,12 @@ export const ProjectsPage = () => {
   if (error) {
     return (
       <PageContainer title="Projects" actions={actions}>
-        <Box sx={{ width: "100%", py: 4 }}>
-          <Alert severity="error" sx={{ mb: 2 }}>
+        <div className="w-full py-8">
+          <Alert className="mb-4" severity="error">
             {error}
           </Alert>
           <Button onClick={fetchProjects}>Retry</Button>
-        </Box>
+        </div>
       </PageContainer>
     );
   }
@@ -159,7 +142,8 @@ export const ProjectsPage = () => {
             href="https://opensource.electrolux.one/infrakitchen/concepts/project"
             target="_blank"
             rel="noopener"
-            sx={{ color: "inherit", textDecoration: "underline" }}
+            color="inherit"
+            className="decoration-current"
           >
             Projects
           </Link>{" "}
@@ -168,7 +152,7 @@ export const ProjectsPage = () => {
       }
       actions={actions}
     >
-      <Box sx={{ width: "100%" }}>
+      <div className="w-full">
         <FilterProvider
           columns={projectColumns}
           storageKey={`filter_${entityName}s`}
@@ -178,34 +162,15 @@ export const ProjectsPage = () => {
           <FilterPanel />
         </FilterProvider>
         {loading ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "50vh",
-            }}
-          >
-            <CircularProgress />
-          </Box>
+          <div className="flex h-[50vh] items-center justify-center">
+            <Spinner />
+          </div>
         ) : projects.length === 0 ? (
-          <Box sx={{ textAlign: "center", py: 4 }}>
-            <Typography variant="h5" component="p">
-              No projects match your filters
-            </Typography>
-          </Box>
+          <div className="py-8 text-center">
+            <p className="m-0 text-h5">No projects match your filters</p>
+          </div>
         ) : (
-          <Box
-            sx={{
-              "--card-min-width": { xs: "240px", sm: "260px", md: "300px" },
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fill, minmax(var(--card-min-width), 1fr))",
-              gap: 2,
-              width: "100%",
-              mt: 3,
-            }}
-          >
+          <div className="mt-6 grid w-full grid-cols-[repeat(auto-fill,_minmax(var(--card-min-width),_1fr))] gap-4 [--card-min-width:240px] sm:[--card-min-width:260px] md:[--card-min-width:300px]">
             {projects.map((project) => (
               <EntityCard
                 key={project.id}
@@ -219,9 +184,9 @@ export const ProjectsPage = () => {
                 entityFields={projectCardFields(project)}
               />
             ))}
-          </Box>
+          </div>
         )}
-      </Box>
+      </div>
     </PageContainer>
   );
 };

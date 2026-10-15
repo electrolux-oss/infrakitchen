@@ -1,8 +1,7 @@
 import React from "react";
 
-import { Alert, Button } from "@mui/material";
-
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { Alert, Button } from "../../ui";
 import { ENTITY_ACTION } from "../../utils";
 
 import ResourceStateReviewDialog from "./ResourceStateReviewDialog";
@@ -19,13 +18,6 @@ export const ResourceReviewView = () => {
       {hasCheckStateDifferencePermission && (
         <Alert
           severity="warning"
-          sx={{
-            // MUI anchors the action slot to the top; center it on the message.
-            "& .MuiAlert-action": {
-              alignItems: "center",
-              paddingTop: 0,
-            },
-          }}
           action={
             <Button
               color="inherit"

@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 
-import { Box, Card, Grid, Typography } from "@mui/material";
+import { Card } from "../../../ui";
 
 export interface EntitySidebarLayoutProps {
   /** Main column: tabs and the rest of the page content. */
@@ -16,30 +16,10 @@ export const EntitySidebarLayout = ({
   children,
   sidebar,
 }: EntitySidebarLayoutProps) => (
-  <Box
-    sx={{
-      display: "grid",
-      gridTemplateColumns: {
-        xs: "minmax(0, 1fr)",
-        lg: "minmax(0, 1fr) 360px",
-      },
-      alignItems: "start",
-      gap: 2,
-      width: "100%",
-    }}
-  >
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 2,
-        minWidth: 0,
-      }}
-    >
-      {children}
-    </Box>
+  <div className="grid w-full grid-cols-[minmax(0,_1fr)] items-start gap-4 lg:grid-cols-[minmax(0,_1fr)_360px]">
+    <div className="flex min-w-0 flex-col gap-4">{children}</div>
     {sidebar}
-  </Box>
+  </div>
 );
 
 export interface EntitySidebarProps {
@@ -49,7 +29,7 @@ export interface EntitySidebarProps {
 
 /** Sidebar card holding the SidebarSection groups of an entity detail page. */
 export const EntitySidebar = ({ ariaLabel, children }: EntitySidebarProps) => (
-  <Card component="aside" aria-label={ariaLabel} sx={{ p: 0 }}>
+  <Card className="p-0" component="aside" aria-label={ariaLabel}>
     {children}
   </Card>
 );
@@ -69,59 +49,21 @@ export const SidebarSection = ({
   action,
   children,
 }: SidebarSectionProps) => (
-  <Box
-    component="section"
-    sx={{
-      p: 2,
-      "&:not(:last-of-type)": {
-        borderBottom: 1,
-        borderColor: "divider",
-      },
-    }}
-  >
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 1,
-        // Keep the title baseline steady whether or not an action is present.
-        minHeight: 32,
-        mb: 1.5,
-      }}
+  <section className="p-4 [&:not(:last-of-type)]:border-b [&:not(:last-of-type)]:border-divider">
+    <div
+      // Keep the title baseline steady whether or not an action is present.
+      className="mb-3 flex min-h-8 items-center justify-between gap-2"
     >
-      <Typography
-        component="h3"
-        sx={{
-          fontWeight: 600,
-          fontSize: "0.875rem",
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-        }}
-      >
+      <h3 className="m-0 flex items-center gap-2 text-[0.875rem] font-semibold">
         {title}
         {count !== undefined && (
-          <Box
-            component="span"
-            sx={{
-              fontSize: "0.75rem",
-              fontWeight: 500,
-              color: "text.secondary",
-              bgcolor: "action.hover",
-              borderRadius: "999px",
-              px: 0.75,
-              lineHeight: 1.6,
-            }}
-          >
+          <span className="rounded-full bg-hover px-1.5 text-[0.75rem] leading-[1.6] font-medium text-fg-muted">
             {count}
-          </Box>
+          </span>
         )}
-      </Typography>
+      </h3>
       {action}
-    </Box>
-    <Grid container spacing={1.5}>
-      {children}
-    </Grid>
-  </Box>
+    </div>
+    <div className="grid grid-cols-2 gap-3">{children}</div>
+  </section>
 );

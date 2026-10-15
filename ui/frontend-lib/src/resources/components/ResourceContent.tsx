@@ -1,7 +1,5 @@
 import { useState } from "react";
 
-import { Box } from "@mui/material";
-
 import { Audit } from "../../common/components/activity/Audit";
 import { EntityLogs } from "../../common/components/activity/EntityLogs";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
@@ -42,22 +40,13 @@ export const ResourceContent = () => {
       // stack in a column and share a single row of equal columns from xl up.
       label: "Template",
       content: (
-        <Box
-          sx={{
-            display: "grid",
-            gap: 2,
-            alignItems: "start",
-            gridTemplateColumns: "minmax(0, 1fr)",
-            gridAutoFlow: { xs: "row", xl: "column" },
-            gridAutoColumns: "minmax(0, 1fr)",
-          }}
-        >
+        <div className="grid [grid-auto-columns:minmax(0,_1fr)] [grid-auto-flow:row] grid-cols-[minmax(0,_1fr)] items-start gap-4 xl:[grid-auto-flow:column]">
           <TemplateConfiguration
             resource={entity}
             onEditVariables={openVariablesDialog}
           />
           <DependencyConfiguration resource={entity} />
-        </Box>
+        </div>
       ),
     },
     {
@@ -120,9 +109,9 @@ export const ResourceContent = () => {
     {
       label: "Revisions",
       content: (
-        <Box sx={{ width: "100%" }}>
+        <div className="w-full">
           <Revision resourceId={entity.id} resourceRevision={0} />
-        </Box>
+        </div>
       ),
     },
     {

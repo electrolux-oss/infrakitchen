@@ -1,26 +1,20 @@
-import { useCallback } from "react";
-
 import { useNavigate } from "react-router";
-
-import StorageIcon from "@mui/icons-material/Storage";
-import TuneIcon from "@mui/icons-material/Tune";
-import { Box, Chip, Grid, TextField } from "@mui/material";
 
 import {
   EntitySidebar,
   SidebarSection,
 } from "../../common/components/cards/EntitySidebar";
-import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
+import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
+import { EditableNameField } from "../../common/components/editors/EditableNameField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import { Entity } from "../../common/components/entities/Entity";
-import { CommonField } from "../../common/components/fields/CommonField";
-import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
-import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
-import { notify, notifyError } from "../../common/hooks/useNotification";
+import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import StatusChip from "../../common/StatusChip";
+import { StorageIcon, TuneIcon } from "../../icons/material";
+import { Chip } from "../../ui";
 import { GqlBlueprint, UPDATE_BLUEPRINT_MUTATION } from "../graphql";
 import { BlueprintUpdateFieldInput } from "../graphql/mutations";
 
@@ -34,28 +28,16 @@ export interface BlueprintSidebarProps {
  * column can focus on its wiring and workflows.
  */
 export const BlueprintSidebar = ({ blueprint }: BlueprintSidebarProps) => {
-  const { refreshEntity } = useEntityProvider();
-  const { ikApi, linkPrefix } = useConfig();
+  const { linkPrefix } = useConfig();
   const { checkActionPermission } = usePermissionProvider();
   const navigate = useNavigate();
 
   const canEdit = checkActionPermission("api:blueprint", "write");
 
-  const saveField = useCallback(
-    async (input: BlueprintUpdateFieldInput) => {
-      try {
-        await ikApi.graphqlRequest(UPDATE_BLUEPRINT_MUTATION, {
-          id: blueprint.id,
-          input,
-        });
-        notify("Blueprint updated successfully", "success");
-        refreshEntity?.();
-      } catch (error) {
-        notifyError(error);
-        throw error;
-      }
-    },
-    [ikApi, blueprint.id, refreshEntity],
+  const saveField = useEntityFieldSaver<BlueprintUpdateFieldInput>(
+    UPDATE_BLUEPRINT_MUTATION,
+    blueprint.id,
+    "Blueprint",
   );
 
   const externalTemplates = blueprint.externalTemplates || [];
@@ -69,24 +51,10 @@ export const BlueprintSidebar = ({ blueprint }: BlueprintSidebarProps) => {
   return (
     <EntitySidebar ariaLabel="Blueprint details">
       <SidebarSection title="About">
-        <CommonEditableField<string>
-          name="Name"
-          canEdit={canEdit}
+        <EditableNameField
           value={blueprint.name}
-          ariaLabel="Edit name"
-          display={<span>{blueprint.name}</span>}
+          canEdit={canEdit}
           onSave={(value) => saveField({ name: value })}
-          renderEditor={({ value, onChange }) => (
-            <TextField
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              slotProps={{ input: { "aria-label": "Name" } }}
-              fullWidth
-              margin="normal"
-              autoFocus
-            />
-          )}
-          size={12}
         />
         <EditableDescriptionField
           value={blueprint.description}
@@ -101,19 +69,19 @@ export const BlueprintSidebar = ({ blueprint }: BlueprintSidebarProps) => {
       </SidebarSection>
 
       <SidebarSection title="Status">
-        <Grid size={12}>
+        <div className="col-span-full">
           <StatusChip status={blueprint.status} />
-        </Grid>
+        </div>
       </SidebarSection>
 
       <SidebarSection title="Templates" count={blueprint.templates.length}>
-        <Grid size={12}>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <div className="col-span-full">
+          <div className="flex flex-col gap-2">
             {blueprint.templates.map((t) => (
               <Entity key={t.id} entity={t} />
             ))}
-          </Box>
-        </Grid>
+          </div>
+        </div>
       </SidebarSection>
 
       {externalTemplates.length > 0 && (
@@ -121,8 +89,8 @@ export const BlueprintSidebar = ({ blueprint }: BlueprintSidebarProps) => {
           title="Input Templates"
           count={externalTemplates.length}
         >
-          <Grid size={12}>
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+          <div className="col-span-full">
+            <div className="flex flex-wrap gap-2">
               {externalTemplates.map((t) => (
                 <Chip
                   key={t.id}
@@ -133,15 +101,15 @@ export const BlueprintSidebar = ({ blueprint }: BlueprintSidebarProps) => {
                   onClick={() => navigate(`${linkPrefix}templates/${t.id}`)}
                 />
               ))}
-            </Box>
-          </Grid>
+            </div>
+          </div>
         </SidebarSection>
       )}
 
       {constants.length > 0 && (
         <SidebarSection title="Constants" count={constants.length}>
-          <Grid size={12}>
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+          <div className="col-span-full">
+            <div className="flex flex-wrap gap-2">
               {constants.map((c) => (
                 <Chip
                   key={c.id}
@@ -151,37 +119,12 @@ export const BlueprintSidebar = ({ blueprint }: BlueprintSidebarProps) => {
                   icon={<TuneIcon />}
                 />
               ))}
-            </Box>
-          </Grid>
+            </div>
+          </div>
         </SidebarSection>
       )}
 
-      <SidebarSection title="Details">
-        <CommonField
-          name="Created by"
-          value={
-            blueprint.creator ? (
-              <Entity entity={{ ...blueprint.creator, entityType: "user" }} />
-            ) : null
-          }
-          size={12}
-        />
-        <CommonField
-          name="Created"
-          value={<RelativeTime date={blueprint.createdAt} />}
-          size={6}
-        />
-        <CommonField
-          name="Last Updated"
-          value={<RelativeTime date={blueprint.updatedAt} />}
-          size={6}
-        />
-        <CommonField
-          name="Revision"
-          value={blueprint.revisionNumber}
-          size={12}
-        />
-      </SidebarSection>
+      <SidebarDetailsSection entity={blueprint} />
     </EntitySidebar>
   );
 };

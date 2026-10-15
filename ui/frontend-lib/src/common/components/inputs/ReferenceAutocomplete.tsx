@@ -6,16 +6,7 @@ import React, {
   useState,
 } from "react";
 
-import {
-  Autocomplete,
-  AutocompleteRenderValue,
-  Box,
-  Chip,
-  SxProps,
-  TextField,
-  Theme,
-} from "@mui/material";
-
+import { Autocomplete, AutocompleteInputChangeReason } from "../../../ui";
 import VersionLifecycleStateChip from "../../VersionLifecycleStateChip";
 import { ReferenceLoader, ReferenceOption } from "../filter_panel/FilterConfig";
 import { Label } from "../labels/Label";
@@ -26,44 +17,31 @@ interface ReferenceAutocompleteProps {
   onChange: (value: string | string[]) => void;
   multiple?: boolean;
   placeholder?: string;
-  sx?: SxProps<Theme>;
+  className?: string;
 }
 
 const ReferenceOptionContent = ({
   option,
-  labelSx,
+  labelClassName,
 }: {
   option: ReferenceOption;
-  labelSx?: SxProps<Theme>;
+  labelClassName?: string;
 }) => (
   <>
     {option.templateName && (
-      <Label
-        label={option.templateName}
-        sx={{ mr: 1, height: 20, fontSize: "0.75rem" }}
-      />
+      <Label className="mr-2" label={option.templateName} />
     )}
     {option.icon && (
-      <Box
-        component="span"
-        sx={{ mr: 0.5, display: "inline-flex", alignItems: "center" }}
-      >
-        {option.icon}
-      </Box>
+      <span className="mr-1 inline-flex items-center">{option.icon}</span>
     )}
-    <Box component="span" sx={labelSx}>
-      {option.label}
-    </Box>
+    <span className={labelClassName}>{option.label}</span>
     {option.lifecycleState && (
-      <Box
-        component="span"
-        sx={{ ml: 1, display: "inline-flex", alignItems: "center" }}
-      >
+      <span className="ml-2 inline-flex items-center">
         <VersionLifecycleStateChip
           lifecycleState={option.lifecycleState}
           breakingChanges={option.breakingChanges ?? undefined}
         />
-      </Box>
+      </span>
     )}
   </>
 );
@@ -74,7 +52,7 @@ export const ReferenceAutocomplete = ({
   onChange,
   multiple = false,
   placeholder,
-  sx,
+  className,
 }: ReferenceAutocompleteProps) => {
   const [options, setOptions] = useState<ReferenceOption[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -142,7 +120,11 @@ export const ReferenceAutocomplete = ({
   }, [cacheOptions, loadOptions, selectedValues]);
 
   const handleInputChange = useCallback(
-    (_e: React.SyntheticEvent, newInput: string, reason: string) => {
+    (
+      _e: React.SyntheticEvent | null,
+      newInput: string,
+      reason: AutocompleteInputChangeReason,
+    ) => {
       if (reason === "reset") return;
       setInputValue(newInput);
 
@@ -202,14 +184,14 @@ export const ReferenceAutocomplete = ({
     return (
       <Autocomplete
         multiple
-        size="small"
         options={effectiveOptions}
-        getOptionLabel={(opt) => (typeof opt === "string" ? opt : opt.label)}
+        getOptionLabel={(opt) => opt.label}
+        getOptionKey={(opt) => opt.value}
         isOptionEqualToValue={(opt, val) => opt.value === val.value}
         value={selectedOptions}
         onChange={(_e, newVal) => {
-          onChange((newVal as ReferenceOption[]).map((o) => o.value));
-          cacheOptions(newVal as ReferenceOption[]);
+          onChange(newVal.map((o) => o.value));
+          cacheOptions(newVal);
           setInputValue("");
           loadOptions("")
             .then((nextOptions) => {
@@ -222,81 +204,30 @@ export const ReferenceAutocomplete = ({
         onInputChange={handleInputChange}
         loading={loading}
         filterOptions={(x) => x}
-        renderValue={(
-          val: AutocompleteRenderValue<ReferenceOption, true, false>,
-          getItemProps,
-        ) =>
-          val.map((option, index) => {
-            const { key, ...rest } = getItemProps({ index });
-            return <Chip key={key} label={option.label} {...rest} />;
-          })
-        }
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            placeholder={arrValue.length === 0 ? placeholder : ""}
-          />
-        )}
-        sx={sx}
+        placeholder={placeholder}
+        className={className}
       />
     );
   }
 
   return (
     <Autocomplete
-      size="small"
       options={effectiveOptions}
-      getOptionLabel={(opt) => (typeof opt === "string" ? opt : opt.label)}
+      getOptionLabel={(opt) => opt.label}
+      getOptionKey={(opt) => opt.value}
       isOptionEqualToValue={(opt, val) => opt.value === val.value}
       value={selectedOption}
-      onChange={(_e, newVal) =>
-        onChange(
-          newVal ? (typeof newVal === "string" ? newVal : newVal.value) : "",
-        )
-      }
+      onChange={(_e, newVal) => onChange(newVal ? newVal.value : "")}
       inputValue={inputValue}
       onInputChange={handleInputChange}
       loading={loading}
       filterOptions={(x) => x}
-      renderOption={(props, option) => {
-        const opt = option as ReferenceOption;
-        return (
-          <li {...props} key={opt.value}>
-            <ReferenceOptionContent option={opt} />
-          </li>
-        );
-      }}
-      renderValue={(option, getItemProps) => {
-        // Drop the chip delete handler; it doesn't belong on the plain span.
-        const { onDelete: _onDelete, ...itemProps } = getItemProps();
-        return (
-          <Box
-            component="span"
-            {...itemProps}
-            sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              minWidth: 0,
-            }}
-          >
-            <ReferenceOptionContent
-              option={option}
-              labelSx={{
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            />
-          </Box>
-        );
-      }}
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          placeholder={selectedOption ? "" : placeholder}
-        />
+      renderOption={(option) => <ReferenceOptionContent option={option} />}
+      renderValue={(option) => (
+        <ReferenceOptionContent option={option} labelClassName="truncate" />
       )}
-      sx={sx}
+      placeholder={placeholder}
+      className={className}
     />
   );
 };

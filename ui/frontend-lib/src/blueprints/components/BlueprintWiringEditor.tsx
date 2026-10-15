@@ -2,13 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useForm } from "react-hook-form";
 
-import { Box, Button } from "@mui/material";
-
 import { WiringRule } from "../../common/components/viewers/Wiring/types";
 import { WiringCanvas } from "../../common/components/viewers/Wiring/WiringCanvas";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { Button } from "../../ui";
 import { GqlBlueprint, UPDATE_BLUEPRINT_MUTATION } from "../graphql";
 import { useBlueprintForm } from "../hooks/useBlueprintForm";
 import { BlueprintUpdateRequest } from "../types";
@@ -151,7 +150,7 @@ export const BlueprintWiringEditor = ({
   );
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <div className="flex flex-col gap-4">
       <WiringCanvas
         selectedTemplates={form.selectedTemplates}
         wiring={form.currentWiring}
@@ -171,7 +170,7 @@ export const BlueprintWiringEditor = ({
         onConstantDefaultValueUpdate={form.handleConstantDefaultValueUpdate}
         missingParentTemplates={form.missingParentTemplates}
       />
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+      <div className="flex justify-end gap-2">
         <Button onClick={onClose} disabled={saving}>
           Cancel
         </Button>
@@ -182,7 +181,7 @@ export const BlueprintWiringEditor = ({
         >
           Save
         </Button>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };

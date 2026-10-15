@@ -1,16 +1,16 @@
-import { Tab } from "@mui/material";
-import { styled } from "@mui/material/styles";
+import { Tab, TabProps } from "../ui";
+import { cn } from "../utils/cn";
 
-export const StyledTab = styled(Tab)(({ theme }) => ({
-  textTransform: "none",
-  fontWeight: 500,
-  color: theme.palette.text.secondary,
-  backgroundColor: theme.palette.background.paper,
-  border: `1px solid ${theme.palette.divider}`,
-  borderRadius: "var(--template-surface-radius)",
-  "&.Mui-selected": {
-    backgroundColor: theme.palette.primary.main,
-    color: theme.palette.primary.contrastText,
-    border: `1px solid ${theme.palette.primary.main}`,
-  },
-}));
+/**
+ * Segmented-control tab: bordered pill that fills with the primary color
+ * when selected. Pair with `<Tabs hideIndicator>`.
+ */
+export const StyledTab = ({ className, ...props }: TabProps) => (
+  <Tab
+    className={cn(
+      "rounded-surface border border-divider bg-paper font-medium text-fg-muted aria-selected:border-primary aria-selected:bg-primary aria-selected:text-primary-contrast",
+      className,
+    )}
+    {...props}
+  />
+);

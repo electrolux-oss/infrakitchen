@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 
-import { CircularProgress, Box } from "@mui/material";
-
 import { useConfig } from "../../common";
 import { HclItemList } from "../../common/components/hcl/HclItemList";
 import { notifyError } from "../../common/hooks/useNotification";
 import { ValidationRulesByVariable } from "../../types";
+import { Spinner } from "../../ui";
 import {
   GqlValidationRulesByVariable,
   transformValidationRulesByVariable,
@@ -108,12 +107,12 @@ export const InputTab = ({ source_code_version }: InputTabProps) => {
   ]);
 
   return (
-    <Box sx={{ pt: 0.5 }}>
+    <div className="pt-1">
       {loading ? (
-        <CircularProgress size={16} />
+        <Spinner size={16} />
       ) : (
         <HclItemList items={configs} type="variables" />
       )}
-    </Box>
+    </div>
   );
 };

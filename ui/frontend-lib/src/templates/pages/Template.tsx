@@ -1,8 +1,5 @@
 import { useParams, useNavigate } from "react-router";
 
-import AddIcon from "@mui/icons-material/Add";
-import { Button, Tooltip } from "@mui/material";
-
 import { useConfig } from "../../common";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
@@ -10,6 +7,8 @@ import {
   EntityProvider,
   useEntityProvider,
 } from "../../common/context/EntityContext";
+import { AddIcon } from "../../icons/material";
+import { Button, Tooltip } from "../../ui";
 import { ENTITY_STATUS } from "../../utils/constants";
 import { TemplateContent } from "../components/TemplateContent";
 import { TEMPLATE_DETAIL_FIELDS } from "../graphql";

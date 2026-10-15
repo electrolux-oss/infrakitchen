@@ -1,8 +1,7 @@
 import { ReactNode } from "react";
 
-import { GridSize } from "@mui/material";
-
 import { sameStringSet } from "../../utils";
+import { FieldSpan } from "../fields/CommonField";
 import { Labels } from "../labels/Labels";
 
 import { CommonEditableField } from "./CommonEditableField";
@@ -21,8 +20,8 @@ export interface EditableTagsFieldProps {
   editorLabel?: string;
   /** Helper text shown under the editor. */
   helperText?: string;
-  /** Grid sizing for the underlying field cell (defaults to full width). */
-  size?: GridSize | { xs: GridSize; md: GridSize } | undefined;
+  /** Width in the surrounding field grid (defaults to full). */
+  span?: FieldSpan;
   /** Optional custom read-only rendering; overrides the default chip list. */
   display?: ReactNode;
 }
@@ -39,7 +38,7 @@ export const EditableTagsField = ({
   onSave,
   editorLabel,
   helperText = "Press Enter to add a label",
-  size = 12,
+  span = "full",
   display = <Labels labels={value} />,
 }: EditableTagsFieldProps) => (
   <CommonEditableField<string[]>
@@ -58,7 +57,7 @@ export const EditableTagsField = ({
         helperText={helperText}
       />
     )}
-    size={size}
+    span={span}
   />
 );
 

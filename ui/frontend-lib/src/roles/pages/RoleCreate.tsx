@@ -8,8 +8,6 @@ import {
 } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import { Box, TextField, Button } from "@mui/material";
-
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ReferenceSearchInput from "../../common/components/inputs/ReferenceSearchInput";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -17,6 +15,7 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { CREATE_ROLE_MUTATION } from "../../permissions/graphql/mutations";
 import { IkEntity } from "../../types";
+import { Button, TextField } from "../../ui";
 import { RoleCreate } from "../types";
 
 const RoleCreatePageInner = () => {
@@ -69,17 +68,9 @@ const RoleCreatePageInner = () => {
         </>
       }
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          flexDirection: "column",
-          minWidth: 320,
-          width: "100%",
-        }}
-      >
+      <div className="flex w-full min-w-80 flex-col items-center">
         <PropertyCard title="Role Details">
-          <Box>
+          <div>
             <Controller
               name="role"
               control={control}
@@ -88,15 +79,10 @@ const RoleCreatePageInner = () => {
                 <TextField
                   {...field}
                   label="Role Name"
-                  variant="outlined"
                   error={!!errors.role}
                   fullWidth
                   margin="normal"
-                  slotProps={{
-                    htmlInput: {
-                      "aria-label": "Role name",
-                    },
-                  }}
+                  inputProps={{ "aria-label": "Role name" }}
                 />
               )}
             />
@@ -117,13 +103,12 @@ const RoleCreatePageInner = () => {
                   setBuffer={setBuffer}
                   value={field.value}
                   label="Select User"
-                  sx={{ mb: 3 }}
                 />
               )}
             />
-          </Box>
+          </div>
         </PropertyCard>
-      </Box>
+      </div>
     </PageContainer>
   );
 };

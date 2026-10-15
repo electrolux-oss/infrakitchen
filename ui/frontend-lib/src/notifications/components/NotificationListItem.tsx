@@ -1,15 +1,9 @@
-import {
-  Box,
-  ListItem,
-  ListItemButton,
-  Stack,
-  Typography,
-} from "@mui/material";
-
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { ListItem, ListItemButton } from "../../ui";
+import { cn } from "../../utils/cn";
 import { GqlUserNotification } from "../graphql";
 
-import { UNREAD_DOT_SX } from "./notificationFormat";
+import { UNREAD_DOT_CLASSES } from "./notificationFormat";
 import { ReadToggleButton } from "./ReadToggleButton";
 
 interface NotificationListItemProps {
@@ -30,81 +24,51 @@ export const NotificationListItem = ({
 
   return (
     <ListItem
+      // The themed List is a flex column; without this rows shrink to fit its max height
+      className="mx-2 my-0.5 w-auto shrink-0 items-stretch overflow-hidden rounded-[8px] hover:bg-hover [&_.d-btn:hover]:bg-transparent [&_[role=button]:hover]:bg-transparent"
       disablePadding
-      sx={{
-        alignItems: "stretch",
-        // The themed List is a flex column; without this rows shrink to fit its max height
-        flexShrink: 0,
-        width: "auto",
-        mx: 1,
-        my: 0.25,
-        borderRadius: 1,
-        overflow: "hidden",
-        "&:hover": { bgcolor: "action.hover" },
-        "& .MuiListItemButton-root:hover, & .MuiIconButton-root:hover": {
-          bgcolor: "transparent",
-        },
-      }}
     >
       <ListItemButton
+        className="min-w-0 gap-3 px-4 py-2"
         onClick={() => onSelect(notification)}
         alignItems="flex-start"
-        sx={{ gap: 1.5, py: 1, px: 2, minWidth: 0 }}
       >
-        <Box
+        <div
           aria-label={isUnread ? "Unread" : undefined}
-          sx={{
-            ...UNREAD_DOT_SX,
-            mt: 0.75,
-            visibility: isUnread ? "visible" : "hidden",
-          }}
+          className={cn(
+            UNREAD_DOT_CLASSES,
+            "mt-1.5",
+            isUnread ? "visible" : "invisible",
+          )}
         />
-        <Stack sx={{ minWidth: 0, flex: 1, gap: 0.25 }}>
-          <Typography
-            variant="body2"
-            noWrap
-            sx={{ fontWeight: isUnread ? 600 : 400 }}
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <p
+            className={cn(
+              "m-0 truncate text-body2",
+              isUnread ? "font-semibold" : "font-normal",
+            )}
           >
             {headline}
-          </Typography>
+          </p>
           {showMessage && (
-            <Typography
-              variant="caption"
-              sx={{
-                color: "text.secondary",
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-                whiteSpace: "pre-line",
-              }}
-            >
+            <span className="line-clamp-2 overflow-hidden text-caption whitespace-pre-line text-fg-muted [-webkit-box-orient:vertical]">
               {notification.message}
-            </Typography>
+            </span>
           )}
-          <Stack
-            direction="row"
-            sx={{ gap: 1, alignItems: "center", color: "text.secondary" }}
-          >
-            {/* {notification.entityName && (
-            <Typography variant="caption" noWrap sx={{ minWidth: 0 }}>
-              {notification.entityName}
-            </Typography>
-          )} */}
+          <div className="flex flex-row items-center gap-2 text-fg-muted">
             <RelativeTime
               date={notification.createdAt}
-              variant="caption"
-              sx={{ flexShrink: 0 }}
+              className="shrink-0 text-caption"
             />
-          </Stack>
-        </Stack>
+          </div>
+        </div>
       </ListItemButton>
-      <Box sx={{ display: "flex", alignItems: "center", pr: 1 }}>
+      <div className="flex items-center pr-2">
         <ReadToggleButton
           isRead={!isUnread}
           onClick={() => onToggleRead(notification)}
         />
-      </Box>
+      </div>
     </ListItem>
   );
 };

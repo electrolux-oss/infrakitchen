@@ -1,8 +1,5 @@
 import { useRef, useState } from "react";
 
-import TuneIcon from "@mui/icons-material/Tune";
-import { Box, Button } from "@mui/material";
-
 import { PermissionWrapper } from "../../common";
 import {
   EntityFetchTable,
@@ -10,6 +7,8 @@ import {
 } from "../../common/components/entity_table/EntityFetchTable";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { TuneIcon } from "../../icons/material";
+import { Button } from "../../ui";
 import { SCV_FIELD_MAP } from "../graphql/fragments";
 
 import {
@@ -37,14 +36,7 @@ export const EntitySourceCodeVersions = ({
         requiredPermission="api:source_code_version"
         permissionAction="write"
       >
-        <Box
-          sx={{
-            display: "flex",
-            width: "100%",
-            justifyContent: "flex-end",
-            mb: 0.5,
-          }}
-        >
+        <div className="mb-1 flex w-full justify-end">
           <Button
             size="small"
             startIcon={<TuneIcon />}
@@ -52,7 +44,7 @@ export const EntitySourceCodeVersions = ({
           >
             Manage Versions
           </Button>
-        </Box>
+        </div>
       </PermissionWrapper>
       <EntityFetchTable
         ref={tableRef}

@@ -1,25 +1,11 @@
-import type { SystemStyleObject, Theme } from "@mui/system";
-
 /**
  * Responsive grid used for entity card grids (Templates, Integrations, Code
- * Repositories, ...). Uses explicit column counts per breakpoint so cards keep
+ * Repositories, ...). Uses explicit column counts per breakpoint (plain `1fr` tracks, not
+ * Tailwind's `minmax(0, 1fr)`) so cards keep
  * a predictable number per row (e.g. 4 on a laptop, 5 on xl), filling the full
  * width of the page container instead of stretching on very wide monitors.
  */
-export const entityCardGridSx = (): SystemStyleObject<Theme> => ({
-  display: "grid",
-  gridTemplateColumns: {
-    xs: "1fr",
-    sm: "repeat(2, 1fr)",
-    md: "repeat(3, 1fr)",
-    lg: "repeat(4, 1fr)",
-    xl: "repeat(5, 1fr)",
-  },
-  // Above the default xl breakpoint (1536px) there is no larger preset, so a
-  // dedicated media query adds a 6th column on very wide monitors (>=1920px).
-  "@media (min-width: 1920px)": {
-    gridTemplateColumns: "repeat(6, 1fr)",
-  },
-  gap: 2,
-  width: "100%",
-});
+// Above the xl breakpoint (1536px) there is no larger preset, so a dedicated
+// min-width variant adds a 6th column on very wide monitors (>=1920px).
+export const ENTITY_CARD_GRID_CLASSES =
+  "grid w-full gap-4 grid-cols-[1fr] sm:grid-cols-[repeat(2,1fr)] md:grid-cols-[repeat(3,1fr)] lg:grid-cols-[repeat(4,1fr)] xl:grid-cols-[repeat(5,1fr)] min-[1920px]:grid-cols-[repeat(6,1fr)]";

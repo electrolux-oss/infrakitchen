@@ -2,14 +2,13 @@ import { useCallback, useState } from "react";
 
 import { useParams } from "react-router";
 
-import TaskAltIcon from "@mui/icons-material/TaskAlt";
-import { Button } from "@mui/material";
-
 import { LogLiveTail, PermissionWrapper, useConfig } from "../../common";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { TaskAltIcon } from "../../icons/material";
+import { Button } from "../../ui";
 import { IntegrationContent } from "../components/IntegrationContent";
 import {
   INTEGRATION_DETAILS_FIELDS,

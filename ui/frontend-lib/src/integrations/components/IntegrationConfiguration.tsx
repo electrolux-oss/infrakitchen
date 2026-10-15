@@ -1,5 +1,3 @@
-import { Box } from "@mui/material";
-
 import { formatLabel } from "../../common";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import {
@@ -7,7 +5,6 @@ import {
   getProviderValue,
 } from "../../common/components/fields/CommonField";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
-import { CODE_FONT_FAMILY } from "../../common/theme";
 import { GqlIntegration } from "../graphql";
 
 import { IntegrationConfigurationEditor } from "./IntegrationConfigurationEditor";
@@ -41,13 +38,9 @@ export const IntegrationConfiguration = ({
       <CommonField
         name={"Integration Provider"}
         value={
-          <Box
-            sx={{
-              height: "auto",
-            }}
-          >
+          <div className="h-auto">
             {getProviderValue(integration.integrationProvider)}
-          </Box>
+          </div>
         }
       />
       <CommonField
@@ -58,16 +51,9 @@ export const IntegrationConfiguration = ({
         const value =
           k === "gcp_wif_pool_provider_audience" ||
           k === "gcp_wif_service_account_impersonation_url" ? (
-            <Box
-              sx={{
-                color: "text.secondary",
-                fontFamily: CODE_FONT_FAMILY,
-                overflowWrap: "anywhere",
-                wordBreak: "break-word",
-              }}
-            >
+            <div className="font-mono wrap-anywhere [word-break:break-word] text-fg-muted">
               {String(v)}
-            </Box>
+            </div>
           ) : (
             v
           );

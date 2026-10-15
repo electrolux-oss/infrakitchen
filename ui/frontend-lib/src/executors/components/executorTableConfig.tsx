@@ -1,5 +1,3 @@
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
@@ -11,6 +9,7 @@ import {
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
 import { toolColumn } from "../../tools/components/toolColumn";
+import { RenderCellParams } from "../../ui";
 import { ENTITY_STATE, ENTITY_STATUS } from "../../utils/constants";
 
 export const executorColumns: EntityTableColumn[] = [
@@ -24,7 +23,7 @@ export const executorColumns: EntityTableColumn[] = [
     filterable: false,
     align: "center",
     headerAlign: "center",
-    renderCell: (params: GridRenderCellParams) => (
+    renderCell: (params: RenderCellParams) => (
       <FavoriteButton
         componentId={String(params.row.id)}
         componentType="executor"
@@ -47,7 +46,7 @@ export const executorColumns: EntityTableColumn[] = [
       defaultOperator: "like",
       defaultSelected: true,
     },
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: RenderCellParams) => {
       return <Entity entity={params.row} />;
     },
   },
@@ -68,7 +67,7 @@ export const executorColumns: EntityTableColumn[] = [
       }),
     },
     valueGetter: (_value: any, row: any) => row.sourceCode?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: RenderCellParams) => {
       const sourceCodeVersion = params.row.sourceCode;
       return (
         <Entity
@@ -120,7 +119,7 @@ export const executorColumns: EntityTableColumn[] = [
       },
     ],
     valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
-    renderCell: (params: GridRenderCellParams) => (
+    renderCell: (params: RenderCellParams) => (
       <StatusChip
         status={String(params.row.status).toLowerCase()}
         state={String(params.row.state).toLowerCase()}

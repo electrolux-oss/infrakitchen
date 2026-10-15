@@ -1,8 +1,3 @@
-import {
-  GridColumnVisibilityModel,
-  GridRenderCellParams,
-} from "@mui/x-data-grid";
-
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
@@ -15,9 +10,10 @@ import StatusChip from "../../common/StatusChip";
 import { getRepoNameFromUrl } from "../../common/utils";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
 import { ProviderIcon } from "../../icons/Icons";
+import { ColumnVisibilityModel, RenderCellParams } from "../../ui";
 import { ENTITY_STATUS, VERSION_LIFECYCLE_STATE } from "../../utils/constants";
 
-export const sourceCodeVersionDefaultColumnVisibilityModel: GridColumnVisibilityModel =
+export const sourceCodeVersionDefaultColumnVisibilityModel: ColumnVisibilityModel =
   {
     createdAt: false,
     creator: false,
@@ -53,7 +49,7 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
         defaultOperator: "like",
       },
     ],
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: RenderCellParams) => {
       const { sourceCodeVersion, sourceCodeBranch } = params.row;
       return sourceCodeVersion || sourceCodeBranch ? (
         <Entity
@@ -83,7 +79,7 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
       }),
     },
     valueGetter: (value: any) => value?.name || "",
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: RenderCellParams) => {
       const template = params.row.template;
       return <Entity entity={template} />;
     },
@@ -112,7 +108,7 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
       }),
     },
     valueGetter: (value: any) => value?.name || "",
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: RenderCellParams) => {
       const sourceCode = params.row.sourceCode;
       return (
         <Entity
@@ -151,7 +147,7 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
         { label: "Ready", value: ENTITY_STATUS.READY },
       ],
     },
-    renderCell: (params: GridRenderCellParams) => (
+    renderCell: (params: RenderCellParams) => (
       <StatusChip status={params.row.status} />
     ),
   },
@@ -177,7 +173,7 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
         <VersionLifecycleStateChip lifecycleState={value} />
       ),
     },
-    renderCell: (params: GridRenderCellParams) => (
+    renderCell: (params: RenderCellParams) => (
       <VersionLifecycleStateChip
         lifecycleState={params.row.lifecycleState}
         breakingChanges={params.row.breakingChanges}

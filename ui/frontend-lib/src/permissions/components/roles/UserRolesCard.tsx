@@ -1,9 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
-import { Box, Button } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { PermissionWrapper } from "../../../common";
 import { BaseCard } from "../../../common/components/cards/BaseCard";
 import { Entity } from "../../../common/components/entities/Entity";
@@ -16,6 +12,9 @@ import {
   userColumn,
 } from "../../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../../common/components/fields/RelativeTime";
+import { AdminPanelSettingsIcon } from "../../../icons/material";
+import { Button } from "../../../ui";
+import { RenderCellParams } from "../../../ui";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
@@ -45,7 +44,7 @@ export const UserRolesCard = (props: { userId: string }) => {
         headerName: "Role Name",
         flex: 1,
         hideable: false,
-        renderCell: (params: GridRenderCellParams) => {
+        renderCell: (params: RenderCellParams) => {
           return (
             <Entity
               entity={{
@@ -61,11 +60,11 @@ export const UserRolesCard = (props: { userId: string }) => {
         field: "createdAt",
         headerName: "Created",
         width: RELATIVE_TIME_COLUMN_WIDTH,
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <RelativeTime
+            className="flex justify-end"
             date={params.value}
             compact
-            sx={{ display: "flex", justifyContent: "flex-end" }}
           />
         ),
       },
@@ -74,7 +73,7 @@ export const UserRolesCard = (props: { userId: string }) => {
         field: "id",
         headerName: "Delete",
         sortable: false,
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <PermissionWrapper
             requiredPermission="api:permission"
             permissionAction="admin"
@@ -96,14 +95,7 @@ export const UserRolesCard = (props: { userId: string }) => {
         requiredPermission="api:permission"
         permissionAction="write"
       >
-        <Box
-          sx={{
-            display: "flex",
-            width: "100%",
-            justifyContent: "flex-end",
-            mb: 0.5,
-          }}
-        >
+        <div className="col-span-full mb-1 flex justify-end">
           <Button
             size="small"
             onClick={() => handleOpenDialog()}
@@ -111,7 +103,7 @@ export const UserRolesCard = (props: { userId: string }) => {
           >
             Assign Role
           </Button>
-        </Box>
+        </div>
       </PermissionWrapper>
 
       <UserRoleCreateDialog
@@ -121,14 +113,16 @@ export const UserRolesCard = (props: { userId: string }) => {
         onSuccess={refreshUserRolesTable}
       />
 
-      <EntityFetchTable
-        ref={tableRef}
-        title="User Roles"
-        entityName="permission"
-        columns={columns}
-        defaultFilter={{ ptype: "g", v0: `user:${userId}` }}
-        entityFieldMap={PERMISSION_FIELD_MAP}
-      />
+      <div className="col-span-full">
+        <EntityFetchTable
+          ref={tableRef}
+          title="User Roles"
+          entityName="permission"
+          columns={columns}
+          defaultFilter={{ ptype: "g", v0: `user:${userId}` }}
+          entityFieldMap={PERMISSION_FIELD_MAP}
+        />
+      </div>
     </BaseCard>
   );
 };

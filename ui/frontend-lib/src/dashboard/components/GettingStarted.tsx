@@ -1,12 +1,16 @@
 import { useNavigate } from "react-router";
 
 import { Icon } from "@iconify/react";
-import InventoryIcon from "@mui/icons-material/Inventory";
-import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
-import RocketLaunchOutlinedIcon from "@mui/icons-material/RocketLaunchOutlined";
-import { Box, Button, Divider, Typography } from "@mui/material";
+import octiconCloud24Data from "@iconify-icons/octicon/cloud-24";
+import octiconGitBranch24Data from "@iconify-icons/octicon/git-branch-24";
 
 import { useConfig } from "../../common";
+import {
+  InventoryIcon,
+  LibraryBooksIcon,
+  RocketLaunchOutlinedIcon,
+} from "../../icons/material";
+import { Divider, Button } from "../../ui";
 
 const steps = [
   {
@@ -15,7 +19,7 @@ const steps = [
       "Connect your git providers (GitHub, GitLab, Bitbucket, Azure Repos) to access infrastructure templates",
     button: "Connect Git",
     navigateTo: "integrations#git",
-    icon: <Icon icon="octicon:git-branch-24" width="20" height="20" />,
+    icon: <Icon icon={octiconGitBranch24Data} ssr width="20" height="20" />,
   },
   {
     title: "Integrate Cloud Provider(s)",
@@ -23,7 +27,7 @@ const steps = [
       "Link your cloud providers (AWS, Azure, GCP) for resource provisioning",
     button: "Connect Cloud",
     navigateTo: "integrations#cloud",
-    icon: <Icon icon="octicon:cloud-24" width="20" height="20" />,
+    icon: <Icon icon={octiconCloud24Data} ssr width="20" height="20" />,
   },
   {
     title: "Import Templates",
@@ -46,97 +50,40 @@ export const GettingStartedContent = () => {
   const navivate = useNavigate();
 
   return (
-    <Box sx={{ width: "100%" }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-        <RocketLaunchOutlinedIcon
-          sx={{ color: "primary.main", fontSize: 20 }}
-        />
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+    <div className="w-full">
+      <div className="mb-3 flex items-center gap-2">
+        <RocketLaunchOutlinedIcon className="text-[20px] text-primary" />
+        <h6 className="m-0 text-subtitle1 font-semibold text-grey-500">
           Getting Started
-        </Typography>
-      </Box>
-      <Divider sx={{ mb: 1.5 }} />
-      <Box
-        sx={{
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: "var(--template-surface-radius)",
-          backgroundColor: "background.paper",
-          overflow: "hidden",
-        }}
-      >
+        </h6>
+      </div>
+      <Divider className="mb-3" />
+      <div className="overflow-hidden rounded-surface border border-divider bg-paper">
         {steps.map((step, idx) => (
-          <Box
+          <div
+            // On phones the button drops below the step text.
+            className="flex flex-wrap items-center gap-3 px-4 py-4 sm:flex-nowrap [&:not(:first-of-type)]:border-t [&:not(:first-of-type)]:border-divider"
             key={step.title}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              // On phones the button drops below the step text.
-              flexWrap: { xs: "wrap", sm: "nowrap" },
-              gap: 1.5,
-              px: 2,
-              py: 2,
-              "&:not(:first-of-type)": {
-                borderTop: 1,
-                borderColor: "divider",
-              },
-            }}
           >
-            <Box
-              component="span"
-              sx={{
-                width: 20,
-                height: 20,
-                flexShrink: 0,
-                mt: 0.3,
-                borderRadius: "50%",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "primary.main",
-                color: "primary.contrastText",
-                fontSize: "0.75rem",
-                lineHeight: 1,
-              }}
-            >
+            <span className="mt-[2.4px] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[0.75rem] leading-[1] text-primary-contrast">
               {idx + 1}
-            </Box>
-            <Box sx={{ flex: "1 1 0", minWidth: 0 }}>
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: 600,
-                  fontSize: 16,
-                  mb: 0.5,
-                }}
-              >
-                {step.title}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "text.secondary",
-                }}
-              >
-                {step.description}
-              </Typography>
-            </Box>
+            </span>
+            <div className="min-w-0 flex-[1_1_0]">
+              <p className="m-0 mb-1 text-[16px] font-semibold">{step.title}</p>
+              <p className="m-0 text-body2 text-fg-muted">{step.description}</p>
+            </div>
             <Button
+              className="ml-0 w-full shrink-0 sm:ml-auto sm:w-50"
               variant="outlined"
               size="small"
               startIcon={step.icon}
-              sx={{
-                width: { xs: "100%", sm: "200px" },
-                flexShrink: 0,
-                ml: { xs: 0, sm: "auto" },
-              }}
               onClick={() => navivate(`${linkPrefix}${step.navigateTo}`)}
             >
               {step.button}
             </Button>
-          </Box>
+          </div>
         ))}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };

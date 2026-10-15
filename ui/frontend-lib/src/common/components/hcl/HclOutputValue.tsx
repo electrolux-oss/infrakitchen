@@ -1,8 +1,6 @@
 import React from "react";
 
-import { Box, Typography, Chip } from "@mui/material";
-
-import { solidChipColorSx } from "../../utils/softChip";
+import { Chip } from "../../../ui";
 import { PlaceholderDescription } from "../fields/PlaceholderDescription";
 
 interface HclOutputValueProps {
@@ -15,47 +13,22 @@ interface HclOutputValueProps {
 
 export const HclOutputValue: React.FC<HclOutputValueProps> = ({ output }) => {
   return (
-    <Box
-      sx={{
-        border: 1,
-        borderColor: "divider",
-        p: 2,
-        mb: 2,
-        borderRadius: "var(--template-surface-radius)",
-      }}
-    >
-      <Typography
-        variant="body1"
-        component="span"
-        sx={{
-          fontWeight: 500,
-          mr: 1,
-        }}
-      >
-        {output.name}
-      </Typography>
+    <div className="mb-4 rounded-surface border border-divider p-4">
+      <span className="mr-2 text-body1 font-medium">{output.name}</span>
       {output.source && (
         <Chip
           label={output.source}
           variant="filled"
-          sx={solidChipColorSx("default")}
+          appearance="solid"
+          color="default"
         />
       )}
-      <Typography
-        variant="caption"
-        sx={{
-          color: "text.secondary",
-          display: "block",
-          mt: 1,
-        }}
-      >
+      <span className="mt-2 block text-caption text-fg-muted">
         {" "}
         {output.description || (
-          <PlaceholderDescription
-            sx={{ fontSize: "inherit", lineHeight: "inherit" }}
-          />
+          <PlaceholderDescription className="text-[length:inherit] leading-[inherit]" />
         )}
-      </Typography>
-    </Box>
+      </span>
+    </div>
   );
 };

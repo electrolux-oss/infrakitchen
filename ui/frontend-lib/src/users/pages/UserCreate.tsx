@@ -8,12 +8,11 @@ import {
 } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import { Box, TextField, Button } from "@mui/material";
-
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import { Button, TextField } from "../../ui";
 import { CREATE_USER_MUTATION } from "../graphql";
 import { UserCreate } from "../types";
 
@@ -69,17 +68,9 @@ const UserCreatePageInner = () => {
         </>
       }
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          flexDirection: "column",
-          width: "100%",
-          minWidth: 320,
-        }}
-      >
+      <div className="flex w-full min-w-80 flex-col items-center">
         <PropertyCard title="User Definition">
-          <Box>
+          <div>
             <Controller
               name="identifier"
               control={control}
@@ -88,7 +79,6 @@ const UserCreatePageInner = () => {
                 <TextField
                   {...field}
                   label="Identifier"
-                  variant="outlined"
                   error={!!errors.identifier}
                   helperText={
                     errors.identifier
@@ -97,11 +87,7 @@ const UserCreatePageInner = () => {
                   }
                   fullWidth
                   margin="normal"
-                  slotProps={{
-                    htmlInput: {
-                      "aria-label": "User identifier",
-                    },
-                  }}
+                  inputProps={{ "aria-label": "User identifier" }}
                 />
               )}
             />
@@ -112,7 +98,6 @@ const UserCreatePageInner = () => {
                 <TextField
                   {...field}
                   label="Description"
-                  variant="outlined"
                   error={!!errors.description}
                   helperText={
                     errors.description
@@ -121,11 +106,7 @@ const UserCreatePageInner = () => {
                   }
                   fullWidth
                   margin="normal"
-                  slotProps={{
-                    htmlInput: {
-                      "aria-label": "User description",
-                    },
-                  }}
+                  inputProps={{ "aria-label": "User description" }}
                 />
               )}
             />
@@ -137,7 +118,6 @@ const UserCreatePageInner = () => {
                 <TextField
                   {...field}
                   label="Password"
-                  variant="outlined"
                   error={!!errors.password}
                   type="password"
                   helperText={
@@ -147,17 +127,13 @@ const UserCreatePageInner = () => {
                   }
                   fullWidth
                   margin="normal"
-                  slotProps={{
-                    htmlInput: {
-                      "aria-label": "User password",
-                    },
-                  }}
+                  inputProps={{ "aria-label": "User password" }}
                 />
               )}
             />
-          </Box>
+          </div>
         </PropertyCard>
-      </Box>
+      </div>
     </PageContainer>
   );
 };

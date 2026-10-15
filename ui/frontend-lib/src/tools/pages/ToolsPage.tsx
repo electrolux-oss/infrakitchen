@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import AddIcon from "@mui/icons-material/Add";
-import { Button, Typography } from "@mui/material";
-
 import { PermissionWrapper, useConfig } from "../../common";
 import { CommonDialog } from "../../common/components/dialogs";
 import {
@@ -12,6 +9,8 @@ import {
 import { useEventProvider, usePermissionProvider } from "../../common/context";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import { AddIcon } from "../../icons/material";
+import { Button } from "../../ui";
 import {
   ToolDownloadDialog,
   ToolDownloadInput,
@@ -253,10 +252,10 @@ export const ToolsPage = () => {
         onClose={() => setClearDefaultDialogOpen(false)}
         title="Clear global default?"
         content={
-          <Typography variant="body2">
+          <p className="m-0 text-body2">
             {defaultTool &&
               `${toolLabel(defaultTool)} will no longer be the global default. Resources and executors without a selected tool will run the tofu installed on the worker.`}
-          </Typography>
+          </p>
         }
         actions={
           <Button
@@ -278,10 +277,10 @@ export const ToolsPage = () => {
         onClose={() => setDeleteDialogTool(null)}
         title="Delete tool?"
         content={
-          <Typography variant="body2">
+          <p className="m-0 text-body2">
             {deleteDialogTool &&
               `Delete ${deleteDialogTool.name} ${deleteDialogTool.version}? Tools used by resources or executors cannot be deleted.`}
-          </Typography>
+          </p>
         }
         actions={
           <Button

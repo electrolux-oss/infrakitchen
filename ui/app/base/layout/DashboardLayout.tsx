@@ -3,21 +3,18 @@ import * as React from "react";
 import { Outlet } from "react-router";
 
 import {
+  breakpointUp,
   GradientCircularProgress,
   InfrakitchenLogo,
   useLocalStorage,
+  useMediaQuery,
   usePermissionProvider,
 } from "@electrolux-oss/infrakitchen";
-import Box from "@mui/material/Box";
-import { useTheme } from "@mui/material/styles";
-import Toolbar from "@mui/material/Toolbar";
-import useMediaQuery from "@mui/material/useMediaQuery";
 
 import DashboardHeader from "./DashboardHeader";
 import DashboardSidebar from "./DashboardSidebar";
 
 export default function DashboardLayout() {
-  const theme = useTheme();
   const loading = usePermissionProvider().loading;
   const { get, setKey } = useLocalStorage<Record<string, boolean>>();
 
@@ -28,7 +25,7 @@ export default function DashboardLayout() {
   const [isMobileNavigationExpanded, setIsMobileNavigationExpanded] =
     React.useState(false);
 
-  const isOverMdViewport = useMediaQuery(theme.breakpoints.up("md"));
+  const isOverMdViewport = useMediaQuery(breakpointUp.md);
 
   const isNavigationExpanded = isOverMdViewport
     ? isDesktopNavigationExpanded
@@ -64,32 +61,18 @@ export default function DashboardLayout() {
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
+      <div className="flex h-[100vh] items-center justify-center">
         <GradientCircularProgress />
-      </Box>
+      </div>
     );
   }
 
   return (
-    <Box
+    <div
+      // 100vh on mobile browsers includes the area behind the address bar;
+      // dvh tracks the actually visible viewport.
+      className="relative flex h-[100vh] w-full overflow-hidden supports-[height:100dvh]:h-[100dvh]"
       ref={layoutRef}
-      sx={{
-        position: "relative",
-        display: "flex",
-        overflow: "hidden",
-        // 100vh on mobile browsers includes the area behind the address bar;
-        // dvh tracks the actually visible viewport.
-        height: "100vh",
-        "@supports (height: 100dvh)": { height: "100dvh" },
-        width: "100%",
-      }}
     >
       <DashboardHeader
         logo={<InfrakitchenLogo />}
@@ -100,47 +83,21 @@ export default function DashboardLayout() {
       <DashboardSidebar
         expanded={isNavigationExpanded}
         setExpanded={setIsNavigationExpanded}
-        container={layoutRef?.current ?? undefined}
       />
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          flex: 1,
-          minWidth: 0,
-          minHeight: 0,
-          width: "100%",
-        }}
-      >
-        <Toolbar variant="dense" sx={{ displayPrint: "none" }} />
-        <Box
-          component="main"
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            flex: 1,
-            overflow: "auto",
-            minHeight: 0,
-          }}
-        >
+      <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col">
+        <div className="h-12 shrink-0 print:hidden" />
+        <main className="flex min-h-0 flex-1 flex-col overflow-auto">
           <React.Suspense
             fallback={
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  flex: 1,
-                }}
-              >
+              <div className="flex flex-1 items-center justify-center">
                 <GradientCircularProgress />
-              </Box>
+              </div>
             }
           >
             <Outlet />
           </React.Suspense>
-        </Box>
-      </Box>
-    </Box>
+        </main>
+      </div>
+    </div>
   );
 }

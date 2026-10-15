@@ -1,10 +1,8 @@
 import { forwardRef, useCallback } from "react";
 
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
-import { Box, Typography } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import { toast } from "sonner";
 
+import { ErrorOutlinedIcon } from "../../../icons/material";
 import { CodeBlock } from "../code/CodeBlock";
 
 import { ErrorCardShell } from "./ErrorCardShell";
@@ -30,30 +28,22 @@ export const ErrorWithStatusCode = forwardRef<
   return (
     <ErrorCardShell ref={ref} title={message} onDismiss={handleDismiss}>
       {text && (
-        <Box
-          sx={{
-            display: "flex",
-            gap: 1,
-            p: 1.5,
-            borderRadius: "var(--template-surface-radius)",
-            bgcolor: (theme) => alpha(theme.palette.error.main, 0.08),
-          }}
-        >
-          <ErrorOutlineIcon color="error" fontSize="small" sx={{ mt: "1px" }} />
-          <Typography
-            variant="body2"
-            color="error.dark"
-            sx={{ wordBreak: "break-word", minWidth: 0 }}
-          >
+        <div className="flex gap-2 rounded-surface bg-error/8 p-3">
+          <ErrorOutlinedIcon
+            className="mt-0.25"
+            color="error"
+            fontSize="small"
+          />
+          <p className="m-0 min-w-0 text-body2 [word-break:break-word] text-error-dark">
             {text}
-          </Typography>
-        </Box>
+          </p>
+        </div>
       )}
 
       {raw && (
-        <Box sx={{ mt: 1.5 }}>
+        <div className="mt-3">
           <CodeBlock>{raw}</CodeBlock>
-        </Box>
+        </div>
       )}
     </ErrorCardShell>
   );

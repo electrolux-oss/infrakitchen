@@ -1,6 +1,6 @@
 import { Control, Controller, FieldErrors } from "react-hook-form";
 
-import { MenuItem, TextField } from "@mui/material";
+import { MenuItem, TextField } from "../../ui";
 
 interface FormValues {
   configuration: object;

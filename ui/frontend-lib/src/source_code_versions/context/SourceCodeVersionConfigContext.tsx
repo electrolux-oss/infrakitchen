@@ -7,9 +7,8 @@ import {
   useEffect,
 } from "react";
 
-import { useEffectOnce } from "react-use";
-
 import { InfraKitchenApi } from "../../api";
+import { useEffectOnce } from "../../common/hooks/useEffectOnce";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { GqlTemplateShort, GqlTemplateTreeNode } from "../../templates/graphql";
 import { ValidationRule } from "../../types";

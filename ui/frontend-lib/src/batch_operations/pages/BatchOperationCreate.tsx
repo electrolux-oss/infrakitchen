@@ -3,21 +3,19 @@ import { useCallback } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
+import { useConfig } from "../../common/context/ConfigContext";
+import { notify, notifyError } from "../../common/hooks/useNotification";
+import PageContainer from "../../common/PageContainer";
 import {
-  TextField,
-  Box,
   Button,
+  TextField,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   FormHelperText,
-} from "@mui/material";
-
-import { PropertyCard } from "../../common/components/cards/PropertyCard";
-import { useConfig } from "../../common/context/ConfigContext";
-import { notify, notifyError } from "../../common/hooks/useNotification";
-import PageContainer from "../../common/PageContainer";
+} from "../../ui";
 import { BatchOperationEntitySelector } from "../components/BatchOperationEntitySelector";
 import { CREATE_BATCH_OPERATION_MUTATION } from "../graphql";
 import { BatchOperationCreate } from "../types";
@@ -79,7 +77,7 @@ export const BatchOperationCreatePage = () => {
       }
     >
       <PropertyCard title="Batch Operation Configuration">
-        <Box>
+        <div>
           <Controller
             name="name"
             control={control}
@@ -88,7 +86,6 @@ export const BatchOperationCreatePage = () => {
               <TextField
                 {...field}
                 label="Name"
-                variant="outlined"
                 error={!!errors.name}
                 helperText={
                   errors.name
@@ -97,11 +94,7 @@ export const BatchOperationCreatePage = () => {
                 }
                 fullWidth
                 margin="normal"
-                slotProps={{
-                  htmlInput: {
-                    "aria-label": "Batch operation name",
-                  },
-                }}
+                inputProps={{ "aria-label": "Batch operation name" }}
               />
             )}
           />
@@ -112,7 +105,6 @@ export const BatchOperationCreatePage = () => {
               <TextField
                 {...field}
                 label="Description"
-                variant="outlined"
                 error={!!errors.description}
                 helperText={
                   errors.description
@@ -123,11 +115,7 @@ export const BatchOperationCreatePage = () => {
                 margin="normal"
                 multiline
                 rows={3}
-                slotProps={{
-                  htmlInput: {
-                    "aria-label": "Batch operation description",
-                  },
-                }}
+                inputProps={{ "aria-label": "Batch operation description" }}
               />
             )}
           />
@@ -172,7 +160,7 @@ export const BatchOperationCreatePage = () => {
               setValue={setValue}
             />
           )}
-        </Box>
+        </div>
       </PropertyCard>
     </PageContainer>
   );

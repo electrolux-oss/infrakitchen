@@ -2,19 +2,9 @@ import { Fragment, ReactNode, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardHeader,
-  Divider,
-  Stack,
-  Typography,
-} from "@mui/material";
-
+import { WarningAmberIcon } from "../../../icons/material";
 import { CASCADE_DESTROY_RESOURCE_MUTATION } from "../../../resources/graphql";
+import { Alert, Button, Card, CardHeader } from "../../../ui";
 import { ENTITY_ACTION } from "../../../utils";
 import { useConfig } from "../../context";
 import { useEntityProvider } from "../../context/EntityContext";
@@ -240,59 +230,41 @@ export const DangerZoneCard = ({
   }
 
   return (
-    <Card
-      sx={{
-        border: `1px solid`,
-        borderColor: "error.main",
-        width: "100%",
-      }}
-    >
+    <Card className="w-full border border-error">
       <CardHeader
-        title={
-          <Typography color="error" variant="h6" component="h2">
-            Danger Zone
-          </Typography>
-        }
+        title={<h2 className="m-0 text-h6 text-error">Danger Zone</h2>}
         subheader={
-          <Typography color="error">
+          <p className="m-0 text-body2 text-error">
             {description ??
               "Some of these actions cannot be undone. Review carefully before continuing."}
-          </Typography>
+          </p>
         }
       />
-      <Stack divider={<Divider />} sx={{ px: 2, pb: 2 }}>
+      <div className="flex flex-col divide-y divide-divider px-4 pb-4">
         {visibleActions.map((config) => (
-          <Box
+          <div
+            className="flex items-center justify-between gap-4 py-2"
             key={config.key}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 2,
-              py: 1,
-            }}
           >
-            <Box sx={{ minWidth: 0 }}>
-              <Typography variant="subtitle2" sx={{ color: "text.primary" }}>
-                {config.label}
-              </Typography>
+            <div className="min-w-0">
+              <h6 className="m-0 text-subtitle2 text-fg">{config.label}</h6>
               {config.description && (
-                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                <span className="text-caption text-fg-muted">
                   {config.description}
-                </Typography>
+                </span>
               )}
-            </Box>
+            </div>
             <Button
+              className="shrink-0"
               variant="contained"
               color="error"
               onClick={() => changeDialog(config.key)}
-              sx={{ flexShrink: 0 }}
             >
               {config.label}
             </Button>
-          </Box>
+          </div>
         ))}
-      </Stack>
+      </div>
       {visibleActions.map((config) =>
         config.renderDialog ? (
           <Fragment key={config.key}>
@@ -308,7 +280,7 @@ export const DangerZoneCard = ({
             open={!!dialogValues[config.key]}
             onClose={() => changeDialog(config.key)}
             content={
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <div className="flex flex-col gap-4">
                 <Alert
                   severity={
                     config.severity === "destructive" ? "error" : "warning"
@@ -332,7 +304,7 @@ export const DangerZoneCard = ({
                     onChange={setDestroyConfirm}
                   />
                 )}
-              </Box>
+              </div>
             }
             actions={
               config.renderDialogActions ? (

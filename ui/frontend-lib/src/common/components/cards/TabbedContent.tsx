@@ -2,11 +2,9 @@ import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { useLocation, useNavigate, useParams } from "react-router";
 
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import { Box, Button, Chip, Menu, MenuItem, Tab, Tabs } from "@mui/material";
-
+import { ArrowDropDownIcon } from "../../../icons/material";
+import { Button, Chip, Menu, MenuItem, Tab, Tabs } from "../../../ui";
 import { usePermissionProvider } from "../../context";
-import { solidChipColorSx } from "../../utils/softChip";
 
 export interface TabDefinition {
   label: string;
@@ -24,10 +22,10 @@ export const TabCountLabel = ({
   label: string;
   count: number;
 }) => (
-  <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+  <div className="flex items-center gap-1.5">
     {label}
-    <Chip label={String(count)} sx={solidChipColorSx("info")} />
-  </Box>
+    <Chip label={String(count)} appearance="solid" color="info" />
+  </div>
 );
 
 interface TabbedContentProps {
@@ -178,26 +176,16 @@ export const TabbedContent = ({
     ? [...barTabs.filter((t) => t !== activeTab), activeTab]
     : barTabs;
 
-  const tabSx = { textTransform: "none" } as const;
-
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Box
+    <div className="flex flex-col gap-4">
+      <div
+        className="relative mb-3 flex min-w-0 items-center border-b border-divider"
         ref={tabBarRef}
-        sx={{
-          position: "relative",
-          display: "flex",
-          alignItems: "center",
-          minWidth: 0,
-          borderBottom: 1,
-          borderColor: "divider",
-          mb: 1.5,
-        }}
       >
         <Tabs
+          className="min-w-0"
           value={activeTab.label}
           onChange={(_, v) => selectTab(v)}
-          sx={{ minWidth: 0, "& .MuiTab-root": tabSx }}
         >
           {orderedBarTabs.map(({ label, tabLabel }) => (
             <Tab key={label} label={tabLabel ?? label} value={label} />
@@ -208,11 +196,12 @@ export const TabbedContent = ({
             <Button
               color="inherit"
               onClick={(e) => setMoreAnchor(e.currentTarget)}
-              endIcon={<ArrowDropDownIcon />}
+              endIcon={
+                <ArrowDropDownIcon className="shrink-0 text-fg-muted normal-case" />
+              }
               aria-haspopup="menu"
               aria-expanded={Boolean(moreAnchor)}
               aria-label={`More tabs (${overflowTabs.length})`}
-              sx={{ ...tabSx, flexShrink: 0, color: "text.secondary" }}
             >
               More
             </Button>
@@ -239,24 +228,13 @@ export const TabbedContent = ({
         )}
         {/* Hidden, non-interactive copy of every tab plus the "More" button,
             used only to measure how many tabs fit. */}
-        <Box
+        <div
+          className="pointer-events-none invisible absolute top-0 left-0 flex h-0 w-max overflow-hidden whitespace-nowrap"
           ref={measureRef}
           aria-hidden
-          sx={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            display: "flex",
-            height: 0,
-            overflow: "hidden",
-            width: "max-content",
-            visibility: "hidden",
-            pointerEvents: "none",
-            whiteSpace: "nowrap",
-          }}
         >
           {/* Tabs must be rendered inside a Tabs container. */}
-          <Tabs value={false} sx={{ flexShrink: 0, "& .MuiTab-root": tabSx }}>
+          <Tabs className="shrink-0" value={false}>
             {visibleTabs.map(({ label, tabLabel }) => (
               <Tab
                 key={label}
@@ -270,14 +248,13 @@ export const TabbedContent = ({
           <Button
             data-measure-more
             tabIndex={-1}
-            endIcon={<ArrowDropDownIcon />}
-            sx={{ ...tabSx, flexShrink: 0 }}
+            endIcon={<ArrowDropDownIcon className="shrink-0 normal-case" />}
           >
             More
           </Button>
-        </Box>
-      </Box>
+        </div>
+      </div>
       {activeTab.content}
-    </Box>
+    </div>
   );
 };

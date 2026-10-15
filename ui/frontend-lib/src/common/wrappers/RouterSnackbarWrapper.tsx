@@ -1,10 +1,11 @@
 import { Outlet } from "react-router";
 
-import { useColorScheme } from "@mui/material/styles";
 import { Toaster } from "sonner";
 
+import { useColorScheme } from "../../ui";
+
 export const RouterSnackbarWrapper = () => {
-  const { mode } = useColorScheme();
+  const { resolvedMode } = useColorScheme();
   return (
     <>
       <Toaster
@@ -12,7 +13,7 @@ export const RouterSnackbarWrapper = () => {
         position="top-right"
         richColors
         closeButton
-        theme={mode ?? "system"}
+        theme={resolvedMode}
         visibleToasts={5}
         style={{ ["--width" as any]: "520px" }}
         toastOptions={{
@@ -24,7 +25,7 @@ export const RouterSnackbarWrapper = () => {
         position="bottom-right"
         richColors
         closeButton
-        theme={mode ?? "system"}
+        theme={resolvedMode}
         visibleToasts={3}
         style={{ ["--width" as any]: "520px" }}
         toastOptions={{

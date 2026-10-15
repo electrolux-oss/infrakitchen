@@ -1,7 +1,5 @@
 import { useMemo } from "react";
 
-import { Box, Chip, Grid, Typography } from "@mui/material";
-
 import { Audit } from "../../common/components/activity/Audit";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
@@ -13,9 +11,9 @@ import {
 } from "../../common/components/cards/TabbedContent";
 import { HclItemList } from "../../common/components/hcl/HclItemList";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { solidChipColorSx } from "../../common/utils/softChip";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
+import { Chip } from "../../ui";
 import { EntityTaskQueueStatus } from "../../workers/components";
 import { GqlSourceCodeVersion } from "../graphql";
 
@@ -26,14 +24,12 @@ import { SourceCodeVersionSidebar } from "./SourceCodeVersionSidebar";
 
 /** Card title with an info-tinted count chip, e.g. "Input Variables" + [4]. */
 const CardCountTitle = ({ title, count }: { title: string; count: number }) => (
-  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+  <div className="flex items-center gap-2">
     {/* Inherit the card-title styling so this header matches the
         plain-string titles used by the other cards. */}
-    <Typography component="span" variant="inherit">
-      {title}
-    </Typography>
-    <Chip label={String(count)} sx={solidChipColorSx("info")} />
-  </Box>
+    <span>{title}</span>
+    <Chip label={String(count)} appearance="solid" color="info" />
+  </div>
 );
 
 export const SourceCodeVersionContent = () => {
@@ -51,16 +47,7 @@ export const SourceCodeVersionContent = () => {
       // side by side in equal columns from xl up.
       label: "Variables",
       content: (
-        <Box
-          sx={{
-            display: "grid",
-            gap: 2,
-            alignItems: "start",
-            gridTemplateColumns: "minmax(0, 1fr)",
-            gridAutoFlow: { xs: "row", xl: "column" },
-            gridAutoColumns: "minmax(0, 1fr)",
-          }}
-        >
+        <div className="grid [grid-auto-columns:minmax(0,_1fr)] [grid-auto-flow:row] grid-cols-[minmax(0,_1fr)] items-start gap-4 xl:[grid-auto-flow:column]">
           <BaseCard
             name={
               <CardCountTitle
@@ -69,9 +56,9 @@ export const SourceCodeVersionContent = () => {
               />
             }
           >
-            <Grid size={12}>
+            <div className="col-span-full">
               <InputTab source_code_version={source_code_version} />
-            </Grid>
+            </div>
           </BaseCard>
           <BaseCard
             name={
@@ -81,15 +68,15 @@ export const SourceCodeVersionContent = () => {
               />
             }
           >
-            <Grid size={12}>
+            <div className="col-span-full">
               <HclItemList
                 items={source_code_version.outputs ?? []}
                 type="outputs"
                 emptyMessage="No output values."
               />
-            </Grid>
+            </div>
           </BaseCard>
-        </Box>
+        </div>
       ),
     },
     {

@@ -1,17 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 
-import AccountTreeIcon from "@mui/icons-material/AccountTree";
-import CloseFullscreenIcon from "@mui/icons-material/CloseFullscreen";
-import FullscreenIcon from "@mui/icons-material/Fullscreen";
-import {
-  Box,
-  Dialog,
-  DialogContent,
-  IconButton,
-  Tooltip,
-  useColorScheme,
-  useTheme,
-} from "@mui/material";
 import {
   Background,
   Controls,
@@ -21,11 +9,24 @@ import {
 import "@xyflow/react/dist/style.css";
 import { useShallow } from "zustand/react/shallow";
 
+import {
+  AccountTreeIcon,
+  CloseFullscreenIcon,
+  FullscreenIcon,
+} from "../../../../icons/material";
+import {
+  IconButton,
+  Tooltip,
+  Dialog,
+  DialogContent,
+  useColorScheme,
+} from "../../../../ui";
+import { cn } from "../../../../utils/cn";
 import { useFillViewportHeight } from "../../../hooks/useFillViewportHeight";
 
 import { ConstantNode } from "./ConstantNode";
 import { ExternalNode } from "./ExternalNode";
-import { DiagramNode, useCanvasPalette } from "./helpers";
+import { DiagramNode } from "./helpers";
 import { TemplateNode } from "./TemplateNode";
 import { GenericStep, GenericTemplate, WiringRule } from "./types";
 import {
@@ -259,9 +260,7 @@ export const WiringDiagram = ({
   steps,
   allowFullscreen = false,
 }: WiringDiagramProps) => {
-  const theme = useTheme();
-  const palette = useCanvasPalette();
-  const { mode } = useColorScheme();
+  const { resolvedMode: mode } = useColorScheme();
   const [fullscreen, setFullscreen] = useState(false);
   const [flow, setFlow] = useState<ReactFlowInstance<DiagramNode>>();
 
@@ -329,10 +328,9 @@ export const WiringDiagram = ({
         selectedTemplates: templates,
         externalTemplates,
         constants,
-        theme,
         stepByTemplate,
       }),
-    [wiring, templates, externalTemplates, constants, theme, stepByTemplate],
+    [wiring, templates, externalTemplates, constants, stepByTemplate],
   );
 
   const useStore = useMemo(() => createWiringCanvasStore(), []);
@@ -368,23 +366,15 @@ export const WiringDiagram = ({
     );
   };
 
-  const toolbarButtonSx = {
-    bgcolor: "background.paper",
-    border: `1px solid ${palette.divider}`,
-    "&:hover": { bgcolor: "action.hover" },
-  };
-
   const canvas = (
-    <Box
+    <div
+      className={cn(
+        fullscreen ? "border-0" : "border border-divider",
+        fullscreen ? "rounded-none" : "rounded-surface",
+        "relative w-full overflow-hidden",
+      )}
       ref={fillRef}
-      sx={{
-        width: "100%",
-        height: fullscreen ? "100%" : canvasHeight,
-        position: "relative",
-        border: fullscreen ? "none" : `1px solid ${palette.divider}`,
-        borderRadius: fullscreen ? 0 : "var(--template-surface-radius)",
-        overflow: "hidden",
-      }}
+      style={{ height: fullscreen ? "100%" : canvasHeight }}
     >
       <ReactFlow
         nodes={nodes}
@@ -406,32 +396,23 @@ export const WiringDiagram = ({
         <Controls showInteractive={false} />
       </ReactFlow>
 
-      <Box
-        sx={{
-          position: "absolute",
-          top: 8,
-          right: 8,
-          zIndex: 10,
-          display: "flex",
-          gap: 1,
-        }}
-      >
+      <div className="absolute top-2 right-2 z-10 flex gap-2">
         <Tooltip title="Auto arrange">
           <IconButton
+            className="border border-divider bg-paper hover:bg-hover"
             size="small"
             aria-label="Auto arrange nodes"
             onClick={autoArrange}
-            sx={toolbarButtonSx}
           >
             <AccountTreeIcon fontSize="small" />
           </IconButton>
         </Tooltip>
         {allowFullscreen && (
           <IconButton
+            className="border border-divider bg-paper hover:bg-hover"
             size="small"
             aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}
             onClick={() => setFullscreen((v) => !v)}
-            sx={toolbarButtonSx}
           >
             {fullscreen ? (
               <CloseFullscreenIcon fontSize="small" />
@@ -440,8 +421,8 @@ export const WiringDiagram = ({
             )}
           </IconButton>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 
   if (fullscreen) {
@@ -450,9 +431,9 @@ export const WiringDiagram = ({
         open
         fullScreen
         onClose={() => setFullscreen(false)}
-        slotProps={{ paper: { sx: { bgcolor: "background.default" } } }}
+        className="bg-canvas"
       >
-        <DialogContent sx={{ p: 0, height: "100vh" }}>{canvas}</DialogContent>
+        <DialogContent className="h-[100vh] p-0">{canvas}</DialogContent>
       </Dialog>
     );
   }

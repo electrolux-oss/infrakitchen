@@ -1,18 +1,13 @@
 import React, { useState, useMemo } from "react";
 
 import {
-  Typography,
-  Box,
+  Chip,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   SelectChangeEvent,
-  Chip,
-  Stack,
-} from "@mui/material";
-
-import { solidChipColorSx } from "../../utils/softChip";
+} from "../../../ui";
 
 import { HclInputVariable } from "./HclInputVariable";
 import { HclOutputValue } from "./HclOutputValue";
@@ -61,14 +56,9 @@ export const HclItemList: React.FC<HclItemListProps> = ({
 
   if (!items || items.length === 0) {
     return (
-      <Typography
-        variant="body2"
-        sx={{
-          color: "text.secondary",
-        }}
-      >
+      <p className="m-0 text-body2 text-fg-muted">
         {emptyMessage || defaultEmptyMessage}
-      </Typography>
+      </p>
     );
   }
 
@@ -104,48 +94,36 @@ export const HclItemList: React.FC<HclItemListProps> = ({
   return (
     <>
       {type === "variables" && items.length > 0 && (
-        <Box sx={{ mb: 2 }}>
-          <Stack
-            direction="row"
-            sx={{
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: 1,
-            }}
-          >
+        <div className="mb-4">
+          <div className="flex flex-row flex-wrap items-center justify-between gap-2">
             {/* Variable counts */}
-            <Stack direction="row" spacing={1}>
+            <div className="flex flex-row gap-2">
               {" "}
               <Chip
                 label={`${variableCounts.required} required`}
+                appearance="solid"
                 color="error"
-                variant="filled"
-                sx={solidChipColorSx("error")}
               />
               <Chip
                 label={`${variableCounts.optional} optional`}
+                appearance="solid"
                 color="info"
-                variant="filled"
-                sx={solidChipColorSx("info")}
               />
               <Chip
                 label={`${variableCounts.restricted} restricted`}
+                appearance="solid"
                 color="warning"
-                variant="filled"
-                sx={solidChipColorSx("warning")}
               />
               <Chip
                 label={`${variableCounts.sensitive} sensitive`}
+                appearance="solid"
                 color="secondary"
-                variant="filled"
-                sx={solidChipColorSx("secondary")}
               />
-            </Stack>
+            </div>
 
             {/* Sort dropdown - only show if more than 1 item */}
             {items.length > 1 && (
-              <FormControl size="small" sx={{ minWidth: 120 }}>
+              <FormControl className="min-w-30" size="small">
                 <InputLabel>Sort by</InputLabel>
                 <Select
                   value={sortBy}
@@ -157,8 +135,8 @@ export const HclItemList: React.FC<HclItemListProps> = ({
                 </Select>
               </FormControl>
             )}
-          </Stack>
-        </Box>
+          </div>
+        </div>
       )}
       {type === "variables" ? (
         <>

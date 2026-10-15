@@ -1,8 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { Icon } from "@iconify/react";
-import { Box, Button } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
+import iconParkOutlineAddData from "@iconify-icons/icon-park-outline/add";
 
 import { Entity, PermissionWrapper } from "../../../common";
 import {
@@ -14,6 +13,8 @@ import {
   userColumn,
 } from "../../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../../common/components/fields/RelativeTime";
+import { Button } from "../../../ui";
+import { RenderCellParams } from "../../../ui";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
@@ -46,7 +47,7 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
         flex: 1,
         sortable: false,
         hideable: false,
-        renderCell: (params: GridRenderCellParams) => {
+        renderCell: (params: RenderCellParams) => {
           if (params.row.v1 && params.row.v1.includes("*")) {
             return <span>{params.row.v1}</span>;
           }
@@ -64,7 +65,7 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
         fetchFields: ["v2"],
         headerName: "Action",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) => {
+        renderCell: (params: RenderCellParams) => {
           if (params.row.action) {
             return params.row.action;
           } else {
@@ -76,11 +77,11 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
         field: "createdAt",
         headerName: "Created",
         width: RELATIVE_TIME_COLUMN_WIDTH,
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <RelativeTime
+            className="flex justify-end"
             date={params.value}
             compact
-            sx={{ display: "flex", justifyContent: "flex-end" }}
           />
         ),
       },
@@ -90,7 +91,7 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
         headerName: "Delete",
         sortable: false,
         flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <PermissionWrapper
             requiredPermission="api:permission"
             permissionAction="admin"
@@ -112,22 +113,15 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
         requiredPermission="api:permission"
         permissionAction="write"
       >
-        <Box
-          sx={{
-            display: "flex",
-            width: "100%",
-            justifyContent: "flex-end",
-            mb: 0.5,
-          }}
-        >
+        <div className="mb-1 flex w-full justify-end">
           <Button
             size="small"
             onClick={() => handleOpenDialog()}
-            startIcon={<Icon icon="icon-park-outline:add" />}
+            startIcon={<Icon icon={iconParkOutlineAddData} ssr />}
           >
             Add Resource Policy
           </Button>
-        </Box>
+        </div>
       </PermissionWrapper>
       <RolePolicyEntityCreateDialog
         roleName={role}

@@ -2,8 +2,6 @@ import { useEffect, useMemo } from "react";
 
 import { useNavigate } from "react-router";
 
-import { Button } from "@mui/material";
-
 import { useConfig } from "../../common";
 import { Audit } from "../../common/components/activity/Audit";
 import { EntityLogs } from "../../common/components/activity/EntityLogs";
@@ -20,6 +18,7 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { EntityExecutors } from "../../executors/components/EntityExecutors";
 import { EntityResources } from "../../resources/components/EntityResources";
+import { Button } from "../../ui";
 import { SET_DEFAULT_TOOL_MUTATION } from "../graphql";
 import { ToolDetail, toolLabel } from "../types";
 

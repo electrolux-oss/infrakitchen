@@ -1,14 +1,11 @@
 import { useState } from "react";
 
-import RepeatIcon from "@mui/icons-material/Repeat";
-import ScheduleIcon from "@mui/icons-material/Schedule";
-import { Box, Button, Tooltip } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-
+import { RepeatIcon, ScheduleIcon } from "../../../icons/material";
+import { Button, Tooltip } from "../../../ui";
+import { cn } from "../../../utils/cn";
 import { useEntityProvider } from "../../context/EntityContext";
 import { useNow } from "../../hooks/useNow";
 import { usePendingScheduledAction } from "../../hooks/usePendingScheduledAction";
-import { CODE_FONT_FAMILY } from "../../theme";
 import { formatTimeUntil } from "../../utils";
 import { ScheduleEntityActionDialog } from "../dialogs/ScheduleEntityActionDialog";
 import { getDateValue } from "../fields/CommonField";
@@ -41,32 +38,28 @@ export const ScheduleApplyButton = ({
   const button = (
     <Button
       color="inherit"
-      startIcon={cron ? <RepeatIcon /> : <ScheduleIcon />}
-      onClick={() => setIsDialogOpen(true)}
-      sx={
-        pendingScheduledAction
-          ? (theme) => ({
-              // Soft amber tint: same warning family as the status semantics,
-              // but calm enough to read as "scheduled" rather than "alert".
-              color: theme.palette.warning.main,
-              borderColor: alpha(theme.palette.warning.main, 0.45),
-              backgroundColor: alpha(theme.palette.warning.main, 0.12),
-              "&:hover": {
-                backgroundColor: alpha(theme.palette.warning.main, 0.2),
-                borderColor: theme.palette.warning.main,
-              },
-            })
-          : undefined
+      startIcon={
+        cron ? (
+          <RepeatIcon />
+        ) : (
+          <ScheduleIcon
+            className={cn(
+              pendingScheduledAction &&
+                "border-warning/45 bg-warning/12 text-warning hover:border-warning hover:bg-warning/20",
+            )}
+          />
+        )
       }
+      onClick={() => setIsDialogOpen(true)}
     >
       {" "}
       {pendingScheduledAction ? (
         <>
           {cron ? "Recurring (" : "Scheduled ("}
           {/* Countdown in the code font so digits stay uniform while ticking. */}
-          <Box component="span" sx={{ fontFamily: CODE_FONT_FAMILY }}>
+          <span className="font-mono">
             {formatTimeUntil(pendingScheduledAction.runAt, now)}
-          </Box>
+          </span>
           {")"}
         </>
       ) : (

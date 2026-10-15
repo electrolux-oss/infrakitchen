@@ -1,5 +1,3 @@
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
@@ -7,6 +5,7 @@ import {
   NUMERIC_COLUMN_ALIGN,
   userColumn,
 } from "../../common/components/entity_table/tableColumns";
+import { RenderCellParams } from "../../ui";
 
 export const batchOperationColumns: EntityTableColumn[] = [
   {
@@ -22,7 +21,7 @@ export const batchOperationColumns: EntityTableColumn[] = [
       defaultOperator: "like",
       defaultSelected: true,
     },
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: RenderCellParams) => {
       return (
         <Entity entity={{ ...params.row, entityType: "batch_operation" }} />
       );

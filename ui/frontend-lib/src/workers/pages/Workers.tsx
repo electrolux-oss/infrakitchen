@@ -1,17 +1,15 @@
 import { useMemo } from "react";
 
-import { Tooltip, Typography } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import { CODE_FONT_FAMILY } from "../../common/theme";
 import { PermissionWrapper } from "../../common/wrappers/PermissionWrapper";
 import { TaskQueueButton } from "../../tasks/components/TaskQueueDialog";
+import { Tooltip } from "../../ui";
+import { RenderCellParams } from "../../ui";
 import { WORKER_FIELD_MAP } from "../graphql";
 
 // Helper function to flatten nested objects,
@@ -38,7 +36,7 @@ const HostInfoField = {
   sortable: false,
   headerName: "Host info",
   flex: 2,
-  renderCell: (params: GridRenderCellParams) => {
+  renderCell: (params: RenderCellParams) => {
     if (!params.value) {
       return null;
     }
@@ -57,21 +55,13 @@ const HostInfoField = {
     return (
       <Tooltip
         title={
-          <Typography
-            variant="caption"
-            sx={{
-              fontFamily: CODE_FONT_FAMILY,
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-word",
-              maxWidth: 420,
-            }}
-          >
+          <span className="max-w-105 font-mono text-caption [word-break:break-word] whitespace-pre-wrap">
             {formattedString}
-          </Typography>
+          </span>
         }
         placement="top-start"
       >
-        <Typography>{condensedDisplay}</Typography>
+        <p className="m-0 text-body2">{condensedDisplay}</p>
       </Tooltip>
     );
   },
@@ -90,7 +80,7 @@ export default function WorkerList() {
         field: "status",
         headerName: "Status",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <StatusChip status={String(params.row.status).toLowerCase()} />
         ),
       },
@@ -99,9 +89,9 @@ export default function WorkerList() {
         headerName: "Last Task",
         flex: 2,
         sortable: false,
-        renderCell: (params: GridRenderCellParams) => {
+        renderCell: (params: RenderCellParams) => {
           if (!params.value) {
-            return <Typography color="textSecondary">N/A</Typography>;
+            return <p className="m-0 text-body2 text-fg-muted">N/A</p>;
           }
           // current_task is a free-form JSON blob stored with snake_case keys.
           const { entity, entity_id, action, user, started_at } = params.value;
@@ -109,17 +99,9 @@ export default function WorkerList() {
           return (
             <Tooltip
               title={
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontFamily: CODE_FONT_FAMILY,
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                    maxWidth: 420,
-                  }}
-                >
+                <span className="max-w-105 font-mono text-caption [word-break:break-word] whitespace-pre-wrap">
                   {`Entity: ${entity}\nID: ${entity_id}\nAction: ${action}\nUser: ${user}\nStarted: ${started_at}`}
-                </Typography>
+                </span>
               }
               placement="top-start"
             >
@@ -135,8 +117,8 @@ export default function WorkerList() {
         headerName: "Completed",
         flex: 0.5,
         sortField: "tasks_completed",
-        renderCell: (params: GridRenderCellParams) => (
-          <Typography>{params.value ?? 0}</Typography>
+        renderCell: (params: RenderCellParams) => (
+          <p className="m-0 text-body2">{params.value ?? 0}</p>
         ),
       },
       {
@@ -144,11 +126,11 @@ export default function WorkerList() {
         headerName: "Created",
         width: RELATIVE_TIME_COLUMN_WIDTH,
         sortField: "created_at",
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <RelativeTime
+            className="flex justify-end"
             date={params.value}
             compact
-            sx={{ display: "flex", justifyContent: "flex-end" }}
           />
         ),
       },
@@ -157,11 +139,11 @@ export default function WorkerList() {
         headerName: "Updated",
         width: RELATIVE_TIME_COLUMN_WIDTH,
         sortField: "updated_at",
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <RelativeTime
+            className="flex justify-end"
             date={params.value}
             compact
-            sx={{ display: "flex", justifyContent: "flex-end" }}
           />
         ),
       },

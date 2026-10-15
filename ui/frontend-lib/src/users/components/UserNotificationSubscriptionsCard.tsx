@@ -1,11 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
-import { IconButton } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { useConfig } from "../../common";
-import { deleteIconButtonStyle } from "../../common/components/buttons/deleteIconButtonStyle";
+import { deleteIconButtonClass } from "../../common/components/buttons/deleteIconButtonClass";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { Entity } from "../../common/components/entities/Entity";
 import {
@@ -15,10 +11,13 @@ import {
 import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { notifyError } from "../../common/hooks/useNotification";
+import { DeleteOutlinedIcon } from "../../icons/material";
 import {
   DELETE_SUBSCRIPTION_MUTATION,
   NOTIFICATION_SUBSCRIPTION_FIELD_MAP,
 } from "../../notifications";
+import { IconButton } from "../../ui";
+import { RenderCellParams } from "../../ui";
 
 const DeleteSubscriptionButton = ({
   id,
@@ -48,9 +47,9 @@ const DeleteSubscriptionButton = ({
       onClick={() => void handleDelete()}
       disabled={isLoading}
       size="small"
-      sx={deleteIconButtonStyle}
+      className={deleteIconButtonClass}
     >
-      <DeleteOutlineIcon fontSize="small" />
+      <DeleteOutlinedIcon fontSize="small" />
     </IconButton>
   );
 };
@@ -74,7 +73,7 @@ export const UserNotificationSubscriptionsCard = (props: {
         flex: 1,
         sortable: false,
         hideable: false,
-        renderCell: (params: GridRenderCellParams) => {
+        renderCell: (params: RenderCellParams) => {
           return (
             <Entity
               entity={{
@@ -92,11 +91,11 @@ export const UserNotificationSubscriptionsCard = (props: {
         field: "createdAt",
         headerName: "Created",
         width: RELATIVE_TIME_COLUMN_WIDTH,
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <RelativeTime
+            className="flex justify-end"
             date={params.value}
             compact
-            sx={{ display: "flex", justifyContent: "flex-end" }}
           />
         ),
       },
@@ -104,7 +103,7 @@ export const UserNotificationSubscriptionsCard = (props: {
         field: "id",
         headerName: "Delete",
         sortable: false,
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <DeleteSubscriptionButton
             id={params.value}
             onDeleted={refreshSubscriptions}
@@ -120,14 +119,16 @@ export const UserNotificationSubscriptionsCard = (props: {
       name="Subscriptions"
       description="Entities you follow. You receive their notifications in-app; add a preference above to also get them in Slack."
     >
-      <EntityFetchTable
-        ref={tableRef}
-        title="User Subscriptions"
-        entityName="subscription"
-        columns={columns}
-        defaultFilter={{ user_id }}
-        entityFieldMap={NOTIFICATION_SUBSCRIPTION_FIELD_MAP}
-      />
+      <div className="col-span-full">
+        <EntityFetchTable
+          ref={tableRef}
+          title="User Subscriptions"
+          entityName="subscription"
+          columns={columns}
+          defaultFilter={{ user_id }}
+          entityFieldMap={NOTIFICATION_SUBSCRIPTION_FIELD_MAP}
+        />
+      </div>
     </BaseCard>
   );
 };

@@ -1,8 +1,5 @@
-import { Box, Typography } from "@mui/material";
-
 import { humanizeEntityType } from "../../common/components/entities/Entity";
 import { Label } from "../../common/components/labels/Label";
-import { CODE_FONT_FAMILY } from "../../common/theme";
 import type { UnresolvedEntityReason } from "../utils/auditLogEntity";
 
 const RESOLUTION_LABELS: Record<UnresolvedEntityReason, string> = {
@@ -21,10 +18,10 @@ export const DeniedEntityCell = ({
   entityType: string;
   action?: string;
 }) => (
-  <Typography variant="body2" sx={{ color: "error.main" }}>
+  <p className="m-0 text-body2 text-error">
     {action ? `${action.charAt(0).toUpperCase()}${action.slice(1)} ` : ""}
     {humanizeEntityType(entityType)} request was denied
-  </Typography>
+  </p>
 );
 
 /**
@@ -43,33 +40,15 @@ export const DeletedEntityCell = ({
   entityType: string;
   reason: UnresolvedEntityReason;
 }) => (
-  <Box
-    sx={{
-      display: "flex",
-      flexDirection: "column",
-      gap: 0.5,
-      minWidth: 0,
-    }}
-  >
-    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-      {RESOLUTION_LABELS[reason]}
-    </Typography>
+  <div className="flex min-w-0 flex-col gap-1">
+    <p className="m-0 text-body2 text-fg-muted">{RESOLUTION_LABELS[reason]}</p>
     {entityId && (
-      <Box
-        sx={{ display: "flex", alignItems: "center", gap: 0.75, minWidth: 0 }}
-      >
-        <Typography
-          variant="caption"
-          sx={{
-            fontFamily: CODE_FONT_FAMILY,
-            color: "text.secondary",
-            wordBreak: "break-all",
-          }}
-        >
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className="font-mono text-caption break-all text-fg-muted">
           {entityId}
-        </Typography>
+        </span>
         <Label label={humanizeEntityType(entityType)} />
-      </Box>
+      </div>
     )}
-  </Box>
+  </div>
 );

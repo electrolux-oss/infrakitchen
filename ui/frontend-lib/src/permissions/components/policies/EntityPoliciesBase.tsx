@@ -2,11 +2,6 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import { Box, Button, Chip } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { PermissionWrapper } from "../../../common";
 import { Entity } from "../../../common/components/entities/Entity";
 import {
@@ -20,6 +15,9 @@ import {
 import { capitalizeFirstLetter } from "../../../common/components/fields/CommonField";
 import { RelativeTime } from "../../../common/components/fields/RelativeTime";
 import { useConfig } from "../../../common/context";
+import { AdminPanelSettingsIcon, PersonAddIcon } from "../../../icons/material";
+import { Button, Chip } from "../../../ui";
+import { RenderCellParams } from "../../../ui";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
@@ -62,7 +60,7 @@ export const EntityPoliciesBase = ({
         flex: 1,
         sortable: false,
         hideable: false,
-        renderCell: (params: GridRenderCellParams) => {
+        renderCell: (params: RenderCellParams) => {
           if (params.row.v0.startsWith("user:")) {
             return (
               <Entity
@@ -91,7 +89,7 @@ export const EntityPoliciesBase = ({
         fetchFields: ["v1", "v2"],
         headerName: "Action",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) => {
+        renderCell: (params: RenderCellParams) => {
           if (params.row.action) {
             return params.row.action;
           } else {
@@ -107,7 +105,7 @@ export const EntityPoliciesBase = ({
               headerName: "Source",
               sortable: false,
               flex: 1,
-              renderCell: (params: GridRenderCellParams) => {
+              renderCell: (params: RenderCellParams) => {
                 const isInherited = params.row.v1 !== originalEntityId;
                 const inheritedProjectId = params.row.v1.split(":")[1];
                 const projectPoliciesPath = `${linkPrefix}projects/${inheritedProjectId}/policies`;
@@ -140,11 +138,11 @@ export const EntityPoliciesBase = ({
         field: "createdAt",
         headerName: "Created",
         width: RELATIVE_TIME_COLUMN_WIDTH,
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <RelativeTime
+            className="flex justify-end"
             date={params.value}
             compact
-            sx={{ display: "flex", justifyContent: "flex-end" }}
           />
         ),
       },
@@ -154,7 +152,7 @@ export const EntityPoliciesBase = ({
         headerName: "Delete",
         sortable: false,
         flex: 1,
-        renderCell: (params: GridRenderCellParams) =>
+        renderCell: (params: RenderCellParams) =>
           params.row.v1 === originalEntityId ? (
             <PermissionWrapper
               requiredPermission="api:permission"
@@ -185,15 +183,7 @@ export const EntityPoliciesBase = ({
         requiredPermission={"api:permission"}
         permissionAction="write"
       >
-        <Box
-          sx={{
-            display: "flex",
-            width: "100%",
-            justifyContent: "flex-end",
-            gap: 1,
-            mb: 0.5,
-          }}
-        >
+        <div className="mb-1 flex w-full justify-end gap-2">
           <Button
             size="small"
             onClick={() => setIsDialogOpen(true)}
@@ -208,7 +198,7 @@ export const EntityPoliciesBase = ({
           >
             Add User
           </Button>
-        </Box>
+        </div>
       </PermissionWrapper>
       <EntityFetchTable
         ref={tableRef}

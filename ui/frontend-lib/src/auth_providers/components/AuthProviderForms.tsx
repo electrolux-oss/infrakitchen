@@ -1,6 +1,6 @@
 import { Control, Controller, FieldErrors } from "react-hook-form";
 
-import { TextField } from "@mui/material";
+import { TextField } from "../../ui";
 
 interface FormValues {
   configuration: object;

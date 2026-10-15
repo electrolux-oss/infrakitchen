@@ -2,19 +2,15 @@ import React from "react";
 
 import ReactDiffViewer, { DiffMethod } from "react-diff-viewer-continued";
 
-import {
-  Typography,
-  Paper,
-  Box,
-  CircularProgress,
-  useColorScheme,
-  useTheme,
-} from "@mui/material";
-
 import { useEntityProvider } from "../../common";
+import {
+  DIFF_VIEWER_DARK_VARIABLES,
+  DIFF_VIEWER_FONT_SIZE,
+} from "../../common/components/activity/DiffEditor";
 import { ActionButton } from "../../common/components/buttons/ActionButton";
 import { CommonDialog } from "../../common/components/dialogs/CommonDialog";
 import { IkEntity } from "../../types";
+import { Spinner, useColorScheme } from "../../ui";
 import { ENTITY_ACTION, ENTITY_STATUS } from "../../utils/constants";
 import { GqlResourceTempState } from "../graphql";
 
@@ -24,8 +20,7 @@ interface JsonDiffViewerProps {
 }
 
 function JsonDiffViewer({ originalText, modifiedText }: JsonDiffViewerProps) {
-  const theme = useTheme();
-  const { mode } = useColorScheme();
+  const { resolvedMode: mode } = useColorScheme();
 
   return (
     <ReactDiffViewer
@@ -39,19 +34,9 @@ function JsonDiffViewer({ originalText, modifiedText }: JsonDiffViewerProps) {
       disableWordDiff={true}
       useDarkTheme={mode === "dark"}
       styles={{
-        variables: {
-          dark: {
-            diffViewerBackground: theme.vars?.palette.grey?.[800],
-            gutterBackground: theme.vars?.palette.background.paper,
-            gutterColor: theme.vars?.palette.text.secondary,
-          },
-        },
-        contentText: {
-          fontSize: theme.typography.caption.fontSize,
-        },
-        lineNumber: {
-          fontSize: theme.typography.caption.fontSize,
-        },
+        variables: { dark: DIFF_VIEWER_DARK_VARIABLES },
+        contentText: { fontSize: DIFF_VIEWER_FONT_SIZE },
+        lineNumber: { fontSize: DIFF_VIEWER_FONT_SIZE },
       }}
     />
   );
@@ -93,50 +78,28 @@ export const ResourceStateReviewDialog: React.FC<
       content={
         <>
           {error && (
-            <Typography color="error">
+            <p className="m-0 text-body2 text-error">
               Error loading resource state:{" "}
               {String((error as Error)?.message || error)}
-            </Typography>
+            </p>
           )}
           {loading && !resourceTempState && (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-              <CircularProgress />
-            </Box>
+            <div className="flex justify-center py-8">
+              <Spinner />
+            </div>
           )}
           {resourceTempState && (
-            <Box sx={{ width: "100%" }}>
-              <Paper variant="outlined" sx={{ p: 0 }}>
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    borderBottom: 1,
-                    borderColor: "divider",
-                    bgcolor: "background.paper",
-                    minWidth: "1200px",
-                  }}
-                >
-                  <Typography variant="subtitle2" sx={{ px: 2, py: 1.5 }}>
+            <div className="w-full">
+              <div className="rounded-surface border border-divider bg-paper p-0 text-fg">
+                <div className="grid min-w-300 grid-cols-[1fr_1fr] border-b border-divider bg-paper">
+                  <h6 className="m-0 px-4 py-3 text-subtitle2 text-grey-500">
                     Current State
-                  </Typography>
-                  <Typography variant="subtitle2" sx={{ px: 2, py: 1.5 }}>
+                  </h6>
+                  <h6 className="m-0 px-4 py-3 text-subtitle2 text-grey-500">
                     Updated State
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: "100%",
-                    maxWidth: "100%",
-                    maxHeight: "70vh",
-                    overflow: "auto",
-                    "& .diff-viewer-wrapper": {
-                      minWidth: "1200px",
-                    },
-                    "& table": {
-                      marginTop: 0,
-                    },
-                  }}
-                >
+                  </h6>
+                </div>
+                <div className="max-h-[70vh] w-full max-w-full overflow-auto [&_.diff-viewer-wrapper]:min-w-300 [&_table]:mt-0">
                   <JsonDiffViewer
                     originalText={(() => {
                       const filteredEntity: any = {};
@@ -179,18 +142,14 @@ export const ResourceStateReviewDialog: React.FC<
                       2,
                     )}
                   />
-                </Box>
-              </Paper>
-            </Box>
+                </div>
+              </div>
+            </div>
           )}
           {entity?.status === ENTITY_STATUS.APPROVAL_PENDING && (
-            <Typography
-              sx={{
-                color: "warning.main",
-              }}
-            >
+            <p className="m-0 text-body2 text-warning">
               Resource is pending for approval.
-            </Typography>
+            </p>
           )}
         </>
       }

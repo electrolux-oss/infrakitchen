@@ -1,26 +1,19 @@
-import { useCallback } from "react";
-
-import { Box, Chip, Grid, TextField } from "@mui/material";
-
 import {
   EntitySidebar,
   SidebarSection,
 } from "../../common/components/cards/EntitySidebar";
-import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
+import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
+import { EditableNameField } from "../../common/components/editors/EditableNameField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
-import { Entity } from "../../common/components/entities/Entity";
 import {
   CommonField,
   getProviderValue,
 } from "../../common/components/fields/CommonField";
-import { RelativeTime } from "../../common/components/fields/RelativeTime";
-import { useConfig } from "../../common/context";
-import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
-import { notify, notifyError } from "../../common/hooks/useNotification";
+import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import StatusChip from "../../common/StatusChip";
-import { solidChipColorSx } from "../../common/utils/softChip";
+import { Chip } from "../../ui";
 import { GqlIntegration } from "../graphql";
 import {
   IntegrationUpdateFieldInput,
@@ -40,49 +33,22 @@ export interface IntegrationSidebarProps {
 export const IntegrationSidebar = ({
   integration,
 }: IntegrationSidebarProps) => {
-  const { ikApi } = useConfig();
-  const { refreshEntity } = useEntityProvider();
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = checkActionPermission("api:integration", "write");
 
-  const saveField = useCallback(
-    async (input: IntegrationUpdateFieldInput) => {
-      try {
-        await ikApi.graphqlRequest(UPDATE_INTEGRATION_MUTATION, {
-          id: integration.id,
-          input,
-        });
-        notify("Integration updated successfully", "success");
-        refreshEntity?.();
-      } catch (error) {
-        notifyError(error);
-        throw error;
-      }
-    },
-    [ikApi, integration.id, refreshEntity],
+  const saveField = useEntityFieldSaver<IntegrationUpdateFieldInput>(
+    UPDATE_INTEGRATION_MUTATION,
+    integration.id,
+    "Integration",
   );
 
   return (
     <EntitySidebar ariaLabel="Integration details">
       <SidebarSection title="About">
-        <CommonEditableField<string>
-          name={"Name"}
-          canEdit={canEdit}
+        <EditableNameField
           value={integration.name}
-          ariaLabel="Edit name"
-          display={<span>{integration.name}</span>}
+          canEdit={canEdit}
           onSave={(value) => saveField({ name: value })}
-          renderEditor={({ value, onChange }) => (
-            <TextField
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              slotProps={{ input: { "aria-label": "Name" } }}
-              fullWidth
-              margin="normal"
-              autoFocus
-            />
-          )}
-          size={12}
         />
         <EditableDescriptionField
           value={integration.description}
@@ -97,50 +63,24 @@ export const IntegrationSidebar = ({
       </SidebarSection>
 
       <SidebarSection title="Status">
-        <Grid size={12}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <div className="col-span-full">
+          <div className="flex items-center gap-2">
             <StatusChip status={integration.status} />
             <Chip
               label={integration.integrationType.toUpperCase()}
-              sx={solidChipColorSx(
-                integrationTypeChipColor(integration.integrationType),
-              )}
+              appearance="solid"
+              color={integrationTypeChipColor(integration.integrationType)}
             />
-          </Box>
-        </Grid>
+          </div>
+        </div>
         <CommonField
           name="Provider"
           value={getProviderValue(integration.integrationProvider)}
-          size={12}
+          span="full"
         />
       </SidebarSection>
 
-      <SidebarSection title="Details">
-        <CommonField
-          name="Created by"
-          value={
-            integration.creator ? (
-              <Entity entity={{ ...integration.creator, entityType: "user" }} />
-            ) : null
-          }
-          size={12}
-        />
-        <CommonField
-          name="Created"
-          value={<RelativeTime date={integration.createdAt} />}
-          size={6}
-        />
-        <CommonField
-          name="Last Updated"
-          value={<RelativeTime date={integration.updatedAt} />}
-          size={6}
-        />
-        <CommonField
-          name="Revision"
-          value={integration.revisionNumber}
-          size={12}
-        />
-      </SidebarSection>
+      <SidebarDetailsSection entity={integration} />
     </EntitySidebar>
   );
 };

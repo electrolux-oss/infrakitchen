@@ -1,26 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import AddIcon from "@mui/icons-material/Add";
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import {
-  Box,
-  Button,
-  FormControl,
-  IconButton,
-  MenuItem,
-  Select,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { useConfig } from "../../common";
-import { deleteIconButtonStyle } from "../../common/components/buttons/deleteIconButtonStyle";
+import { deleteIconButtonClass } from "../../common/components/buttons/deleteIconButtonClass";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { CommonDialog } from "../../common/components/dialogs/CommonDialog";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
@@ -33,12 +14,29 @@ import {
   useSlackLink,
 } from "../../common/providers/slack/useSlackLink";
 import {
+  AddIcon,
+  CheckIcon,
+  CloseIcon,
+  DeleteOutlinedIcon,
+  EditOutlinedIcon,
+  WarningAmberIcon,
+} from "../../icons/material";
+import {
   DELETE_NOTIFICATION_PREFERENCE_MUTATION,
   GqlNotificationPreference,
   NOTIFICATION_PREFERENCE_FIELD_MAP,
   UPSERT_NOTIFICATION_PREFERENCE_MUTATION,
 } from "../../notifications";
 import { NotificationChannel } from "../../notifications/types";
+import {
+  Button,
+  IconButton,
+  Tooltip,
+  FormControl,
+  MenuItem,
+  Select,
+} from "../../ui";
+import { RenderCellParams } from "../../ui";
 import { EVENT_TYPE } from "../../utils";
 
 // In-app delivery is always on, so preferences only pick additional channels
@@ -128,15 +126,14 @@ const NotificationPreferenceDialog = ({
       }
       maxWidth="sm"
       content={
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+        <div className="flex flex-col gap-4 pt-2">
           <FormControl fullWidth>
-            <Typography
+            <h6
+              className="m-0 mb-2 text-subtitle2 text-grey-500"
               id="user-notification-event-type-label"
-              variant="subtitle2"
-              sx={{ mb: 1 }}
             >
               Event type
-            </Typography>
+            </h6>
             <Select
               labelId="user-notification-event-type-label"
               value={eventType}
@@ -152,20 +149,18 @@ const NotificationPreferenceDialog = ({
           </FormControl>
 
           <FormControl fullWidth>
-            <Typography
+            <h6
+              className="m-0 text-subtitle2 text-grey-500"
               id="user-notification-channels-label"
-              variant="subtitle2"
             >
               Additional channels
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{ color: "text.secondary", mb: 1 }}
-            >
+            </h6>
+            <span className="mb-2 text-caption text-fg-muted">
               In-app notifications are always delivered. Choose where else you
               want to receive this event.
-            </Typography>
+            </span>
             <Select
+              className="mb-2"
               labelId="user-notification-channels-label"
               multiple
               value={channels}
@@ -173,7 +168,6 @@ const NotificationPreferenceDialog = ({
                 setChannels(event.target.value as NotificationChannel[])
               }
               renderValue={(selected) => selected.join(", ")}
-              sx={{ mb: 1 }}
             >
               {EXTERNAL_CHANNEL_OPTIONS.map((channel) => (
                 <MenuItem
@@ -195,14 +189,14 @@ const NotificationPreferenceDialog = ({
               pendingNote="Slack messages start once the account is linked."
             />
           </FormControl>
-        </Box>
+        </div>
       }
       actions={
-        <Stack direction="row" spacing={1}>
+        <div className="flex flex-row gap-2">
           <Button variant="contained" onClick={handleSave} disabled={isLoading}>
             {initialPreference ? "Save" : "Create"}
           </Button>
-        </Stack>
+        </div>
       }
     />
   );
@@ -239,13 +233,13 @@ const NotificationPreferenceActions = ({
 
   if (isConfirming) {
     return (
-      <Stack direction="row">
+      <div className="flex flex-row">
         <IconButton
           title="Confirm delete"
           size="small"
           onClick={() => void handleDelete()}
           disabled={isLoading}
-          sx={deleteIconButtonStyle}
+          className={deleteIconButtonClass}
         >
           <CheckIcon fontSize="small" />
         </IconButton>
@@ -257,12 +251,12 @@ const NotificationPreferenceActions = ({
         >
           <CloseIcon fontSize="small" />
         </IconButton>
-      </Stack>
+      </div>
     );
   }
 
   return (
-    <Stack direction="row">
+    <div className="flex flex-row">
       <IconButton
         title="Edit Preference"
         size="small"
@@ -274,11 +268,11 @@ const NotificationPreferenceActions = ({
         title="Delete Preference"
         size="small"
         onClick={() => setIsConfirming(true)}
-        sx={deleteIconButtonStyle}
+        className={deleteIconButtonClass}
       >
-        <DeleteOutlineIcon fontSize="small" />
+        <DeleteOutlinedIcon fontSize="small" />
       </IconButton>
-    </Stack>
+    </div>
   );
 };
 
@@ -323,35 +317,35 @@ export const UserNotificationPreferencesCard = (props: {
         headerName: "Integration Types",
         flex: 1,
         sortable: false,
-        renderCell: (params: GridRenderCellParams) => (
-          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+        renderCell: (params: RenderCellParams) => (
+          <div className="flex flex-row items-center gap-1">
             {externalChannels(params.row.channels).map((channel, index) => (
-              <Box key={channel} component="span">
+              <span key={channel}>
                 {index > 0 && ", "}
                 {channel}
                 {channel === "SLACK" && !slackLinked && (
                   <Tooltip title="Not delivered: Slack account not linked">
                     <WarningAmberIcon
+                      className="ml-1 align-middle"
                       color="warning"
                       fontSize="inherit"
-                      sx={{ ml: 0.5, verticalAlign: "middle" }}
                     />
                   </Tooltip>
                 )}
-              </Box>
+              </span>
             ))}
-          </Stack>
+          </div>
         ),
       },
       {
         field: "createdAt",
         headerName: "Created",
         width: RELATIVE_TIME_COLUMN_WIDTH,
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <RelativeTime
+            className="flex justify-end"
             date={params.value}
             compact
-            sx={{ display: "flex", justifyContent: "flex-end" }}
           />
         ),
       },
@@ -360,7 +354,7 @@ export const UserNotificationPreferencesCard = (props: {
         headerName: "Actions",
         sortable: false,
         hideable: false,
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <NotificationPreferenceActions
             preference={params.row}
             onEdit={handleOpenEdit}
@@ -388,14 +382,16 @@ export const UserNotificationPreferencesCard = (props: {
           </Button>
         }
       >
-        <EntityFetchTable
-          key={refreshKey}
-          title="User Notification Preferences"
-          entityName="notificationPreference"
-          columns={columns}
-          defaultFilter={{ user_id }}
-          entityFieldMap={NOTIFICATION_PREFERENCE_FIELD_MAP}
-        />
+        <div className="col-span-full">
+          <EntityFetchTable
+            key={refreshKey}
+            title="User Notification Preferences"
+            entityName="notificationPreference"
+            columns={columns}
+            defaultFilter={{ user_id }}
+            entityFieldMap={NOTIFICATION_PREFERENCE_FIELD_MAP}
+          />
+        </div>
       </BaseCard>
       <NotificationPreferenceDialog
         userId={user_id}

@@ -1,10 +1,8 @@
 import React from "react";
 
-import { Chip, Typography, useTheme } from "@mui/material";
-
 import { SourceConfigResponse } from "../../../source_code_versions/types";
 import { getValidationSummary } from "../../../source_code_versions/utils/validationSummary";
-import { solidChipColorSx } from "../../utils/softChip";
+import { Chip } from "../../../ui";
 import { CodeBlock } from "../code/CodeBlock";
 import { PlaceholderText } from "../fields/PlaceholderDescription";
 import { VariableCard } from "../fields/VariableCard";
@@ -20,7 +18,6 @@ interface HclInputVariableProps {
 export const HclInputVariable: React.FC<HclInputVariableProps> = ({
   variable,
 }) => {
-  const theme = useTheme();
   const validationSummary = getValidationSummary(variable);
 
   const formatDefaultValue = (defaultValue: any) => {
@@ -39,7 +36,7 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
 
     if (typeof defaultValue === "boolean") {
       return (
-        <CodeBlock sx={{ color: defaultValue ? "success.main" : "error.main" }}>
+        <CodeBlock className={defaultValue ? "text-success" : "text-error"}>
           {String(defaultValue)}
         </CodeBlock>
       );
@@ -59,40 +56,41 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
           {validationSummary && (
             <Chip
               label={validationSummary}
-              sx={{ ml: 1, ...solidChipColorSx("success")(theme) }}
+              className="ml-2"
+              appearance="solid"
+              color="success"
             />
           )}
           {variable.restricted && (
             <Chip
               label="restricted"
-              sx={{ ml: 1, ...solidChipColorSx("warning")(theme) }}
+              className="ml-2"
+              appearance="solid"
+              color="warning"
             />
           )}
           {variable.sensitive && (
             <Chip
               label="sensitive"
-              sx={{ ml: 1, ...solidChipColorSx("secondary")(theme) }}
+              className="ml-2"
+              appearance="solid"
+              color="secondary"
             />
           )}
         </>
       }
       footer={
         variable.source && (
-          <Typography
-            variant="caption"
-            sx={{ color: "text.secondary", display: "block", mt: 0.5 }}
-          >
+          <span className="mt-1 block text-caption text-fg-muted">
             source: {variable.source}
-          </Typography>
+          </span>
         )
       }
     >
-      <Typography variant="caption" sx={{ color: "text.secondary" }}>
-        Default
-      </Typography>
-      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+      <span className="text-caption text-fg-muted">Default</span>
+      <p className="m-0 text-body2 font-medium">
         {formatDefaultValue(variable.default)}
-      </Typography>
+      </p>
     </VariableCard>
   );
 };

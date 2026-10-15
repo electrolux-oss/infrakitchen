@@ -8,8 +8,6 @@ import {
 } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import { Box, TextField, Button, MenuItem, Autocomplete } from "@mui/material";
-
 import { LabelInput } from "../../common";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
@@ -17,10 +15,10 @@ import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import { getAutocompleteTextFieldProps } from "../../common/utils/autocompleteInput";
 import { RefFolders } from "../../source_codes/types";
 import { ToolSelect } from "../../tools";
 import { IkEntity } from "../../types";
+import { Autocomplete, Button, TextField, MenuItem } from "../../ui";
 import { EXECUTOR_CREATE_MUTATION } from "../graphql";
 import { ExecutorCreate } from "../types";
 
@@ -200,17 +198,9 @@ const ExecutorCreatePageInner = () => {
         </>
       }
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          flexDirection: "column",
-          width: "100%",
-          minWidth: 320,
-        }}
-      >
+      <div className="flex w-full min-w-80 flex-col items-center">
         <PropertyCard title="Executor Definition">
-          <Box>
+          <div>
             <Controller
               name="name"
               control={control}
@@ -221,7 +211,6 @@ const ExecutorCreatePageInner = () => {
                   label="Name"
                   required
                   placeholder="Enter executor name. It should be unique within the selected template."
-                  variant="outlined"
                   error={!!errors.name}
                   fullWidth
                   margin="normal"
@@ -236,7 +225,6 @@ const ExecutorCreatePageInner = () => {
                   {...field}
                   label="Description"
                   placeholder="Enter executor description (optional)"
-                  variant="outlined"
                   error={!!errors.description}
                   fullWidth
                   margin="normal"
@@ -249,10 +237,10 @@ const ExecutorCreatePageInner = () => {
               defaultValue={[]}
               render={({ field }) => <LabelInput errors={errors} {...field} />}
             />
-          </Box>
+          </div>
         </PropertyCard>
         <PropertyCard title="Code Repo Configuration">
-          <Box>
+          <div>
             <Controller
               name="sourceCodeId"
               control={control}
@@ -299,25 +287,16 @@ const ExecutorCreatePageInner = () => {
                     getOptionLabel={(option) =>
                       `${option} - ${gitTagMessages[option] || ""}`
                     }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        {...getAutocompleteTextFieldProps(params, {
-                          htmlInput: {
-                            "aria-label": "Source git tag",
-                          },
-                        })}
-                        label="Select Git Tag"
-                        fullWidth
-                        margin="normal"
-                        error={!!errors.sourceCodeVersion}
-                        helperText={
-                          errors.sourceCodeVersion
-                            ? errors.sourceCodeVersion.message
-                            : "Select git tag"
-                        }
-                      />
-                    )}
+                    aria-label="Source git tag"
+                    label="Select Git Tag"
+                    fullWidth
+                    margin="normal"
+                    error={!!errors.sourceCodeVersion}
+                    helperText={
+                      errors.sourceCodeVersion
+                        ? errors.sourceCodeVersion.message
+                        : "Select git tag"
+                    }
                   />
                 )}
               />
@@ -333,25 +312,16 @@ const ExecutorCreatePageInner = () => {
                   getOptionLabel={(option) =>
                     `${option} - ${gitBranchMessages[option] || ""}`
                   }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      {...getAutocompleteTextFieldProps(params, {
-                        htmlInput: {
-                          "aria-label": "Source git branch",
-                        },
-                      })}
-                      label="Select Git Branch"
-                      fullWidth
-                      margin="normal"
-                      error={!!errors.sourceCodeBranch}
-                      helperText={
-                        errors.sourceCodeBranch
-                          ? errors.sourceCodeBranch.message
-                          : "Select git branch"
-                      }
-                    />
-                  )}
+                  aria-label="Source git branch"
+                  label="Select Git Branch"
+                  fullWidth
+                  margin="normal"
+                  error={!!errors.sourceCodeBranch}
+                  helperText={
+                    errors.sourceCodeBranch
+                      ? errors.sourceCodeBranch.message
+                      : "Select git branch"
+                  }
                 />
               )}
             />
@@ -374,11 +344,9 @@ const ExecutorCreatePageInner = () => {
                       ? errors.sourceCodeFolder.message
                       : "Select directory path"
                   }
-                  slotProps={{
-                    select: {
-                      inputProps: {
-                        "aria-label": "Source directory path",
-                      },
+                  selectProps={{
+                    inputProps: {
+                      "aria-label": "Source directory path",
                     },
                   }}
                 >
@@ -390,11 +358,11 @@ const ExecutorCreatePageInner = () => {
                 </TextField>
               )}
             />
-          </Box>
+          </div>
         </PropertyCard>
 
         <PropertyCard title="Executor Configuration">
-          <Box>
+          <div>
             <Controller
               name="commandArgs"
               control={control}
@@ -403,7 +371,6 @@ const ExecutorCreatePageInner = () => {
                   {...field}
                   label="Command arguments"
                   helperText="Enter command arguments (e.g., -var-file=prod.tfvars)"
-                  variant="outlined"
                   error={!!errors.commandArgs}
                   fullWidth
                   margin="normal"
@@ -536,9 +503,9 @@ const ExecutorCreatePageInner = () => {
                 )}
               />
             )}
-          </Box>
+          </div>
         </PropertyCard>
-      </Box>
+      </div>
     </PageContainer>
   );
 };

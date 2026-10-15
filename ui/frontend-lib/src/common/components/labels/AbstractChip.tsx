@@ -1,6 +1,4 @@
-import { Chip } from "@mui/material";
-
-import { solidChipColorSx } from "../../utils/softChip";
+import { Chip } from "../../../ui";
 
 /**
  * "Abstract" badge for abstract templates. Matches the chip rendered by
@@ -11,11 +9,9 @@ export const AbstractChip = () => (
   <Chip
     label="ABSTRACT"
     variant="filled"
-    sx={(theme) => ({
-      ...solidChipColorSx("info")(theme),
-      height: 18,
-      fontSize: "0.625rem",
-    })}
+    className="h-4.5 text-[0.625rem]"
+    appearance="solid"
+    color="info"
   />
 );
 

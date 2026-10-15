@@ -1,7 +1,6 @@
 import { Control, FieldArrayWithId } from "react-hook-form";
 
-import { Box, CircularProgress } from "@mui/material";
-
+import { Spinner } from "../../ui";
 import { useSourceCodeVersionConfigContext } from "../context/SourceCodeVersionConfigContext";
 
 import { SourceConfigForm } from "./SourceConfigForm";
@@ -15,22 +14,22 @@ export const ConfigList = ({ control, fields }: ConfigListProps) => {
   const { isLoading } = useSourceCodeVersionConfigContext();
 
   return (
-    <Box>
+    <div>
       {isLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-          <CircularProgress size={28} />
-        </Box>
+        <div className="flex justify-center py-8">
+          <Spinner size={28} />
+        </div>
       ) : (
         fields.map((field, index) => (
-          <Box key={`${field.id}`}>
+          <div key={`${field.id}`}>
             <SourceConfigForm
               control={control}
               index={index}
               fieldId={field.id}
             />
-          </Box>
+          </div>
         ))
       )}
-    </Box>
+    </div>
   );
 };

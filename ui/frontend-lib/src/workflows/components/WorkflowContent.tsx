@@ -1,9 +1,5 @@
 import { useState } from "react";
 
-import AccountTreeIcon from "@mui/icons-material/AccountTree";
-import ListIcon from "@mui/icons-material/List";
-import { ToggleButton, ToggleButtonGroup } from "@mui/material";
-
 import { useLocalStorage } from "../../common";
 import { Audit } from "../../common/components/activity/Audit";
 import { EntityLogs } from "../../common/components/activity/EntityLogs";
@@ -15,6 +11,8 @@ import {
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { AccountTreeIcon, ListIcon } from "../../icons/material";
+import { ToggleButton, ToggleButtonGroup } from "../../ui";
 import { EntityTaskQueueStatus } from "../../workers/components";
 import { GqlWorkflow } from "../graphql";
 
@@ -51,11 +49,11 @@ const WorkflowStepsTab = ({ workflow }: { workflow: GqlWorkflow }) => {
             size="small"
           >
             <ToggleButton value="list">
-              <ListIcon fontSize="small" sx={{ mr: 0.5 }} />
+              <ListIcon className="mr-1" fontSize="small" />
               List
             </ToggleButton>
             <ToggleButton value="diagram">
-              <AccountTreeIcon fontSize="small" sx={{ mr: 0.5 }} />
+              <AccountTreeIcon className="mr-1" fontSize="small" />
               Diagram
             </ToggleButton>
           </ToggleButtonGroup>

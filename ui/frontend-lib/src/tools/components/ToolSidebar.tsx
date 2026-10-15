@@ -1,13 +1,11 @@
-import { Chip, Grid, Link, Stack, Typography } from "@mui/material";
-
 import {
   EntitySidebar,
   SidebarSection,
 } from "../../common/components/cards/EntitySidebar";
-import { Entity } from "../../common/components/entities/Entity";
+import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
 import { CommonField } from "../../common/components/fields/CommonField";
-import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import StatusChip from "../../common/StatusChip";
+import { Chip, Link } from "../../ui";
 import { ToolDetail, toolStatus, formatToolSize } from "../types";
 
 export interface ToolSidebarProps {
@@ -22,83 +20,69 @@ export interface ToolSidebarProps {
 export const ToolSidebar = ({ tool }: ToolSidebarProps) => (
   <EntitySidebar ariaLabel="Tool details">
     <SidebarSection title="Status">
-      <Grid size={12}>
-        <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+      <div className="col-span-full">
+        <div className="flex flex-row items-center gap-1">
           <StatusChip status={toolStatus(tool)} />
           {tool.isDefault && (
             <Chip size="small" label="default" color="primary" />
           )}
-        </Stack>
-      </Grid>
+        </div>
+      </div>
       {toolStatus(tool) === "error" && (
         <CommonField
           name="Error"
           value={
-            <Typography sx={{ color: "error.main" }}>
-              {tool.errorMessage}
-            </Typography>
+            <p className="m-0 text-body2 text-error">{tool.errorMessage}</p>
           }
-          size={12}
+          span="full"
         />
       )}
     </SidebarSection>
 
     <SidebarSection title="Binary">
-      <CommonField name="Platform" value={`${tool.os}/${tool.arch}`} size={6} />
-      <CommonField name="Size" value={formatToolSize(tool.size)} size={6} />
-      <CommonField name="Executable" value={tool.executable} size={12} />
+      <CommonField
+        name="Platform"
+        value={`${tool.os}/${tool.arch}`}
+        span="half"
+      />
+      <CommonField name="Size" value={formatToolSize(tool.size)} span="half" />
+      <CommonField name="Executable" value={tool.executable} span="full" />
       <CommonField
         name="Source"
         value={
           tool.sourceUrl ? (
             <Link
+              className="wrap-anywhere"
               href={tool.sourceUrl}
               target="_blank"
               rel="noopener"
-              underline="hover"
-              sx={{ overflowWrap: "anywhere" }}
             >
               {tool.sourceUrl}
             </Link>
           ) : null
         }
-        size={12}
+        span="full"
       />
       <CommonField
         name="SHA256"
         value={
           tool.sha256 ? (
-            <Typography
-              sx={{ fontFamily: "monospace", overflowWrap: "anywhere" }}
-            >
+            <p className="m-0 font-mono text-body2 wrap-anywhere">
               {tool.sha256}
-            </Typography>
+            </p>
           ) : null
         }
-        size={12}
+        span="full"
       />
     </SidebarSection>
 
-    <SidebarSection title="Details">
-      <CommonField
-        name="Added by"
-        value={
-          tool.creator ? (
-            <Entity entity={{ ...tool.creator, entityType: "user" }} />
-          ) : null
-        }
-        size={12}
-      />
-      <CommonField
-        name="Created"
-        value={<RelativeTime date={tool.createdAt} />}
-        size={6}
-      />
-      <CommonField
-        name="Last Updated"
-        value={tool.updatedAt ? <RelativeTime date={tool.updatedAt} /> : null}
-        size={6}
-      />
-    </SidebarSection>
+    <SidebarDetailsSection
+      entity={{
+        creator: tool.creator,
+        createdAt: tool.createdAt,
+        updatedAt: tool.updatedAt,
+      }}
+      creatorLabel="Added by"
+    />
   </EntitySidebar>
 );

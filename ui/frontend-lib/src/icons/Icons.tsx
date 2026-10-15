@@ -1,71 +1,85 @@
 import React from "react";
 
 import { Icon } from "@iconify/react";
-import CloudQueueIcon from "@mui/icons-material/CloudQueue";
-import { Box } from "@mui/material";
+import deviconMongodbData from "@iconify-icons/devicon/mongodb";
+import deviconPostgresqlData from "@iconify-icons/devicon/postgresql";
+import logosAwsData from "@iconify-icons/logos/aws";
+import logosBitbucketData from "@iconify-icons/logos/bitbucket";
+import logosGitIconData from "@iconify-icons/logos/git-icon";
+import logosGitlabIconData from "@iconify-icons/logos/gitlab-icon";
+import logosGoogleCloudData from "@iconify-icons/logos/google-cloud";
+import logosGoogleIconData from "@iconify-icons/logos/google-icon";
+import logosMicrosoftAzureData from "@iconify-icons/logos/microsoft-azure";
+import logosMicrosoftIconData from "@iconify-icons/logos/microsoft-icon";
+import logosSlackIconData from "@iconify-icons/logos/slack-icon";
+import logosTerraformIconData from "@iconify-icons/logos/terraform-icon";
+import mdiGithubData from "@iconify-icons/mdi/github";
+import vscodeIconsFileTypeDatadogData from "@iconify-icons/vscode-icons/file-type-datadog";
+import vscodeIconsFileTypeOpentofuData from "@iconify-icons/vscode-icons/file-type-opentofu";
 
-// Wrapper to keep a consistent signature with other MUI SvgIcon-based components.
-// Accept only Iconify props (width/height/color/className/style). Ignore MUI-specific props like sx.
+import { CloudQueueIcon } from "./material";
+
+// Brand and provider icons take Iconify's props (width/height/color/className/style).
 export type IconProps = Omit<React.ComponentProps<typeof Icon>, "icon">;
 
 export const AwsIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="logos:aws" {...props} />
+  <Icon icon={logosAwsData} ssr {...props} />
 );
 
 export const AzureIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="logos:microsoft-azure" {...props} />
+  <Icon icon={logosMicrosoftAzureData} ssr {...props} />
 );
 
 export const MicrosoftIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="logos:microsoft-icon" {...props} />
+  <Icon icon={logosMicrosoftIconData} ssr {...props} />
 );
 
 export const GoogleCloudIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="logos:google-cloud" {...props} />
+  <Icon icon={logosGoogleCloudData} ssr {...props} />
 );
 
 export const GoogleIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="logos:google-icon" {...props} />
+  <Icon icon={logosGoogleIconData} ssr {...props} />
 );
 
 export const GitHubIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="mdi:github" color="currentColor" {...props} />
+  <Icon icon={mdiGithubData} ssr color="currentColor" {...props} />
 );
 
 export const GitLabIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="logos:gitlab-icon" {...props} />
+  <Icon icon={logosGitlabIconData} ssr {...props} />
 );
 
 export const BitbucketIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="logos:bitbucket" {...props} />
+  <Icon icon={logosBitbucketData} ssr {...props} />
 );
 
 export const GitIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="logos:git-icon" {...props} />
+  <Icon icon={logosGitIconData} ssr {...props} />
 );
 
 export const MongoDBIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="devicon:mongodb" {...props} />
+  <Icon icon={deviconMongodbData} ssr {...props} />
 );
 
 export const PostgreSQLIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="devicon:postgresql" {...props} />
+  <Icon icon={deviconPostgresqlData} ssr {...props} />
 );
 
 export const DatadogIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="vscode-icons:file-type-datadog" {...props} />
+  <Icon icon={vscodeIconsFileTypeDatadogData} ssr {...props} />
 );
 
 export const OpenTofuIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="vscode-icons:file-type-opentofu" {...props} />
+  <Icon icon={vscodeIconsFileTypeOpentofuData} ssr {...props} />
 );
 
 export const TerraformIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="logos:terraform-icon" {...props} />
+  <Icon icon={logosTerraformIconData} ssr {...props} />
 );
 
 export const SlackIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="logos:slack-icon" {...props} />
+  <Icon icon={logosSlackIconData} ssr {...props} />
 );
 
 const resourceIcons = new Map<string, React.ElementType>([
@@ -114,22 +128,11 @@ export const ProviderIcon: React.FC<{
   provider?: string;
   size?: number;
 }> = ({ provider, size = 18 }) => (
-  <Box
-    component="span"
+  <span
+    className="inline-flex shrink-0 items-center justify-center leading-[0] [&_svg]:size-[var(--icon-size)] [&_svg]:shrink-0"
+    style={{ "--icon-size": `${size}px` } as React.CSSProperties}
     aria-hidden
-    sx={{
-      display: "inline-flex",
-      alignItems: "center",
-      justifyContent: "center",
-      flexShrink: 0,
-      lineHeight: 0,
-      "& svg": {
-        width: size,
-        height: size,
-        flexShrink: 0,
-      },
-    }}
   >
     {IconField(provider, size)}
-  </Box>
+  </span>
 );

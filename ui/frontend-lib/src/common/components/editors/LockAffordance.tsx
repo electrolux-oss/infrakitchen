@@ -1,6 +1,8 @@
-import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { Box, IconButton, Tooltip } from "@mui/material";
+import {
+  LockOpenOutlinedIcon,
+  LockOutlinedIcon,
+} from "../../../icons/material";
+import { IconButton, Tooltip } from "../../../ui";
 
 interface LockAffordanceProps {
   /** Whether the field is currently locked (shows a solid lock) or unlocked. */
@@ -25,27 +27,15 @@ export const LockAffordance = ({
 }: LockAffordanceProps) => {
   const button = (
     <IconButton
+      className="size-5 shrink-0 border border-transparent p-0 hover:border-divider hover:bg-hover"
       size="small"
       onClick={onClick}
       aria-label={description ? `${title}. ${description}` : title}
-      sx={{
-        width: 20,
-        height: 20,
-        padding: 0,
-        flexShrink: 0,
-        border: "1px solid transparent",
-        // Same default icon color as the edit (pencil) affordance. Always
-        // visible in both states so the lock status is never ambiguous.
-        "&:hover": {
-          backgroundColor: "action.hover",
-          borderColor: "divider",
-        },
-      }}
     >
       {locked ? (
-        <LockOutlinedIcon sx={{ fontSize: 16 }} />
+        <LockOutlinedIcon className="text-[16px]" />
       ) : (
-        <LockOpenOutlinedIcon sx={{ fontSize: 16 }} />
+        <LockOpenOutlinedIcon className="text-[16px]" />
       )}
     </IconButton>
   );
@@ -53,16 +43,12 @@ export const LockAffordance = ({
   return (
     <Tooltip
       title={
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-          <Box component="span" sx={{ fontWeight: 600 }}>
-            {title}
-          </Box>
+        <div className="flex flex-col gap-1">
+          <span className="font-semibold">{title}</span>
           {description ? (
-            <Box component="span" sx={{ fontWeight: 400, opacity: 0.85 }}>
-              {description}
-            </Box>
+            <span className="font-normal opacity-85">{description}</span>
           ) : null}
-        </Box>
+        </div>
       }
     >
       <span>{button}</span>

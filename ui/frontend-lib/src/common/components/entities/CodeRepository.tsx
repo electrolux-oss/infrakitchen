@@ -1,5 +1,3 @@
-import { Box, Stack } from "@mui/material";
-
 import { ProviderIcon } from "../../../icons/Icons";
 import { getRepoNameFromUrl } from "../../utils";
 
@@ -31,31 +29,15 @@ export const CodeRepository = ({
   const repoName = name ?? getRepoNameFromUrl(sourceCodeUrl || "");
 
   return (
-    <Stack
-      direction="row"
-      spacing={1}
-      sx={{
-        alignItems: "center",
-        minWidth: 0,
-        overflow: "hidden",
-      }}
-    >
+    <div className="flex min-w-0 flex-row items-center gap-2 overflow-hidden">
       <ProviderIcon provider={sourceCodeProvider} />
       {id && entityName && !disableLink ? (
         <EntityLink id={id} entityName={entityName} name={repoName} noWrap />
       ) : (
-        <Box
-          component="span"
-          sx={{
-            minWidth: 0,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
+        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
           {repoName}
-        </Box>
+        </span>
       )}
-    </Stack>
+    </div>
   );
 };

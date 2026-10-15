@@ -1,11 +1,10 @@
 import * as React from "react";
 
-import Divider from "@mui/material/Divider";
+import { Divider } from "@electrolux-oss/infrakitchen";
 
-import type {} from "@mui/material/themeCssVarsAugmentation";
 import DashboardSidebarContext from "../../context/DashboardSidebarContext";
 
-import { getDrawerSxTransitionMixin } from "./mixins";
+import { drawerTransition } from "./mixins";
 
 export default function DashboardSidebarDividerItem() {
   const sidebarContext = React.useContext(DashboardSidebarContext);
@@ -17,14 +16,12 @@ export default function DashboardSidebarDividerItem() {
   return (
     <li>
       <Divider
-        sx={{
-          borderBottomWidth: 1,
-          my: 1,
-          mx: -0.5,
-          ...(hasDrawerTransitions
-            ? getDrawerSxTransitionMixin(fullyExpanded, "margin")
-            : {}),
-        }}
+        className="-mx-1 my-2"
+        style={
+          hasDrawerTransitions
+            ? { transition: drawerTransition(fullyExpanded, "margin") }
+            : undefined
+        }
       />
     </li>
   );

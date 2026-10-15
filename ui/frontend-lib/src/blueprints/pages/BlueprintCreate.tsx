@@ -3,12 +3,11 @@ import { useCallback } from "react";
 import { Control, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import { Button } from "@mui/material";
-
 import { WiringRule } from "../../common/components/viewers/Wiring/types";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import { Button } from "../../ui";
 import { BlueprintFormFields } from "../components/BlueprintFormFields";
 import { CREATE_BLUEPRINT_MUTATION, GqlBlueprint } from "../graphql";
 import { useBlueprintForm } from "../hooks/useBlueprintForm";

@@ -9,21 +9,18 @@ import {
 } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import {
-  Box,
-  TextField,
-  Button,
-  Autocomplete,
-  Chip,
-  MenuItem,
-  FormControlLabel,
-  Checkbox,
-} from "@mui/material";
-
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import {
+  Autocomplete,
+  Checkbox,
+  FormControlLabel,
+  Button,
+  TextField,
+  MenuItem,
+} from "../../ui";
 import { renderFieldsForProvider } from "../components/AuthProviderForms";
 import { CREATE_AUTH_PROVIDER_MUTATION } from "../graphql";
 import { AuthProviderCreate } from "../types";
@@ -100,17 +97,9 @@ const AuthProviderCreatePageInner = () => {
         </>
       }
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          flexDirection: "column",
-          minWidth: 320,
-          width: "100%",
-        }}
-      >
+      <div className="flex w-full min-w-80 flex-col items-center">
         <PropertyCard title="Auth Provider Definition">
-          <Box>
+          <div>
             <Controller
               name="name"
               control={control}
@@ -120,7 +109,6 @@ const AuthProviderCreatePageInner = () => {
                   {...field}
                   label="Name"
                   required={true}
-                  variant="outlined"
                   error={!!errors.name}
                   helperText={
                     errors.name ? errors.name.message : "Provide a unique name"
@@ -137,7 +125,6 @@ const AuthProviderCreatePageInner = () => {
                 <TextField
                   {...field}
                   label="Description"
-                  variant="outlined"
                   error={!!errors.description}
                   helperText={
                     errors.description
@@ -159,7 +146,6 @@ const AuthProviderCreatePageInner = () => {
                   select
                   label="Auth Provider"
                   required={true}
-                  variant="outlined"
                   error={!!errors.authProvider}
                   helperText={
                     errors.authProvider
@@ -185,37 +171,18 @@ const AuthProviderCreatePageInner = () => {
                 <Autocomplete
                   multiple
                   freeSolo
-                  options={[]}
+                  options={[] as string[]}
                   value={field.value}
                   onChange={(_event, newValue) => field.onChange(newValue)}
-                  renderValue={(value: readonly string[], getTagProps) =>
-                    value.map((option: string, index: number) => {
-                      const { key, ...rest } = getTagProps({ index });
-                      return (
-                        <Chip
-                          key={key}
-                          {...rest}
-                          variant="outlined"
-                          label={option}
-                        />
-                      );
-                    })
+                  label="Filter By Domain"
+                  error={!!errors.filterByDomain}
+                  helperText={
+                    errors.filterByDomain
+                      ? errors.filterByDomain.message
+                      : "Add filter by domain and press Enter"
                   }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Filter By Domain"
-                      variant="outlined"
-                      error={!!errors.filterByDomain}
-                      helperText={
-                        errors.filterByDomain
-                          ? errors.filterByDomain.message
-                          : "Add filter by domain and press Enter"
-                      }
-                      fullWidth
-                      margin="normal"
-                    />
-                  )}
+                  fullWidth
+                  margin="normal"
                 />
               )}
             />
@@ -230,20 +197,20 @@ const AuthProviderCreatePageInner = () => {
                 />
               )}
             />
-          </Box>
+          </div>
         </PropertyCard>
         {selectedProvider && (
           <PropertyCard title="Configuration">
-            <Box>
+            <div>
               {renderFieldsForProvider(
                 selectedProvider,
                 control as Control<any>,
                 errors,
               )}
-            </Box>
+            </div>
           </PropertyCard>
         )}
-      </Box>
+      </div>
     </PageContainer>
   );
 };

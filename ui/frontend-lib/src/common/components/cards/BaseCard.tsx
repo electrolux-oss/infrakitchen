@@ -1,22 +1,12 @@
 import { ReactNode } from "react";
 
-import {
-  Box,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Grid,
-  SxProps,
-  Theme,
-} from "@mui/material";
-
-import { softChipColorSx, solidChipColorSx } from "../../utils/softChip";
+import { Chip, Card, CardContent, CardHeader } from "../../../ui";
+import { cn } from "../../../utils/cn";
 
 /**
  * Base layout card shared by the section cards on entity detail pages (and the
  * card-like groups on overview pages). Renders an optional header — icon,
- * name, status chip and actions — above a fixed `spacing={2}` grid that hosts
+ * name, status chip and actions — above a two-column grid that hosts
  * the caller's fields, so every card keeps a consistent structure and rhythm.
  *
  * The header is only rendered when at least one of its parts is provided;
@@ -27,7 +17,7 @@ export interface BaseCardProps {
   name?: ReactNode;
   /** Supporting text shown under the title (header subheader). */
   description?: ReactNode;
-  /** Body content, typically `<Grid item>` fields placed inside the 2-col grid. */
+  /** Body content, typically CommonField cells of the 2-col grid. */
   children?: ReactNode;
   /** Header actions (e.g. edit / refresh buttons) rendered on the right. */
   actions?: ReactNode;
@@ -46,8 +36,8 @@ export interface BaseCardProps {
     | "warning";
   /** Chip style: translucent soft pill (default) or solid filled pill (EntityCard-style). */
   chipVariant?: "soft" | "solid";
-  /** Style overrides merged onto the root MUI Card. */
-  sx?: SxProps<Theme>;
+  /** Class names merged onto the root Card. */
+  className?: string;
 }
 
 export const BaseCard = (props: BaseCardProps) => {
@@ -60,7 +50,7 @@ export const BaseCard = (props: BaseCardProps) => {
     chip,
     chipColor = "info",
     chipVariant = "soft",
-    sx,
+    className,
   } = props;
 
   // Skip the header entirely unless the caller supplied at least one of its
@@ -68,44 +58,31 @@ export const BaseCard = (props: BaseCardProps) => {
   const hasHeader = !!(name || description || actions || chip || icon);
 
   return (
-    <Card sx={{ width: "100%", ...sx }}>
+    <Card className={cn("w-full", className)}>
       {hasHeader && (
         <CardHeader
           title={
             // Icon + title + chip share a row; the chip sits inline after the name.
-            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+            <div className="flex items-center gap-4">
               {icon}
               {name}
               {chip && (
                 <Chip
                   label={chip.toUpperCase()}
-                  variant="filled"
-                  sx={
-                    chipVariant === "solid"
-                      ? solidChipColorSx(chipColor)
-                      : softChipColorSx(chipColor)
-                  }
+                  appearance={chipVariant === "solid" ? "solid" : "soft"}
+                  color={chipColor}
                 />
               )}
-            </Box>
+            </div>
           }
           subheader={description ? description : undefined}
+          subheaderClassName="mt-2"
           action={actions}
-          sx={{
-            // Give the description breathing room below the title row.
-            "& .MuiCardHeader-content": {
-              "& .MuiCardHeader-subheader": {
-                marginTop: 1,
-              },
-            },
-          }}
         />
       )}
       <CardContent>
-        {/* Standard 2-col grid: callers opt out of a column by passing item xs=12. */}
-        <Grid container spacing={2}>
-          {children}
-        </Grid>
+        {/* Two columns from md up; a field with span="full" takes the whole row. */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{children}</div>
       </CardContent>
     </Card>
   );

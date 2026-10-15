@@ -1,9 +1,8 @@
 import { useState, forwardRef } from "react";
 
-import { Box, TextField, Button } from "@mui/material";
-
 import { InfraKitchenApi } from "../../api/InfraKitchenApi";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { Button, TextField } from "../../ui";
 
 import { GITHUB_REPO_QUERY } from "./graphql";
 import { GithubRepo } from "./types";
@@ -113,7 +112,7 @@ const GithubRepoInput = forwardRef<any, GithubRepoInputProps>((props, _ref) => {
   };
 
   return (
-    <Box>
+    <div>
       <TextField
         value={urlDraft}
         onChange={(e) => handleDraftChange(e.target.value)}
@@ -123,7 +122,6 @@ const GithubRepoInput = forwardRef<any, GithubRepoInputProps>((props, _ref) => {
             validateUrl();
           }
         }}
-        variant="outlined"
         error={hasFailed || error}
         helperText={
           helpertext ||
@@ -142,7 +140,7 @@ const GithubRepoInput = forwardRef<any, GithubRepoInputProps>((props, _ref) => {
       >
         {isLoading ? "Validating..." : "Validate"}
       </Button>
-    </Box>
+    </div>
   );
 });
 

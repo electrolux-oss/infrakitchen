@@ -1,17 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import {
-  Box,
-  Chip,
-  CircularProgress,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-
 import { useConfig } from "../../common";
 import { notifyError } from "../../common/hooks/useNotification";
-import { CODE_FONT_FAMILY } from "../../common/theme";
 import {
   GqlSourceConfig,
   GqlSourceOutputConfigTemplate,
@@ -22,6 +12,7 @@ import {
   SourceOutputConfigTemplateResponse,
   SourceConfigResponse,
 } from "../../source_code_versions/types";
+import { Spinner, Chip, Tooltip, TextField } from "../../ui";
 import { GqlTemplateShort } from "../graphql";
 
 interface NamingConventionInputProps {
@@ -130,11 +121,10 @@ export const NamingConventionInput = ({
   );
 
   return (
-    <Box sx={{ mt: 1 }}>
+    <div className="mt-2">
       <TextField
         inputRef={inputRef}
         label="Naming Convention Pattern"
-        variant="outlined"
         value={value ?? ""}
         onChange={handleChange}
         error={error}
@@ -144,52 +134,30 @@ export const NamingConventionInput = ({
         }
         fullWidth
         margin="normal"
-        slotProps={{
-          htmlInput: { "aria-label": "Naming convention pattern" },
-        }}
+        inputProps={{ "aria-label": "Naming convention pattern" }}
       />
       {/* Available variables */}
-      <Box sx={{ mt: 0.5, mb: 1 }}>
-        <Typography
-          variant="caption"
-          sx={{
-            color: "text.secondary",
-            mr: 1,
-          }}
-        >
+      <div className="mt-1 mb-2">
+        <span className="mr-2 text-caption text-fg-muted">
           Available variables (click to insert):
-        </Typography>
-        {loading && (
-          <CircularProgress size={14} sx={{ verticalAlign: "middle" }} />
-        )}
+        </span>
+        {loading && <Spinner className="align-middle" size={14} />}
         {!loading &&
           configs.length === 0 &&
           parentOutputGroups.every((g) => g.outputs.length === 0) && (
-            <Typography
-              variant="caption"
-              sx={{
-                color: "text.disabled",
-              }}
-            >
+            <span className="text-caption text-fg-disabled">
               No variables found — add source code versions with variable
               configs first.
-            </Typography>
+            </span>
           )}
 
         {/* Own variable configs */}
         {configs.length > 0 && (
-          <Box sx={{ mt: 0.5, mb: 0.5 }}>
-            <Typography
-              variant="caption"
-              sx={{
-                color: "text.secondary",
-                display: "block",
-                mb: 0.25,
-              }}
-            >
+          <div className="mt-1 mb-1">
+            <span className="mb-0.5 block text-caption text-fg-muted">
               Input variables:
-            </Typography>
-            <Box sx={{ display: "inline-flex", flexWrap: "wrap", gap: 0.5 }}>
+            </span>
+            <div className="inline-flex flex-wrap gap-1">
               {configs.map((config) => (
                 <Tooltip
                   key={config.name}
@@ -197,40 +165,27 @@ export const NamingConventionInput = ({
                   placement="top"
                 >
                   <Chip
+                    className="font-mono text-[0.75rem]"
                     label={config.name}
                     variant="outlined"
                     color="primary"
                     onClick={() => handleInsertVariable(config.name)}
-                    sx={{
-                      cursor: "pointer",
-                      fontFamily: CODE_FONT_FAMILY,
-                      fontSize: "0.75rem",
-                    }}
                   />
                 </Tooltip>
               ))}
-            </Box>
-          </Box>
+            </div>
+          </div>
         )}
 
         {/* Parent output groups */}
         {parentOutputGroups.map(
           (group) =>
             group.outputs.length > 0 && (
-              <Box key={group.parentName} sx={{ mt: 0.5, mb: 0.5 }}>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: "text.secondary",
-                    display: "block",
-                    mb: 0.25,
-                  }}
-                >
+              <div className="mt-1 mb-1" key={group.parentName}>
+                <span className="mb-0.5 block text-caption text-fg-muted">
                   Parent <strong>{group.parentName}</strong> outputs:
-                </Typography>
-                <Box
-                  sx={{ display: "inline-flex", flexWrap: "wrap", gap: 0.5 }}
-                >
+                </span>
+                <div className="inline-flex flex-wrap gap-1">
                   {group.outputs.map((output) => (
                     <Tooltip
                       key={output.name}
@@ -238,23 +193,19 @@ export const NamingConventionInput = ({
                       placement="top"
                     >
                       <Chip
+                        className="font-mono text-[0.75rem]"
                         label={output.name}
                         variant="outlined"
                         color="secondary"
                         onClick={() => handleInsertVariable(output.name)}
-                        sx={{
-                          cursor: "pointer",
-                          fontFamily: CODE_FONT_FAMILY,
-                          fontSize: "0.75rem",
-                        }}
                       />
                     </Tooltip>
                   ))}
-                </Box>
-              </Box>
+                </div>
+              </div>
             ),
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };

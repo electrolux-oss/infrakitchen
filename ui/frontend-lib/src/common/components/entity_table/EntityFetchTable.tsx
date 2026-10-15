@@ -1,13 +1,8 @@
 import { forwardRef, useEffect, useState, useMemo, useRef } from "react";
 
-import {
-  GridPaginationModel,
-  GridSortModel,
-  GridColumnVisibilityModel,
-} from "@mui/x-data-grid";
-
 import { useLocalStorage } from "../..";
 import { IkEntity } from "../../../types";
+import { ColumnVisibilityModel, PaginationModel, SortModel } from "../../../ui";
 import { buildAdvancedApiFilters } from "../filter_panel/buildAdvancedApiFilters";
 import { FilterProvider } from "../filter_panel/FilterContext";
 
@@ -23,9 +18,9 @@ export type {
 } from "./EntityFetchTable.types";
 
 interface DataGridState {
-  sortModel: GridSortModel;
-  paginationModel: GridPaginationModel;
-  columnVisibilityModel?: GridColumnVisibilityModel;
+  sortModel: SortModel;
+  paginationModel: PaginationModel;
+  columnVisibilityModel?: ColumnVisibilityModel;
 }
 
 export const EntityFetchTable = forwardRef<
@@ -72,7 +67,7 @@ export const EntityFetchTable = forwardRef<
   const storageKey = `entityTable_${title.toLowerCase().replace(/\s+/g, "_")}`;
   const savedState = get(storageKey) as DataGridState | undefined;
 
-  const defaultSortModel = useMemo<GridSortModel>(() => {
+  const defaultSortModel = useMemo<SortModel>(() => {
     const effectiveDefault = defaultSort ?? {
       field: "updated_at",
       sort: "desc" as const,
@@ -90,7 +85,7 @@ export const EntityFetchTable = forwardRef<
     return column ? [{ field: column.field, sort: effectiveDefault.sort }] : [];
   }, [columns, defaultSort]);
 
-  const [sortModel, setSortModel] = useState<GridSortModel>(() => {
+  const [sortModel, setSortModel] = useState<SortModel>(() => {
     const sortableFields = new Set(
       columns
         .filter((column) => column.sortable !== false)
@@ -102,30 +97,28 @@ export const EntityFetchTable = forwardRef<
     return savedSortModel.length > 0 ? savedSortModel : defaultSortModel;
   });
 
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+  const [paginationModel, setPaginationModel] = useState<PaginationModel>({
     page: 0,
     pageSize: 10,
   });
 
   const [columnVisibilityModel, setColumnVisibilityModel] =
-    useState<GridColumnVisibilityModel>(() => ({
+    useState<ColumnVisibilityModel>(() => ({
       ...(defaultColumnVisibilityModel ?? {}),
       ...(savedState?.columnVisibilityModel ?? {}),
     }));
 
-  const handleSortModelChange = (newSortModel: GridSortModel) => {
+  const handleSortModelChange = (newSortModel: SortModel) => {
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
     setSortModel(newSortModel.length > 0 ? newSortModel : defaultSortModel);
   };
 
-  const handlePaginationModelChange = (
-    newPaginationModel: GridPaginationModel,
-  ) => {
+  const handlePaginationModelChange = (newPaginationModel: PaginationModel) => {
     setPaginationModel(newPaginationModel);
   };
 
   const handleColumnVisibilityModelChange = (
-    newColumnVisibilityModel: GridColumnVisibilityModel,
+    newColumnVisibilityModel: ColumnVisibilityModel,
   ) => {
     setColumnVisibilityModel(newColumnVisibilityModel);
   };

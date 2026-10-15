@@ -1,6 +1,3 @@
-import { Box, Chip } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
@@ -8,7 +5,8 @@ import {
   userColumn,
 } from "../../common/components/entity_table/tableColumns";
 import StatusChip from "../../common/StatusChip";
-import { solidChipColorSx } from "../../common/utils/softChip";
+import { Chip } from "../../ui";
+import { RenderCellParams } from "../../ui";
 
 export const blueprintColumns: EntityTableColumn[] = [
   {
@@ -24,9 +22,7 @@ export const blueprintColumns: EntityTableColumn[] = [
       defaultOperator: "like",
       defaultSelected: true,
     },
-    renderCell: (params: GridRenderCellParams) => (
-      <Entity entity={params.row} />
-    ),
+    renderCell: (params: RenderCellParams) => <Entity entity={params.row} />,
   },
   {
     field: "description",
@@ -38,30 +34,21 @@ export const blueprintColumns: EntityTableColumn[] = [
     headerName: "Templates",
     flex: 1.5,
     sortable: false,
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: RenderCellParams) => {
       const templates = params.row.templates ?? [];
       return (
-        <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+        <div className="flex flex-wrap gap-1">
           {templates.slice(0, 3).map((t: any) => (
-            <Chip
-              key={t.id}
-              label={t.name}
-              variant="filled"
-              sx={(theme) =>
-                solidChipColorSx("default", undefined, undefined, true)(theme)
-              }
-            />
+            <Chip key={t.id} label={t.name} appearance="solid" compact />
           ))}
           {templates.length > 3 && (
             <Chip
               label={`+${templates.length - 3}`}
-              variant="filled"
-              sx={(theme) =>
-                solidChipColorSx("default", undefined, undefined, true)(theme)
-              }
+              appearance="solid"
+              compact
             />
           )}
-        </Box>
+        </div>
       );
     },
   },
@@ -79,7 +66,7 @@ export const blueprintColumns: EntityTableColumn[] = [
         { label: "Disabled", value: "disabled" },
       ],
     },
-    renderCell: (params: GridRenderCellParams) => (
+    renderCell: (params: RenderCellParams) => (
       <StatusChip status={String(params.row.status).toLowerCase()} />
     ),
   },

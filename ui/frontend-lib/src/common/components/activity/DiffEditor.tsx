@@ -1,6 +1,19 @@
-import DiffViewer, { DiffMethod } from "react-diff-viewer-continued";
+import { lazy, Suspense } from "react";
 
-import { Box, useColorScheme, useTheme } from "@mui/material";
+import { Spinner } from "../../../ui";
+
+/** Dark-scheme colours for react-diff-viewer, shared by every diff view. */
+export const DIFF_VIEWER_DARK_VARIABLES = {
+  diffViewerBackground: "var(--color-grey-800)",
+  gutterBackground: "var(--color-paper)",
+  gutterColor: "var(--color-fg-muted)",
+};
+
+/** Caption size used for diff lines and gutters. */
+export const DIFF_VIEWER_FONT_SIZE = "0.75rem";
+
+// react-diff-viewer brings diff, Emotion and more; load it only when shown.
+const DiffViewerPane = lazy(() => import("./DiffViewerPane"));
 
 export interface DiffEditorProps {
   originalText: string;
@@ -12,55 +25,17 @@ export interface DiffEditorProps {
 }
 
 export function DiffEditor(props: DiffEditorProps) {
-  const {
-    originalText,
-    modifiedText,
-    splitView = false,
-    showDiffOnly = false,
-  } = props;
-  const theme = useTheme();
-  const { mode } = useColorScheme();
-
-  const diffStyles = {
-    variables: {
-      dark: {
-        diffViewerBackground: theme.vars?.palette.grey?.[800],
-        gutterBackground: theme.vars?.palette.background.paper,
-        gutterColor: theme.vars?.palette.text.secondary,
-      },
-    },
-    marker: {
-      fontSize: theme.typography.caption.fontSize,
-    },
-    line: {
-      fontSize: theme.typography.caption.fontSize,
-      "&:hover": {
-        background: theme.palette.action.hover,
-      },
-    },
-    lineNumber: {
-      fontSize: theme.typography.caption.fontSize,
-    },
-  };
-
   return (
-    <Box
-      sx={{
-        height: "100%",
-        overflow: "auto",
-      }}
-    >
-      <DiffViewer
-        key={`diffviewer-${mode}-${splitView}-${showDiffOnly}`}
-        oldValue={originalText}
-        newValue={modifiedText}
-        splitView={splitView}
-        hideLineNumbers={false}
-        showDiffOnly={showDiffOnly}
-        styles={diffStyles}
-        useDarkTheme={mode === "dark"}
-        compareMethod={DiffMethod.WORDS}
-      />
-    </Box>
+    <div className="h-full overflow-auto">
+      <Suspense
+        fallback={
+          <div className="flex h-full items-center justify-center p-4">
+            <Spinner size={24} />
+          </div>
+        }
+      >
+        <DiffViewerPane {...props} />
+      </Suspense>
+    </div>
   );
 }

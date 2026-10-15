@@ -2,9 +2,6 @@ import { useState } from "react";
 
 import { useParams } from "react-router";
 
-import TuneIcon from "@mui/icons-material/Tune";
-import { Button } from "@mui/material";
-
 import { LogLiveTail, PermissionWrapper } from "../../common";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
@@ -12,6 +9,8 @@ import {
   EntityProvider,
   useEntityProvider,
 } from "../../common/context/EntityContext";
+import { TuneIcon } from "../../icons/material";
+import { Button } from "../../ui";
 import { TASK_QUEUE_STATUS_SELECTION } from "../../workers/graphql";
 import { SourceCodeVersionContent } from "../components/SourceCodeVersionContent";
 import { TemplateVersionReorderDialog } from "../components/TemplateVersionReorderDialog";

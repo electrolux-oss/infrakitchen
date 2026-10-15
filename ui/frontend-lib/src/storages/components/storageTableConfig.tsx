@@ -1,6 +1,3 @@
-import { Box } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
@@ -11,6 +8,7 @@ import {
 import { getProviderValue } from "../../common/components/fields/CommonField";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
+import { RenderCellParams } from "../../ui";
 import { ENTITY_STATE, ENTITY_STATUS } from "../../utils/constants";
 
 export const storageColumns: EntityTableColumn[] = [
@@ -27,7 +25,7 @@ export const storageColumns: EntityTableColumn[] = [
       defaultOperator: "like",
       defaultSelected: true,
     },
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: RenderCellParams) => {
       return <Entity entity={params.row} />;
     },
   },
@@ -58,16 +56,10 @@ export const storageColumns: EntityTableColumn[] = [
         { label: "Azure DevOps", value: "azure_devops" },
       ],
     },
-    renderCell: (params: GridRenderCellParams) => (
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          height: "100%",
-        }}
-      >
+    renderCell: (params: RenderCellParams) => (
+      <div className="flex h-full items-center">
         {getProviderValue(params.value, 18)}
-      </Box>
+      </div>
     ),
   },
   {
@@ -109,7 +101,7 @@ export const storageColumns: EntityTableColumn[] = [
         ],
       },
     ],
-    renderCell: (params: GridRenderCellParams) => (
+    renderCell: (params: RenderCellParams) => (
       <StatusChip
         status={String(params.row.status).toLowerCase()}
         state={String(params.row.state).toLowerCase()}
@@ -134,7 +126,7 @@ export const storageColumns: EntityTableColumn[] = [
       }),
     },
     valueGetter: (_value: any, row: any) => row.integration?.name || "",
-    renderCell: (params: GridRenderCellParams) =>
+    renderCell: (params: RenderCellParams) =>
       params.row.integration ? (
         <Entity entity={params.row.integration} />
       ) : null,

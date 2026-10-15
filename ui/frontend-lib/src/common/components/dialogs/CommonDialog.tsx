@@ -1,15 +1,15 @@
 import React, { ReactNode } from "react";
 
-import CloseIcon from "@mui/icons-material/Close";
-import { Box } from "@mui/material";
+import { CloseIcon } from "../../../icons/material";
 import {
+  Button,
+  IconButton,
   Dialog,
   DialogTitle,
-  IconButton,
   DialogContent,
   DialogActions,
-  Button,
-} from "@mui/material";
+} from "../../../ui";
+import { cn } from "../../../utils/cn";
 
 interface CommonDialogProps {
   open: boolean;
@@ -41,41 +41,28 @@ export const CommonDialog: React.FC<CommonDialogProps> = ({
       maxWidth={maxWidth}
       fullWidth={fullWidth}
     >
-      <DialogTitle
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          px: 3,
-          pt: 2.5,
-          pb: 1.5,
-          fontSize: "1.0625rem",
-          fontWeight: 600,
-          lineHeight: 1.4,
-        }}
-      >
+      <DialogTitle className="flex items-center justify-between px-6 pt-5 pb-3 text-[1.0625rem] leading-[1.4] font-semibold">
         {title}
-        <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+        <div className="flex items-center gap-1">
           {headerAction}
           <IconButton
+            className={cn(
+              "text-fg-muted hover:bg-hover",
+              headerAction ? "ml-0" : "ml-2",
+            )}
             onClick={onClose}
             size="small"
             aria-label="Close Dialog"
-            sx={{
-              ml: headerAction ? 0 : 1,
-              color: "text.secondary",
-              "&:hover": { bgcolor: "action.hover" },
-            }}
           >
             <CloseIcon fontSize="small" />
           </IconButton>
-        </Box>
+        </div>
       </DialogTitle>
-      <DialogContent sx={{ minWidth: { xs: 300, sm: 400 }, pt: 0.5 }}>
-        <Box>{content}</Box>
+      <DialogContent className="min-w-75 pt-1 sm:min-w-100">
+        <div>{content}</div>
       </DialogContent>
       {hasFooterActions && (
-        <DialogActions sx={{ px: 3, pt: 1, pb: 2.5, gap: 1 }}>
+        <DialogActions className="gap-2 px-6 pt-2 pb-5">
           <Button onClick={onClose}>Cancel</Button>
           {actions}
         </DialogActions>

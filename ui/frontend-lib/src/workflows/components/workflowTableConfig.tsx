@@ -1,5 +1,3 @@
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
@@ -8,6 +6,7 @@ import {
 } from "../../common/components/entity_table/tableColumns";
 import { getDateValue } from "../../common/components/fields/CommonField";
 import StatusChip from "../../common/StatusChip";
+import { RenderCellParams } from "../../ui";
 import { ENTITY_STATUS } from "../../utils/constants";
 
 export const workflowColumns: EntityTableColumn[] = [
@@ -16,7 +15,7 @@ export const workflowColumns: EntityTableColumn[] = [
     headerName: "Workflow",
     flex: 1,
     hideable: false,
-    renderCell: (params: GridRenderCellParams) => (
+    renderCell: (params: RenderCellParams) => (
       <Entity
         entity={{
           id: params.row.id,
@@ -51,7 +50,7 @@ export const workflowColumns: EntityTableColumn[] = [
         { label: "Ready", value: ENTITY_STATUS.READY },
       ],
     },
-    renderCell: (params: GridRenderCellParams) => (
+    renderCell: (params: RenderCellParams) => (
       <StatusChip status={String(params.row.status).toLowerCase()} />
     ),
   },
@@ -69,14 +68,14 @@ export const workflowColumns: EntityTableColumn[] = [
     headerName: "Created At",
     flex: 1,
     sortField: "created_at",
-    renderCell: (params: GridRenderCellParams) => getDateValue(params.value),
+    renderCell: (params: RenderCellParams) => getDateValue(params.value),
   },
   {
     field: "completedAt",
     headerName: "Completed At",
     flex: 1,
     sortField: "completed_at",
-    renderCell: (params: GridRenderCellParams) =>
+    renderCell: (params: RenderCellParams) =>
       params.value ? getDateValue(params.value) : "-",
   },
 ];

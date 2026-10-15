@@ -1,24 +1,18 @@
 import { forwardRef } from "react";
 
+import { AddIcon, DeleteOutlinedIcon } from "../../../icons/material";
 import {
-  Add as AddIcon,
-  DeleteOutlined as DeleteOutlineIcon,
-} from "@mui/icons-material";
-import {
-  Box,
-  Button,
-  Chip,
   FormControlLabel,
-  IconButton,
   Switch,
-  TextField,
+  Button,
+  IconButton,
+  Chip,
   Tooltip,
-  Typography,
-} from "@mui/material";
-
-import { dashedAddButtonSx } from "../../utils/dashedAddButtonSx";
-import { solidChipColorSx } from "../../utils/softChip";
-import { deleteIconButtonStyle } from "../buttons/deleteIconButtonStyle";
+  TextField,
+} from "../../../ui";
+import { cn } from "../../../utils/cn";
+import { dashedAddButtonClass } from "../../utils/dashedAddButton";
+import { deleteIconButtonClass } from "../buttons/deleteIconButtonClass";
 
 interface Tag {
   name: string;
@@ -84,64 +78,36 @@ const TagInput = forwardRef<any, TagInputProps>((props, _ref) => {
   };
 
   return (
-    <Box sx={{ mt: 2, px: 2 }}>
+    <div className="mt-4 px-4">
       {!hideHeader && (
         /* Section header: label, entry count */
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {label}
-          </Typography>
+        <div className="mb-2 flex items-center gap-2">
+          <p className="m-0 text-body2 font-semibold">{label}</p>
           <Chip
             label={String(currentValue.length)}
-            sx={solidChipColorSx("info", undefined, undefined, true)}
+            appearance="solid"
+            color="info"
+            compact
           />
-        </Box>
+        </div>
       )}
 
       {currentValue.length > 0 && (
-        <Box
-          sx={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            gap: 1,
-            pb: 0,
-            color: "text.secondary",
-          }}
-        >
+        <div className="flex flex-wrap items-center gap-2 pb-0 text-fg-muted">
           {/* Column captions shown once, instead of "Name"/"Value" labels on
               every row. Reserve the switch + remove-action widths so the
               captions stay aligned with the fields below. */}
-          <Typography
-            variant="caption"
-            sx={{ flex: "1 1 180px", minWidth: 160 }}
-          >
-            Name
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{ flex: "1 1 180px", minWidth: 160 }}
-          >
-            Value
-          </Typography>
-          <Box sx={{ flex: "0 0 auto", width: 178 }} />
-          <Box sx={{ flex: "0 0 auto", width: 28 }} />
-        </Box>
+          <span className="min-w-40 flex-[1_1_180px] text-caption">Name</span>
+          <span className="min-w-40 flex-[1_1_180px] text-caption">Value</span>
+          <div className="w-44.5 flex-none" />
+          <div className="w-7 flex-none" />
+        </div>
       )}
 
       {currentValue.map((item: Tag, index: number) => (
-        <Box
-          key={index}
-          sx={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "flex-start",
-            gap: 1,
-            pt: 0.25,
-          }}
-        >
+        <div className="flex flex-wrap items-start gap-2 pt-0.5" key={index}>
           <TextField
-            variant="outlined"
+            className="min-w-40 flex-[1_1_180px]"
             margin="dense"
             value={item.name}
             onChange={(e) => handleFieldChange(index, "name", e.target.value)}
@@ -152,11 +118,10 @@ const TagInput = forwardRef<any, TagInputProps>((props, _ref) => {
             }
             helperText={fieldErrors?.[index]?.name?.message || undefined}
             required
-            slotProps={{ htmlInput: { "aria-label": `Tag name ${index + 1}` } }}
-            sx={{ flex: "1 1 180px", minWidth: 160 }}
+            inputProps={{ "aria-label": `Tag name ${index + 1}` }}
           />
           <TextField
-            variant="outlined"
+            className="min-w-40 flex-[1_1_180px]"
             value={item.value}
             onChange={(e) => handleFieldChange(index, "value", e.target.value)}
             error={
@@ -167,12 +132,10 @@ const TagInput = forwardRef<any, TagInputProps>((props, _ref) => {
             helperText={fieldErrors?.[index]?.value?.message || undefined}
             margin="dense"
             required
-            slotProps={{
-              htmlInput: { "aria-label": `Tag value ${index + 1}` },
-            }}
-            sx={{ flex: "1 1 180px", minWidth: 160 }}
+            inputProps={{ "aria-label": `Tag value ${index + 1}` }}
           />
           <FormControlLabel
+            className="my-1 ml-0 self-center"
             control={
               <Switch
                 checked={item.inherited_by_children}
@@ -185,47 +148,36 @@ const TagInput = forwardRef<any, TagInputProps>((props, _ref) => {
                 }
               />
             }
-            label={
-              <Typography variant="body2">Inherited By Children</Typography>
-            }
-            sx={{ alignSelf: "center", my: 0.5, ml: 0 }}
+            label={<p className="m-0 text-body2">Inherited By Children</p>}
           />
           <Tooltip title="Remove">
             <IconButton
               size="small"
-              sx={{ ...deleteIconButtonStyle, alignSelf: "center", my: 0.5 }}
+              className={cn(deleteIconButtonClass, "my-1 self-center")}
               onClick={() => handleRemove(index)}
               aria-label="Remove"
             >
-              <DeleteOutlineIcon fontSize="small" />
+              <DeleteOutlinedIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-        </Box>
+        </div>
       ))}
       {!hideHeader && (
         /* Add action sits under the rows, matching the other list editors. */
-        <Box sx={{ mt: 1 }}>
+        <div className="mt-2">
           <Button
             startIcon={<AddIcon />}
             onClick={handleAdd}
-            sx={dashedAddButtonSx}
+            className={dashedAddButtonClass}
           >
             Add
           </Button>
-        </Box>
+        </div>
       )}
       {showErrors && typeof fieldErrors?.message === "string" && (
-        <Typography
-          variant="body2"
-          sx={{
-            color: "error.main",
-            mt: 1,
-          }}
-        >
-          {fieldErrors.message}
-        </Typography>
+        <p className="m-0 mt-2 text-body2 text-error">{fieldErrors.message}</p>
       )}
-    </Box>
+    </div>
   );
 });
 

@@ -1,14 +1,10 @@
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import { Box, Chip, Tooltip } from "@mui/material";
-import { SxProps, Theme } from "@mui/system";
-
+import { WarningAmberIcon } from "../icons/material";
+import { Chip, Tooltip, type ChipColor } from "../ui";
+import { cn } from "../utils/cn";
 import { VERSION_LIFECYCLE_STATE } from "../utils/constants";
 
-import { MuiChipColor } from "./utils";
-import { resolveChipColor, solidChipColorSx } from "./utils/softChip";
-
 const VERSION_LIFECYCLE_STATE_COLORS: Partial<
-  Record<VERSION_LIFECYCLE_STATE, MuiChipColor>
+  Record<VERSION_LIFECYCLE_STATE, ChipColor>
 > = {
   [VERSION_LIFECYCLE_STATE.ACTIVE]: "success",
   [VERSION_LIFECYCLE_STATE.PREVIEW]: "info",
@@ -16,9 +12,19 @@ const VERSION_LIFECYCLE_STATE_COLORS: Partial<
   [VERSION_LIFECYCLE_STATE.ARCHIVED]: "error",
 };
 
+const DOT_COLORS: Record<ChipColor, string> = {
+  default: "bg-grey-400",
+  primary: "bg-primary",
+  secondary: "bg-secondary",
+  success: "bg-success",
+  info: "bg-info",
+  warning: "bg-warning",
+  error: "bg-error",
+};
+
 export const getVersionLifecycleStateColor = (
   lifecycleStateValue: string | undefined,
-): MuiChipColor => {
+): ChipColor => {
   const lifecycleState = lifecycleStateValue?.toLocaleLowerCase() as
     VERSION_LIFECYCLE_STATE | undefined;
 
@@ -29,7 +35,7 @@ export const getVersionLifecycleStateColor = (
 
 interface VersionLifecycleStateChipProps {
   lifecycleState: VERSION_LIFECYCLE_STATE | string;
-  sx?: SxProps<Theme>;
+  className?: string;
   breakingChanges?: string;
   /**
    * `chip` is the full labelled pill; `dot` is a small colored dot with the
@@ -45,7 +51,7 @@ interface VersionLifecycleStateChipProps {
 
 const VersionLifecycleStateChip = ({
   lifecycleState,
-  sx,
+  className,
   breakingChanges,
   variant = "chip",
   hideBreakingChangesWarning = false,
@@ -58,7 +64,7 @@ const VersionLifecycleStateChip = ({
 
   if (variant === "dot") {
     return (
-      <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}>
+      <div className="inline-flex items-center gap-1.5">
         <Tooltip
           title={
             hasBreakingChanges
@@ -66,17 +72,13 @@ const VersionLifecycleStateChip = ({
               : normalizedState
           }
         >
-          <Box
-            component="span"
+          <span
             aria-label={normalizedState}
-            sx={(theme) => ({
-              width: 10,
-              height: 10,
-              flexShrink: 0,
-              borderRadius: "50%",
-              bgcolor: resolveChipColor(color, theme),
-              ...(sx as object),
-            })}
+            className={cn(
+              "size-2.5 shrink-0 rounded-full",
+              DOT_COLORS[color],
+              className,
+            )}
           />
         </Tooltip>
         {hasBreakingChanges ? (
@@ -84,27 +86,24 @@ const VersionLifecycleStateChip = ({
             <WarningAmberIcon color="warning" fontSize="small" />
           </Tooltip>
         ) : null}
-      </Box>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}>
+    <div className="inline-flex items-center gap-1.5">
       <Chip
         label={normalizedState}
-        sx={(theme) => ({
-          ...solidChipColorSx(color)(theme),
-          textTransform: "uppercase",
-          fontWeight: 500,
-          ...(sx as object),
-        })}
+        appearance="solid"
+        color={color}
+        className={cn("font-medium uppercase", className)}
       />
       {hasBreakingChanges ? (
         <Tooltip title={breakingChanges}>
           <WarningAmberIcon color="warning" fontSize="small" />
         </Tooltip>
       ) : null}
-    </Box>
+    </div>
   );
 };
 

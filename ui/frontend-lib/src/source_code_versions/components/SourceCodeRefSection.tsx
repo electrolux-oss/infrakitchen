@@ -3,16 +3,6 @@ import { useState, useMemo } from "react";
 import { useLocation } from "react-router";
 
 import {
-  Alert,
-  Box,
-  CircularProgress,
-  FormControlLabel,
-  Switch,
-  TablePagination,
-} from "@mui/material";
-import { GridPaginationModel } from "@mui/x-data-grid";
-
-import {
   buildAdvancedApiFilters,
   useEntityListProvider,
   EntityListProvider,
@@ -24,6 +14,14 @@ import {
 } from "../../common";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { useHashParams } from "../../common/hooks/useHashParams";
+import {
+  Alert,
+  Spinner,
+  FormControlLabel,
+  Switch,
+  TablePagination,
+} from "../../ui";
+import { PaginationModel } from "../../ui";
 import { ENTITY_STATUS } from "../../utils";
 import { SCV_FIELD_MAP } from "../graphql";
 import { RefType } from "../types";
@@ -71,7 +69,7 @@ const RefEmptyState = ({ type }: { type: RefType }) => {
   const label = type === RefType.TAG ? "tags" : "branches";
 
   return (
-    <Alert severity="info" sx={{ mt: 1 }}>
+    <Alert className="mt-2" severity="info">
       {synced
         ? `This repository has no ${label}.`
         : `This repository has not been synced yet. Trigger a sync to load ${label}.`}
@@ -140,11 +138,11 @@ const SourceCodeGitRefRows = ({
   }, [enabledOnly, entities, pagedRefs, type]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+    <div className="flex flex-col gap-1.5">
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-          <CircularProgress size={32} />
-        </Box>
+        <div className="flex justify-center p-8">
+          <Spinner size={32} />
+        </div>
       ) : (
         displayRefs.map((ref: string) => {
           const entity = resolveEntityForRef(ref);
@@ -167,7 +165,7 @@ const SourceCodeGitRefRows = ({
       )}
 
       <TablePagination
-        component="div"
+        className="mt-2 border-t border-divider"
         count={enabledOnly ? total : refs.length}
         page={page - 1}
         onPageChange={(_, newPage) => onPageChange(newPage + 1)}
@@ -176,9 +174,8 @@ const SourceCodeGitRefRows = ({
           onRowsPerPageChange(parseInt(e.target.value, 10))
         }
         rowsPerPageOptions={[5, 10, 25]}
-        sx={{ borderTop: 1, borderColor: "divider", mt: 1 }}
       />
-    </Box>
+    </div>
   );
 };
 
@@ -188,12 +185,11 @@ export const SourceCodeRefSection = ({
   sourceCodeId,
   getFolders,
 }: SourceCodeRefSectionProps) => {
-  const { get, setKey } =
-    useLocalStorage<Record<string, GridPaginationModel>>();
+  const { get, setKey } = useLocalStorage<Record<string, PaginationModel>>();
   const storageKey = `sourceCodeVersion_entities_${type === RefType.BRANCH ? "branches" : "tags"}`;
 
   const savedState = get(storageKey);
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>(
+  const [paginationModel, setPaginationModel] = useState<PaginationModel>(
     savedState || { page: 0, pageSize: 10 },
   );
 
@@ -344,25 +340,9 @@ export const SourceCodeRefSection = ({
       entityFieldMap={SCV_FIELD_MAP}
     >
       <BaseCard>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            width: "100%",
-            maxWidth: "100%",
-            p: 1,
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 1,
-              mb: 1.5,
-              flexWrap: "wrap",
-            }}
-          >
-            <Box sx={{ width: "40rem", maxWidth: "100%" }}>
+        <div className="col-span-full flex max-w-full flex-col p-2">
+          <div className="mb-3 flex flex-wrap items-start gap-2">
+            <div className="w-[40rem] max-w-full">
               <FilterRenderer
                 config={{
                   id: "filter",
@@ -380,8 +360,9 @@ export const SourceCodeRefSection = ({
                 filterValues={filterValues}
                 onChange={handleFilterChange}
               />
-            </Box>
+            </div>
             <FormControlLabel
+              className="ml-0 sm:ml-auto"
               control={
                 <Switch
                   checked={!!filterValues["enabled_only"]}
@@ -391,15 +372,9 @@ export const SourceCodeRefSection = ({
                 />
               }
               label="Enabled only"
-              sx={{
-                "& .MuiFormControlLabel-label": {
-                  fontSize: "0.75rem",
-                  color: "text.secondary",
-                },
-                ml: { xs: 0, sm: "auto" },
-              }}
+              labelClassName="text-caption text-fg-muted"
             />
-          </Box>
+          </div>
 
           <SourceCodeGitRefRows
             refs={filteredRefs}
@@ -414,7 +389,7 @@ export const SourceCodeRefSection = ({
             enabledOnly={!!filterValues["enabled_only"]}
             defaultOpenRef={initialSearch || undefined}
           />
-        </Box>
+        </div>
       </BaseCard>
     </EntityListProvider>
   );

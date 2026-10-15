@@ -1,13 +1,10 @@
-import { Typography } from "@mui/material";
-
 import {
   EntitySidebar,
   SidebarSection,
 } from "../../common/components/cards/EntitySidebar";
-import { Entity } from "../../common/components/entities/Entity";
+import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
 import { CommonField } from "../../common/components/fields/CommonField";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
-import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { GqlBatchOperation } from "../graphql";
 
 export interface BatchOperationSidebarProps {
@@ -29,14 +26,14 @@ export const BatchOperationSidebar = ({
           name="Description"
           value={
             batchOperation.description ? (
-              <Typography variant="body2" sx={{ overflowWrap: "anywhere" }}>
+              <p className="m-0 text-body2 wrap-anywhere">
                 {batchOperation.description}
-              </Typography>
+              </p>
             ) : (
               <PlaceholderText text="No description provided." />
             )
           }
-          size={12}
+          span="full"
         />
       </SidebarSection>
 
@@ -46,38 +43,22 @@ export const BatchOperationSidebar = ({
           value={
             batchOperation.entityType === "resource" ? "Resources" : "Executors"
           }
-          size={6}
+          span="half"
         />
         <CommonField
           name="Total Entities"
           value={batchOperation?.entityIds?.length || 0}
-          size={6}
+          span="half"
         />
       </SidebarSection>
 
-      <SidebarSection title="Details">
-        <CommonField
-          name="Created by"
-          value={
-            batchOperation.creator ? (
-              <Entity
-                entity={{ ...batchOperation.creator, entityType: "user" }}
-              />
-            ) : null
-          }
-          size={12}
-        />
-        <CommonField
-          name="Created"
-          value={<RelativeTime date={batchOperation.createdAt} />}
-          size={6}
-        />
-        <CommonField
-          name="Last Updated"
-          value={<RelativeTime date={batchOperation.updatedAt} />}
-          size={6}
-        />
-      </SidebarSection>
+      <SidebarDetailsSection
+        entity={{
+          creator: batchOperation.creator,
+          createdAt: batchOperation.createdAt,
+          updatedAt: batchOperation.updatedAt,
+        }}
+      />
     </EntitySidebar>
   );
 };

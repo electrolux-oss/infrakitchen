@@ -1,14 +1,6 @@
 import { SyntheticEvent } from "react";
 
-import {
-  FormControl,
-  Autocomplete,
-  TextField,
-  Box,
-  Typography,
-} from "@mui/material";
-
-import { getAutocompleteTextFieldProps } from "../../common/utils/autocompleteInput";
+import { Autocomplete, FormControl } from "../../ui";
 import { useSourceCodeVersionConfigContext } from "../context/SourceCodeVersionConfigContext";
 import { GqlSourceCodeVersion } from "../graphql";
 
@@ -21,7 +13,7 @@ export const ReferenceSelector = () => {
     references.find((ref) => ref.id === selectedReferenceId) || null;
 
   const handleAutocompleteChange = (
-    _event: SyntheticEvent,
+    _event: SyntheticEvent | null,
     newValue: GqlSourceCodeVersion | null,
   ) => {
     const newReferenceId = newValue ? newValue.id : "";
@@ -29,10 +21,9 @@ export const ReferenceSelector = () => {
   };
 
   return (
-    <FormControl sx={{ minWidth: 250 }} size="small">
+    <FormControl className="min-w-62.5" size="small">
       <Autocomplete
         fullWidth
-        size="small"
         options={references}
         value={selectedObject}
         onChange={handleAutocompleteChange}
@@ -40,44 +31,24 @@ export const ReferenceSelector = () => {
         getOptionLabel={(option) =>
           option.sourceCodeVersion || option.sourceCodeBranch || ""
         }
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            {...getAutocompleteTextFieldProps(params, {
-              inputLabel: {
-                shrink: true,
-              },
-            })}
-            label="Inherit from"
-            variant="outlined"
-          />
+        renderOption={(option) => (
+          <div>
+            <p className="m-0 text-body2">
+              {option.sourceCodeVersion || option.sourceCodeBranch}
+            </p>
+            {option.description && (
+              <span className="text-caption text-fg-muted">
+                {option.description}
+              </span>
+            )}
+          </div>
         )}
-        renderOption={(props, option) => {
-          return (
-            <li {...props}>
-              <Box>
-                <Typography variant="body2">
-                  {option.sourceCodeVersion || option.sourceCodeBranch}
-                </Typography>
-                {option.description && (
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: "text.secondary",
-                    }}
-                  >
-                    {option.description}
-                  </Typography>
-                )}
-              </Box>
-            </li>
-          );
-        }}
         noOptionsText={
           hasReferences
             ? "No matching source code versions"
             : "No source code versions available"
         }
+        label="Inherit from"
       />
     </FormControl>
   );

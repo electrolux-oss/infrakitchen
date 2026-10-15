@@ -1,10 +1,9 @@
 import { useState } from "react";
 
-import { Button } from "@mui/material";
-
 import { useConfig } from "../../common";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { Button } from "../../ui";
 import {
   DOWNLOAD_TOOL_MUTATION,
   SET_DEFAULT_TOOL_MUTATION,

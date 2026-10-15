@@ -2,22 +2,6 @@ import React, { useMemo } from "react";
 
 import { useNavigate } from "react-router";
 
-import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
-import ErrorOutlinedIcon from "@mui/icons-material/ErrorOutlined";
-import HistoryIcon from "@mui/icons-material/History";
-import PendingOutlinedIcon from "@mui/icons-material/PendingOutlined";
-import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Divider,
-  Typography,
-  useMediaQuery,
-} from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
-
 import {
   AuditExecutionResult,
   getAuditExecution,
@@ -26,14 +10,20 @@ import {
   Entity,
   humanizeEntityType,
 } from "../../common/components/entities/Entity";
-import {
-  dataGridClickableRowSx,
-  dataGridDefaultProps,
-  dataGridSx,
-} from "../../common/components/entity_table/dataGridStyles";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { Label } from "../../common/components/labels/Label";
 import { useConfig } from "../../common/context/ConfigContext";
+import { paletteTextClass } from "../../common/utils";
+import {
+  CheckCircleOutlinedIcon,
+  ErrorOutlinedIcon,
+  HistoryIcon,
+  PendingOutlinedIcon,
+  WarningAmberOutlinedIcon,
+} from "../../icons/material";
+import { Divider, Spinner, Button, useMediaQuery } from "../../ui";
+import { DataTable, DataTableColumn, RenderCellParams } from "../../ui";
+import { cn } from "../../utils/cn";
 import { ActivityLogEntry } from "../types";
 
 export interface RecentActivityWidgetProps {
@@ -145,13 +135,13 @@ const ActivityEvent = ({ activity }: { activity: ActivityLogEntry }) => {
   );
   const Icon = STATUS_ICONS[status];
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+    <div className="flex items-center gap-2">
       <Icon
         fontSize="small"
-        sx={{ color: STATUS_COLORS[status], flexShrink: 0 }}
+        className={cn("shrink-0", paletteTextClass(STATUS_COLORS[status]))}
       />
       <span>{humanizeAction(activity.action)}</span>
-    </Box>
+    </div>
   );
 };
 
@@ -198,63 +188,41 @@ const ActivityCardList = ({
   activities: ActivityLogEntry[];
   onRowClick: (row: ActivityLogEntry, event: React.MouseEvent) => void;
 }) => (
-  <Box role="list">
+  <div role="list">
     {activities.map((activity, index) => {
       const typeLabel =
         activity.entityData?.template?.name ||
         humanizeEntityType(activity.model);
       return (
-        <Box
+        <div
+          className={cn(
+            "hover:bg-hover",
+            cn(
+              index === 0 ? "border-t-0" : "border-t",
+              "border-t-divider",
+              "cursor-pointer px-4 py-3 text-[0.875rem]",
+            ),
+          )}
           key={activity.id}
           role="listitem"
           onClick={(event) => onRowClick(activity, event)}
-          sx={{
-            px: 2,
-            py: 1.5,
-            borderTop: index === 0 ? "none" : "1px solid",
-            borderTopColor: "divider",
-            fontSize: "0.875rem",
-            cursor: "pointer",
-            "&:hover": { backgroundColor: "action.hover" },
-          }}
         >
-          <Box sx={{ fontWeight: 500, minWidth: 0, overflowWrap: "anywhere" }}>
+          <div className="min-w-0 font-medium wrap-anywhere">
             <ActivityEntity activity={activity} showLabel={false} />
-          </Box>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              flexWrap: "wrap",
-              columnGap: 1.5,
-              rowGap: 0.5,
-              mt: 0.75,
-              color: "text.secondary",
-              fontSize: "0.8125rem",
-            }}
-          >
+          </div>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-fg-muted">
             <ActivityEvent activity={activity} />
             {typeLabel && <Label label={typeLabel} />}
             <AuditExecutionResult log={activity} />
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                ml: "auto",
-              }}
-            >
+            <div className="ml-auto flex items-center gap-2">
               <ActivityCreator activity={activity} />
-              <RelativeTime
-                date={activity.createdAt}
-                sx={{ display: "flex" }}
-              />
-            </Box>
-          </Box>
-        </Box>
+              <RelativeTime className="flex" date={activity.createdAt} />
+            </div>
+          </div>
+        </div>
       );
     })}
-  </Box>
+  </div>
 );
 
 export const RecentActivityWidget = ({
@@ -267,12 +235,9 @@ export const RecentActivityWidget = ({
 }: RecentActivityWidgetProps) => {
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
-  const theme = useTheme();
   // Same breakpoint as EntityTable: a 4-column grid doesn't fit a phone, so
   // rows become stacked cards.
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"), {
-    noSsr: true,
-  });
+  const isMobile = useMediaQuery("(max-width: 599.95px)");
 
   const count = activities.length;
   const showingLabel = hasFavorites
@@ -282,14 +247,14 @@ export const RecentActivityWidget = ({
   const hasMore =
     onLoadMore !== undefined && total !== undefined && count < total;
 
-  const columns: GridColDef<ActivityLogEntry>[] = useMemo(
+  const columns: DataTableColumn<ActivityLogEntry>[] = useMemo(
     () => [
       {
         field: "action",
         headerName: "Event",
         flex: 1.2,
         valueGetter: (_value, row) => humanizeAction(row.action),
-        renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => (
+        renderCell: (params: RenderCellParams<ActivityLogEntry>) => (
           <ActivityEvent activity={params.row} />
         ),
       },
@@ -298,7 +263,7 @@ export const RecentActivityWidget = ({
         headerName: "Entity",
         flex: 2,
         valueGetter: (_value, row) => row.entityData?.name ?? row.entityId,
-        renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => (
+        renderCell: (params: RenderCellParams<ActivityLogEntry>) => (
           <ActivityEntity activity={params.row} showLabel />
         ),
       },
@@ -308,7 +273,7 @@ export const RecentActivityWidget = ({
         flex: 2.5,
         sortable: false,
         valueGetter: (_value, row) => getAuditExecution(row)?.status ?? "",
-        renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => (
+        renderCell: (params: RenderCellParams<ActivityLogEntry>) => (
           <AuditExecutionResult log={params.row} />
         ),
       },
@@ -318,23 +283,15 @@ export const RecentActivityWidget = ({
         width: 150,
         valueGetter: (_value, row) =>
           row.creator?.displayName ?? row.creator?.identifier ?? "System",
-        renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-end",
-              gap: 1.5,
-              width: "100%",
-            }}
-          >
+        renderCell: (params: RenderCellParams<ActivityLogEntry>) => (
+          <div className="flex w-full items-center justify-end gap-3">
             <RelativeTime
+              className="flex"
               date={params.row.createdAt}
               compact
-              sx={{ display: "flex" }}
             />
             <ActivityCreator activity={params.row} />
-          </Box>
+          </div>
         ),
       },
     ],
@@ -352,111 +309,60 @@ export const RecentActivityWidget = ({
     void navigate(`${linkPrefix}${row.model}s/${row.entityId}/audit`);
   };
 
-  const handleRowClick = (
-    params: { row: ActivityLogEntry },
-    event?: React.MouseEvent<HTMLElement>,
-  ) => navigateToAudit(params.row, event);
-
   return (
-    <Box sx={{ width: "100%", height: "100%" }}>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 1,
-          mb: 1.5,
-        }}
-      >
-        <HistoryIcon sx={{ color: "primary.main", fontSize: 20 }} />
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+    <div className="h-full w-full">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <HistoryIcon className="text-[20px] text-primary" />
+        <h6 className="m-0 text-subtitle1 font-semibold text-grey-500">
           Recent Activities
-        </Typography>
+        </h6>
         {!loading && (
-          <Typography
-            variant="caption"
-            sx={{ color: "text.secondary", ml: "auto" }}
-          >
+          <span className="ml-auto text-caption text-fg-muted">
             {showingLabel}
-          </Typography>
+          </span>
         )}
-      </Box>
-      <Divider sx={{ mb: 1.5 }} />
-      <Box
-        sx={{
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: "var(--template-surface-radius)",
-          backgroundColor: "background.paper",
-          overflow: "hidden",
-        }}
-      >
+      </div>
+      <Divider className="mb-3" />
+      <div className="overflow-hidden rounded-surface border border-divider bg-paper">
         {loading ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              py: 4,
-            }}
-          >
-            <CircularProgress size={24} />
-          </Box>
+          <div className="flex items-center justify-center py-8">
+            <Spinner size={24} />
+          </div>
         ) : count === 0 ? (
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              py: 4,
-              color: "text.secondary",
-            }}
-          >
-            <HistoryIcon sx={{ fontSize: 32, mb: 1, opacity: 0.5 }} />
-            <Typography variant="body2">
+          <div className="flex flex-col items-center justify-center py-8 text-fg-muted">
+            <HistoryIcon className="mb-2 text-[32px] opacity-50" />
+            <p className="m-0 text-body2">
               No recent activities {hasFavorites ? "on your favorites." : "."}
-            </Typography>
-          </Box>
+            </p>
+          </div>
         ) : isMobile ? (
           <ActivityCardList
             activities={activities}
             onRowClick={navigateToAudit}
           />
         ) : (
-          <DataGrid
+          <DataTable
             rows={activities}
             columns={columns}
-            autoHeight
-            disableRowSelectionOnClick
-            columnHeaderHeight={0}
+            hideHeader
             hideFooter
-            onRowClick={handleRowClick}
-            {...dataGridDefaultProps}
-            sx={{
-              ...dataGridSx,
-              ...dataGridClickableRowSx,
-              minHeight: "auto",
-              border: "none",
-              bgcolor: "background.paper",
-              "& .MuiDataGrid-columnHeaders": { display: "none" },
-            }}
+            onRowClick={navigateToAudit}
           />
         )}
-      </Box>
+      </div>
       {hasMore && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 1.5 }}>
+        <div className="mt-3 flex justify-center">
           <Button
             size="small"
             variant="text"
             onClick={onLoadMore}
             disabled={loadingMore}
-            startIcon={loadingMore ? <CircularProgress size={14} /> : undefined}
+            startIcon={loadingMore ? <Spinner size={14} /> : undefined}
           >
             {loadingMore ? "Loading…" : "Load more"}
           </Button>
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };

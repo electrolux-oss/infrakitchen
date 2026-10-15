@@ -2,9 +2,8 @@ import React, { FC, useCallback } from "react";
 
 import { useNavigate } from "react-router";
 
-import { Box, Link } from "@mui/material";
-import { SxProps, Theme } from "@mui/system";
-
+import { Link } from "../../../ui";
+import { cn } from "../../../utils/cn";
 import { useConfig } from "../../context";
 
 interface EntityLinkProps {
@@ -13,7 +12,6 @@ interface EntityLinkProps {
   urlProvider?: string;
   name?: string;
   identifier?: string;
-  sx?: SxProps<Theme>;
   className?: string;
   /** Truncate the link text on a single line with an ellipsis (full text in a tooltip). */
   noWrap?: boolean;
@@ -30,7 +28,6 @@ export const EntityLink: FC<EntityLinkProps> = ({
   urlProvider,
   name,
   identifier,
-  sx,
   className,
   noWrap = false,
 }) => {
@@ -56,29 +53,17 @@ export const EntityLink: FC<EntityLinkProps> = ({
     [navigate, fullPath],
   );
 
-  const linkSx = noWrap
-    ? ([{ flex: "1 1 0%", minWidth: 0 }, sx] as SxProps<Theme>)
-    : sx;
-
   return (
-    <Box
-      sx={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 1,
-        ...(noWrap && {
-          display: "flex",
-          flexShrink: 1,
-          minWidth: 0,
-          overflow: "hidden",
-        }),
-      }}
+    <div
+      className={cn(
+        "inline-flex items-center gap-2",
+        noWrap && "flex min-w-0 shrink overflow-hidden",
+      )}
     >
       <Link
-        className={className}
+        className={cn(noWrap && "min-w-0 flex-1", className)}
         href={fullPath}
         onClick={handleClick}
-        sx={linkSx}
         title={noWrap ? displayText : undefined}
         style={{
           cursor: "pointer",
@@ -93,6 +78,6 @@ export const EntityLink: FC<EntityLinkProps> = ({
       >
         {displayText}
       </Link>
-    </Box>
+    </div>
   );
 };

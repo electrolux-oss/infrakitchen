@@ -2,27 +2,22 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useSearchParams } from "react-router";
 
-import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
-import { Alert, Box, Link } from "@mui/material";
-import {
-  DataGrid,
-  GridColDef,
-  GridPaginationModel,
-  GridRenderCellParams,
-} from "@mui/x-data-grid";
-
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { UserAvatar } from "../../common/components/entities/UserAvatar";
-import {
-  dataGridDefaultProps,
-  dataGridPaginationSlotProps,
-  dataGridSx,
-} from "../../common/components/entity_table/dataGridStyles";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import { CODE_FONT_FAMILY } from "../../common/theme";
+import { LocalOfferOutlinedIcon } from "../../icons/material";
+import { Alert, Link } from "../../ui";
+import {
+  DataTable,
+  DataTableColumn,
+  PaginationModel,
+  RenderCellParams,
+} from "../../ui";
+import { cn } from "../../utils/cn";
 import {
   GqlSourceCodeCommit,
   GqlSourceCodeTag,
@@ -41,20 +36,10 @@ const SHA_PARAM = "sha";
  */
 export const TagChip = ({ tag }: { tag: string }) => {
   return (
-    <Box
-      sx={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 0.75,
-        minWidth: 0,
-      }}
-    >
-      <LocalOfferOutlinedIcon
-        color="action"
-        sx={{ fontSize: 16, flexShrink: 0 }}
-      />
-      <Box component="span">{tag}</Box>
-    </Box>
+    <div className="inline-flex min-w-0 items-center gap-1.5">
+      <LocalOfferOutlinedIcon className="shrink-0 text-[16px]" color="action" />
+      <span>{tag}</span>
+    </div>
   );
 };
 
@@ -73,7 +58,7 @@ export const SourceCodeCommits = ({
 }: SourceCodeCommitsProps) => {
   const { ikApi } = useConfig();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+  const [paginationModel, setPaginationModel] = useState<PaginationModel>({
     page: 0,
     pageSize: ROWS_PER_PAGE_OPTIONS[0],
   });
@@ -188,14 +173,14 @@ export const SourceCodeCommits = ({
 
   const lastSyncedAt = useEntityProvider().entity?.updatedAt;
 
-  const columns: GridColDef<GqlSourceCodeCommit>[] = useMemo(
+  const columns: DataTableColumn<GqlSourceCodeCommit>[] = useMemo(
     () => [
       {
         field: "shortSha",
         headerName: "Commit",
         width: 100,
         sortable: false,
-        renderCell: (params: GridRenderCellParams<GqlSourceCodeCommit>) => {
+        renderCell: (params: RenderCellParams<GqlSourceCodeCommit>) => {
           const commit = params.row;
           const shaText = (
             <span style={{ fontFamily: CODE_FONT_FAMILY }}>
@@ -216,7 +201,7 @@ export const SourceCodeCommits = ({
         headerName: "Message",
         flex: 1,
         sortable: false,
-        renderCell: (params: GridRenderCellParams<GqlSourceCodeCommit>) => (
+        renderCell: (params: RenderCellParams<GqlSourceCodeCommit>) => (
           <SourceCodeCommitMessage commit={params.row} />
         ),
       },
@@ -225,12 +210,12 @@ export const SourceCodeCommits = ({
         headerName: "Tags",
         width: 160,
         sortable: false,
-        renderCell: (params: GridRenderCellParams<GqlSourceCodeCommit>) => (
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+        renderCell: (params: RenderCellParams<GqlSourceCodeCommit>) => (
+          <div className="flex flex-wrap gap-2">
             {(tagsBySha.get(params.row.sha) ?? []).map((tag) => (
               <TagChip key={tag} tag={tag} />
             ))}
-          </Box>
+          </div>
         ),
       },
       {
@@ -240,23 +225,16 @@ export const SourceCodeCommits = ({
         sortable: false,
         align: "right",
         headerAlign: "right",
-        renderCell: (params: GridRenderCellParams<GqlSourceCodeCommit>) => {
+        renderCell: (params: RenderCellParams<GqlSourceCodeCommit>) => {
           const commit = params.row;
           return (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 0.75,
-                minWidth: 0,
-              }}
-            >
+            <div className="flex min-w-0 items-center gap-1.5">
               <RelativeTime date={commit.authoredAt} />
               <UserAvatar
                 id={commit.author?.id}
                 identifier={commit.author?.identifier ?? commit.authorName}
               />
-            </Box>
+            </div>
           );
         },
       },
@@ -266,7 +244,7 @@ export const SourceCodeCommits = ({
 
   if (!branch) {
     return (
-      <Alert severity="info" sx={{ mt: 1 }}>
+      <Alert className="mt-2" severity="info">
         This repository has not been synced yet. Trigger a sync to load commits.
       </Alert>
     );
@@ -276,38 +254,30 @@ export const SourceCodeCommits = ({
     <PropertyCard
       title={null}
       subtitle={
-        <Box sx={{ display: "inline-flex", alignItems: "baseline", gap: 0.5 }}>
+        <div className="inline-flex items-baseline gap-1">
           <span>{`${total} commits on the ${branch} branch, synced`}</span>
           {lastSyncedAt && (
             <span>
               <RelativeTime date={lastSyncedAt} />.
             </span>
           )}
-        </Box>
+        </div>
       }
     >
       {error && <Alert severity="error">{error}</Alert>}
-      <Box sx={{ opacity: loading ? 0.5 : 1 }}>
-        <DataGrid
+      <div className={cn(loading ? "opacity-50" : "opacity-100")}>
+        <DataTable
           rows={commits}
           getRowId={(row) => row.sha}
           columns={columns}
           loading={loading}
-          pagination
           paginationMode="server"
           rowCount={count}
-          disableRowSelectionOnClick
           paginationModel={paginationModel}
           onPaginationModelChange={setPaginationModel}
           pageSizeOptions={ROWS_PER_PAGE_OPTIONS}
-          {...dataGridDefaultProps}
-          sx={{
-            ...dataGridSx,
-            minHeight: "auto",
-          }}
-          slotProps={dataGridPaginationSlotProps("commits-pagination-label")}
         />
-      </Box>
+      </div>
     </PropertyCard>
   );
 };

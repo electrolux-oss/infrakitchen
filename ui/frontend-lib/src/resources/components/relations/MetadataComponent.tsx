@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 
 import { json } from "@codemirror/lang-json";
-import { Alert, Box } from "@mui/material";
 import CodeMirror from "@uiw/react-codemirror";
 
 import { useConfig, GradientCircularProgress } from "../../../common";
 import { notifyError } from "../../../common/hooks/useNotification";
+import { Alert } from "../../../ui";
 import { GqlResource } from "../../graphql";
 import { RESOURCE_METADATA_QUERY } from "../../graphql";
 
@@ -41,42 +41,42 @@ export function MetadataComponent(props: ResourceMetadataProps) {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+      <div className="flex justify-center p-8">
         <GradientCircularProgress />
-      </Box>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ p: 2 }}>
+      <div className="p-4">
         <Alert severity="error">{error.toString()}</Alert>
-      </Box>
+      </div>
     );
   }
 
   if (!metadata) {
     return (
-      <Box sx={{ p: 2 }}>
+      <div className="p-4">
         <Alert severity="info">
           No metadata information found for resource {entity.name}.
         </Alert>
-      </Box>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ width: "100%", height: "100%", overflow: "auto" }}>
+    <div className="h-full w-full overflow-auto">
       <CodeMirror
         value={JSON.stringify(metadata, null, 2)}
         extensions={[json()]}
         readOnly={true}
         style={{
-          border: "1px solid var(--template-palette-divider)",
-          borderRadius: "var(--template-surface-radius)",
+          border: "1px solid var(--color-divider)",
+          borderRadius: "var(--ik-surface-radius)",
           overflow: "hidden",
         }}
       />
-    </Box>
+    </div>
   );
 }

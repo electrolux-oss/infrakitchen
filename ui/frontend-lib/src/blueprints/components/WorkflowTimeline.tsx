@@ -1,22 +1,18 @@
 import { useNavigate } from "react-router";
 
+import { useConfig } from "../../common";
+import { Entity } from "../../common/components/entities/Entity";
+import StatusChip from "../../common/StatusChip";
 import {
-  Box,
-  LinearProgress,
-  Link,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Typography,
-} from "@mui/material";
-
-import { useConfig } from "../../common";
-import { Entity } from "../../common/components/entities/Entity";
-import StatusChip from "../../common/StatusChip";
-import { CODE_FONT_FAMILY } from "../../common/theme";
+  LinearProgress,
+  Link,
+} from "../../ui";
 import { GqlWorkflow } from "../../workflows/graphql";
 
 interface WorkflowTimelineProps {
@@ -29,68 +25,35 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
 
   if (workflows.length === 0) {
     return (
-      <Typography
-        variant="body2"
-        sx={{
-          color: "text.secondary",
-          py: 2,
-        }}
-      >
-        No workflows yet.
-      </Typography>
+      <p className="m-0 py-4 text-body2 text-fg-muted">No workflows yet.</p>
     );
   }
 
   return (
-    <Box sx={{ width: "100%" }}>
+    <div className="w-full">
       {workflows.map((exec) => (
-        <Box
+        <div
+          className="mb-6 overflow-hidden rounded-surface border border-divider"
           key={exec.id}
-          sx={{
-            mb: 3,
-            border: 1,
-            borderColor: "divider",
-            borderRadius: "var(--template-surface-radius)",
-            overflow: "hidden",
-          }}
         >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              px: 2,
-              py: 1.5,
-              borderBottom: 1,
-              borderColor: "divider",
-              bgcolor: "background.default",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{ fontFamily: CODE_FONT_FAMILY }}
-              >
+          <div className="flex items-center justify-between border-b border-divider bg-canvas px-4 py-3">
+            <div className="flex items-center gap-4">
+              <h6 className="m-0 font-mono text-subtitle2 text-grey-500">
                 <Link
+                  className="cursor-pointer font-mono"
                   component="button"
                   variant="subtitle2"
-                  sx={{ fontFamily: CODE_FONT_FAMILY, cursor: "pointer" }}
                   onClick={() => navigate(`${linkPrefix}workflows/${exec.id}`)}
                 >
                   {exec.id.slice(0, 8)}…
                 </Link>
-              </Typography>
+              </h6>
               <StatusChip status={exec.status} />
-            </Box>
-            <Typography
-              variant="caption"
-              sx={{
-                color: "text.secondary",
-              }}
-            >
+            </div>
+            <span className="text-caption text-fg-muted">
               {new Date(exec.createdAt).toLocaleString()}
-            </Typography>
-          </Box>
+            </span>
+          </div>
 
           {exec.status === "in_progress" && <LinearProgress />}
 
@@ -136,14 +99,9 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
                     </TableCell>
                     <TableCell>
                       {step.errorMessage ? (
-                        <Typography
-                          variant="caption"
-                          color="error"
-                          sx={{ maxWidth: 200, display: "block" }}
-                          noWrap
-                        >
+                        <span className="block max-w-50 truncate text-caption text-error">
                           {step.errorMessage}
-                        </Typography>
+                        </span>
                       ) : (
                         "-"
                       )}
@@ -153,8 +111,8 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
               </TableBody>
             </Table>
           </TableContainer>
-        </Box>
+        </div>
       ))}
-    </Box>
+    </div>
   );
 };

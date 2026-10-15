@@ -1,32 +1,17 @@
 import { useCallback, useState } from "react";
 
-import AddIcon from "@mui/icons-material/Add";
-import {
-  Box,
-  Button,
-  Chip,
-  Grid,
-  Switch,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
-
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { EditAffordance } from "../../common/components/editors/EditAffordance";
-import {
-  dataGridDefaultProps,
-  dataGridSx,
-} from "../../common/components/entity_table/dataGridStyles";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import TagInput from "../../common/components/inputs/TagInput";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { CODE_FONT_FAMILY } from "../../common/theme";
-import { dashedAddButtonSx } from "../../common/utils/dashedAddButtonSx";
-import { solidChipColorSx } from "../../common/utils/softChip";
+import { dashedAddButtonClass } from "../../common/utils/dashedAddButton";
+import { AddIcon } from "../../icons/material";
+import { Switch, Button, Chip, Tooltip } from "../../ui";
+import { DataTable, DataTableColumn } from "../../ui";
 import {
   ResourceUpdateFieldInput,
   UPDATE_RESOURCE_MUTATION,
@@ -49,16 +34,14 @@ const DependencyVariablesTable = ({
 }: {
   variables: DependencyVariable[];
 }) => {
-  const columns: GridColDef<any>[] = [
+  const columns: DataTableColumn<any>[] = [
     {
       field: "name",
       headerName: "Name",
       flex: 1,
       sortable: false,
       renderCell: (params) => (
-        <Typography sx={{ fontFamily: CODE_FONT_FAMILY }}>
-          {params.value}
-        </Typography>
+        <p className="m-0 font-mono text-body2">{params.value}</p>
       ),
     },
     {
@@ -67,9 +50,7 @@ const DependencyVariablesTable = ({
       flex: 2.5,
       sortable: false,
       renderCell: (params) => (
-        <Typography sx={{ fontFamily: CODE_FONT_FAMILY }}>
-          {params.value}
-        </Typography>
+        <p className="m-0 font-mono text-body2">{params.value}</p>
       ),
     },
     {
@@ -84,8 +65,8 @@ const DependencyVariablesTable = ({
           }
         >
           <Switch
+            className="pointer-events-none cursor-default"
             checked={Boolean(params.value)}
-            sx={{ pointerEvents: "none", cursor: "default" }}
           />
         </Tooltip>
       ),
@@ -99,36 +80,9 @@ const DependencyVariablesTable = ({
   }));
 
   return (
-    <Box
-      sx={{
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: "var(--template-surface-radius)",
-        backgroundColor: "background.paper",
-        overflow: "hidden",
-      }}
-    >
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        autoHeight
-        hideFooter
-        density="compact"
-        columnHeaderHeight={36}
-        disableRowSelectionOnClick
-        {...dataGridDefaultProps}
-        sx={[
-          dataGridSx,
-          {
-            // Compact rows: tighten the shared cell padding for these small
-            // read-only tables.
-            "& .MuiDataGrid-cell": { py: "2px" },
-          },
-          // Small embedded table: hug its rows instead of the shared min-height.
-          { minHeight: "auto" },
-        ]}
-      />
-    </Box>
+    <div className="overflow-hidden rounded-surface border border-divider bg-paper">
+      <DataTable rows={rows} columns={columns} hideFooter density="compact" />
+    </div>
   );
 };
 
@@ -203,15 +157,10 @@ export const DependencyConfiguration = ({
   };
 
   const renderSectionHeader = (label: string, count: number) => (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-        {label}
-      </Typography>
-      <Chip
-        label={String(count)}
-        sx={solidChipColorSx("info", undefined, undefined, true)}
-      />
-    </Box>
+    <div className="mb-2 flex items-center gap-2">
+      <p className="m-0 text-body2 font-semibold">{label}</p>
+      <Chip label={String(count)} appearance="solid" color="info" compact />
+    </div>
   );
 
   // Pencil edit affordance that sits beside the displayed value (e.g. on the
@@ -289,8 +238,8 @@ export const DependencyConfiguration = ({
         { name: "", value: "", inherited_by_children: true },
       ]);
     return (
-      <Grid size={12}>
-        <Box sx={{ mt: 2 }}>
+      <div className="col-span-full">
+        <div className="mt-4">
           {renderSectionHeader(label, count)}
           {editing ? (
             <>
@@ -301,26 +250,19 @@ export const DependencyConfiguration = ({
                 value={draft}
                 onChange={setDraft}
               />
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 1,
-                  mt: 1,
-                  // Align with the TagInput rows, which are inset by px: 2.
-                  px: 2,
-                }}
+              <div
+                // Align with the TagInput rows, which are inset by px: 2.
+                className="mt-2 flex items-center justify-between gap-2 px-4"
               >
                 {/* Dashed "Add" action shared with the other list editors. */}
                 <Button
                   startIcon={<AddIcon />}
                   onClick={addEntry}
-                  sx={dashedAddButtonSx}
+                  className={dashedAddButtonClass}
                 >
                   Add
                 </Button>
-                <Box sx={{ display: "flex", gap: 1 }}>
+                <div className="flex gap-2">
                   <Button
                     onClick={() => setEditingSection(null)}
                     disabled={saving}
@@ -334,42 +276,29 @@ export const DependencyConfiguration = ({
                   >
                     Save
                   </Button>
-                </Box>
-              </Box>
+                </div>
+              </div>
             </>
           ) : entries.length > 0 ? (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 0.5,
-              }}
-            >
-              <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+            <div className="flex items-start gap-1">
+              <div className="min-w-0 grow">
                 {getDependencyVariables(entries)}
-              </Box>
+              </div>
               {renderEditAffordance(() => startEdit(section), canEdit, label)}
-            </Box>
+            </div>
           ) : (
-            <Box
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 0.5,
-                maxWidth: "100%",
-              }}
-            >
+            <div className="inline-flex max-w-full items-center gap-1">
               {getDependencyVariables(entries)}
               {renderEditAffordance(() => startEdit(section), canEdit, label)}
-            </Box>
+            </div>
           )}
-        </Box>
-      </Grid>
+        </div>
+      </div>
     );
   };
 
   return (
-    <Box sx={{ gap: 2, display: "flex", flexDirection: "column" }}>
+    <div className="flex flex-col gap-4">
       <BaseCard name="Dependency Configuration">
         {renderSection("tags", "Dependency Tags", resource.dependencyTags)}
         {renderSection(
@@ -378,6 +307,6 @@ export const DependencyConfiguration = ({
           resource.dependencyConfig,
         )}
       </BaseCard>
-    </Box>
+    </div>
   );
 };

@@ -1,8 +1,7 @@
-import RefreshIcon from "@mui/icons-material/Refresh";
-import { Alert, IconButton, Typography } from "@mui/material";
-
 import { useEntityProvider } from "../../../common";
 import PageContainer from "../../../common/PageContainer";
+import { RefreshIcon } from "../../../icons/material";
+import { Alert, IconButton } from "../../../ui";
 
 import { KubernetesRelations } from "./kubernetes/KubernetesRelations";
 import { MetadataComponent } from "./MetadataComponent";
@@ -31,9 +30,9 @@ export const RelationsComponent = () => {
         </>
       }
     >
-      {loading && <Typography>Loading...</Typography>}
+      {loading && <p className="m-0 text-body2">Loading...</p>}
       {error && (
-        <Alert severity="error" sx={{ width: "100%" }}>
+        <Alert className="w-full" severity="error">
           {error}
         </Alert>
       )}
@@ -45,12 +44,10 @@ export const RelationsComponent = () => {
             <MetadataComponent entity={entity} />
           ) : (
             <Alert severity="info">
-              <Typography variant="h5" component="p">
-                No relations available
-              </Typography>
-              <Typography variant="body1">
+              <p className="m-0 text-h5">No relations available</p>
+              <p className="m-0 text-body1">
                 This entity does not have Any relations.
-              </Typography>
+              </p>
             </Alert>
           )}
         </>

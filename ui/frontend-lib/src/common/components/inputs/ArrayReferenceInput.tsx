@@ -1,16 +1,13 @@
 import React, { useEffect, forwardRef } from "react";
 
-import {
-  FormControl,
-  Autocomplete,
-  TextField,
-  Chip,
-  FormHelperText,
-  Tooltip,
-} from "@mui/material";
-
 import { InfraKitchenApi } from "../../../api/InfraKitchenApi";
 import { IkEntity } from "../../../types";
+import {
+  Autocomplete,
+  Tooltip,
+  FormControl,
+  FormHelperText,
+} from "../../../ui";
 import { buildGraphqlFields } from "../../graphql/buildGraphqlFields";
 import { notifyError } from "../../hooks/useNotification";
 
@@ -80,10 +77,8 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
     );
 
     const handleEntityChange = (
-      _event: React.SyntheticEvent,
+      _event: React.SyntheticEvent | null,
       value: IkEntity | IkEntity[] | null,
-      _reason: string,
-      _details?: any,
     ) => {
       if (Array.isArray(value)) {
         onChange(value.map((entity) => String(entity.id)));
@@ -145,41 +140,19 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
     ]);
     const control = (
       <FormControl fullWidth margin="dense">
-        <Autocomplete
-          size="small"
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              alignItems: "center",
-              minHeight: 32,
-              marginTop: "0 !important",
-              ...(singleLine && {
-                height: "32px !important",
-                minHeight: "32px !important",
-                paddingTop: "0 !important",
-                paddingBottom: "0 !important",
-              }),
-            },
-            "& .MuiAutocomplete-tagContainer": {
-              flexWrap: singleLine ? "nowrap" : "wrap",
-              overflowX: singleLine ? "auto" : undefined,
-              overflow: singleLine ? "hidden" : "visible",
-              margin: "2px 0",
-              padding: "0 2px",
-            },
-            "& .MuiAutocomplete-tag": {
-              margin: "2px",
-              flexShrink: singleLine ? 0 : undefined,
-            },
-          }}
-          clearIcon={false}
-          defaultValue={otherProps.defaultValue || undefined}
+        <Autocomplete<IkEntity, boolean>
+          inputClassName={
+            singleLine
+              ? "h-8 flex-nowrap overflow-hidden py-0 [&>*]:shrink-0"
+              : undefined
+          }
+          disableClearable
           disabled={otherProps.disabled || false}
           getOptionDisabled={isOptionDisabled}
           options={filteredOptions}
           getOptionLabel={(option) => getOptionLabel(option, showFields)}
-          isOptionEqualToValue={(option, value) =>
-            option.id === (value?.id || value)
-          }
+          getOptionKey={(option) => String(option.id)}
+          isOptionEqualToValue={(option, value) => option.id === value.id}
           value={
             otherProps.multiple
               ? buffer[resolvedBufferKey]?.filter((e: IkEntity) =>
@@ -191,69 +164,30 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
           }
           multiple={otherProps.multiple || false}
           onChange={handleEntityChange}
-          renderOption={(
-            props: React.HTMLAttributes<HTMLLIElement> & { key: React.Key },
-            option: IkEntity,
-          ) => {
-            const { key, ...rest } = props;
-            return (
-              <li key={key} {...rest}>
-                {renderOptionContent ? (
-                  renderOptionContent(option)
-                ) : (
-                  <ReferenceContent
-                    entityName={entity_name}
-                    entity={option}
-                    fallback={getOptionLabel(option, showFields)}
-                  />
-                )}
-              </li>
-            );
-          }}
-          renderValue={(value, getTagProps) => {
-            const maxToShow = 5;
-            const visible = value.slice(0, maxToShow);
-            return [
-              ...visible.map((option: IkEntity, index: number) => (
-                <Chip
-                  label={
-                    <ReferenceContent
-                      entityName={entity_name}
-                      entity={option}
-                      fallback={option.name || option.identifier}
-                    />
-                  }
-                  {...getTagProps({ index })}
-                  key={option.id}
-                  variant="outlined"
-                />
-              )),
-              value.length > maxToShow ? (
-                <Chip
-                  label={`+${value.length - maxToShow}`}
-                  {...getTagProps({ index: maxToShow })}
-                  key="more"
-                  variant="outlined"
-                />
-              ) : null,
-            ];
-          }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label={label ? label : undefined}
-              placeholder={placeholder}
-              required={otherProps.required}
-              error={props.error}
-              slotProps={{
-                ...params.slotProps,
-                htmlInput: {
-                  ...params.slotProps.htmlInput,
-                  ...(label ? {} : { "aria-label": ariaLabel || label || "" }),
-                },
-              }}
+          renderOption={(option) =>
+            renderOptionContent ? (
+              renderOptionContent(option)
+            ) : (
+              <ReferenceContent
+                entityName={entity_name}
+                entity={option}
+                fallback={getOptionLabel(option, showFields)}
+              />
+            )
+          }
+          renderValue={(option) => (
+            <ReferenceContent
+              entityName={entity_name}
+              entity={option}
+              fallback={option.name || option.identifier}
             />
           )}
+          limitTags={5}
+          label={label || undefined}
+          aria-label={label ? undefined : ariaLabel || undefined}
+          placeholder={placeholder}
+          required={otherProps.required}
+          error={props.error}
         />
 
         <FormHelperText error={props.error}>

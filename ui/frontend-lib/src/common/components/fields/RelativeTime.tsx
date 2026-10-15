@@ -1,34 +1,29 @@
 import React from "react";
 
-import { Tooltip, Typography, TypographyProps } from "@mui/material";
-
+import { Tooltip } from "../../../ui";
+import { cn } from "../../../utils/cn";
 import { formatTimeAgo } from "../../utils";
 
 import { getDateValue } from "./CommonField";
 
 interface RelativeTimeProps {
   date: string | Date;
-  component?: React.ElementType;
-  variant?: TypographyProps["variant"];
   /** Dense table cells show "1h ago" instead of "1 hour ago". */
   compact?: boolean;
-  sx?: any;
+  /** Defaults to body2; pass e.g. text-caption to change the size. */
+  className?: string;
 }
 
 export const RelativeTime: React.FC<RelativeTimeProps> = ({
   date,
-  component = "span",
-  variant,
   compact = false,
-  sx,
+  className,
 }) => {
   const dateObj = date instanceof Date ? date : new Date(date);
 
   if (isNaN(dateObj.getTime())) {
     return (
-      <Typography component={component} variant={variant} sx={sx}>
-        {dateObj.toString()}
-      </Typography>
+      <span className={cn("text-body2", className)}>{dateObj.toString()}</span>
     );
   }
 
@@ -36,12 +31,10 @@ export const RelativeTime: React.FC<RelativeTimeProps> = ({
   const exactTimestamp = getDateValue(date);
 
   return (
-    <Typography component={component} variant={variant} sx={sx}>
+    <span className={cn("text-body2", className)}>
       <Tooltip title={exactTimestamp}>
-        <Typography component="span" variant="inherit">
-          {timeAgoText}
-        </Typography>
+        <span>{timeAgoText}</span>
       </Tooltip>
-    </Typography>
+    </span>
   );
 };

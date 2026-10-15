@@ -2,13 +2,12 @@ import { useCallback, useId, useState } from "react";
 
 import { Controller, useForm } from "react-hook-form";
 
-import { Box, Button } from "@mui/material";
-
 import { CommonDialog } from "../../../common";
 import ReferenceSearchInput from "../../../common/components/inputs/ReferenceSearchInput";
 import { useConfig } from "../../../common/context/ConfigContext";
 import { notify, notifyError } from "../../../common/hooks/useNotification";
 import { IkEntity } from "../../../types";
+import { Button } from "../../../ui";
 import { ASSIGN_USER_TO_ROLE_MUTATION } from "../../graphql/mutations";
 
 interface RoleCreateProps {
@@ -77,7 +76,7 @@ export const AssignUserToRole = (props: RoleCreateProps) => {
   const resolvedFormId = formId ?? generatedFormId;
 
   return (
-    <Box sx={{ width: "50%" }}>
+    <div className="w-[50%]">
       <form id={resolvedFormId} onSubmit={handleSubmit(onSubmit)}>
         {userId && (
           <Controller
@@ -122,7 +121,7 @@ export const AssignUserToRole = (props: RoleCreateProps) => {
           />
         )}
       </form>
-    </Box>
+    </div>
   );
 };
 

@@ -1,12 +1,11 @@
 import { useMemo } from "react";
 
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { NOTIFICATION_SUBSCRIPTION_FIELD_MAP } from "../../notifications";
+import { RenderCellParams } from "../../ui";
 
 interface ProjectNotificationSubscribersTableProps {
   projectId: string;
@@ -22,7 +21,7 @@ export const ProjectNotificationSubscribersTable = ({
         headerName: "User",
         flex: 1,
         sortField: "user.identifier",
-        renderCell: (params: GridRenderCellParams) => {
+        renderCell: (params: RenderCellParams) => {
           const user = params.row.user;
           if (!user) return "Unknown";
           return <Entity entity={{ ...user, entityType: "user" }} />;
@@ -32,11 +31,11 @@ export const ProjectNotificationSubscribersTable = ({
         field: "createdAt",
         headerName: "Subscribed",
         width: RELATIVE_TIME_COLUMN_WIDTH,
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <RelativeTime
+            className="flex justify-end"
             date={params.value}
             compact
-            sx={{ display: "flex", justifyContent: "flex-end" }}
           />
         ),
       },

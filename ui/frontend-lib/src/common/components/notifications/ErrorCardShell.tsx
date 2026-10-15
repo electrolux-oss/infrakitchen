@@ -1,7 +1,7 @@
 import { forwardRef, ReactNode } from "react";
 
-import CloseIcon from "@mui/icons-material/Close";
-import { Box, Card, IconButton, Typography } from "@mui/material";
+import { CloseIcon } from "../../../icons/material";
+import { IconButton, Card } from "../../../ui";
 
 interface ErrorCardShellProps {
   title: ReactNode;
@@ -16,40 +16,22 @@ interface ErrorCardShellProps {
 export const ErrorCardShell = forwardRef<HTMLDivElement, ErrorCardShellProps>(
   ({ title, onDismiss, children }, ref) => (
     <div ref={ref} role="alert">
-      <Card
-        sx={{
-          width: "min(480px, 92vw)",
-          borderRadius: "var(--template-surface-radius)",
-          boxShadow: 8,
-          overflow: "hidden",
-        }}
-      >
-        <Box sx={{ p: 1.5 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              gap: 1,
-            }}
-          >
-            <Typography
-              variant="subtitle1"
-              color="primary"
-              sx={{ fontWeight: 700, minWidth: 0 }}
-            >
+      <Card className="w-[min(480px,92vw)] overflow-hidden rounded-surface shadow-[var(--ik-shadow-8)]">
+        <div className="p-3">
+          <div className="flex items-start justify-between gap-2">
+            <h6 className="m-0 min-w-0 text-subtitle1 font-bold text-primary">
               {title}
-            </Typography>
+            </h6>
             <IconButton
+              className="-mt-0.5 -mr-1 p-0.5"
               size="small"
               onClick={onDismiss}
-              sx={{ p: 0.25, mt: -0.25, mr: -0.5 }}
             >
               <CloseIcon fontSize="small" />
             </IconButton>
-          </Box>
-          {children && <Box sx={{ mt: 0.5 }}>{children}</Box>}
-        </Box>
+          </div>
+          {children && <div className="mt-1">{children}</div>}
+        </div>
       </Card>
     </div>
   ),

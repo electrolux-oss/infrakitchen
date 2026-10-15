@@ -1,8 +1,6 @@
 import { MouseEvent } from "react";
 
-import { Chip } from "@mui/material";
-
-import { solidChipColorSx } from "../../utils/softChip";
+import { Chip } from "../../../ui";
 
 export interface RevisionChipProps {
   /**
@@ -35,15 +33,9 @@ export const RevisionChip = ({
     <Chip
       label={label}
       variant={variant === "outlined" ? "outlined" : "filled"}
-      color={variant === "outlined" ? "primary" : undefined}
-      sx={
-        variant === "outlined"
-          ? { cursor: clickable ? "pointer" : "default" }
-          : (theme) => ({
-              ...solidChipColorSx("default")(theme),
-              cursor: clickable ? "pointer" : "default",
-            })
-      }
+      color={variant === "outlined" ? "primary" : "default"}
+      appearance={variant === "outlined" ? "theme" : "solid"}
+      clickable={clickable}
       onClick={onClick}
     />
   );

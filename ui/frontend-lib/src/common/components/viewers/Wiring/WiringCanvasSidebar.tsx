@@ -1,32 +1,31 @@
 import React, { useEffect, useState } from "react";
 
-import AddIcon from "@mui/icons-material/Add";
-import DataObjectIcon from "@mui/icons-material/DataObject";
-import NumbersIcon from "@mui/icons-material/Numbers";
-import SearchIcon from "@mui/icons-material/Search";
-import StorageIcon from "@mui/icons-material/Storage";
-import TextFieldsIcon from "@mui/icons-material/TextFields";
 import {
-  Box,
-  Button,
-  Divider,
-  InputAdornment,
-  List,
-  ListItemButton,
-  ListItemText,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-
+  AddIcon,
+  DataObjectIcon,
+  NumbersIcon,
+  SearchIcon,
+  StorageIcon,
+  TextFieldsIcon,
+} from "../../../../icons/material";
 import {
   TEMPLATE_SHORT_FIELDS,
   GqlTemplateShort,
 } from "../../../../templates/graphql";
+import {
+  Divider,
+  Button,
+  Tooltip,
+  InputAdornment,
+  ListItemText,
+  TextField,
+  List,
+  ListItemButton,
+} from "../../../../ui";
+import { cn } from "../../../../utils/cn";
 import { useConfig } from "../../../context";
 import { AbstractChip } from "../../labels/AbstractChip";
 
-import { useCanvasPalette } from "./helpers";
 import { GenericTemplate } from "./types";
 import {
   ConstantType,
@@ -37,25 +36,10 @@ export const DRAG_TYPE = "application/ik-template";
 export const DRAG_TYPE_EXTERNAL = "application/ik-external-template";
 
 /**
- * Compact styling for the draggable palette entries: `ListItemButton` inherits
- * app-navigation geometry that is far too roomy for a 220px palette.
+ * Compact styling for the draggable palette entries.
  */
-const PALETTE_ITEM_SX = {
-  borderRadius: "var(--template-surface-radius)",
-  m: 0,
-  mb: 0.5,
-  px: 1,
-  py: 0.25,
-  minHeight: 0,
-  flexShrink: 0,
-  gap: 0.5,
-  cursor: "grab",
-  "&:active": { cursor: "grabbing" },
-  border: "1px dashed",
-  borderColor: "divider",
-  bgcolor: "action.hover",
-  "&:hover": { bgcolor: "action.selected" },
-} as const;
+const PALETTE_ITEM_CLASS =
+  "mb-1 min-h-0 shrink-0 cursor-grab gap-1 rounded-surface border border-dashed border-divider bg-hover px-2 py-0.5 hover:bg-selected active:cursor-grabbing";
 
 interface WiringCanvasSidebarProps {
   selectedIds: Set<string>;
@@ -74,7 +58,6 @@ export function WiringCanvasSidebar({
   onExternalTemplateAdd,
   onConstantAdd,
 }: WiringCanvasSidebarProps) {
-  const palette = useCanvasPalette();
   const { ikApi } = useConfig();
 
   const [templates, setTemplates] = useState<GenericTemplate[]>([]);
@@ -136,69 +119,36 @@ export function WiringCanvasSidebar({
   };
 
   return (
-    <Box
-      sx={{
-        width: 220,
-        minWidth: 220,
-        borderRight: `1px solid ${palette.divider}`,
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-        bgcolor: "background.default",
-      }}
-    >
-      <Box sx={{ px: 1.5, pt: 1.5, pb: 0.5 }}>
-        <Typography
-          variant="caption"
-          sx={{
-            fontWeight: 700,
-            color: "text.secondary",
-          }}
-        >
+    <div className="flex w-55 min-w-55 flex-col overflow-hidden border-r border-r-divider bg-canvas">
+      <div className="px-3 pt-3 pb-1">
+        <span className="text-caption font-bold text-fg-muted">
           Available Templates
-        </Typography>
+        </span>
         <TextField
+          className="mt-1"
           placeholder="Search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           fullWidth
-          sx={{ mt: 0.5 }}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon
-                    fontSize="small"
-                    sx={{ color: "text.disabled" }}
-                  />
-                </InputAdornment>
-              ),
-            },
-          }}
+          startAdornment={
+            <InputAdornment position="start">
+              <SearchIcon className="text-fg-disabled" fontSize="small" />
+            </InputAdornment>
+          }
         />
-      </Box>
+      </div>
       <List
+        className={cn(
+          "overflow-y-auto px-1 py-0",
+          missingParentTemplates.length > 0 ? "max-h-[50%]" : undefined,
+          missingParentTemplates.length > 0 ? "flex-initial" : "flex-1",
+        )}
         dense
-        sx={{
-          flex: missingParentTemplates.length > 0 ? "0 1 auto" : 1,
-          overflowY: "auto",
-          px: 0.5,
-          py: 0,
-          maxHeight: missingParentTemplates.length > 0 ? "50%" : undefined,
-        }}
       >
         {filteredTemplates.length === 0 && (
-          <Typography
-            variant="caption"
-            sx={{
-              color: "text.disabled",
-              px: 1.5,
-              py: 1,
-              display: "block",
-            }}
-          >
+          <span className="block px-3 py-2 text-caption text-fg-disabled">
             {search ? "No matches" : "All templates added"}
-          </Typography>
+          </span>
         )}
 
         {filteredTemplates.map((t) => (
@@ -207,18 +157,15 @@ export function WiringCanvasSidebar({
             draggable
             onDragStart={(e) => handleDragStart(e, t)}
             onClick={() => onAdd(t as unknown as GenericTemplate)}
-            sx={PALETTE_ITEM_SX}
+            className={PALETTE_ITEM_CLASS}
           >
             <ListItemText
               primary={t.name}
-              slotProps={{ primary: { variant: "body2", noWrap: true } }}
+              primaryClassName="truncate font-normal"
             />
             {t.abstract && <AbstractChip />}
             <Tooltip title="Add to canvas" arrow>
-              <AddIcon
-                fontSize="small"
-                sx={{ color: "text.disabled", ml: 0.5 }}
-              />
+              <AddIcon className="ml-1 text-fg-disabled" fontSize="small" />
             </Tooltip>
           </ListItemButton>
         ))}
@@ -226,43 +173,21 @@ export function WiringCanvasSidebar({
       {missingParentTemplates.length > 0 && (
         <>
           <Divider />
-          <Box sx={{ px: 1.5, pt: 1, pb: 0.5 }}>
-            <Typography
-              variant="caption"
-              sx={{
-                fontWeight: 700,
-                color: "warning.main",
-                display: "flex",
-                alignItems: "center",
-                gap: 0.5,
-              }}
-            >
-              <StorageIcon sx={{ fontSize: 14 }} />
+          <div className="px-3 pt-2 pb-1">
+            <span className="flex items-center gap-1 text-caption font-bold text-warning">
+              <StorageIcon className="text-[14px]" />
               Input Templates
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{
-                color: "text.secondary",
-              }}
-            >
+            </span>
+            <span className="text-caption text-fg-muted">
               Parent templates - add to wire outputs to dependent resources.
-            </Typography>
-          </Box>
+            </span>
+          </div>
 
-          <List dense sx={{ flex: 1, overflowY: "auto", px: 0.5, py: 0 }}>
+          <List className="flex-1 overflow-y-auto px-1 py-0" dense>
             {availableParentTemplates.length === 0 && (
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "text.disabled",
-                  px: 1.5,
-                  py: 1,
-                  display: "block",
-                }}
-              >
+              <span className="block px-3 py-2 text-caption text-fg-disabled">
                 All parent templates added
-              </Typography>
+              </span>
             )}
 
             {availableParentTemplates.map((t) => (
@@ -271,18 +196,15 @@ export function WiringCanvasSidebar({
                 draggable
                 onDragStart={(e) => handleExternalDragStart(e, t)}
                 onClick={() => onExternalTemplateAdd(t)}
-                sx={{ ...PALETTE_ITEM_SX, borderColor: "warning.dark" }}
+                className={cn(PALETTE_ITEM_CLASS, "border-warning-dark")}
               >
                 <ListItemText
                   primary={t.name}
-                  slotProps={{ primary: { variant: "body2", noWrap: true } }}
+                  primaryClassName="truncate font-normal"
                 />
                 {t.abstract && <AbstractChip />}
                 <Tooltip title="Add as input" arrow>
-                  <AddIcon
-                    fontSize="small"
-                    sx={{ color: "warning.main", ml: 0.5 }}
-                  />
+                  <AddIcon className="ml-1 text-warning" fontSize="small" />
                 </Tooltip>
               </ListItemButton>
             ))}
@@ -290,47 +212,33 @@ export function WiringCanvasSidebar({
         </>
       )}
       <Divider />
-      <Box sx={{ px: 1.5, pt: 1, pb: 1.5 }}>
-        <Typography
-          variant="caption"
-          sx={{
-            fontWeight: 700,
-            color: "secondary.main",
-            display: "flex",
-            alignItems: "center",
-            gap: 0.5,
-          }}
-        >
-          <DataObjectIcon sx={{ fontSize: 14 }} />
+      <div className="px-3 pt-2 pb-3">
+        <span className="flex items-center gap-1 text-caption font-bold text-secondary">
+          <DataObjectIcon className="text-[14px]" />
           Constants
-        </Typography>
-        <Typography
-          variant="caption"
-          sx={{
-            color: "text.secondary",
-          }}
-        >
+        </span>
+        <span className="text-caption text-fg-muted">
           Fixed values wired to inputs.
-        </Typography>
-        <Box sx={{ display: "flex", gap: 0.5, mt: 1 }}>
+        </span>
+        <div className="mt-2 flex gap-1">
           <Button
+            className="flex-1"
             color="secondary"
             startIcon={<TextFieldsIcon />}
             onClick={() => onConstantAdd("string")}
-            sx={{ flex: 1 }}
           >
             String
           </Button>
           <Button
+            className="flex-1"
             color="secondary"
             startIcon={<NumbersIcon />}
             onClick={() => onConstantAdd("number")}
-            sx={{ flex: 1 }}
           >
             Number
           </Button>
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,14 +1,12 @@
 import { useCallback } from "react";
 
-import { Checkbox, FormControlLabel, Typography } from "@mui/material";
-
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { BooleanInlineField } from "../../common/components/editors/BooleanInlineField";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
-import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { notify, notifyError } from "../../common/hooks/useNotification";
+import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
+import { Checkbox, FormControlLabel } from "../../ui";
 import { RESOURCE_UPDATE_APPROVAL_BYPASS_FIELD_OPTIONS } from "../constants";
 import { GqlProject } from "../graphql";
 import {
@@ -22,25 +20,13 @@ interface ProjectSettingsProps {
 }
 
 export const ProjectSettings = ({ project }: ProjectSettingsProps) => {
-  const { ikApi } = useConfig();
-  const { actions, refreshEntity } = useEntityProvider();
+  const { actions } = useEntityProvider();
   const canEdit = actions.includes("edit");
 
-  const saveField = useCallback(
-    async (input: ProjectUpdateFieldInput) => {
-      try {
-        await ikApi.graphqlRequest(UPDATE_PROJECT_MUTATION, {
-          id: project.id,
-          input,
-        });
-        notify("Project updated successfully", "success");
-        refreshEntity?.();
-      } catch (error) {
-        notifyError(error);
-        throw error;
-      }
-    },
-    [ikApi, project.id, refreshEntity],
+  const saveField = useEntityFieldSaver<ProjectUpdateFieldInput>(
+    UPDATE_PROJECT_MUTATION,
+    project.id,
+    "Project",
   );
 
   const saveConfiguration = useCallback(
@@ -58,14 +44,13 @@ export const ProjectSettings = ({ project }: ProjectSettingsProps) => {
 
   return (
     <BaseCard name="Project Configuration">
-      {" "}
       <BooleanInlineField
         name={"Always Use Workspace"}
         canEdit={canEdit}
         value={project.configuration?.always_use_workspace ?? false}
         ariaLabel="Edit always use workspace"
         onSave={(value) => saveConfiguration({ always_use_workspace: value })}
-        size={6}
+        span="half"
       />
       <CommonEditableField<ResourceUpdateApprovalBypassField[]>
         name={"Allow Update Without Approval"}
@@ -115,25 +100,15 @@ export const ProjectSettings = ({ project }: ProjectSettingsProps) => {
         isEqual={(a, b) =>
           a.length === b.length && a.every((value) => b.includes(value))
         }
-        size={6}
+        span="half"
       />
-      <Typography
-        variant="body2"
-        sx={{
-          color: "text.secondary",
-        }}
-      >
+      <p className="m-0 text-body2 text-fg-muted">
         Force resources in this project to use the assigned workspace.
-      </Typography>
-      <Typography
-        variant="body2"
-        sx={{
-          color: "text.secondary",
-        }}
-      >
+      </p>
+      <p className="m-0 text-body2 text-fg-muted">
         Let users update selected resource fields without creating an approval
         request.
-      </Typography>
+      </p>
     </BaseCard>
   );
 };

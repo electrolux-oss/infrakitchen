@@ -1,8 +1,3 @@
-import {
-  GridColumnVisibilityModel,
-  GridRenderCellParams,
-} from "@mui/x-data-grid";
-
 import { getRepoNameFromUrl } from "../../common";
 import { CodeRepository } from "../../common/components/entities/CodeRepository";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
@@ -12,13 +7,13 @@ import {
   userColumn,
 } from "../../common/components/entity_table/tableColumns";
 import StatusChip from "../../common/StatusChip";
+import { ColumnVisibilityModel, RenderCellParams } from "../../ui";
 import { ENTITY_STATUS } from "../../utils/constants";
 
-export const sourceCodeDefaultColumnVisibilityModel: GridColumnVisibilityModel =
-  {
-    description: false,
-    creator: false,
-  };
+export const sourceCodeDefaultColumnVisibilityModel: ColumnVisibilityModel = {
+  description: false,
+  creator: false,
+};
 
 export const sourceCodeColumns: EntityTableColumn[] = [
   {
@@ -35,7 +30,7 @@ export const sourceCodeColumns: EntityTableColumn[] = [
     },
     valueGetter: (_value: any, row: any) =>
       getRepoNameFromUrl(row.sourceCodeUrl || ""),
-    renderCell: (params: GridRenderCellParams) => (
+    renderCell: (params: RenderCellParams) => (
       <CodeRepository {...params.row} />
     ),
   },
@@ -63,7 +58,7 @@ export const sourceCodeColumns: EntityTableColumn[] = [
         { label: "Ready", value: ENTITY_STATUS.READY },
       ],
     },
-    renderCell: (params: GridRenderCellParams) => (
+    renderCell: (params: RenderCellParams) => (
       <StatusChip status={params.row.status} />
     ),
   },

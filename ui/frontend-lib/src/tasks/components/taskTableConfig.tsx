@@ -1,8 +1,3 @@
-import {
-  GridColumnVisibilityModel,
-  GridRenderCellParams,
-} from "@mui/x-data-grid";
-
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
@@ -12,8 +7,9 @@ import {
 } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import StatusChip from "../../common/StatusChip";
+import { ColumnVisibilityModel, RenderCellParams } from "../../ui";
 
-export const taskDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
+export const taskDefaultColumnVisibilityModel: ColumnVisibilityModel = {
   creator: false,
 };
 
@@ -33,7 +29,7 @@ export const taskColumns = (): EntityTableColumn[] => [
       defaultOperator: "in",
       optionsKey: "entities",
     },
-    renderCell: (params: GridRenderCellParams) => (
+    renderCell: (params: RenderCellParams) => (
       <Entity
         entity={{
           ...params.row.entityData,
@@ -51,7 +47,7 @@ export const taskColumns = (): EntityTableColumn[] => [
     fetchFields: ["status", "state"],
     headerName: "Status",
     flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
+    renderCell: (params: RenderCellParams) => (
       <StatusChip status={params.row.status} state={params.row.state} />
     ),
   },
@@ -67,7 +63,7 @@ export const taskColumns = (): EntityTableColumn[] => [
     width: RELATIVE_TIME_COLUMN_WIDTH,
     align: "right",
     headerAlign: "right",
-    renderCell: (params: GridRenderCellParams) =>
+    renderCell: (params: RenderCellParams) =>
       params.value ? <RelativeTime date={params.value} compact /> : null,
   },
   userColumn(),

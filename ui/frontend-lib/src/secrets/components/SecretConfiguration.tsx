@@ -1,16 +1,8 @@
 import { useCallback, useState } from "react";
 
-import AddIcon from "@mui/icons-material/Add";
-import { Box, Button, Chip, Typography } from "@mui/material";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
-
 import { Entity, formatLabel } from "../../common";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { EditAffordance } from "../../common/components/editors/EditAffordance";
-import {
-  dataGridDefaultProps,
-  dataGridSx,
-} from "../../common/components/entity_table/dataGridStyles";
 import {
   CommonField,
   getProviderValue,
@@ -20,9 +12,10 @@ import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { CODE_FONT_FAMILY } from "../../common/theme";
-import { dashedAddButtonSx } from "../../common/utils/dashedAddButtonSx";
-import { solidChipColorSx } from "../../common/utils/softChip";
+import { dashedAddButtonClass } from "../../common/utils/dashedAddButton";
+import { AddIcon } from "../../icons/material";
+import { Button, Chip } from "../../ui";
+import { DataTable, DataTableColumn } from "../../ui";
 import { GqlSecret } from "../graphql";
 import {
   SecretUpdateFieldInput,
@@ -56,19 +49,17 @@ const asSecretList = (secrets: unknown): CustomSecret[] => {
   return [];
 };
 
-// Read-only presentation of the secret list: a compact DataGrid. Values are
+// Read-only presentation of the secret list: a compact DataTable. Values are
 // masked — only names ever render in plain text.
 const SecretListTable = ({ secrets }: { secrets: CustomSecret[] }) => {
-  const columns: GridColDef<any>[] = [
+  const columns: DataTableColumn<any>[] = [
     {
       field: "name",
       headerName: "Name",
       flex: 1,
       sortable: false,
       renderCell: (params) => (
-        <Typography sx={{ fontFamily: CODE_FONT_FAMILY }}>
-          {params.value}
-        </Typography>
+        <p className="m-0 font-mono text-body2">{params.value}</p>
       ),
     },
     {
@@ -77,16 +68,11 @@ const SecretListTable = ({ secrets }: { secrets: CustomSecret[] }) => {
       flex: 2.5,
       sortable: false,
       renderCell: (params) => (
-        <Typography
-          sx={{
-            fontFamily: CODE_FONT_FAMILY,
-            color: "text.secondary",
-          }}
-        >
+        <p className="m-0 font-mono text-body2 text-fg-muted">
           {params.value
             ? "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
             : ""}
-        </Typography>
+        </p>
       ),
     },
   ];
@@ -98,36 +84,9 @@ const SecretListTable = ({ secrets }: { secrets: CustomSecret[] }) => {
   }));
 
   return (
-    <Box
-      sx={{
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: "var(--template-surface-radius)",
-        backgroundColor: "background.paper",
-        overflow: "hidden",
-      }}
-    >
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        autoHeight
-        hideFooter
-        density="compact"
-        columnHeaderHeight={36}
-        disableRowSelectionOnClick
-        {...dataGridDefaultProps}
-        sx={[
-          dataGridSx,
-          {
-            // Compact rows: tighten the shared cell padding for this small
-            // read-only table.
-            "& .MuiDataGrid-cell": { py: "2px" },
-          },
-          // Small embedded table: hug its rows instead of the shared min-height.
-          { minHeight: "auto" },
-        ]}
-      />
-    </Box>
+    <div className="overflow-hidden rounded-surface border border-divider bg-paper">
+      <DataTable rows={rows} columns={columns} hideFooter density="compact" />
+    </div>
   );
 };
 
@@ -222,19 +181,21 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
       <CommonField name={"Secret Type"} value={secret.secretType} />
       {isCustom ? (
         <CommonField
-          size={12}
+          span="full"
           name={
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <div className="flex items-center gap-2">
               Secret List
               <Chip
                 label={String(secretList.length)}
-                sx={solidChipColorSx("info", undefined, undefined, true)}
+                appearance="solid"
+                color="info"
+                compact
               />
-            </Box>
+            </div>
           }
           value={
             editingList ? (
-              <Box sx={{ width: "100%" }}>
+              <div className="w-full">
                 <CustomSecretInput
                   label="Secret list"
                   hideHeader
@@ -242,26 +203,19 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
                   value={draftSecrets}
                   onChange={setDraftSecrets}
                 />
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 1,
-                    mt: 1,
-                    // Align with the editor rows (inset by px: 2).
-                    px: 2,
-                  }}
+                <div
+                  // Align with the editor rows (inset by px: 2).
+                  className="mt-2 flex items-center justify-between gap-2 px-4"
                 >
                   {/* Dashed "Add" action shared with the other list editors. */}
                   <Button
                     startIcon={<AddIcon />}
                     onClick={addSecret}
-                    sx={dashedAddButtonSx}
+                    className={dashedAddButtonClass}
                   >
                     Add
                   </Button>
-                  <Box sx={{ display: "flex", gap: 1 }}>
+                  <div className="flex gap-2">
                     <Button
                       onClick={() => setEditingList(false)}
                       disabled={savingSecrets}
@@ -275,34 +229,21 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
                     >
                       Save
                     </Button>
-                  </Box>
-                </Box>
-              </Box>
+                  </div>
+                </div>
+              </div>
             ) : secretList.length > 0 ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 0.5,
-                }}
-              >
-                <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+              <div className="flex items-start gap-1">
+                <div className="min-w-0 grow">
                   <SecretListTable secrets={secretList} />
-                </Box>
+                </div>
                 {editAffordance}
-              </Box>
+              </div>
             ) : (
-              <Box
-                sx={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 0.5,
-                  maxWidth: "100%",
-                }}
-              >
+              <div className="inline-flex max-w-full items-center gap-1">
                 <PlaceholderText />
                 {editAffordance}
-              </Box>
+              </div>
             )
           }
         />

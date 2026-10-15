@@ -1,6 +1,5 @@
-import { GridSize, Switch } from "@mui/material";
-
-import { CommonField } from "../fields/CommonField";
+import { Switch } from "../../../ui";
+import { CommonField, FieldSpan } from "../fields/CommonField";
 
 export interface BooleanInlineFieldProps {
   /** Field label shown above the value. */
@@ -9,8 +8,8 @@ export interface BooleanInlineFieldProps {
   canEdit: boolean;
   /** Current persisted value. */
   value: boolean;
-  /** Grid sizing for the underlying field cell. */
-  size?: GridSize | { xs: GridSize; md: GridSize } | undefined;
+  /** Width in the surrounding field grid. */
+  span?: FieldSpan;
   /** Accessible label for the toggle (defaults to the field name). */
   ariaLabel?: string;
   /** Persists the new value; should throw on failure so it can be surfaced. */
@@ -26,7 +25,7 @@ export const BooleanInlineField = ({
   name,
   canEdit,
   value,
-  size,
+  span,
   ariaLabel,
   onSave,
 }: BooleanInlineFieldProps) => {
@@ -42,14 +41,14 @@ export const BooleanInlineField = ({
   return (
     <CommonField
       name={name}
-      size={size}
+      span={span}
       value={
         <Switch
+          className="mt-1"
           checked={value}
           disabled={!canEdit}
           onChange={(e) => handleChange(e.target.checked)}
-          slotProps={{ input: { "aria-label": ariaLabel || name } }}
-          sx={{ mt: 0.5 }}
+          inputProps={{ "aria-label": ariaLabel || name }}
         />
       }
     />

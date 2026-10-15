@@ -8,21 +8,7 @@ import {
   useWatch,
 } from "react-hook-form";
 
-import { Box, FormControl, FormHelperText, InputLabel } from "@mui/material";
-import {
-  DataGrid,
-  GridPaginationModel,
-  GridRenderCellParams,
-  GridRowSelectionModel,
-  GridSortModel,
-} from "@mui/x-data-grid";
-
 import { Entity } from "../../common/components/entities/Entity";
-import {
-  dataGridDefaultProps,
-  dataGridPaginationSlotProps,
-  dataGridSx,
-} from "../../common/components/entity_table/dataGridStyles";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
@@ -39,6 +25,13 @@ import { EXECUTOR_FIELD_MAP } from "../../executors/graphql";
 import { resourceColumns as filterableResourceColumns } from "../../resources/components/resourceTableConfig";
 import { RESOURCE_FIELD_MAP } from "../../resources/graphql";
 import { IkEntity } from "../../types";
+import { FormControl, FormHelperText, InputLabel } from "../../ui";
+import {
+  DataTable,
+  PaginationModel,
+  RenderCellParams,
+  SortModel,
+} from "../../ui";
 import { BatchOperationCreate } from "../types";
 
 // State + Created columns are identical across the resource and executor
@@ -48,7 +41,7 @@ const selectionStateColumn: EntityTableColumn = {
   headerName: "State",
   flex: 1,
   valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
-  renderCell: (params: GridRenderCellParams) => (
+  renderCell: (params: RenderCellParams) => (
     <StatusChip
       status={String(params.row.status).toLowerCase()}
       state={String(params.row.state).toLowerCase()}
@@ -60,12 +53,8 @@ const selectionCreatedAtColumn: EntityTableColumn = {
   field: "createdAt",
   headerName: "Created",
   width: RELATIVE_TIME_COLUMN_WIDTH,
-  renderCell: (params: GridRenderCellParams) => (
-    <RelativeTime
-      date={params.value}
-      compact
-      sx={{ display: "flex", justifyContent: "flex-end" }}
-    />
+  renderCell: (params: RenderCellParams) => (
+    <RelativeTime className="flex justify-end" date={params.value} compact />
   ),
 };
 
@@ -95,11 +84,11 @@ export const BatchOperationEntitySelector = (
   const [entities, setEntities] = useState<IkEntity[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalRows, setTotalRows] = useState(0);
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+  const [paginationModel, setPaginationModel] = useState<PaginationModel>({
     page: 0,
     pageSize: 10,
   });
-  const [sortModel, setSortModel] = useState<GridSortModel>([]);
+  const [sortModel, setSortModel] = useState<SortModel>([]);
 
   const resourceSelectionColumns: EntityTableColumn[] = useMemo(
     () => [
@@ -109,7 +98,7 @@ export const BatchOperationEntitySelector = (
         fetchFields: ["name", "id", "entityName"],
         flex: 1,
         hideable: false,
-        renderCell: (params: GridRenderCellParams) => {
+        renderCell: (params: RenderCellParams) => {
           return <Entity entity={params.row} />;
         },
       },
@@ -118,7 +107,7 @@ export const BatchOperationEntitySelector = (
         headerName: "Template",
         flex: 1,
         valueGetter: (value: any) => value?.name || "",
-        renderCell: (params: GridRenderCellParams) => {
+        renderCell: (params: RenderCellParams) => {
           const template = params.row.template;
           return <Entity entity={template} />;
         },
@@ -142,7 +131,7 @@ export const BatchOperationEntitySelector = (
           if (!scv) return "";
           return scv.sourceCodeVersion ?? scv.sourceCodeBranch;
         },
-        renderCell: (params: GridRenderCellParams) => {
+        renderCell: (params: RenderCellParams) => {
           const scv = params.row.sourceCodeVersion;
           if (!scv) return null;
           return <Entity entity={scv} lifecycleVariant="dot" />;
@@ -163,7 +152,7 @@ export const BatchOperationEntitySelector = (
         fetchFields: ["name", "id", "entityName"],
         flex: 1,
         hideable: false,
-        renderCell: (params: GridRenderCellParams) => {
+        renderCell: (params: RenderCellParams) => {
           return <Entity entity={params.row} />;
         },
       },
@@ -173,7 +162,7 @@ export const BatchOperationEntitySelector = (
         flex: 1,
         valueGetter: (_value: any, row: any) =>
           row.sourceCode?.identifier || "",
-        renderCell: (params: GridRenderCellParams) => {
+        renderCell: (params: RenderCellParams) => {
           const sourceCodeVersion = params.row.sourceCode;
           return <Entity entity={sourceCodeVersion} />;
         },
@@ -214,14 +203,6 @@ export const BatchOperationEntitySelector = (
     setFilterValues(values);
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
   }, []);
-
-  const buildRowSelectionModel = useCallback(
-    (selectedIds: Array<string | number>): GridRowSelectionModel => ({
-      type: "include",
-      ids: new Set(selectedIds),
-    }),
-    [],
-  );
 
   useEffect(() => {
     let cancelled = false;
@@ -325,10 +306,10 @@ export const BatchOperationEntitySelector = (
       }}
       render={({ field }) => (
         <FormControl fullWidth margin="normal" error={!!errors.entityIds}>
-          <InputLabel shrink>
+          <InputLabel>
             {`Select ${entityType === "resource" ? "Resources" : "Executors"}`}
           </InputLabel>
-          <Box sx={{ mt: 1 }}>
+          <div className="mt-2">
             <FilterProvider
               columns={filterColumns}
               storageKey={`filter_batch_operation_${entityType}`}
@@ -336,8 +317,8 @@ export const BatchOperationEntitySelector = (
             >
               <FilterPanel />
             </FilterProvider>
-            <Box sx={{ mt: 2, height: 520, width: "100%" }}>
-              <DataGrid
+            <div className="mt-4 w-full overflow-hidden rounded-surface border border-divider bg-paper">
+              <DataTable
                 rows={entities}
                 columns={columns}
                 loading={loading}
@@ -345,34 +326,13 @@ export const BatchOperationEntitySelector = (
                 paginationMode="server"
                 sortingMode="server"
                 checkboxSelection
-                disableRowSelectionOnClick
-                {...dataGridDefaultProps}
-                rowSelectionModel={buildRowSelectionModel(
-                  Array.isArray(selectedEntityIds) ? selectedEntityIds : [],
-                )}
+                rowSelectionModel={
+                  Array.isArray(selectedEntityIds) ? selectedEntityIds : []
+                }
                 onRowSelectionModelChange={(newSelection) => {
-                  const currentPageIds = entities.map((entity) =>
-                    String(entity.id),
-                  );
-                  const excludedIds = new Set(
-                    Array.from(newSelection.ids).map(String),
-                  );
-                  const baseSelected = Array.isArray(selectedEntityIds)
-                    ? selectedEntityIds.map(String)
-                    : [];
-
-                  const nextSelected =
-                    newSelection.type === "exclude"
-                      ? Array.from(
-                          new Set([
-                            ...baseSelected,
-                            ...currentPageIds.filter(
-                              (id) => !excludedIds.has(id),
-                            ),
-                          ]),
-                        )
-                      : Array.from(excludedIds);
-
+                  // Ids from other pages stay in the model, so it is the
+                  // whole selection.
+                  const nextSelected = newSelection.map(String);
                   setValue("entityIds", nextSelected, {
                     shouldValidate: true,
                     shouldDirty: true,
@@ -384,14 +344,10 @@ export const BatchOperationEntitySelector = (
                 sortModel={sortModel}
                 onSortModelChange={setSortModel}
                 pageSizeOptions={[10, 25, 50, 100]}
-                keepNonExistentRowsSelected
-                sx={{ ...dataGridSx }}
-                slotProps={dataGridPaginationSlotProps(
-                  "entity-pagination-label",
-                )}
+                className="md:min-h-[380px]"
               />
-            </Box>
-          </Box>
+            </div>
+          </div>
           <FormHelperText>
             {errors.entityIds
               ? errors.entityIds.message

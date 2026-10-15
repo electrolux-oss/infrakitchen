@@ -1,6 +1,8 @@
 import { Icon } from "@iconify/react";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import { Box, IconButton, Tooltip } from "@mui/material";
+import ixLogData from "@iconify-icons/ix/log";
+
+import { AutoAwesomeIcon } from "../../icons/material";
+import { IconButton, Tooltip } from "../../ui";
 
 const isTerraformLanguage = (lang?: string): boolean =>
   lang === "opentofu" || lang === "terraform";
@@ -29,14 +31,7 @@ export const LogActionButtons = ({
   if (!ACTIONS_WITH_LOGS.includes(action)) return null;
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        gap: 1,
-        alignItems: "center",
-        height: "100%",
-      }}
-    >
+    <div className="flex h-full items-center gap-2">
       {action !== "sync" &&
         isTerraformLanguage(sourceCodeLanguage) &&
         onOpenSummary && (
@@ -60,10 +55,10 @@ export const LogActionButtons = ({
             onOpenLogs();
           }}
         >
-          <Icon icon="ix:log" />
+          <Icon icon={ixLogData} ssr />
         </IconButton>
       </Tooltip>
-    </Box>
+    </div>
   );
 };
 

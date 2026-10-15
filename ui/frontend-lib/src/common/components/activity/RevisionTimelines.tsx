@@ -1,8 +1,7 @@
 import { useMemo, useState } from "react";
 
-import { Box, Button } from "@mui/material";
-
 import { AuditLogEntity } from "../../../types";
+import { Button } from "../../../ui";
 
 import { RevisionTimeline } from "./RevisionTimeline";
 
@@ -68,7 +67,7 @@ export const RevisionTimelines = ({
         />
       ))}
       {groups.length > 0 && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+        <div className="mt-4 flex justify-center">
           <Button
             variant="text"
             disabled={groups.length <= limit}
@@ -76,7 +75,7 @@ export const RevisionTimelines = ({
           >
             Show more
           </Button>
-        </Box>
+        </div>
       )}
     </>
   );

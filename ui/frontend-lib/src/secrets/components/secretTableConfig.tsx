@@ -1,9 +1,3 @@
-import { Box } from "@mui/material";
-import {
-  GridColumnVisibilityModel,
-  GridRenderCellParams,
-} from "@mui/x-data-grid";
-
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
@@ -14,6 +8,7 @@ import {
 import { getProviderValue } from "../../common/components/fields/CommonField";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
+import { ColumnVisibilityModel, RenderCellParams } from "../../ui";
 import { ENTITY_STATUS } from "../../utils/constants";
 
 export const secretColumns: EntityTableColumn[] = [
@@ -30,7 +25,7 @@ export const secretColumns: EntityTableColumn[] = [
       defaultOperator: "like",
       defaultSelected: true,
     },
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: RenderCellParams) => {
       return <Entity entity={params.row} />;
     },
   },
@@ -54,16 +49,10 @@ export const secretColumns: EntityTableColumn[] = [
     field: "secretProvider",
     headerName: "Provider",
     flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          height: "100%",
-        }}
-      >
+    renderCell: (params: RenderCellParams) => (
+      <div className="flex h-full items-center">
         {getProviderValue(params.value, 18)}
-      </Box>
+      </div>
     ),
   },
   {
@@ -83,7 +72,7 @@ export const secretColumns: EntityTableColumn[] = [
       ],
     },
     valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
-    renderCell: (params: GridRenderCellParams) => (
+    renderCell: (params: RenderCellParams) => (
       <StatusChip
         status={String(params.row.status).toLowerCase()}
         state={String(params.row.state).toLowerCase()}
@@ -108,7 +97,7 @@ export const secretColumns: EntityTableColumn[] = [
       }),
     },
     valueGetter: (_value: any, row: any) => row.integration?.name || "",
-    renderCell: (params: GridRenderCellParams) =>
+    renderCell: (params: RenderCellParams) =>
       params.row.integration ? (
         <Entity entity={params.row.integration} />
       ) : null,
@@ -116,7 +105,7 @@ export const secretColumns: EntityTableColumn[] = [
   labelsColumn("secret"),
 ];
 
-export const secretDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
+export const secretDefaultColumnVisibilityModel: ColumnVisibilityModel = {
   description: false,
   updatedAt: false,
   integration: false,

@@ -3,16 +3,6 @@ import { useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import {
-  Box,
-  Button,
-  Checkbox,
-  FormGroup,
-  FormControlLabel,
-  TextField,
-  Typography,
-} from "@mui/material";
-
 import { LabelInput, MultiSelectEditor } from "../../common";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { DependencyConfigurationFields } from "../../common/components/hcl/DependencyConfigurationFields";
@@ -22,6 +12,7 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { validateTagEntries } from "../../resources/utils/formValidation";
 import { IkEntity } from "../../types";
+import { Checkbox, FormControlLabel, Button, TextField } from "../../ui";
 import { GqlUserShort, USERS_SHORT_QUERY } from "../../users/graphql";
 import { RESOURCE_UPDATE_APPROVAL_BYPASS_FIELD_OPTIONS } from "../constants";
 import { CREATE_PROJECT_MUTATION } from "../graphql";
@@ -115,17 +106,9 @@ export const ProjectCreatePage = () => {
         </>
       }
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          flexDirection: "column",
-          width: "100%",
-          minWidth: 320,
-        }}
-      >
+      <div className="flex w-full min-w-80 flex-col items-center">
         <PropertyCard title="Project Definition">
-          <Box>
+          <div>
             <Controller
               name="name"
               control={control}
@@ -135,18 +118,13 @@ export const ProjectCreatePage = () => {
                   {...field}
                   label="Name"
                   required
-                  variant="outlined"
                   error={!!errors.name}
                   helperText={
                     errors.name ? errors.name.message : "Name of the project"
                   }
                   fullWidth
                   margin="normal"
-                  slotProps={{
-                    htmlInput: {
-                      "aria-label": "Project name",
-                    },
-                  }}
+                  inputProps={{ "aria-label": "Project name" }}
                 />
               )}
             />
@@ -157,7 +135,6 @@ export const ProjectCreatePage = () => {
                 <TextField
                   {...field}
                   label="Description"
-                  variant="outlined"
                   error={!!errors.description}
                   helperText={
                     errors.description
@@ -166,11 +143,7 @@ export const ProjectCreatePage = () => {
                   }
                   fullWidth
                   margin="normal"
-                  slotProps={{
-                    htmlInput: {
-                      "aria-label": "Project description",
-                    },
-                  }}
+                  inputProps={{ "aria-label": "Project description" }}
                 />
               )}
             />
@@ -202,16 +175,16 @@ export const ProjectCreatePage = () => {
               defaultValue={[]}
               render={({ field }) => <LabelInput errors={errors} {...field} />}
             />
-          </Box>
+          </div>
         </PropertyCard>
 
         <PropertyCard title="Project Configuration">
-          <Box>
+          <div>
             <Controller
               name="configuration.always_use_workspace"
               control={control}
               render={({ field }) => (
-                <Box>
+                <div>
                   <FormControlLabel
                     control={
                       <Checkbox
@@ -221,27 +194,19 @@ export const ProjectCreatePage = () => {
                     }
                     label="Always use workspace"
                   />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: "text.secondary",
-                      display: "block",
-                      mt: -1,
-                      mb: 1,
-                    }}
-                  >
+                  <span className="-mt-2 mb-2 block text-caption text-fg-muted">
                     Force resources in this project to use the assigned
                     workspace.
-                  </Typography>
-                </Box>
+                  </span>
+                </div>
               )}
             />
             <Controller
               name="configuration.allow_unapproved_metadata_edits"
               control={control}
               render={({ field }) => (
-                <Box>
-                  <FormGroup>
+                <div>
+                  <div className="flex flex-col flex-wrap">
                     {RESOURCE_UPDATE_APPROVAL_BYPASS_FIELD_OPTIONS.map(
                       (option) => (
                         <FormControlLabel
@@ -266,27 +231,19 @@ export const ProjectCreatePage = () => {
                         />
                       ),
                     )}
-                  </FormGroup>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: "text.secondary",
-                      display: "block",
-                      mt: -1,
-                      mb: 1,
-                    }}
-                  >
+                  </div>
+                  <span className="-mt-2 mb-2 block text-caption text-fg-muted">
                     Let users update selected resource fields without creating
                     an approval request.
-                  </Typography>
-                </Box>
+                  </span>
+                </div>
               )}
             />
-          </Box>
+          </div>
         </PropertyCard>
 
         <PropertyCard title="Project Owners">
-          <Box>
+          <div>
             <Controller
               name="owners"
               control={control}
@@ -303,7 +260,7 @@ export const ProjectCreatePage = () => {
                 />
               )}
             />
-          </Box>
+          </div>
         </PropertyCard>
 
         <DependencyConfigurationFields
@@ -322,7 +279,7 @@ export const ProjectCreatePage = () => {
             },
           }}
         />
-      </Box>
+      </div>
     </PageContainer>
   );
 };

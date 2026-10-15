@@ -1,15 +1,17 @@
 import * as React from "react";
 
-import MenuIcon from "@mui/icons-material/Menu";
-import MenuOpenIcon from "@mui/icons-material/MenuOpen";
-import Box from "@mui/material/Box";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import Tooltip from "@mui/material/Tooltip";
+import {
+  cn,
+  ListItemIcon,
+  ListItemText,
+  MenuIcon,
+  MenuOpenIcon,
+  Tooltip,
+} from "@electrolux-oss/infrakitchen";
 
 import DashboardSidebarContext from "../../context/DashboardSidebarContext";
+
+import { SIDEBAR_ITEM_CLASS } from "./mixins";
 
 export interface DashboardSidebarToggleItemProps {
   expanded: boolean;
@@ -38,63 +40,32 @@ export default function DashboardSidebarToggleItem({
       placement="right"
       enterDelay={500}
     >
-      <ListItem
-        disablePadding
-        sx={{
-          display: "block",
-          py: 0,
-          px: 1,
-          overflowX: "hidden",
-        }}
-      >
-        <ListItemButton
+      <div className="block overflow-x-hidden px-2">
+        <button
+          type="button"
+          className={cn(SIDEBAR_ITEM_CLASS, "font-sans", mini && "h-8.5")}
           onClick={handleClick}
           aria-label={expanded ? "Collapse sidebar" : "Expand sidebar"}
-          sx={{
-            height: mini ? 34 : "auto",
-          }}
         >
           {mini ? (
-            <Box
-              sx={{
-                position: "absolute",
-                left: "50%",
-                top: "50%",
-                transform: "translate(-50%, -50%)",
-              }}
-            >
-              <ListItemIcon
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+              <ListItemIcon className="mr-0 flex items-center justify-center">
                 {icon}
               </ListItemIcon>
-            </Box>
+            </div>
           ) : (
             <React.Fragment>
-              <ListItemIcon
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "auto",
-                }}
-              >
+              <ListItemIcon className="mr-0 flex items-center">
                 {icon}
               </ListItemIcon>
               <ListItemText
+                className="z-1 whitespace-nowrap"
                 primary={expanded ? "Collapse" : "Expand"}
-                sx={{
-                  whiteSpace: "nowrap",
-                  zIndex: 1,
-                }}
               />
             </React.Fragment>
           )}
-        </ListItemButton>
-      </ListItem>
+        </button>
+      </div>
     </Tooltip>
   );
 }

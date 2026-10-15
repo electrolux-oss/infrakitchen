@@ -1,12 +1,12 @@
 import { useState } from "react";
 
 import { Icon } from "@iconify/react";
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
-import { Button, Stack } from "@mui/material";
+import carbonUnlinkData from "@iconify-icons/carbon/unlink";
 
 import { useConfig } from "../../common";
 import { notifyError } from "../../common/hooks/useNotification";
+import { CheckIcon, CloseIcon } from "../../icons/material";
+import { Button } from "../../ui";
 import { UNLINK_USER_ACCOUNT_MUTATION } from "../graphql";
 
 interface UnlinkAccountButtonProps {
@@ -56,30 +56,30 @@ export const UnlinkAccountButton = (props: UnlinkAccountButtonProps) => {
   return (
     <>
       {isConfirmingUnlink ? (
-        <Stack direction="row" spacing={1}>
+        <div className="flex flex-row gap-2">
           <Button
+            className="font-bold normal-case"
             variant="contained"
             startIcon={<CheckIcon />}
             onClick={() => handleUnlinkAccount()}
-            sx={{ textTransform: "none", fontWeight: "bold" }}
             disabled={isLoading}
           >
             Approve
           </Button>
           <Button
+            className="font-bold normal-case"
             color="error"
             startIcon={<CloseIcon />}
             onClick={handleCancelUnlink}
-            sx={{ textTransform: "none", fontWeight: "bold" }}
             disabled={isLoading}
           >
             Cancel
           </Button>
-        </Stack>
+        </div>
       ) : (
         <Button
           onClick={handleInitiateUnlinkConfirmation}
-          startIcon={<Icon icon="carbon:unlink" />}
+          startIcon={<Icon icon={carbonUnlinkData} ssr />}
         >
           Unlink Account
         </Button>

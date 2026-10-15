@@ -2,15 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import AddIcon from "@mui/icons-material/Add";
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Typography,
-} from "@mui/material";
-
 import { FilterProvider, PermissionWrapper } from "../../common";
 import { EntityCard } from "../../common/components/cards/EntityCard";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
@@ -19,6 +10,8 @@ import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import { AddIcon } from "../../icons/material";
+import { Alert, Spinner, Button } from "../../ui";
 import { serviceColumns } from "../components/serviceTableConfig";
 import { GqlService, SERVICES_QUERY } from "../graphql";
 
@@ -70,7 +63,7 @@ export const ServicesPage = () => {
   }, [fetchServices]);
 
   const actions = (
-    <Box>
+    <div>
       <PermissionWrapper
         requiredPermission="api:service"
         permissionAction="write"
@@ -82,18 +75,16 @@ export const ServicesPage = () => {
           Create
         </Button>
       </PermissionWrapper>
-    </Box>
+    </div>
   );
 
   const serviceCardFields = (service: GqlService) => {
     return (
       <>
-        <Box>
-          <Typography sx={{ display: "block", color: "text.secondary" }}>
-            Last Updated
-          </Typography>{" "}
+        <div>
+          <p className="m-0 block text-body2 text-fg-muted">Last Updated</p>{" "}
           <RelativeTime date={service.updatedAt} />
-        </Box>
+        </div>
       </>
     );
   };
@@ -101,12 +92,12 @@ export const ServicesPage = () => {
   if (error) {
     return (
       <PageContainer title="Services" actions={actions}>
-        <Box sx={{ width: "100%", py: 4 }}>
-          <Alert severity="error" sx={{ mb: 2 }}>
+        <div className="w-full py-8">
+          <Alert className="mb-4" severity="error">
             {error}
           </Alert>
           <Button onClick={fetchServices}>Retry</Button>
-        </Box>
+        </div>
       </PageContainer>
     );
   }
@@ -117,7 +108,7 @@ export const ServicesPage = () => {
       description="Services describe what runs inside a project and who owns it."
       actions={actions}
     >
-      <Box sx={{ width: "100%" }}>
+      <div className="w-full">
         <FilterProvider
           columns={serviceColumns}
           storageKey={`filter_${entityName}s`}
@@ -127,34 +118,15 @@ export const ServicesPage = () => {
           <FilterPanel />
         </FilterProvider>
         {loading ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "50vh",
-            }}
-          >
-            <CircularProgress />
-          </Box>
+          <div className="flex h-[50vh] items-center justify-center">
+            <Spinner />
+          </div>
         ) : services.length === 0 ? (
-          <Box sx={{ textAlign: "center", py: 4 }}>
-            <Typography variant="h5" component="p">
-              No services match your filters
-            </Typography>
-          </Box>
+          <div className="py-8 text-center">
+            <p className="m-0 text-h5">No services match your filters</p>
+          </div>
         ) : (
-          <Box
-            sx={{
-              "--card-min-width": { xs: "240px", sm: "260px", md: "300px" },
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fill, minmax(var(--card-min-width), 1fr))",
-              gap: 2,
-              width: "100%",
-              mt: 3,
-            }}
-          >
+          <div className="mt-6 grid w-full grid-cols-[repeat(auto-fill,_minmax(var(--card-min-width),_1fr))] gap-4 [--card-min-width:240px] sm:[--card-min-width:260px] md:[--card-min-width:300px]">
             {services.map((service) => (
               <EntityCard
                 key={service.id}
@@ -167,9 +139,9 @@ export const ServicesPage = () => {
                 entityFields={serviceCardFields(service)}
               />
             ))}
-          </Box>
+          </div>
         )}
-      </Box>
+      </div>
     </PageContainer>
   );
 };

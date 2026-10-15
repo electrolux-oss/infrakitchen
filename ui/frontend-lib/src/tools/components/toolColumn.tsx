@@ -1,9 +1,7 @@
-import { Typography } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
+import { RenderCellParams } from "../../ui";
 import { ToolShort, toolLabel } from "../types";
 
 /** IaC tool selected by a resource or an executor, empty means the global default. */
@@ -28,14 +26,10 @@ export const toolColumn = (): EntityTableColumn => ({
     }),
   },
   valueGetter: (_value: any, row: any) => (row.tool ? toolLabel(row.tool) : ""),
-  renderCell: (params: GridRenderCellParams) => {
+  renderCell: (params: RenderCellParams) => {
     const tool = params.row.tool as ToolShort | null | undefined;
     if (!tool) {
-      return (
-        <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          Global default
-        </Typography>
-      );
+      return <p className="m-0 text-body2 text-fg-muted">Global default</p>;
     }
     return (
       <Entity

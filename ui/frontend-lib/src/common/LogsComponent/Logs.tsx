@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, ReactNode } from "react";
 
-import RefreshIcon from "@mui/icons-material/Refresh";
-import { Box, IconButton, Tooltip, Typography } from "@mui/material";
+import { RefreshIcon } from "../../icons/material";
+import { IconButton, Tooltip } from "../../ui";
 
 import { LogsView } from "./LogsView";
 import { SummaryView } from "./SummaryView";
@@ -76,22 +76,14 @@ export const Logs = (props: {
   }, [isRefreshing, view, onHeaderActionReady, handleManualRefresh]);
 
   return (
-    <Box>
+    <div>
       {view === "summary" && (
         <>
-          <Box
-            sx={{
-              px: 0.5,
-              mb: 2,
-              display: "flex",
-              justifyContent: "flex-start",
-              gap: 1,
-            }}
-          >
-            <Typography variant="body2">
+          <div className="mb-4 flex justify-start gap-2 px-1">
+            <p className="m-0 text-body2">
               {getSummaryDescription(eventAction)}
-            </Typography>
-          </Box>
+            </p>
+          </div>
           <SummaryView
             entityId={entityId}
             auditLogId={auditLogId}
@@ -105,15 +97,7 @@ export const Logs = (props: {
       )}
       {view === "logs" && (
         <>
-          <Box
-            sx={{
-              px: 0.5,
-              mb: 2,
-              display: "flex",
-              justifyContent: "flex-start",
-              gap: 1,
-            }}
-          ></Box>
+          <div className="mb-4 flex justify-start gap-2 px-1"></div>
           <LogsView
             key={refreshKey}
             entityId={entityId}
@@ -124,6 +108,6 @@ export const Logs = (props: {
           />
         </>
       )}
-    </Box>
+    </div>
   );
 };

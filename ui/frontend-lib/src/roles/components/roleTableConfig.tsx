@@ -1,7 +1,6 @@
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
+import { RenderCellParams } from "../../ui";
 
 export const roleColumns: EntityTableColumn[] = [
   {
@@ -17,7 +16,7 @@ export const roleColumns: EntityTableColumn[] = [
       valueType: "text",
       defaultOperator: "like",
     },
-    renderCell: (params: GridRenderCellParams) => (
+    renderCell: (params: RenderCellParams) => (
       <Entity
         entity={{ id: params.row.v1, entityType: "role", name: params.row.v1 }}
       />

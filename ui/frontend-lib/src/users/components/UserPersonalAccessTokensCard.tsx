@@ -1,35 +1,31 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import AddIcon from "@mui/icons-material/Add";
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
-import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
-import {
-  Alert,
-  Box,
-  Button,
-  Checkbox,
-  FormControlLabel,
-  IconButton,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import { addDays, format, parseISO } from "date-fns";
-
 import { useConfig } from "../../common";
-import { deleteIconButtonStyle } from "../../common/components/buttons/deleteIconButtonStyle";
+import { deleteIconButtonClass } from "../../common/components/buttons/deleteIconButtonClass";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { InlineCode } from "../../common/components/code/InlineCode";
 import { CommonDialog } from "../../common/components/dialogs/CommonDialog";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { Label } from "../../common/components/labels/Label";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { CODE_FONT_FAMILY } from "../../common/theme";
 import { copyToClipboard } from "../../common/utils/clipboard";
+import {
+  AddIcon,
+  CheckIcon,
+  CloseIcon,
+  ContentCopyIcon,
+  DeleteOutlinedIcon,
+  VerifiedUserIcon,
+} from "../../icons/material";
+import {
+  Alert,
+  Checkbox,
+  FormControlLabel,
+  Button,
+  IconButton,
+  Tooltip,
+  TextField,
+} from "../../ui";
 import { GqlUser } from "../graphql";
 import {
   CREATE_PERSONAL_ACCESS_TOKEN_MUTATION,
@@ -42,11 +38,12 @@ import {
 
 const isExpired = (value: string | null) => {
   if (!value) return false;
-  return parseISO(value).getTime() <= Date.now();
+  return new Date(value).getTime() <= Date.now();
 };
 
 const formatDateTimeLocal = (value: Date) => {
-  return format(value, "yyyy-MM-dd'T'HH:mm");
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}T${pad(value.getHours())}:${pad(value.getMinutes())}`;
 };
 
 // Entity/action pairs offered for scoped tokens, derived from the owner's own
@@ -150,17 +147,11 @@ const TokenDialog = ({
       title="Create Personal Access Token"
       maxWidth="sm"
       content={
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-            // the Name field's floating label sits above the input's top
-            // border, so the top needs more room to avoid clipping (see
-            // ToolDownloadDialog's pt: 3 for the same pattern)
-            pt: 3,
-            pb: 0.5,
-          }}
+        <div
+          // the Name field's floating label sits above the input's top
+          // border, so the top needs more room to avoid clipping (see
+          // ToolDownloadDialog's pt: 3 for the same pattern)
+          className="flex flex-col gap-4 pt-6 pb-1"
         >
           <TextField
             label="Name *"
@@ -171,32 +162,17 @@ const TokenDialog = ({
             helperText="Use a descriptive label so you can tell tokens apart later."
           />
           {availableScopes.length > 0 && (
-            <Box>
-              <Typography
-                variant="caption"
-                sx={{ color: "text.secondary", display: "block", mb: 0.5 }}
-              >
+            <div>
+              <span className="mb-1 block text-caption text-fg-muted">
                 Permissions
-              </Typography>
-              <Box
-                sx={{
-                  border: (theme) => `1px solid ${theme.palette.divider}`,
-                  borderRadius: "var(--template-surface-radius)",
-                  p: 1,
-                  maxHeight: 220,
-                  overflowY: "auto",
-                }}
-              >
+              </span>
+              <div className="max-h-55 overflow-y-auto rounded-surface border border-divider p-2">
                 {availableScopes.map(({ entity, actions }) => (
-                  <Stack
+                  <div
+                    className="flex flex-row items-center gap-4 px-2"
                     key={entity}
-                    direction="row"
-                    spacing={2}
-                    sx={{ alignItems: "center", px: 1 }}
                   >
-                    <Typography variant="body2" sx={{ minWidth: 110 }}>
-                      {entity}
-                    </Typography>
+                    <p className="m-0 min-w-27.5 text-body2">{entity}</p>
                     {SCOPE_ACTIONS.map((action) => {
                       const scope = `${action}:${entity}`;
                       const allowed = actions.includes(action);
@@ -221,9 +197,9 @@ const TokenDialog = ({
                       );
                       return (
                         <FormControlLabel
+                          className="ml-0"
                           key={scope}
-                          sx={{ ml: 0 }}
-                          // Disabled here too: MUI keys the wrapper's
+                          // Disabled here too: FormControlLabel keys its
                           // cursor:default + greyed label off this prop, not
                           // off the inner Checkbox's.
                           disabled={!allowed}
@@ -243,14 +219,14 @@ const TokenDialog = ({
                         />
                       );
                     })}
-                  </Stack>
+                  </div>
                 ))}
-              </Box>
-              <Alert severity="info" variant="outlined" sx={{ mt: 1 }}>
+              </div>
+              <Alert className="mt-2" severity="info" variant="outlined">
                 Optionally restrict this token to specific permissions — it
                 cannot exceed your own.
               </Alert>
-            </Box>
+            </div>
           )}
           <TextField
             label="Expiration"
@@ -258,37 +234,31 @@ const TokenDialog = ({
             value={expiresAt}
             onChange={(event) => setExpiresAt(event.target.value)}
             fullWidth
-            slotProps={{
-              inputLabel: { shrink: true },
-              htmlInput: { min: minExpiresAt },
-            }}
+            inputProps={{ min: minExpiresAt }}
             helperText={
               selectedScopes.size > 0
                 ? "Scoped personal access token — leave blank to never expire."
                 : "Leave blank for a token that does not expire."
             }
           />
-          <Stack
-            direction="row"
-            spacing={1}
-            useFlexGap
-            sx={{
-              flexWrap: "wrap",
-            }}
-          >
+          <div className="flex flex-row flex-wrap gap-2">
             {expirationOptions.map((hours) => (
               <Button
                 key={hours}
                 disabled={isLoading}
                 onClick={() =>
-                  setExpiresAt(formatDateTimeLocal(addDays(new Date(), hours)))
+                  setExpiresAt(
+                    formatDateTimeLocal(
+                      new Date(Date.now() + hours * 24 * 60 * 60 * 1000),
+                    ),
+                  )
                 }
               >
                 {`${hours} days`}
               </Button>
             ))}
-          </Stack>
-        </Box>
+          </div>
+        </div>
       }
       actions={
         <Button variant="contained" onClick={handleSave} disabled={isLoading}>
@@ -326,82 +296,33 @@ const TokenValueDialog = ({
       title="Personal Access Token Ready"
       maxWidth="md"
       content={
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
-          <Stack
-            direction="row"
-            spacing={1.5}
-            sx={{ alignItems: "flex-start" }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 44,
-                height: 44,
-                borderRadius: "50%",
-                bgcolor: "success.light",
-                color: "success.contrastText",
-                flexShrink: 0,
-              }}
-            >
+        <div className="flex flex-col gap-5 pt-2">
+          <div className="flex flex-row items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-success-light text-success-contrast">
               <VerifiedUserIcon fontSize="small" />
-            </Box>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography variant="h6">Store this token securely</Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "text.secondary",
-                }}
-              >
+            </div>
+            <div className="min-w-0">
+              <h6 className="m-0 text-h6">Store this token securely</h6>
+              <p className="m-0 text-body2 text-fg-muted">
                 This is the only time the full token value will be shown. Copy
                 it now and store it in a secure password manager or secret
                 vault.
-              </Typography>
-            </Box>
-          </Stack>
+              </p>
+            </div>
+          </div>
           <Alert severity="warning" variant="outlined">
             {createdToken?.scopes
               ? "Anyone with this token can perform the granted actions on your behalf until the token is deleted or expires."
               : "Anyone with this token can access your account through the CLI and API until the token is deleted or expires."}
           </Alert>
-          <Box>
-            <Typography
-              variant="caption"
-              sx={{
-                color: "text.secondary",
-                display: "block",
-                mb: 0.75,
-              }}
-            >
+          <div>
+            <span className="mb-1.5 block text-caption text-fg-muted">
               Access token
-            </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                border: (theme) => `1px solid ${theme.palette.divider}`,
-                borderRadius: "var(--template-code-radius)",
-                px: 1.5,
-                py: 1,
-                bgcolor: "background.paper",
-              }}
-            >
-              <Typography
-                component="code"
-                sx={{
-                  flex: 1,
-                  minWidth: 0,
-                  fontFamily: CODE_FONT_FAMILY,
-                  fontSize: 13,
-                  lineHeight: 1.6,
-                  wordBreak: "break-all",
-                }}
-              >
+            </span>
+            <div className="flex items-center gap-2 rounded-code border border-divider bg-paper px-3 py-2">
+              <code className="m-0 min-w-0 flex-1 font-mono text-[13px] leading-[1.6] font-normal break-all">
                 {token ?? ""}
-              </Typography>
+              </code>
               <Tooltip title="Copy token">
                 <IconButton
                   size="small"
@@ -412,24 +333,15 @@ const TokenValueDialog = ({
                   <ContentCopyIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
-            </Box>
-          </Box>
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={1}
-            sx={{ justifyContent: "space-between" }}
-          >
-            <Typography
-              variant="caption"
-              sx={{
-                color: "text.secondary",
-              }}
-            >
+            </div>
+          </div>
+          <div className="flex flex-col justify-between gap-2 sm:flex-row">
+            <span className="text-caption text-fg-muted">
               After this dialog closes, only the token prefix will remain
               visible.
-            </Typography>
-          </Stack>
-        </Box>
+            </span>
+          </div>
+        </div>
       }
       actions={
         <Button variant="contained" onClick={onClose}>
@@ -461,26 +373,22 @@ const DeleteTokenButton = ({
         size="small"
         onClick={() => setIsConfirming(true)}
         disabled={isLoading}
-        sx={deleteIconButtonStyle}
+        className={deleteIconButtonClass}
       >
-        <DeleteOutlineIcon fontSize="small" />
+        <DeleteOutlinedIcon fontSize="small" />
       </IconButton>
     );
   }
 
   return (
-    <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+    <div className="flex flex-row items-center gap-1">
       <IconButton
+        className="border-0 bg-transparent text-error"
         title="Confirm delete"
         aria-label="Confirm delete token"
         size="small"
         disabled={isLoading}
         onClick={() => onDelete(token.id)}
-        sx={{
-          color: "error.main",
-          border: "none",
-          backgroundColor: "transparent",
-        }}
       >
         <CheckIcon fontSize="small" />
       </IconButton>
@@ -490,11 +398,11 @@ const DeleteTokenButton = ({
         size="small"
         disabled={isLoading}
         onClick={() => setIsConfirming(false)}
-        sx={deleteIconButtonStyle}
+        className={deleteIconButtonClass}
       >
         <CloseIcon fontSize="small" />
       </IconButton>
-    </Stack>
+    </div>
   );
 };
 
@@ -577,7 +485,7 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
         name="Personal Access Tokens"
         description="Create and delete tokens for CLI and API access on your account."
         actions={
-          <Stack direction="row" spacing={1}>
+          <div className="flex flex-row gap-2">
             <Button size="small" onClick={loadTokens} disabled={isLoading}>
               Refresh
             </Button>
@@ -589,68 +497,28 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
             >
               Create Token
             </Button>
-          </Stack>
+          </div>
         }
       >
-        <Box
-          sx={{
-            width: "100%",
-            gridColumn: "1 / -1",
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-          }}
-        >
+        <div className="col-[1_/_-1] flex w-full flex-col gap-4">
           {isLoading ? (
-            <Typography
-              variant="body2"
-              sx={{
-                color: "text.secondary",
-              }}
-            >
-              Loading tokens...
-            </Typography>
+            <p className="m-0 text-body2 text-fg-muted">Loading tokens...</p>
           ) : tokens.length === 0 ? (
-            <Typography
-              variant="body2"
-              sx={{
-                color: "text.secondary",
-              }}
-            >
+            <p className="m-0 text-body2 text-fg-muted">
               No personal access tokens yet.
-            </Typography>
+            </p>
           ) : (
             tokens.map((token) => {
               return (
-                <Box
+                <div
+                  className="flex flex-col justify-between gap-4 rounded-surface border border-divider p-4 md:flex-row"
                   key={token.id}
-                  sx={{
-                    border: (theme) => `1px solid ${theme.palette.divider}`,
-                    borderRadius: "var(--template-surface-radius)",
-                    p: 2,
-                    display: "flex",
-                    flexDirection: { xs: "column", md: "row" },
-                    gap: 2,
-                    justifyContent: "space-between",
-                  }}
                 >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 1,
-                      minWidth: 0,
-                    }}
-                  >
-                    <Stack
-                      direction={{ xs: "column", sm: "row" }}
-                      spacing={1}
-                      useFlexGap
-                      sx={{ alignItems: { xs: "flex-start", sm: "center" } }}
-                    >
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  <div className="flex min-w-0 flex-col gap-2">
+                    <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
+                      <p className="m-0 text-body2 font-semibold">
                         {token.name}
-                      </Typography>
+                      </p>
                       {token.scopes ? (
                         <Label tone="info" label="Scoped" />
                       ) : (
@@ -661,96 +529,62 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
                       ) : token.expiresAt ? null : (
                         <Label label="Never expires" tone="error" />
                       )}
-                    </Stack>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: "text.secondary",
-                      }}
-                    >
+                    </div>
+                    <p className="m-0 text-body2 text-fg-muted">
                       Prefix: <InlineCode>{token.tokenPrefix}</InlineCode>
-                    </Typography>
+                    </p>
                     {token.scopes ? (
-                      <Stack
-                        direction="row"
-                        spacing={0.5}
-                        useFlexGap
-                        sx={{ flexWrap: "wrap", alignItems: "center" }}
-                      >
-                        <Typography
-                          variant="body2"
-                          sx={{ color: "text.secondary" }}
-                        >
-                          Scopes:
-                        </Typography>
+                      <div className="flex flex-row flex-wrap items-center gap-1">
+                        <p className="m-0 text-body2 text-fg-muted">Scopes:</p>
                         {token.scopes.map((scope) => (
                           <Label key={scope} tone="default" label={scope} />
                         ))}
-                      </Stack>
+                      </div>
                     ) : null}
-                    <Stack
-                      direction={{ xs: "column", sm: "row" }}
-                      spacing={2}
-                      useFlexGap
-                    >
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: "text.secondary",
-                        }}
-                      >
+                    <div className="flex flex-col gap-4 sm:flex-row">
+                      <span className="text-caption text-fg-muted">
                         Expires:{" "}
                         {token.expiresAt ? (
                           <RelativeTime
                             date={token.expiresAt}
-                            variant="inherit"
+                            className="text-[length:inherit]"
                           />
                         ) : (
                           "Never"
                         )}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: "text.secondary",
-                        }}
-                      >
+                      </span>
+                      <span className="text-caption text-fg-muted">
                         Last used:{" "}
                         {token.lastUsedAt ? (
                           <RelativeTime
                             date={token.lastUsedAt}
-                            variant="inherit"
+                            className="text-[length:inherit]"
                           />
                         ) : (
                           "Never"
                         )}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: "text.secondary",
-                        }}
-                      >
+                      </span>
+                      <span className="text-caption text-fg-muted">
                         Created:{" "}
                         <RelativeTime
                           date={token.createdAt}
-                          variant="inherit"
+                          className="text-[length:inherit]"
                         />
-                      </Typography>
-                    </Stack>
-                  </Box>
-                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2 sm:flex-row">
                     <DeleteTokenButton
                       token={token}
                       isLoading={isSaving}
                       onDelete={handleDelete}
                     />
-                  </Stack>
-                </Box>
+                  </div>
+                </div>
               );
             })
           )}
-        </Box>
+        </div>
       </BaseCard>
       <TokenDialog
         open={dialogOpen}

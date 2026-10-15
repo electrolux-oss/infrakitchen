@@ -1,6 +1,5 @@
 import { useCallback } from "react";
 
-import { Box, Typography } from "@mui/material";
 import { toast } from "sonner";
 
 import { IkEntity } from "../../../types";
@@ -26,20 +25,14 @@ export const DependencyError = ({
   return (
     <ErrorCardShell title={message} onDismiss={handleDismiss}>
       {metadata?.map((r: IkEntity) => (
-        <Box
+        <div
+          className="mb-2 rounded-surface border border-divider p-3"
           key={r.id}
-          sx={{
-            border: 1,
-            borderColor: "divider",
-            p: 1.5,
-            mb: 1,
-            borderRadius: "var(--template-surface-radius)",
-          }}
         >
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+          <p className="m-0 text-body2 font-semibold">
             <Entity entity={r} />
-          </Typography>
-        </Box>
+          </p>
+        </div>
       ))}
     </ErrorCardShell>
   );

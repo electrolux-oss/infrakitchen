@@ -2,18 +2,16 @@ import { useCallback, useState } from "react";
 
 import { Control, FormProvider, useForm } from "react-hook-form";
 
+import { useConfig } from "../../common/context";
+import { useEntityProvider } from "../../common/context/EntityContext";
+import { notify, notifyError } from "../../common/hooks/useNotification";
 import {
-  Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-} from "@mui/material";
-
-import { useConfig } from "../../common/context";
-import { useEntityProvider } from "../../common/context/EntityContext";
-import { notify, notifyError } from "../../common/hooks/useNotification";
+} from "../../ui";
 import { GqlAuthProvider } from "../graphql";
 import {
   AuthProviderUpdateFieldInput,
@@ -104,11 +102,11 @@ export const AuthProviderConfigurationEditor = ({
 
   return (
     <>
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
+      <div className="col-span-full mb-2 flex justify-end">
         <Button onClick={openDialog} disabled={!canEdit}>
           Edit Configuration
         </Button>
-      </Box>
+      </div>
 
       <Dialog open={dialogOpen} onClose={closeDialog} maxWidth="sm" fullWidth>
         <FormProvider {...methods}>

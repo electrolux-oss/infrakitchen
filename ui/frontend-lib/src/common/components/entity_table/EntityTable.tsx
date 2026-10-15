@@ -1,47 +1,36 @@
-import { MouseEvent, ReactNode, useCallback, useMemo } from "react";
+import { MouseEvent, ReactNode, useCallback, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import RefreshIcon from "@mui/icons-material/Refresh";
-import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import {
-  Box,
+  ArrowDownwardIcon,
+  ArrowUpwardIcon,
+  RefreshIcon,
+  ViewColumnIcon,
+} from "../../../icons/material";
+import {
+  ColumnVisibilityMenu,
+  ColumnVisibilityModel,
+  DataTable,
+  DataTableColumn,
   IconButton,
   MenuItem,
+  PaginationModel,
   Pagination,
   Select,
+  SortModel,
   Tooltip,
-  Typography,
   useMediaQuery,
-} from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import {
-  DataGrid,
-  GridFilterModel,
-  GridSortModel,
-  GridPaginationModel,
-  GridColDef,
-  GridColumnVisibilityModel,
-  GridEventListener,
-  useGridApiRef,
-} from "@mui/x-data-grid";
-import type { GridApi } from "@mui/x-data-grid";
-
+} from "../../../ui";
+import { cn } from "../../../utils/cn";
 import { useConfig } from "../../context/ConfigContext";
 import { ColumnFilterSpec } from "../filter_panel/FilterConfig";
 
-import {
-  dataGridClickableRowSx,
-  dataGridDefaultProps,
-  dataGridPaginationSlotProps,
-  dataGridSx,
-} from "./dataGridStyles";
 import { EntityCardList } from "./EntityCardList";
 
-export type EntityTableColumn = GridColDef<any> & {
-  field?: string;
+const EMPTY_LABEL = "No Results Found";
+
+export type EntityTableColumn = DataTableColumn<any> & {
   fetchFields?: string[];
   sortField?: string;
   filter?: ColumnFilterSpec | ColumnFilterSpec[];
@@ -59,16 +48,12 @@ export interface ResourceTableProps {
   entities: any[];
   loading: boolean;
   totalRows: number;
-  paginationModel?: GridPaginationModel;
-  sortModel?: GridSortModel;
-  filterModel?: GridFilterModel;
-  columnVisibilityModel?: GridColumnVisibilityModel;
-  handleSortModelChange?: (model: GridSortModel) => void;
-  handlePaginationModelChange?: (model: GridPaginationModel) => void;
-  setFilterModel?: (model: GridFilterModel) => void;
-  handleColumnVisibilityModelChange?: (
-    model: GridColumnVisibilityModel,
-  ) => void;
+  paginationModel?: PaginationModel;
+  sortModel?: SortModel;
+  columnVisibilityModel?: ColumnVisibilityModel;
+  handleSortModelChange?: (model: SortModel) => void;
+  handlePaginationModelChange?: (model: PaginationModel) => void;
+  handleColumnVisibilityModelChange?: (model: ColumnVisibilityModel) => void;
   onRefresh?: () => void;
   /** Set false to remove the row hover affordance (e.g. no detail page). */
   rowClickable?: boolean;
@@ -78,10 +63,6 @@ export interface ResourceTableProps {
   onRowClick?: (row: any, event?: MouseEvent) => void;
 }
 
-type GridPreferencePanelValue = Parameters<
-  NonNullable<GridApi["showPreferences"]>
->[0];
-
 export const EntityTable = ({
   entities,
   columns,
@@ -89,18 +70,18 @@ export const EntityTable = ({
   totalRows,
   paginationModel,
   sortModel,
-  filterModel,
   columnVisibilityModel,
   handleSortModelChange,
   handlePaginationModelChange,
-  setFilterModel,
   handleColumnVisibilityModelChange,
   onRefresh,
   rowClickable = true,
   quickFilters,
   onRowClick,
 }: ResourceTableProps) => {
-  const apiRef = useGridApiRef();
+  const [columnMenuAnchor, setColumnMenuAnchor] = useState<HTMLElement | null>(
+    null,
+  );
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
 
@@ -131,17 +112,9 @@ export const EntityTable = ({
     [linkPrefix, navigate, onRowClick],
   );
 
-  const handleRowClick: GridEventListener<"rowClick"> = useCallback(
-    (params, event) => navigateToRow(params.row, event),
-    [navigateToRow],
-  );
-
-  const theme = useTheme();
-  // Below `sm` the grid is swapped for a stacked card list: a multi-column
-  // grid can't fit a phone and community DataGrid can't pin the Name column.
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"), {
-    noSsr: true,
-  });
+  // Below `sm` the table is swapped for a stacked card list: a multi-column
+  // table can't fit a phone.
+  const isMobile = useMediaQuery("(max-width: 599.95px)");
 
   // Headers are gone in card mode, so sorting moves to a select.
   const sortableColumns = useMemo(
@@ -181,7 +154,7 @@ export const EntityTable = ({
       return columnVisibilityModel;
     }
 
-    const model: GridColumnVisibilityModel = { ...columnVisibilityModel };
+    const model: ColumnVisibilityModel = { ...columnVisibilityModel };
 
     columns.forEach((column) => {
       // `hideable: false` columns must stay visible even if a persisted
@@ -196,58 +169,26 @@ export const EntityTable = ({
     return model;
   }, [columnVisibilityModel, columns]);
 
-  const handleColumnVisibilityClick = () => {
-    apiRef.current?.showPreferences?.("columns" as GridPreferencePanelValue);
-  };
-
-  // Shared grid chrome (header/footer/rows/cells) lives in `dataGridSx`.
-  // Grids whose rows lead to a detail page opt into the pointer affordance.
-  const rowAffordanceSx = rowClickable === false ? {} : dataGridClickableRowSx;
-
   return (
-    <Box
-      sx={{
-        width: "100%",
-        maxWidth: "100%",
-      }}
-    >
+    <div className="w-full max-w-full">
       {quickFilters && (
-        <Box
-          sx={{
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            mt: 1,
-            mb: 0.5,
-          }}
-        >
+        <div className="mt-2 mb-1 flex w-full justify-center">
           {quickFilters}
-        </Box>
+        </div>
       )}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          gap: 0.25,
-          mt: quickFilters ? 0.5 : 1,
-          mb: 0.5,
-        }}
+      <div
+        className={cn(
+          quickFilters ? "mt-1" : "mt-2",
+          "mb-1",
+          "flex items-center justify-end gap-0.5",
+        )}
       >
         {isMobile && sortableColumns.length > 0 && (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 0.25,
-              mr: "auto",
-              minWidth: 0,
-            }}
-          >
+          <div className="mr-auto flex min-w-0 items-center gap-0.5">
             <Select
+              className="text-[0.8125rem] text-fg-muted"
               size="small"
               variant="standard"
-              disableUnderline
               displayEmpty
               value={currentSort?.field ?? ""}
               onChange={(event) =>
@@ -258,7 +199,6 @@ export const EntityTable = ({
                 const column = sortableColumns.find((c) => c.field === field);
                 return `Sort: ${column?.headerName ?? "Default"}`;
               }}
-              sx={{ fontSize: "0.8125rem", color: "text.secondary" }}
             >
               <MenuItem value="">Default</MenuItem>
               {sortableColumns.map((column) => (
@@ -272,8 +212,8 @@ export const EntityTable = ({
                 title={currentSort.sort === "asc" ? "Ascending" : "Descending"}
               >
                 <IconButton
+                  className="p-1"
                   size="small"
-                  sx={{ p: 0.5 }}
                   aria-label="Toggle sort direction"
                   onClick={toggleMobileSortDirection}
                 >
@@ -285,12 +225,12 @@ export const EntityTable = ({
                 </IconButton>
               </Tooltip>
             )}
-          </Box>
+          </div>
         )}
         <Tooltip title="Refresh">
           <IconButton
+            className="p-1"
             size="small"
-            sx={{ p: 0.75 }}
             aria-label="Refresh"
             onClick={onRefresh}
             disabled={!onRefresh}
@@ -302,27 +242,28 @@ export const EntityTable = ({
           <Tooltip title="Show or hide columns">
             <span>
               <IconButton
+                className="p-1"
                 size="small"
-                sx={{ p: 0.75 }}
                 aria-label="Toggle column visibility"
-                onClick={handleColumnVisibilityClick}
-                disabled={!apiRef.current}
+                aria-haspopup="true"
+                aria-expanded={Boolean(columnMenuAnchor)}
+                onClick={(event) => setColumnMenuAnchor(event.currentTarget)}
               >
                 <ViewColumnIcon fontSize="small" />
               </IconButton>
             </span>
           </Tooltip>
         )}
-      </Box>
-      <Box
-        sx={{
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: "var(--template-surface-radius)",
-          backgroundColor: "background.paper",
-          overflow: "hidden",
-        }}
-      >
+        <ColumnVisibilityMenu
+          open={Boolean(columnMenuAnchor)}
+          anchorEl={columnMenuAnchor}
+          onClose={() => setColumnMenuAnchor(null)}
+          columns={columns}
+          model={effectiveColumnVisibilityModel ?? {}}
+          onChange={(model) => handleColumnVisibilityModelChange?.(model)}
+        />
+      </div>
+      <div className="overflow-hidden rounded-surface border border-divider bg-paper">
         {isMobile ? (
           <>
             <EntityCardList
@@ -331,22 +272,11 @@ export const EntityTable = ({
               columnVisibilityModel={effectiveColumnVisibilityModel}
               loading={loading}
               skeletonCount={pageSize}
-              emptyLabel={dataGridDefaultProps.localeText.noRowsLabel}
-              apiRef={apiRef}
+              emptyLabel={EMPTY_LABEL}
               onRowClick={rowClickable ? navigateToRow : undefined}
             />
             {totalRows > 0 && (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 0.5,
-                  py: 1,
-                  borderTop: "1px solid",
-                  borderTopColor: "divider",
-                }}
-              >
+              <div className="flex flex-col items-center gap-1 border-t border-t-divider py-2">
                 {pageCount > 1 && (
                   <Pagination
                     size="small"
@@ -361,42 +291,32 @@ export const EntityTable = ({
                     }
                   />
                 )}
-                <Typography variant="caption" color="text.secondary">
+                <span className="text-caption text-fg-muted">
                   {firstRow}–{lastRow} of {totalRows}
-                </Typography>
-              </Box>
+                </span>
+              </div>
             )}
           </>
         ) : (
-          <Box sx={{ width: "100%", overflowX: "auto" }}>
-            <DataGrid
-              apiRef={apiRef}
-              rows={entities}
-              rowCount={totalRows}
-              autoHeight
-              paginationMode="server"
-              sortingMode="server"
-              loading={loading}
-              columns={columns}
-              pagination
-              disableRowSelectionOnClick
-              {...(rowClickable ? { onRowClick: handleRowClick } : {})}
-              {...dataGridDefaultProps}
-              sortModel={sortModel}
-              onSortModelChange={handleSortModelChange}
-              paginationModel={paginationModel}
-              onPaginationModelChange={handlePaginationModelChange}
-              pageSizeOptions={[10, 25, 50, 100]}
-              filterModel={filterModel}
-              onFilterModelChange={setFilterModel}
-              columnVisibilityModel={effectiveColumnVisibilityModel}
-              onColumnVisibilityModelChange={handleColumnVisibilityModelChange}
-              sx={{ ...dataGridSx, ...rowAffordanceSx }}
-              slotProps={dataGridPaginationSlotProps("entity-pagination-label")}
-            />
-          </Box>
+          <DataTable
+            className="md:min-h-[380px]"
+            rows={entities}
+            columns={columns}
+            loading={loading}
+            emptyLabel={EMPTY_LABEL}
+            rowCount={totalRows}
+            paginationMode="server"
+            sortingMode="server"
+            sortModel={sortModel}
+            onSortModelChange={handleSortModelChange}
+            paginationModel={paginationModel}
+            onPaginationModelChange={handlePaginationModelChange}
+            pageSizeOptions={[10, 25, 50, 100]}
+            columnVisibilityModel={effectiveColumnVisibilityModel}
+            onRowClick={rowClickable ? navigateToRow : undefined}
+          />
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };

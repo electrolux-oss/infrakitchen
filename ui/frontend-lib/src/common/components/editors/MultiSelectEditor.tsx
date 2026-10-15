@@ -1,4 +1,4 @@
-import { Autocomplete, Chip, TextField } from "@mui/material";
+import { Autocomplete } from "../../../ui";
 
 export interface MultiSelectEditorProps<T> {
   value: T[];
@@ -43,13 +43,12 @@ export const MultiSelectEditor = <T,>({
 }: MultiSelectEditorProps<T>) => (
   <Autocomplete
     multiple
-    size="small"
     options={options}
     value={value}
     onChange={(_event, newValue) => {
       const seen = new Set<string>();
       onChange(
-        (newValue as T[]).filter((option) => {
+        newValue.filter((option) => {
           const key = getOptionKey(option, getOptionLabel);
           if (seen.has(key)) {
             return false;
@@ -71,36 +70,13 @@ export const MultiSelectEditor = <T,>({
       getOptionKey(option, getOptionLabel) ===
       getOptionKey(selected, getOptionLabel)
     }
-    renderValue={(items: readonly T[], getTagProps) =>
-      items.map((option: T, index: number) => {
-        const { key, ...rest } = getTagProps({ index });
-        return (
-          <Chip
-            key={key}
-            {...rest}
-            variant="outlined"
-            label={getOptionLabel(option)}
-          />
-        );
-      })
-    }
-    renderInput={(params) => (
-      <TextField
-        {...params}
-        label={label ? label : undefined}
-        placeholder={placeholder}
-        helperText={helperText}
-        fullWidth
-        margin="dense"
-        slotProps={{
-          ...params.slotProps,
-          htmlInput: {
-            ...params.slotProps.htmlInput,
-            ...(label ? {} : { "aria-label": ariaLabel || label || "" }),
-          },
-        }}
-      />
-    )}
+    getOptionKey={(option) => getOptionKey(option, getOptionLabel)}
+    label={label || undefined}
+    aria-label={label ? undefined : ariaLabel || undefined}
+    placeholder={placeholder}
+    helperText={helperText}
+    fullWidth
+    margin="dense"
   />
 );
 

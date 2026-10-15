@@ -1,20 +1,12 @@
-import { useCallback } from "react";
-
-import { Grid } from "@mui/material";
-
 import {
   EntitySidebar,
   SidebarSection,
 } from "../../common/components/cards/EntitySidebar";
+import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
-import { Entity } from "../../common/components/entities/Entity";
-import { CommonField } from "../../common/components/fields/CommonField";
-import { RelativeTime } from "../../common/components/fields/RelativeTime";
-import { useConfig } from "../../common/context";
-import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
-import { notify, notifyError } from "../../common/hooks/useNotification";
+import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import StatusChip from "../../common/StatusChip";
 import { GqlStorage } from "../graphql";
 import {
@@ -32,26 +24,13 @@ export interface StorageSidebarProps {
  * its configuration and the entities that use it.
  */
 export const StorageSidebar = ({ storage }: StorageSidebarProps) => {
-  const { ikApi } = useConfig();
-  const { refreshEntity } = useEntityProvider();
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = checkActionPermission("api:storage", "write");
 
-  const saveField = useCallback(
-    async (input: StorageUpdateFieldInput) => {
-      try {
-        await ikApi.graphqlRequest(UPDATE_STORAGE_MUTATION, {
-          id: storage.id,
-          input,
-        });
-        notify("Storage updated successfully", "success");
-        refreshEntity?.();
-      } catch (error) {
-        notifyError(error);
-        throw error;
-      }
-    },
-    [ikApi, storage.id, refreshEntity],
+  const saveField = useEntityFieldSaver<StorageUpdateFieldInput>(
+    UPDATE_STORAGE_MUTATION,
+    storage.id,
+    "Storage",
   );
 
   return (
@@ -72,33 +51,12 @@ export const StorageSidebar = ({ storage }: StorageSidebarProps) => {
       </SidebarSection>
 
       <SidebarSection title="Status">
-        <Grid size={12}>
+        <div className="col-span-full">
           <StatusChip status={storage.status} state={storage.state} />
-        </Grid>
+        </div>
       </SidebarSection>
 
-      <SidebarSection title="Details">
-        <CommonField
-          name="Created by"
-          value={
-            storage.creator ? (
-              <Entity entity={{ ...storage.creator, entityType: "user" }} />
-            ) : null
-          }
-          size={12}
-        />
-        <CommonField
-          name="Created"
-          value={<RelativeTime date={storage.createdAt} />}
-          size={6}
-        />
-        <CommonField
-          name="Last Updated"
-          value={<RelativeTime date={storage.updatedAt} />}
-          size={6}
-        />
-        <CommonField name="Revision" value={storage.revisionNumber} size={12} />
-      </SidebarSection>
+      <SidebarDetailsSection entity={storage} />
     </EntitySidebar>
   );
 };

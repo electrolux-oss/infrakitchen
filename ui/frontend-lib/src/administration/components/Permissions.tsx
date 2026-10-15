@@ -1,10 +1,9 @@
 import { useCallback } from "react";
 
-import { Button } from "@mui/material";
-
 import { useConfig } from "../../common";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { Button } from "../../ui";
 import { RELOAD_PERMISSIONS_MUTATION } from "../graphql";
 
 export const PermissionsSection = () => {
@@ -25,7 +24,7 @@ export const PermissionsSection = () => {
     <BaseCard
       name="Permission Configurations"
       description="Reload permission definitions from the backend when they change"
-      sx={{ mt: 4 }}
+      className="mt-8"
       actions={
         <Button variant="contained" onClick={handlePermissionReload}>
           Reload

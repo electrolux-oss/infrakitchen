@@ -1,11 +1,10 @@
-import { Alert, Box } from "@mui/material";
-
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { OverviewCard } from "../../common/components/cards/OverviewCard";
 import { TabbedContent } from "../../common/components/cards/TabbedContent";
 import { ApiPoliciesCard } from "../../permissions/components/policies/ApiPoliciesCard";
 import { EntityRolePoliciesCard } from "../../permissions/components/policies/EntityRolePoliciesCard";
 import { RoleUsersCard } from "../../permissions/components/roles/RoleUsersCard";
+import { Alert } from "../../ui";
 
 export interface RoleContentProps {
   role: string | undefined;
@@ -16,15 +15,7 @@ export const RoleContent = (props: RoleContentProps) => {
   if (!role) return <Alert severity="error">Role name is not provided</Alert>;
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 2,
-        width: "100%",
-        maxWidth: "100%",
-      }}
-    >
+    <div className="flex w-full max-w-full flex-col gap-4">
       <OverviewCard name={role} />
       <TabbedContent
         defaultTab="Users"
@@ -33,7 +24,9 @@ export const RoleContent = (props: RoleContentProps) => {
             label: "Users",
             content: (
               <BaseCard>
-                <RoleUsersCard role={role} />
+                <div className="col-span-full">
+                  <RoleUsersCard role={role} />
+                </div>
               </BaseCard>
             ),
           },
@@ -41,7 +34,9 @@ export const RoleContent = (props: RoleContentProps) => {
             label: "Resource Policies",
             content: (
               <BaseCard>
-                <EntityRolePoliciesCard role={role} />
+                <div className="col-span-full">
+                  <EntityRolePoliciesCard role={role} />
+                </div>
               </BaseCard>
             ),
           },
@@ -49,12 +44,14 @@ export const RoleContent = (props: RoleContentProps) => {
             label: "API Policies",
             content: (
               <BaseCard>
-                <ApiPoliciesCard role={role} />
+                <div className="col-span-full">
+                  <ApiPoliciesCard role={role} />
+                </div>
               </BaseCard>
             ),
           },
         ]}
       />
-    </Box>
+    </div>
   );
 };

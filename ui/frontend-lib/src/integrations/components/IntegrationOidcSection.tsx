@@ -1,21 +1,11 @@
 import { useEffect, useState } from "react";
 
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import DownloadIcon from "@mui/icons-material/Download";
-import {
-  Box,
-  Button,
-  IconButton,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-
 import { CommonField } from "../../common/components/fields/CommonField";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { CODE_FONT_FAMILY } from "../../common/theme";
 import { copyToClipboard } from "../../common/utils/clipboard";
+import { ContentCopyIcon, DownloadIcon } from "../../icons/material";
+import { Button, IconButton, Tooltip } from "../../ui";
 import { INTEGRATION_OIDC_QUERY } from "../graphql/queries";
 
 interface IntegrationOidcDetails {
@@ -85,25 +75,14 @@ export const IntegrationOidcSection = ({
   };
 
   const copyableValue = (value: string) => (
-    <Stack
-      direction="row"
-      spacing={1}
-      sx={{
-        alignItems: "center",
-      }}
-    >
-      <Box
-        component="span"
-        sx={{ wordBreak: "break-all", fontFamily: CODE_FONT_FAMILY }}
-      >
-        {value}
-      </Box>
+    <div className="flex flex-row items-center gap-2">
+      <span className="font-mono break-all">{value}</span>
       <Tooltip title="Copy">
         <IconButton size="small" onClick={() => handleCopy(value)}>
           <ContentCopyIcon fontSize="small" />
         </IconButton>
       </Tooltip>
-    </Stack>
+    </div>
   );
 
   return (
@@ -119,22 +98,15 @@ export const IntegrationOidcSection = ({
       <CommonField
         name={"OIDC JWKS (offline upload)"}
         value={
-          <Box>
+          <div>
             <Button startIcon={<DownloadIcon />} onClick={handleDownloadJwks}>
               Download JWKS
             </Button>
-            <Typography
-              variant="caption"
-              sx={{
-                color: "text.secondary",
-                display: "block",
-                mt: 0.5,
-              }}
-            >
+            <span className="mt-1 block text-caption text-fg-muted">
               Upload this JWKS into the GCP Workload Identity provider only when
               InfraKitchen is not publicly reachable by GCP.
-            </Typography>
-          </Box>
+            </span>
+          </div>
         }
       />
     </>

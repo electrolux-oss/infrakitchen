@@ -1,8 +1,6 @@
 import { ReactNode, useState } from "react";
 
-import { Box, GridSize } from "@mui/material";
-
-import { CommonField } from "../fields/CommonField";
+import { CommonField, FieldSpan } from "../fields/CommonField";
 
 import {
   InlineEditableField,
@@ -12,8 +10,8 @@ import {
 export interface CommonEditableFieldProps<T> {
   /** Field label shown above the value. */
   name: string;
-  /** Grid sizing for the underlying field cell. */
-  size?: GridSize | { xs: GridSize; md: GridSize } | undefined;
+  /** Width in the surrounding field grid. */
+  span?: FieldSpan;
   /** Whether the current user is allowed to edit this field. */
   canEdit: boolean;
   /** Tooltip shown on the disabled edit icon when the user lacks permission. */
@@ -48,7 +46,7 @@ export interface CommonEditableFieldProps<T> {
  */
 export function CommonEditableField<T>({
   name,
-  size,
+  span,
   canEdit,
   disabledTooltip,
   value,
@@ -70,16 +68,12 @@ export function CommonEditableField<T>({
   return (
     <CommonField
       name={
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+        <div className="flex items-center gap-1">
           <span>{name}</span>
-          <Box
-            component="span"
-            ref={setAffordanceSlot}
-            sx={{ display: "inline-flex", alignItems: "center" }}
-          />
-        </Box>
+          <span className="inline-flex items-center" ref={setAffordanceSlot} />
+        </div>
       }
-      size={size}
+      span={span}
       value={
         <InlineEditableField<T>
           value={value}

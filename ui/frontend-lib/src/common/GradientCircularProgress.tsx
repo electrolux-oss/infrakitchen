@@ -1,30 +1,18 @@
-import React from "react";
-
-import { CircularProgress } from "@mui/material";
+import { Spinner } from "../ui";
 
 interface GradientCircularProgressProps {
   size?: number;
 }
 
+/**
+ * Page-level loading indicator. Kept under its original name for library
+ * consumers; it now renders the daisyUI spinner in a muted grey instead of
+ * the gradient MUI CircularProgress.
+ */
 export function GradientCircularProgress({
   size = 40,
 }: GradientCircularProgressProps) {
-  return (
-    <React.Fragment>
-      <svg width={0} height={0}>
-        <defs>
-          <linearGradient id="my_gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#1A1A1A" />
-            <stop offset="100%" stopColor="#A1A1A1" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <CircularProgress
-        size={size}
-        sx={{ "svg circle": { stroke: "url(#my_gradient)" } }}
-      />
-    </React.Fragment>
-  );
+  return <Spinner size={size} color="inherit" className="text-grey-500" />;
 }
 
 export default GradientCircularProgress;

@@ -1,11 +1,10 @@
 import { useNavigate } from "react-router";
 
-import AddIcon from "@mui/icons-material/Add";
-import { Button } from "@mui/material";
-
 import { PermissionWrapper, useConfig } from "../../common";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
+import { AddIcon } from "../../icons/material";
+import { Button } from "../../ui";
 import {
   userColumns,
   userDefaultColumnVisibilityModel,

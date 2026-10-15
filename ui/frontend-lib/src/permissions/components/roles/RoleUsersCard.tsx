@@ -1,9 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import { Box, Button } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import { PermissionWrapper } from "../../../common";
 import { Entity } from "../../../common/components/entities/Entity";
 import {
@@ -15,6 +11,9 @@ import {
   userColumn,
 } from "../../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../../common/components/fields/RelativeTime";
+import { PersonAddIcon } from "../../../icons/material";
+import { Button } from "../../../ui";
+import { RenderCellParams } from "../../../ui";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
@@ -45,7 +44,7 @@ export const RoleUsersCard = (props: { role: string }) => {
         headerName: "Identifier",
         flex: 1,
         hideable: false,
-        renderCell: (params: GridRenderCellParams) => {
+        renderCell: (params: RenderCellParams) => {
           return (
             <Entity
               entity={{
@@ -60,11 +59,11 @@ export const RoleUsersCard = (props: { role: string }) => {
         field: "createdAt",
         headerName: "Created",
         width: RELATIVE_TIME_COLUMN_WIDTH,
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <RelativeTime
+            className="flex justify-end"
             date={params.value}
             compact
-            sx={{ display: "flex", justifyContent: "flex-end" }}
           />
         ),
       },
@@ -74,7 +73,7 @@ export const RoleUsersCard = (props: { role: string }) => {
         headerName: "Delete",
         sortable: false,
         flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
+        renderCell: (params: RenderCellParams) => (
           <PermissionWrapper
             requiredPermission="api:permission"
             permissionAction="admin"
@@ -96,14 +95,7 @@ export const RoleUsersCard = (props: { role: string }) => {
         requiredPermission="api:permission"
         permissionAction="write"
       >
-        <Box
-          sx={{
-            display: "flex",
-            width: "100%",
-            justifyContent: "flex-end",
-            mb: 0.5,
-          }}
-        >
+        <div className="mb-1 flex w-full justify-end">
           <Button
             size="small"
             onClick={() => handleOpenDialog()}
@@ -111,7 +103,7 @@ export const RoleUsersCard = (props: { role: string }) => {
           >
             Assign User
           </Button>
-        </Box>
+        </div>
       </PermissionWrapper>
 
       <UserRoleCreateDialog

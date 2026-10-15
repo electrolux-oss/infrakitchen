@@ -1,15 +1,9 @@
 import { useEffect, forwardRef, useState, useCallback } from "react";
 
-import { Box, Autocomplete, TextField, Typography } from "@mui/material";
-
 import { InfraKitchenApi } from "../../api/InfraKitchenApi";
-import GradientCircularProgress from "../../common/GradientCircularProgress";
 import { notifyError } from "../../common/hooks/useNotification";
-import {
-  getAutocompleteInputProps,
-  getAutocompleteTextFieldProps,
-} from "../../common/utils/autocompleteInput";
 import { IkEntity } from "../../types";
+import { Autocomplete } from "../../ui";
 
 import { BITBUCKET_REPOS_QUERY } from "./graphql";
 import { BitbucketRepo } from "./types";
@@ -91,53 +85,21 @@ const BitbucketRepos = forwardRef<any, BitbucketReposProps>((props, _ref) => {
       onChange={handleEntityChange}
       getOptionLabel={(option) => option.name || ""}
       isOptionEqualToValue={(option, val) => option.uuid === val.uuid}
-      renderInput={(params) => {
-        const inputProps = getAutocompleteInputProps(params);
-
-        return (
-          <TextField
-            {...params}
-            {...getAutocompleteTextFieldProps(params, {
-              input: {
-                ...inputProps,
-                endAdornment: (
-                  <>
-                    {isLoading ? <GradientCircularProgress size={20} /> : null}
-                    {inputProps.endAdornment}
-                  </>
-                ),
-              },
-            })}
-            label={label}
-            margin="normal"
-            error={!!fetchError}
-            helperText={fetchError ? fetchError.message : helpertext || ""}
-          />
-        );
-      }}
-      renderOption={(props, option) => {
-        const { ...otherProps } = props;
-        return (
-          <li {...otherProps}>
-            <Box>
-              <Typography variant="body1">{option.name}</Typography>
-              {option.description && (
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: "text.secondary",
-                  }}
-                >
-                  {option.description}
-                </Typography>
-              )}
-            </Box>
-          </li>
-        );
-      }}
+      renderOption={(option) => (
+        <div>
+          <p className="m-0 text-body1">{option.name}</p>
+          {option.description && (
+            <p className="m-0 text-body2 text-fg-muted">{option.description}</p>
+          )}
+        </div>
+      )}
       noOptionsText={isLoading ? "Loading..." : "No repositories found"}
       disabled={isLoading || !!fetchError}
       {...otherProps}
+      label={label}
+      margin="normal"
+      error={!!fetchError}
+      helperText={fetchError ? fetchError.message : helpertext || ""}
     />
   );
 });

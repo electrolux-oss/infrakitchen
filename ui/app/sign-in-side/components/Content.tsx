@@ -1,33 +1,32 @@
 import { InfrakitchenLogo } from "@electrolux-oss/infrakitchen";
-import AutoFixHighRoundedIcon from "@mui/icons-material/AutoFixHighRounded";
-import ConstructionRoundedIcon from "@mui/icons-material/ConstructionRounded";
-import SettingsSuggestRoundedIcon from "@mui/icons-material/SettingsSuggestRounded";
-import ThumbUpAltRoundedIcon from "@mui/icons-material/ThumbUpAltRounded";
-import Box from "@mui/material/Box";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
+import {
+  AutoFixHighRoundedIcon,
+  ConstructionRoundedIcon,
+  SettingsSuggestRoundedIcon,
+  ThumbUpAltRoundedIcon,
+} from "@electrolux-oss/infrakitchen";
 
 const items = [
   {
-    icon: <SettingsSuggestRoundedIcon sx={{ color: "text.secondary" }} />,
+    icon: <SettingsSuggestRoundedIcon className="text-fg-muted" />,
     title: "Adaptable performance",
     description:
       "Our product effortlessly adjusts to your needs, boosting efficiency and simplifying your tasks.",
   },
   {
-    icon: <ConstructionRoundedIcon sx={{ color: "text.secondary" }} />,
+    icon: <ConstructionRoundedIcon className="text-fg-muted" />,
     title: "Built to last",
     description:
       "Experience unmatched durability that goes above and beyond with lasting investment.",
   },
   {
-    icon: <ThumbUpAltRoundedIcon sx={{ color: "text.secondary" }} />,
+    icon: <ThumbUpAltRoundedIcon className="text-fg-muted" />,
     title: "Great user experience",
     description:
       "Integrate our product into your routine with an intuitive and easy-to-use interface.",
   },
   {
-    icon: <AutoFixHighRoundedIcon sx={{ color: "text.secondary" }} />,
+    icon: <AutoFixHighRoundedIcon className="text-fg-muted" />,
     title: "Innovative functionality",
     description:
       "Stay ahead with features that set new standards, addressing your evolving needs better than the rest.",
@@ -36,47 +35,23 @@ const items = [
 
 export default function Content() {
   return (
-    <Stack
-      sx={{
-        flexDirection: { xs: "column", lg: "row" },
-        alignSelf: "center",
-        gap: { xs: 4, lg: 6 },
-        maxWidth: { xs: 600, sm: 700, md: 800, lg: 900 },
-        width: "100%",
-        alignItems: { xs: "stretch", lg: "center" },
-      }}
-    >
-      <Box
-        sx={{
-          display: { xs: "none", lg: "flex" },
-          "& svg": { width: 120, height: 120 },
-          flexShrink: 0,
-        }}
-      >
+    <div className="flex w-full max-w-150 flex-col items-stretch gap-8 self-center sm:max-w-175 md:max-w-200 lg:max-w-225 lg:flex-row lg:items-center lg:gap-12">
+      <div className="hidden shrink-0 lg:flex [&_svg]:h-30 [&_svg]:w-30">
         <InfrakitchenLogo />
-      </Box>
-      <Stack
-        sx={{
-          gap: 4,
-          flex: { xs: "unset", lg: "0 0 auto" },
-          maxWidth: { xs: 520, sm: 560, md: 600, lg: 420 },
-          width: "100%",
-        }}
-      >
+      </div>
+      <div className="flex w-full max-w-130 flex-[unset] flex-col gap-8 sm:max-w-140 md:max-w-150 lg:max-w-105 lg:flex-none">
         {items.map((item, index) => (
-          <Stack key={index} direction="row" sx={{ gap: 2 }}>
+          <div className="flex flex-row gap-4" key={index}>
             {item.icon}
             <div>
-              <Typography gutterBottom sx={{ fontWeight: "medium" }}>
+              <p className="m-0 mb-[0.35em] text-body2 font-medium">
                 {item.title}
-              </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                {item.description}
-              </Typography>
+              </p>
+              <p className="m-0 text-body2 text-fg-muted">{item.description}</p>
             </div>
-          </Stack>
+          </div>
         ))}
-      </Stack>
-    </Stack>
+      </div>
+    </div>
   );
 }

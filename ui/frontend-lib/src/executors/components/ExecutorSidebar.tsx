@@ -1,6 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
-
-import { Box, Grid, TextField } from "@mui/material";
+import { useEffect, useState } from "react";
 
 import { Entity } from "../../common";
 import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
@@ -8,6 +6,7 @@ import {
   EntitySidebar,
   SidebarSection,
 } from "../../common/components/cards/EntitySidebar";
+import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
@@ -15,20 +14,20 @@ import {
   CommonField,
   GetReferenceUrlValue,
 } from "../../common/components/fields/CommonField";
-import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { ScheduledApplyValue } from "../../common/components/fields/ScheduledApplyValue";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
-import { notify, notifyError } from "../../common/hooks/useNotification";
+import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import { usePendingScheduledAction } from "../../common/hooks/usePendingScheduledAction";
 import StatusChip from "../../common/StatusChip";
 import { sameStringSet } from "../../common/utils";
 import { ProviderIcon } from "../../icons/Icons";
 import { ToolSelect, toolLabel } from "../../tools";
 import { IkEntity } from "../../types";
+import { TextField } from "../../ui";
 import {
   ExecutorUpdateFieldInput,
   EXECUTOR_UPDATE_MUTATION,
@@ -52,7 +51,7 @@ export interface ExecutorSidebarProps {
  */
 export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
   const { ikApi } = useConfig();
-  const { refreshEntity, userEntityPermissions } = useEntityProvider();
+  const { userEntityPermissions } = useEntityProvider();
   const { pendingScheduledAction } = usePendingScheduledAction();
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = userEntityPermissions.includes("admin");
@@ -78,21 +77,10 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
 
   const storageFilter = { integration_id: selectedIntegrationIds };
 
-  const saveField = useCallback(
-    async (input: ExecutorUpdateFieldInput) => {
-      try {
-        await ikApi.graphqlRequest(EXECUTOR_UPDATE_MUTATION, {
-          id: executor.id,
-          input,
-        });
-        notify("Executor updated successfully", "success");
-        refreshEntity?.();
-      } catch (error) {
-        notifyError(error);
-        throw error;
-      }
-    },
-    [ikApi, executor.id, refreshEntity],
+  const saveField = useEntityFieldSaver<ExecutorUpdateFieldInput>(
+    EXECUTOR_UPDATE_MUTATION,
+    executor.id,
+    "Executor",
   );
 
   return (
@@ -111,15 +99,8 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
       </SidebarSection>
 
       <SidebarSection title="Status">
-        <Grid size={12}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 1,
-            }}
-          >
+        <div className="col-span-full">
+          <div className="flex items-center justify-between gap-2">
             <StatusChip status={executor.status} state={executor.state} />
             <FavoriteButton
               componentId={String(executor.id)}
@@ -127,15 +108,15 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
               ariaLabel="Add executor to favorites"
               isFavorite={executor.isFavorite}
             />
-          </Box>
-        </Grid>
+          </div>
+        </div>
         {pendingScheduledAction && (
           <CommonField
             name="Next Scheduled Apply"
             value={
               <ScheduledApplyValue scheduledAction={pendingScheduledAction} />
             }
-            size={12}
+            span="full"
           />
         )}
       </SidebarSection>
@@ -149,7 +130,7 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
           isEqual={sameStringSet}
           display={
             executor.integrationIds && executor.integrationIds.length > 0 ? (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <div className="flex flex-col gap-2">
                 {executor.integrationIds.map((parent) => (
                   <Entity
                     key={parent.id}
@@ -157,7 +138,7 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
                     providerIconSize={24}
                   />
                 ))}
-              </Box>
+              </div>
             ) : null
           }
           onSave={(value) => saveField({ integrationIds: value })}
@@ -180,7 +161,7 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
               multiple
             />
           )}
-          size={12}
+          span="full"
         />
         <CommonEditableField<string[]>
           name={"Secrets"}
@@ -190,13 +171,13 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
           isEqual={sameStringSet}
           display={
             executor.secretIds && executor.secretIds.length > 0 ? (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <div className="flex flex-col gap-2">
                 {executor.secretIds.map((secret) => (
                   <span key={secret.id}>
                     <GetReferenceUrlValue {...secret} />
                   </span>
                 ))}
-              </Box>
+              </div>
             ) : null
           }
           onSave={(value) => saveField({ secretIds: value })}
@@ -215,7 +196,7 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
               multiple
             />
           )}
-          size={12}
+          span="full"
         />
         <CommonEditableField<string | null>
           name={"Storage"}
@@ -244,7 +225,7 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
           }
           onSave={(value) => saveField({ storageId: value })}
           renderEditor={({ value, onChange }) => (
-            <Box sx={{ width: "100%" }}>
+            <div className="w-full">
               <ReferenceInput
                 ikApi={ikApi}
                 entity_name="storages"
@@ -262,9 +243,9 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
                 placeholder="Select storage for TF state…"
                 helpertext={STORAGE_DANGER_HELPER}
               />
-            </Box>
+            </div>
           )}
-          size={12}
+          span="full"
         />
         <CommonEditableField<string | null>
           name={"Storage Path"}
@@ -300,7 +281,7 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
               helperText="Frozen field used as the OpenTofu/Terraform state path. Make sure the path is unique within the selected storage."
             />
           )}
-          size={12}
+          span="full"
         />
         <CommonEditableField<string | null>
           name={"IaC Tool"}
@@ -309,14 +290,14 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
           ariaLabel="Edit IaC tool"
           display={
             executor.tool ? (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <div className="flex items-center gap-2">
                 <ProviderIcon provider={executor.tool.name} />
                 <GetReferenceUrlValue
                   id={executor.tool.id}
                   entityName="tool"
                   display_name={toolLabel(executor.tool)}
                 />
-              </Box>
+              </div>
             ) : (
               <span>Global default</span>
             )
@@ -325,36 +306,11 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
           renderEditor={({ value, onChange }) => (
             <ToolSelect value={value} onChange={onChange} />
           )}
-          size={12}
+          span="full"
         />
       </SidebarSection>
 
-      <SidebarSection title="Details">
-        <CommonField
-          name="Created by"
-          value={
-            executor.creator ? (
-              <Entity entity={{ ...executor.creator, entityType: "user" }} />
-            ) : null
-          }
-          size={12}
-        />
-        <CommonField
-          name="Created"
-          value={<RelativeTime date={executor.createdAt} />}
-          size={6}
-        />
-        <CommonField
-          name="Last Updated"
-          value={<RelativeTime date={executor.updatedAt} />}
-          size={6}
-        />
-        <CommonField
-          name="Revision"
-          value={executor.revisionNumber}
-          size={12}
-        />
-      </SidebarSection>
+      <SidebarDetailsSection entity={executor} />
     </EntitySidebar>
   );
 };

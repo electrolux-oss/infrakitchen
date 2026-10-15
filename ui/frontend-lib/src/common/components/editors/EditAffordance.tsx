@@ -1,5 +1,6 @@
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import { IconButton, Tooltip } from "@mui/material";
+import { EditOutlinedIcon } from "../../../icons/material";
+import { IconButton, Tooltip } from "../../../ui";
+import { cn } from "../../../utils/cn";
 
 interface EditAffordanceProps {
   /** Class applied to the button so a parent can reveal it on hover/focus. */
@@ -33,29 +34,18 @@ export const EditAffordance = ({
 }: EditAffordanceProps) => {
   const button = (
     <IconButton
-      className={className}
+      className={cn(
+        "[transition:opacity_0.15s_ease-in-out,_background-color_0.15s_ease-in-out,_border-color_0.15s_ease-in-out]",
+        "size-5 shrink-0 border border-transparent bg-transparent p-0 hover:border-divider hover:bg-hover focus-visible:opacity-100",
+        revealOnHover ? "opacity-0" : "opacity-100",
+        className,
+      )}
       size="small"
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
-      sx={{
-        opacity: revealOnHover ? 0 : 1,
-        transition:
-          "opacity 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out",
-        width: 20,
-        height: 20,
-        padding: 0,
-        flexShrink: 0,
-        border: "1px solid transparent",
-        backgroundColor: "transparent",
-        "&:hover": {
-          backgroundColor: "action.hover",
-          borderColor: "divider",
-        },
-        "&:focus-visible": { opacity: 1 },
-      }}
     >
-      <EditOutlinedIcon sx={{ fontSize: 16 }} />
+      <EditOutlinedIcon className="text-[16px]" />
     </IconButton>
   );
 

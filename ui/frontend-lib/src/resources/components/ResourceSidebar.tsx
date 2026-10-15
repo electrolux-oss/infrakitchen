@@ -1,27 +1,18 @@
 import { useMemo, useState } from "react";
 
-import SyncIcon from "@mui/icons-material/Sync";
-import {
-  Box,
-  Grid,
-  IconButton,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-
-import { Entity, PermissionWrapper, UserAvatarList } from "../../common";
+import { Entity, UserAvatarList } from "../../common";
 import { DownloadSourceCodeButton } from "../../common/components/buttons/DownloadSourceCodeButton";
 import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
 import {
   EntitySidebar,
   SidebarSection,
 } from "../../common/components/cards/EntitySidebar";
+import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
+import { EditableNameField } from "../../common/components/editors/EditableNameField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import { EditAffordance } from "../../common/components/editors/EditAffordance";
-import { InlineEditableFieldLock } from "../../common/components/editors/InlineEditableField";
 import {
   CommonField,
   GetReferenceUrlValue,
@@ -30,26 +21,23 @@ import {
   PlaceholderDescription,
   PlaceholderText,
 } from "../../common/components/fields/PlaceholderDescription";
-import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { ScheduledApplyValue } from "../../common/components/fields/ScheduledApplyValue";
-import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { Labels } from "../../common/components/labels/Labels";
 import { useConfig } from "../../common/context";
-import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
-import { notify, notifyError } from "../../common/hooks/useNotification";
 import { usePendingScheduledAction } from "../../common/hooks/usePendingScheduledAction";
 import StatusChip from "../../common/StatusChip";
-import { sameStringSet } from "../../common/utils";
+import { makeWriteAccessFilter } from "../../common/utils";
 import { ProviderIcon } from "../../icons/Icons";
 import { ToolSelect, toolLabel } from "../../tools";
 import { IkEntity } from "../../types";
-import { GqlResource, SYNC_WORKSPACE_MUTATION } from "../graphql";
+import { GqlResource } from "../graphql";
 import { useResourceFieldEditor } from "../hooks/useResourceFieldEditor";
 import { useResourceNotificationDialog } from "../hooks/useResourceNotificationDialog";
 
 import { SubscribeNotificationButton } from "./notifications/SubscribeNotificationButton";
+import { ResourceInfrastructureSection } from "./ResourceInfrastructureSection";
 
 export interface ResourceSidebarProps {
   resource: GqlResource;
@@ -57,36 +45,6 @@ export interface ResourceSidebarProps {
   onEditVariables: () => void;
   onSubscriptionChange?: () => void;
 }
-
-type Permissions = ReturnType<typeof usePermissionProvider>["permissions"];
-
-/**
- * Option filter for reference pickers: keeps the entities already attached to
- * the resource and otherwise only offers those the user can write to.
- */
-const makeWriteAccessFilter =
-  (permissions: Permissions, entityName: string, existingIds: Set<string>) =>
-  (option: IkEntity) => {
-    if (existingIds.has(String(option.id))) return true;
-    if (permissions["*"] === "admin") return true;
-    const p = permissions[`${entityName}:${option.id}`];
-    return p === "write" || p === "admin";
-  };
-
-/** Lock config for the state-sensitive storage fields. */
-const storageLock = (
-  label: string,
-  unlocked: boolean,
-  onToggle: () => void,
-): InlineEditableFieldLock => ({
-  locked: !unlocked,
-  onToggle,
-  lockedTitle: `${label} is locked`,
-  lockedDescription:
-    "Changing this can cause OpenTofu/Terraform state issues. Click to unlock and edit.",
-  unlockedTitle: `${label} editing is enabled`,
-  unlockedDescription: "Click the lock to lock it again when you are done.",
-});
 
 const sortByName = <T extends { name?: string | null }>(items: T[]) =>
   [...items].sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
@@ -98,19 +56,11 @@ const RelatedResources = ({
   resources: GqlResource["parents"];
 }) =>
   resources && resources.length > 0 ? (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 0.5,
-        maxHeight: 180,
-        overflowY: "auto",
-      }}
-    >
+    <div className="flex max-h-45 flex-col gap-1 overflow-y-auto">
       {sortByName(resources).map((related) => (
         <Entity key={related.id} entity={related} showLabel stacked />
       ))}
-    </Box>
+    </div>
   ) : null;
 
 /**
@@ -125,44 +75,16 @@ export const ResourceSidebar = ({
 }: ResourceSidebarProps) => {
   const { ikApi } = useConfig();
   const { permissions } = usePermissionProvider();
-  const { userEntityPermissions } = useEntityProvider();
   const { canEdit, saveField, withPendingChange } =
     useResourceFieldEditor(resource);
-  // Storage edits can corrupt Terraform/OpenTofu state, so they stay behind an
-  // admin permission and an explicit unlock.
-  const canEditStorage = userEntityPermissions.includes("admin");
-  const [isStorageUnlocked, setIsStorageUnlocked] = useState(false);
-  const [isStoragePathUnlocked, setIsStoragePathUnlocked] = useState(false);
   const { loading, isSubscribed, handleSubscribe, handleUnsubscribe } =
     useResourceNotificationDialog({
       resourceId: String(resource.id),
       onSubscriptionChange,
     });
   const { pendingScheduledAction } = usePendingScheduledAction();
-  const [isSyncing, setIsSyncing] = useState(false);
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
     {},
-  );
-
-  const integrationOptionFilter = useMemo(
-    () =>
-      makeWriteAccessFilter(
-        permissions,
-        "integration",
-        new Set(resource.integrationIds?.map((i) => String(i.id))),
-      ),
-    [resource.integrationIds, permissions],
-  );
-
-  const workspaceId = resource.workspace?.id;
-  const workspaceOptionFilter = useMemo(
-    () =>
-      makeWriteAccessFilter(
-        permissions,
-        "workspace",
-        new Set(workspaceId ? [String(workspaceId)] : []),
-      ),
-    [workspaceId, permissions],
   );
 
   const projectId = resource.project?.id;
@@ -176,36 +98,6 @@ export const ResourceSidebar = ({
     [projectId, permissions],
   );
 
-  // postgresql storages can always be used, cloud storages only with the
-  // resource's integrations; the backend is accessed with the storage integration.
-  const storageFilter = useMemo(
-    () =>
-      resource.integrationIds && resource.integrationIds.length > 0
-        ? {
-            or: [
-              { integration_id: resource.integrationIds.map((i) => i.id) },
-              { storage_provider: "postgresql" },
-            ],
-          }
-        : { storage_provider: "postgresql" },
-    [resource.integrationIds],
-  );
-
-  const handleSync = () => {
-    setIsSyncing(true);
-    ikApi
-      .graphqlRequest(SYNC_WORKSPACE_MUTATION, { id: resource.id })
-      .then(() => {
-        notify("Sent sync workspace request", "success");
-      })
-      .catch((error) => {
-        notifyError(error);
-      })
-      .finally(() => {
-        setIsSyncing(false);
-      });
-  };
-
   const projectOwners = resource.project?.owners ?? [];
   const parents = resource.parents ?? [];
   const children = resource.children ?? [];
@@ -213,24 +105,11 @@ export const ResourceSidebar = ({
   return (
     <EntitySidebar ariaLabel="Resource details">
       <SidebarSection title="About">
-        <CommonEditableField<string>
-          name="Name"
-          canEdit={canEdit}
+        <EditableNameField
           value={resource.name}
-          ariaLabel="Edit name"
-          display={withPendingChange(<span>{resource.name}</span>, "name")}
+          canEdit={canEdit}
           onSave={(value) => saveField({ name: value })}
-          renderEditor={({ value, onChange }) => (
-            <TextField
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              slotProps={{ input: { "aria-label": "Name" } }}
-              fullWidth
-              margin="normal"
-              autoFocus
-            />
-          )}
-          size={12}
+          display={withPendingChange(<span>{resource.name}</span>, "name")}
         />
         <EditableDescriptionField
           value={resource.description}
@@ -257,15 +136,8 @@ export const ResourceSidebar = ({
       </SidebarSection>
 
       <SidebarSection title="Status">
-        <Grid size={12}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 1,
-            }}
-          >
+        <div className="col-span-full">
+          <div className="flex items-center justify-between gap-2">
             <StatusChip status={resource.status} state={resource.state} />
             <FavoriteButton
               componentId={String(resource.id)}
@@ -273,15 +145,15 @@ export const ResourceSidebar = ({
               ariaLabel="Add resource to favorites"
               isFavorite={resource.isFavorite}
             />
-          </Box>
-        </Grid>
+          </div>
+        </div>
         {pendingScheduledAction && (
           <CommonField
             name="Next Scheduled Apply"
             value={
               <ScheduledApplyValue scheduledAction={pendingScheduledAction} />
             }
-            size={12}
+            span="full"
           />
         )}
       </SidebarSection>
@@ -314,7 +186,7 @@ export const ResourceSidebar = ({
               helpertext="Only projects you have write access to are shown"
             />
           )}
-          size={12}
+          span="full"
         />
         {resource.project && (
           <CommonField
@@ -326,7 +198,7 @@ export const ResourceSidebar = ({
                 <PlaceholderText />
               )
             }
-            size={12}
+            span="full"
           />
         )}
       </SidebarSection>
@@ -347,27 +219,24 @@ export const ResourceSidebar = ({
               <GetReferenceUrlValue {...resource.template} />
             ) : null
           }
-          size={12}
+          span="full"
         />
         <CommonField
           name={
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <div className="flex items-center gap-1">
               <span>Template Version</span>
               {/* Changing the version goes through the variables dialog, as
                   the new version can add or drop input variables. */}
               {canEdit && (
-                <Box
-                  component="span"
-                  sx={{ display: "inline-flex", my: -0.75 }}
-                >
+                <span className="-my-1.5 inline-flex">
                   <EditAffordance
                     onClick={onEditVariables}
                     ariaLabel="Change template version"
                     title="Change template version"
                   />
-                </Box>
+                </span>
               )}
-            </Box>
+            </div>
           }
           value={withPendingChange(
             resource.sourceCodeVersion ? (
@@ -375,7 +244,7 @@ export const ResourceSidebar = ({
             ) : null,
             "source_code_version_id",
           )}
-          size={12}
+          span="full"
         />
         {/* The IaC tool only applies to resources that keep TF state. */}
         {resource.storage && (
@@ -386,14 +255,14 @@ export const ResourceSidebar = ({
             ariaLabel="Edit IaC tool"
             display={withPendingChange(
               resource.tool ? (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <div className="flex items-center gap-2">
                   <ProviderIcon provider={resource.tool.name} />
                   <GetReferenceUrlValue
                     id={resource.tool.id}
                     entityName="tool"
                     display_name={toolLabel(resource.tool)}
                   />
-                </Box>
+                </div>
               ) : (
                 <span>Global default</span>
               ),
@@ -403,306 +272,43 @@ export const ResourceSidebar = ({
             renderEditor={({ value, onChange }) => (
               <ToolSelect value={value} onChange={onChange} />
             )}
-            size={12}
+            span="full"
           />
         )}
       </SidebarSection>
 
       {resource.abstract === false && (
-        <SidebarSection title="Infrastructure">
-          <CommonEditableField<string | null>
-            name="Workspace"
-            canEdit={canEdit}
-            value={resource.workspace?.id ?? null}
-            ariaLabel="Edit workspace"
-            display={withPendingChange(
-              resource.workspace ? (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <GetReferenceUrlValue {...resource.workspace} />
-                  <PermissionWrapper
-                    requiredPermission="api:resource"
-                    permissionAction="admin"
-                  >
-                    <Tooltip title="Sync workspace">
-                      <span>
-                        <IconButton
-                          size="small"
-                          onClick={handleSync}
-                          disabled={isSyncing}
-                          sx={{ "& .MuiSvgIcon-root": { fontSize: "1.2rem" } }}
-                        >
-                          <SyncIcon />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  </PermissionWrapper>
-                </Box>
-              ) : null,
-              "workspace_id",
-            )}
-            onSave={(value) => saveField({ workspaceId: value })}
-            renderEditor={({ value, onChange }) => (
-              <ReferenceInput
-                ikApi={ikApi}
-                buffer={buffer}
-                setBuffer={setBuffer}
-                entity_name="workspaces"
-                showFields={["name", "workspace_provider"]}
-                optionFilter={workspaceOptionFilter}
-                value={value}
-                onChange={onChange}
-                ariaLabel="Workspace"
-                placeholder="Select workspace…"
-                helpertext="Only workspaces you have write access to are shown"
-              />
-            )}
-            size={12}
-          />
-          <CommonEditableField<string[]>
-            name="Cloud Integrations"
-            canEdit={canEdit}
-            value={resource.integrationIds?.map((i) => i.id) || []}
-            ariaLabel="Edit cloud integrations"
-            isEqual={sameStringSet}
-            display={withPendingChange(
-              resource.integrationIds && resource.integrationIds.length > 0 ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 0.5,
-                  }}
-                >
-                  {resource.integrationIds.map((integration) => (
-                    <Entity
-                      key={integration.id}
-                      entity={integration}
-                      providerIconSize={20}
-                    />
-                  ))}
-                </Box>
-              ) : null,
-              "integration_ids",
-            )}
-            onSave={(value) => saveField({ integrationIds: value })}
-            renderEditor={({ value, onChange }) => (
-              <ArrayReferenceInput
-                ikApi={ikApi}
-                buffer={buffer}
-                setBuffer={setBuffer}
-                entity_name="integrations"
-                filter={{
-                  integration_type: "cloud",
-                  integration_provider__not_eq: "postgresql",
-                }}
-                showFields={["integrationProvider", "name"]}
-                optionFilter={integrationOptionFilter}
-                value={value}
-                onChange={onChange}
-                ariaLabel="Cloud Integrations"
-                placeholder="Select cloud integrations…"
-                helpertext="Existing integrations are kept; new options are limited to those you have write access to."
-                multiple
-              />
-            )}
-            size={12}
-          />
-          <CommonEditableField<string[]>
-            name="Secrets"
-            canEdit={canEdit}
-            value={resource.secretIds?.map((s) => s.id) || []}
-            ariaLabel="Edit secrets"
-            isEqual={sameStringSet}
-            display={withPendingChange(
-              resource.secretIds && resource.secretIds.length > 0 ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 0.5,
-                  }}
-                >
-                  {resource.secretIds.map((secret) => (
-                    <span key={secret.id}>
-                      <GetReferenceUrlValue {...secret} />
-                    </span>
-                  ))}
-                </Box>
-              ) : null,
-              "secret_ids",
-            )}
-            onSave={(value) => saveField({ secretIds: value })}
-            renderEditor={({ value, onChange }) => (
-              <ArrayReferenceInput
-                ikApi={ikApi}
-                buffer={buffer}
-                setBuffer={setBuffer}
-                entity_name="secrets"
-                value={value}
-                onChange={onChange}
-                ariaLabel="Secrets"
-                placeholder="Select secrets…"
-                singleLine
-                multiple
-              />
-            )}
-            size={12}
-          />
-          {canEditStorage ? (
-            <>
-              <CommonEditableField<string | null>
-                name="Storage"
-                canEdit={canEditStorage}
-                value={resource.storage?.id ?? null}
-                ariaLabel="Edit storage"
-                lock={storageLock("Storage", isStorageUnlocked, () =>
-                  setIsStorageUnlocked((unlocked) => !unlocked),
-                )}
-                display={withPendingChange(
-                  resource.storage ? (
-                    <GetReferenceUrlValue {...resource.storage} />
-                  ) : null,
-                  "storage_id",
-                )}
-                onSave={(value) => saveField({ storageId: value })}
-                renderEditor={({ value, onChange }) => (
-                  <ReferenceInput
-                    ikApi={ikApi}
-                    entity_name="storages"
-                    buffer={buffer}
-                    bufferKey="storages"
-                    showFields={["name", "storage_provider"]}
-                    fields={["name", "storage_provider", "state"]}
-                    setBuffer={setBuffer}
-                    filter={storageFilter}
-                    value={value}
-                    onChange={onChange}
-                    getOptionDisabled={(option: IkEntity) =>
-                      option.state !== "PROVISIONED"
-                    }
-                    ariaLabel="Storage"
-                    placeholder="Select storage for TF state…"
-                    required
-                    helpertext="Keep this value unchanged unless you are intentionally migrating OpenTofu/Terraform state."
-                  />
-                )}
-                size={12}
-              />
-              {resource.storage && (
-                <CommonEditableField<string | null>
-                  name="Storage Path"
-                  canEdit={canEditStorage}
-                  value={resource.storagePath ?? null}
-                  ariaLabel="Edit storage path"
-                  lock={storageLock("Storage Path", isStoragePathUnlocked, () =>
-                    setIsStoragePathUnlocked((unlocked) => !unlocked),
-                  )}
-                  display={withPendingChange(
-                    resource.storagePath ? (
-                      <span>{resource.storagePath}</span>
-                    ) : null,
-                    "storage_path",
-                  )}
-                  onSave={(value) => saveField({ storagePath: value })}
-                  renderEditor={({ value, onChange }) => (
-                    <TextField
-                      value={value ?? ""}
-                      onChange={(e) => onChange(e.target.value || null)}
-                      slotProps={{
-                        input: { "aria-label": "Storage Path" },
-                      }}
-                      fullWidth
-                      margin="normal"
-                      autoFocus
-                      helperText="By default InfraKitchen uses `service-catalog/{template}/{resource_name}/terraform.tfstate` as the path."
-                    />
-                  )}
-                  size={12}
-                />
-              )}
-            </>
-          ) : (
-            <>
-              <CommonField
-                name="Storage"
-                value={withPendingChange(
-                  resource.storage ? (
-                    <GetReferenceUrlValue {...resource.storage} />
-                  ) : null,
-                  "storage_id",
-                )}
-                size={12}
-              />
-              <CommonField
-                name="Storage Path"
-                value={withPendingChange(resource.storagePath, "storage_path")}
-                size={12}
-              />
-            </>
-          )}
-        </SidebarSection>
+        <ResourceInfrastructureSection resource={resource} />
       )}
 
       <SidebarSection title="Parents" count={parents.length}>
-        <Grid size={12}>
+        <div className="col-span-full">
           {parents.length ? (
             <RelatedResources resources={parents} />
           ) : (
             <PlaceholderText text="No parent resources" />
           )}
-        </Grid>
+        </div>
       </SidebarSection>
 
       <SidebarSection title="Children" count={children.length}>
-        <Grid size={12}>
+        <div className="col-span-full">
           {children.length ? (
             <RelatedResources resources={children} />
           ) : (
             <PlaceholderText text="No child resources" />
           )}
-        </Grid>
+        </div>
       </SidebarSection>
 
-      <SidebarSection title="Details">
-        <CommonField
-          name="Created by"
-          value={
-            resource.creator ? (
-              <Entity entity={{ ...resource.creator, entityType: "user" }} />
-            ) : null
-          }
-          size={12}
-        />
-        <CommonField
-          name="Created"
-          value={<RelativeTime date={resource.createdAt} />}
-          size={6}
-        />
-        <CommonField
-          name="Last Updated"
-          value={<RelativeTime date={resource.updatedAt} />}
-          size={6}
-        />
-        <CommonField
-          name="Revision"
-          value={resource.revisionNumber}
-          size={12}
-        />
-      </SidebarSection>
+      <SidebarDetailsSection entity={resource} />
 
       <SidebarSection title="Notifications">
-        <Grid size={12}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 1,
-            }}
-          >
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+        <div className="col-span-full">
+          <div className="flex items-center justify-between gap-2">
+            <p className="m-0 text-body2 text-fg-muted">
               {isSubscribed ? "Subscribed" : "Not subscribed"}
-            </Typography>
+            </p>
             <SubscribeNotificationButton
               isSubscribed={isSubscribed}
               isLoading={loading}
@@ -713,8 +319,8 @@ export const ResourceSidebar = ({
                 void handleUnsubscribe(inheritChildren)
               }
             />
-          </Box>
-        </Grid>
+          </div>
+        </div>
       </SidebarSection>
     </EntitySidebar>
   );

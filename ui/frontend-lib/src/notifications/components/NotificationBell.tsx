@@ -2,23 +2,12 @@ import { MouseEvent, useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
-import {
-  Badge,
-  Box,
-  Button,
-  Divider,
-  IconButton,
-  List,
-  Popover,
-  Stack,
-  Typography,
-} from "@mui/material";
-
 import { getNotificationEntityLink } from "../../common/components/notifications/notificationLinks";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useNotificationProvider } from "../../common/context/NotificationContext";
 import { notifyError } from "../../common/hooks/useNotification";
+import { NotificationsNoneOutlinedIcon } from "../../icons/material";
+import { Divider, Button, IconButton, Popover, List, Badge } from "../../ui";
 import { GqlUserNotification } from "../graphql";
 
 import { NotificationListItem } from "./NotificationListItem";
@@ -92,6 +81,7 @@ export const NotificationBell = () => {
   return (
     <>
       <IconButton
+        className="border-0 bg-transparent hover:bg-transparent"
         size="small"
         aria-label={
           unreadCount > 0
@@ -102,16 +92,6 @@ export const NotificationBell = () => {
         aria-controls={open ? "notifications-panel" : undefined}
         aria-expanded={open ? "true" : undefined}
         onClick={handleIconClick}
-        sx={(theme) => ({
-          border: "none",
-          backgroundColor: "transparent",
-          "&:hover": { backgroundColor: "transparent" },
-          ...theme.applyStyles("dark", {
-            border: "none",
-            backgroundColor: "transparent",
-            "&:hover": { backgroundColor: "transparent" },
-          }),
-        })}
       >
         <Badge badgeContent={unreadCount} color="error" max={99}>
           <NotificationsNoneOutlinedIcon />
@@ -124,25 +104,12 @@ export const NotificationBell = () => {
         onClose={handleClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
-        slotProps={{
-          paper: {
-            variant: "outlined",
-            sx: { width: 380, mt: 1, borderRadius: 2, overflow: "hidden" },
-          },
-        }}
+        className="mt-2 w-[380px] overflow-hidden rounded-[16px] border border-divider shadow-none"
       >
-        <Stack
-          direction="row"
-          sx={{
-            alignItems: "center",
-            justifyContent: "space-between",
-            px: 2,
-            py: 1.5,
-          }}
-        >
-          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+        <div className="flex flex-row items-center justify-between px-4 py-3">
+          <h6 className="m-0 text-subtitle2 font-semibold text-grey-500">
             Notifications
-          </Typography>
+          </h6>
           <Button
             size="small"
             onClick={handleMarkAllRead}
@@ -150,17 +117,14 @@ export const NotificationBell = () => {
           >
             Mark all as read
           </Button>
-        </Stack>
+        </div>
         <Divider />
         {recentNotifications.length === 0 ? (
-          <Typography
-            variant="body2"
-            sx={{ color: "text.secondary", px: 2, py: 3 }}
-          >
+          <p className="m-0 px-4 py-6 text-body2 text-fg-muted">
             You have no notifications.
-          </Typography>
+          </p>
         ) : (
-          <List dense disablePadding sx={{ maxHeight: 400, overflow: "auto" }}>
+          <List className="max-h-100 overflow-auto" dense disablePadding>
             {recentNotifications.map((notification) => (
               <NotificationListItem
                 key={notification.id}
@@ -172,11 +136,11 @@ export const NotificationBell = () => {
           </List>
         )}
         <Divider />
-        <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
+        <div className="flex justify-center py-2">
           <Button size="small" onClick={handleViewAll}>
             View all notifications
           </Button>
-        </Box>
+        </div>
       </Popover>
     </>
   );

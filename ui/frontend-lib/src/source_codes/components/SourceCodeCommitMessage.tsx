@@ -1,9 +1,8 @@
 import { useState } from "react";
 
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { Box, Popover } from "@mui/material";
-
 import { MarkdownViewer } from "../../common/components/viewers/MarkdownViewer";
+import { InfoOutlinedIcon } from "../../icons/material";
+import { Popover } from "../../ui";
 import { GqlSourceCodeCommit } from "../graphql";
 
 interface SourceCodeCommitMessageProps {
@@ -18,13 +17,13 @@ export const SourceCodeCommitMessage = ({
   const details = commit.description.trim();
 
   return (
-    <Box component="span" sx={{ wordBreak: "break-word" }}>
+    <span className="[word-break:break-word]">
       <span>{commit.message}</span>
       {details && (
         <>
           {" "}
-          <Box
-            component="span"
+          <span
+            className="mx-0.5 inline-flex cursor-pointer items-center [vertical-align:-2px]"
             role="button"
             tabIndex={0}
             aria-label="Commit description"
@@ -39,19 +38,12 @@ export const SourceCodeCommitMessage = ({
                 setAnchorEl(e.currentTarget);
               }
             }}
-            sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              verticalAlign: "-2px",
-              mx: 0.25,
-              cursor: "pointer",
-            }}
           >
             <InfoOutlinedIcon
+              className="block text-[15px] text-action-active"
               fontSize="small"
-              sx={{ fontSize: 15, color: "action.active", display: "block" }}
             />
-          </Box>
+          </span>
           <Popover
             open={Boolean(anchorEl)}
             anchorEl={anchorEl}
@@ -59,25 +51,16 @@ export const SourceCodeCommitMessage = ({
             anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
             transformOrigin={{ vertical: "top", horizontal: "left" }}
             onClick={(e) => e.stopPropagation()}
-            slotProps={{
-              paper: {
-                sx: {
-                  maxWidth: 420,
-                  maxHeight: 320,
-                  overflow: "auto",
-                  mt: 0.5,
-                },
-              },
-            }}
+            className="mt-1 max-h-[320px] max-w-[420px] overflow-auto"
           >
             <MarkdownViewer
               content={details}
               disableInlineCodeCopy
-              sx={{ p: 1.5, color: "text.secondary" }}
+              className="p-3 text-fg-muted"
             />
           </Popover>
         </>
       )}
-    </Box>
+    </span>
   );
 };

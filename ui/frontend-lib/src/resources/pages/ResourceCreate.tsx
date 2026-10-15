@@ -16,21 +16,6 @@ import {
 } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
 
-import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import {
-  Box,
-  TextField,
-  Button,
-  Alert,
-  Grid,
-  IconButton,
-  InputAdornment,
-  Card,
-  CardContent,
-  Chip,
-} from "@mui/material";
-
 import { GradientCircularProgress, LabelInput } from "../../common";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
@@ -42,10 +27,22 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import { makeWriteAccessFilter } from "../../common/utils";
+import { LockOpenOutlinedIcon, LockOutlinedIcon } from "../../icons/material";
 import { GqlTemplateShort } from "../../templates/graphql";
 import { ToolSelect } from "../../tools";
 import { IkEntity } from "../../types";
 import { ValidationRule } from "../../types";
+import {
+  Alert,
+  Button,
+  IconButton,
+  Chip,
+  TextField,
+  InputAdornment,
+  Card,
+  CardContent,
+} from "../../ui";
 import { ENTITY_STATUS } from "../../utils";
 import { VERSION_LIFECYCLE_STATE } from "../../utils/constants";
 import {
@@ -280,11 +277,7 @@ const ResourceCreatePageInner = () => {
   );
 
   const workspaceWriteFilter = useMemo(
-    () => (option: IkEntity) => {
-      if (permissions["*"] === "admin") return true;
-      const p = permissions[`workspace:${option.id}`];
-      return p === "write" || p === "admin";
-    },
+    () => makeWriteAccessFilter(permissions, "workspace"),
     [permissions],
   );
 
@@ -573,29 +566,11 @@ const ResourceCreatePageInner = () => {
         </>
       }
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "flex-start",
-          flexDirection: "column",
-          gap: 2,
-          width: "100%",
-          minWidth: 320,
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            flexDirection: "column",
-            width: "100%",
-            flexGrow: 1,
-            minWidth: 0,
-          }}
-        >
-          <Box ref={resourceDefinitionSectionRef} sx={{ width: "100%" }}>
+      <div className="flex w-full min-w-80 flex-col items-start gap-4">
+        <div className="flex w-full min-w-0 grow flex-col items-center">
+          <div className="w-full" ref={resourceDefinitionSectionRef}>
             <PropertyCard title="Resource Definition">
-              <Box>
+              <div>
                 <Controller
                   name="templateId"
                   control={control}
@@ -624,25 +599,14 @@ const ResourceCreatePageInner = () => {
                   )}
                 />
                 {hasDocs && (
-                  <Card
-                    sx={{
-                      mt: 2,
-                      position: "relative",
-                      overflow: "visible",
-                    }}
-                  >
+                  <Card className="relative mt-4 overflow-visible">
                     <Chip
+                      className="absolute -top-2.5 left-4 z-1"
                       label="Template Documentation"
                       color="info"
                       variant="filled"
-                      sx={{
-                        position: "absolute",
-                        top: -10,
-                        left: 16,
-                        zIndex: 1,
-                      }}
                     />
-                    <CardContent sx={{ pt: 0 }}>
+                    <CardContent className="pt-0">
                       <MarkdownViewer
                         content={watchedTemplate?.documentation || ""}
                       />
@@ -660,7 +624,6 @@ const ResourceCreatePageInner = () => {
                       required
                       disabled={!namingConventionEditable}
                       placeholder="Enter resource name. It should be unique within the selected template."
-                      variant="outlined"
                       error={!!errors.name}
                       fullWidth
                       margin="normal"
@@ -671,32 +634,27 @@ const ResourceCreatePageInner = () => {
                             ? `Naming convention enforced by template: ${namingConvention}. You can unlock the name field to provide a custom name or pattern, but make sure it is unique within the selected template.`
                             : "Enter resource name. It should be unique within the selected template."
                       }
-                      slotProps={{
-                        input: {
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              {namingConvention && (
-                                <IconButton
-                                  size="small"
-                                  color="warning"
-                                  edge="end"
-                                  onClick={() =>
-                                    setNamingConventionEditable(
-                                      (editable) => !editable,
-                                    )
-                                  }
-                                >
-                                  {namingConventionEditable ? (
-                                    <LockOpenOutlinedIcon fontSize="small" />
-                                  ) : (
-                                    <LockOutlinedIcon fontSize="small" />
-                                  )}
-                                </IconButton>
+                      endAdornment={
+                        <InputAdornment position="end">
+                          {namingConvention && (
+                            <IconButton
+                              size="small"
+                              edge="end"
+                              onClick={() =>
+                                setNamingConventionEditable(
+                                  (editable) => !editable,
+                                )
+                              }
+                            >
+                              {namingConventionEditable ? (
+                                <LockOpenOutlinedIcon fontSize="small" />
+                              ) : (
+                                <LockOutlinedIcon fontSize="small" />
                               )}
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
+                            </IconButton>
+                          )}
+                        </InputAdornment>
+                      }
                     />
                   )}
                 />
@@ -708,18 +666,17 @@ const ResourceCreatePageInner = () => {
                       {...field}
                       label="Description"
                       placeholder="Enter resource description (optional)"
-                      variant="outlined"
                       error={!!errors.description}
                       fullWidth
                       margin="normal"
                     />
                   )}
                 />
-              </Box>
+              </div>
             </PropertyCard>
-          </Box>
+          </div>
 
-          <Box sx={{ width: "100%" }}>
+          <div className="w-full">
             <DependencyConfigurationFields
               control={control}
               errors={errors}
@@ -773,11 +730,11 @@ const ResourceCreatePageInner = () => {
               dependencyTagsSectionRef={dependencyTagsSectionRef}
               dependencyConfigSectionRef={dependencyConfigSectionRef}
             />
-          </Box>
+          </div>
           {watchedTemplate?.abstract === true && (
-            <Box ref={templateConfigSectionRef} sx={{ width: "100%" }}>
+            <div className="w-full" ref={templateConfigSectionRef}>
               <PropertyCard title="Template Configuration">
-                <Box>
+                <div>
                   {watchedTemplate && watchedTemplate.parents?.length > 0 && (
                     <>
                       <Controller
@@ -875,15 +832,15 @@ const ResourceCreatePageInner = () => {
                       />
                     </>
                   )}
-                </Box>
+                </div>
               </PropertyCard>
-            </Box>
+            </div>
           )}
 
           {watchedTemplate?.abstract === false && (
-            <Box ref={templateConfigSectionRef} sx={{ width: "100%" }}>
+            <div className="w-full" ref={templateConfigSectionRef}>
               <PropertyCard title="Template Configuration">
-                <Box>
+                <div>
                   {watchedTemplate && watchedTemplate.parents?.length > 0 && (
                     <Controller
                       name="parents"
@@ -940,7 +897,7 @@ const ResourceCreatePageInner = () => {
                             />
                           ))}
                           {watchedParentIds.length > 1 && (
-                            <Alert severity="warning" sx={{ mt: 1 }}>
+                            <Alert className="mt-2" severity="warning">
                               Multiple parents selected. Integration, storage,
                               and workspace will be taken from the last selected
                               parent. Please make sure this is the intended
@@ -1159,9 +1116,9 @@ const ResourceCreatePageInner = () => {
                       />
                     )}
                   />
-                </Box>
+                </div>
 
-                <Box>
+                <div>
                   <Controller
                     name="sourceCodeVersionId"
                     control={control}
@@ -1204,22 +1161,22 @@ const ResourceCreatePageInner = () => {
                     )}
                   />
                   {isDeprecatedSourceCodeVersion ? (
-                    <Alert severity="warning" sx={{ mt: 1 }}>
+                    <Alert className="mt-2" severity="warning">
                       This template version is deprecated. Prefer an active or
                       preview version unless you intentionally need the
                       deprecated one.
                     </Alert>
                   ) : null}
-                </Box>
+                </div>
 
                 {Array.isArray(schema) && schema.length > 0 && (
-                  <Box ref={inputVariablesSectionRef} sx={{ mt: 2 }}>
+                  <div className="mt-4" ref={inputVariablesSectionRef}>
                     <BaseCard
                       name="Input Variables"
                       chip={String(schema?.length || 0)}
                       chipVariant="solid"
                     >
-                      <Grid size={12}>
+                      <div className="col-span-full">
                         {fields.map((field, index) =>
                           schema && schema[index] ? (
                             <ResourceVariableForm
@@ -1238,16 +1195,16 @@ const ResourceCreatePageInner = () => {
                             />
                           ) : null,
                         )}
-                      </Grid>
+                      </div>
                     </BaseCard>
-                  </Box>
+                  </div>
                 )}
                 {isLoading && <GradientCircularProgress />}
               </PropertyCard>
-            </Box>
+            </div>
           )}
-        </Box>
-      </Box>
+        </div>
+      </div>
     </PageContainer>
   );
 };

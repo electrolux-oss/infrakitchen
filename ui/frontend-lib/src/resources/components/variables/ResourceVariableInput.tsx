@@ -2,19 +2,19 @@ import React, { useCallback, useEffect, useState } from "react";
 
 import { json } from "@codemirror/lang-json";
 import { lintGutter } from "@codemirror/lint";
+import CodeMirror from "@uiw/react-codemirror";
+
 import {
+  FormControlLabel,
+  Switch,
   FormHelperText,
   FormControl,
-  FormControlLabel,
   FormLabel,
   MenuItem,
   Select,
-  Switch,
   TextField,
   useColorScheme,
-} from "@mui/material";
-import CodeMirror from "@uiw/react-codemirror";
-
+} from "../../../ui";
 import { ResourceVariableSchema } from "../../types";
 
 interface JsonEditorProps {
@@ -31,7 +31,7 @@ interface JsonEditorProps {
 }
 
 const JsonEditor: React.FC<JsonEditorProps> = ({ field, fieldState }) => {
-  const { mode } = useColorScheme();
+  const { resolvedMode } = useColorScheme();
   const [jsonStr, setJsonStr] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -69,7 +69,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ field, fieldState }) => {
         extensions={[json(), lintGutter()]}
         value={jsonStr}
         onChange={handleChange}
-        theme={mode === "dark" ? "dark" : "light"}
+        theme={resolvedMode}
       />
     </FormControl>
   );
@@ -116,7 +116,6 @@ export const ResourceVariableInput = (props: {
             required={variable.required}
             value={field.value ?? ""}
             label="Value"
-            variant="outlined"
             fullWidth
             margin="normal"
             disabled={isDisabled}
@@ -143,7 +142,6 @@ export const ResourceVariableInput = (props: {
             field.onChange(val === "" ? undefined : Number(val));
           }}
           type="number"
-          variant="outlined"
           fullWidth
           margin="normal"
           error={!!fieldState.error}

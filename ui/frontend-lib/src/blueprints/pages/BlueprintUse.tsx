@@ -3,27 +3,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import LinkIcon from "@mui/icons-material/Link";
-import TuneIcon from "@mui/icons-material/Tune";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Alert,
-  Autocomplete,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { VariableCard } from "../../common/components/fields/VariableCard";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
@@ -35,10 +14,31 @@ import {
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import {
+  ErrorOutlinedIcon,
+  ExpandMoreIcon,
+  LinkIcon,
+  TuneIcon,
+  VisibilityIcon,
+  VisibilityOffIcon,
+} from "../../icons/material";
 import { ResourceVariableRow } from "../../resources/components/variables/ResourceVariablesForm";
 import { ResourceVariableSchema } from "../../resources/types";
 import { GqlTemplateShort } from "../../templates/graphql";
 import { IkEntity } from "../../types";
+import {
+  Autocomplete,
+  Alert,
+  Spinner,
+  Button,
+  Chip,
+  Tooltip,
+  TextField,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+} from "../../ui";
+import { cn } from "../../utils/cn";
 import { GqlWorkflow } from "../../workflows/graphql";
 import {
   BLUEPRINT_USE_QUERY,
@@ -677,16 +677,9 @@ export const BlueprintUsePage = () => {
   if (loading) {
     return (
       <PageContainer title="Use Blueprint">
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: 300,
-          }}
-        >
-          <CircularProgress />
-        </Box>
+        <div className="flex h-75 items-center justify-center">
+          <Spinner />
+        </div>
       </PageContainer>
     );
   }
@@ -694,7 +687,7 @@ export const BlueprintUsePage = () => {
   if (error || !blueprint) {
     return (
       <PageContainer title="Use Blueprint">
-        <Alert severity="error" sx={{ width: "100%" }}>
+        <Alert className="w-full" severity="error">
           {error || "Blueprint not found"}
         </Alert>
       </PageContainer>
@@ -736,20 +729,20 @@ export const BlueprintUsePage = () => {
       }
     >
       {!allParentsResolved && uniqueParentTemplates.length > 0 && (
-        <Alert severity="warning" sx={{ mb: 2 }}>
+        <Alert className="mb-4" severity="warning">
           Some templates require parent resources that are not included in this
           blueprint. Please select existing resources for all required parents
           to continue.
         </Alert>
       )}
       {allParentsResolved && hasAllScvs && !allRequiredVariablesFilled && (
-        <Alert severity="warning" sx={{ mb: 2 }}>
+        <Alert className="mb-4" severity="warning">
           Some required input variables are empty. Fill them in to create
           resources.
         </Alert>
       )}
       <PropertyCard title="General Configuration">
-        <Box>
+        <div>
           <ArrayReferenceInput
             ikApi={ikApi}
             entity_name="integrations"
@@ -870,21 +863,15 @@ export const BlueprintUsePage = () => {
             label="Workspace"
             onChange={(val: string | null) => setValue("workspaceId", val)}
           />
-        </Box>
+        </div>
       </PropertyCard>
       {constantBlocks.length > 0 && (
         <PropertyCard title="Constants">
-          <Box>
-            <Typography
-              variant="body2"
-              sx={{
-                color: "text.secondary",
-                mb: 1,
-              }}
-            >
+          <div>
+            <p className="m-0 mb-2 text-body2 text-fg-muted">
               Enter values for each constant. These values will be applied to
               all wired template inputs.
-            </Typography>
+            </p>
             {constantBlocks.map((c) => {
               const raw = constantValues[c.id] ?? c.defaultValue ?? "";
               const isEmpty = String(raw).trim() === "";
@@ -906,24 +893,20 @@ export const BlueprintUsePage = () => {
                   helperText={isEmpty ? "This constant is required" : " "}
                   fullWidth
                   margin="normal"
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <Chip
-                          icon={<TuneIcon />}
-                          label={isNumber ? "Number" : "String"}
-                          size="small"
-                          color="secondary"
-                          variant="outlined"
-                          sx={{ mr: 1 }}
-                        />
-                      ),
-                    },
-                  }}
+                  startAdornment={
+                    <Chip
+                      className="mr-2"
+                      icon={<TuneIcon />}
+                      label={isNumber ? "Number" : "String"}
+                      size="small"
+                      color="secondary"
+                      variant="outlined"
+                    />
+                  }
                 />
               );
             })}
-          </Box>
+          </div>
         </PropertyCard>
       )}
       {allParentsResolved &&
@@ -962,11 +945,11 @@ export const BlueprintUsePage = () => {
             <PropertyCard
               key={t.id}
               title={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <div className="flex items-center gap-2">
                   <Chip
+                    className="min-w-7 font-bold"
                     label={idx + 1}
                     color="primary"
-                    sx={{ fontWeight: 700, minWidth: 28 }}
                   />
                   <span>{t.name}</span>
                   {Object.keys(wired).length > 0 && (
@@ -981,10 +964,10 @@ export const BlueprintUsePage = () => {
                     <Chip
                       label={`${missingCount} required missing`}
                       color="error"
-                      icon={<ErrorOutlineIcon />}
+                      icon={<ErrorOutlinedIcon />}
                     />
                   )}
-                </Box>
+                </div>
               }
             >
               {/* Source code version selector, abstract templates have none */}
@@ -1001,32 +984,24 @@ export const BlueprintUsePage = () => {
                   onChange={(_e, newVal) =>
                     handleScvChange(t.id, newVal?.id || null)
                   }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Template Version"
-                      margin="normal"
-                      required
-                      helperText={
-                        scvs.length === 0
-                          ? "No source code versions found for this template"
-                          : "Select the template version to use"
-                      }
-                    />
-                  )}
                   disableClearable={false}
                   getOptionDisabled={isOptionDisabled}
                   isOptionEqualToValue={(opt, val) => opt.id === val.id}
                   fullWidth
-                  sx={{ mb: 1 }}
+                  label="Template Version"
+                  margin="normal"
+                  required
+                  helperText={
+                    scvs.length === 0
+                      ? "No source code versions found for this template"
+                      : "Select the template version to use"
+                  }
                 />
               )}
               {/* Required dependency config */}
               {requiredConfigsOf(t).length > 0 && (
-                <Box sx={{ mt: 1, mb: 1 }}>
-                  <Typography variant="h5" component="h4" sx={{ mb: 1 }}>
-                    Dependency Config
-                  </Typography>
+                <div className="mt-2 mb-2">
+                  <h4 className="m-0 mb-2 text-h5">Dependency Config</h4>
                   {requiredConfigsOf(t).map((name) => {
                     // Rendered like the input variables: wired values show their source
                     const wiredCfg = wiredConfigs[t.id]?.[name];
@@ -1050,6 +1025,7 @@ export const BlueprintUsePage = () => {
                             arrow
                           >
                             <Chip
+                              className="mt-2"
                               icon={
                                 wiredCfg.isConstantWire ? (
                                   <TuneIcon />
@@ -1067,7 +1043,6 @@ export const BlueprintUsePage = () => {
                                 wiredCfg.isConstantWire ? "secondary" : "info"
                               }
                               variant="outlined"
-                              sx={{ mt: 1 }}
                             />
                           </Tooltip>
                         ) : (
@@ -1086,11 +1061,11 @@ export const BlueprintUsePage = () => {
                       </VariableCard>
                     );
                   })}
-                </Box>
+                </div>
               )}
               {/* Missing parent selectors */}
               {missing.length > 0 && (
-                <Alert severity="info" sx={{ mb: 1 }}>
+                <Alert className="mb-2" severity="info">
                   This template requires parent resources (
                   {missing.map((p) => p.name).join(", ")}) - select them in
                   General Configuration above.
@@ -1098,28 +1073,13 @@ export const BlueprintUsePage = () => {
               )}
               {/* Variables */}
               {totalNonRestricted > 0 ? (
-                <Accordion
-                  defaultExpanded
-                  elevation={0}
-                  sx={{
-                    borderRadius: "var(--template-surface-radius)",
-                    mt: 2,
-                    "&:before": { display: "none" },
-                  }}
-                >
+                <Accordion standalone className="mt-4" defaultExpanded>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        width: "100%",
-                      }}
-                    >
-                      <Typography variant="h5" component="h4">
+                    <div className="flex w-full items-center gap-2">
+                      <h4 className="m-0 text-h5">
                         Input Variables ({visibleVars.length}
                         {hiddenCount > 0 && ` of ${totalNonRestricted}`})
-                      </Typography>
+                      </h4>
                       <Tooltip
                         title={
                           hideDefaults
@@ -1128,8 +1088,13 @@ export const BlueprintUsePage = () => {
                         }
                         arrow
                       >
-                        <Box
-                          component="span"
+                        <span
+                          className={cn(
+                            hideDefaults
+                              ? "text-primary"
+                              : "text-action-active",
+                            "ml-auto inline-flex cursor-pointer items-center justify-center rounded-surface p-1 hover:bg-hover",
+                          )}
                           aria-label={
                             hideDefaults
                               ? `Show ${hiddenCount} variables with defaults`
@@ -1140,33 +1105,18 @@ export const BlueprintUsePage = () => {
                             setHideDefaults((prev) => !prev);
                           }}
                           onFocus={(e) => e.stopPropagation()}
-                          sx={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            p: 0.5,
-                            ml: "auto",
-                            borderRadius: "var(--template-surface-radius)",
-                            color: hideDefaults
-                              ? "primary.main"
-                              : "action.active",
-                            cursor: "pointer",
-                            "&:hover": {
-                              bgcolor: "action.hover",
-                            },
-                          }}
                         >
                           {hideDefaults ? (
                             <VisibilityIcon fontSize="small" />
                           ) : (
                             <VisibilityOffIcon fontSize="small" />
                           )}
-                        </Box>
+                        </span>
                       </Tooltip>
-                    </Box>
+                    </div>
                   </AccordionSummary>
                   <AccordionDetails>
-                    <Box>
+                    <div>
                       {visibleVars.map((variable) => {
                         const isWired = !!wired[variable.name];
                         const wiredInfo = wired[variable.name];
@@ -1218,6 +1168,7 @@ export const BlueprintUsePage = () => {
                                 arrow
                               >
                                 <Chip
+                                  className="mt-2"
                                   icon={
                                     wiredInfo.isConstantWire ? (
                                       <TuneIcon />
@@ -1237,26 +1188,19 @@ export const BlueprintUsePage = () => {
                                       : "info"
                                   }
                                   variant="outlined"
-                                  sx={{ mt: 1 }}
                                 />
                               </Tooltip>
                             ) : undefined}
                           </ResourceVariableRow>
                         );
                       })}
-                    </Box>
+                    </div>
                   </AccordionDetails>
                 </Accordion>
               ) : currentScv ? (
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: "text.secondary",
-                    mt: 1,
-                  }}
-                >
+                <p className="m-0 mt-2 text-body2 text-fg-muted">
                   No input variables for this template version.
-                </Typography>
+                </p>
               ) : null}
             </PropertyCard>
           );

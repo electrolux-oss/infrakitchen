@@ -1,21 +1,17 @@
 import { useEffect, useState } from "react";
 
-import DownloadIcon from "@mui/icons-material/Download";
-import {
-  Box,
-  Button,
-  Checkbox,
-  FormControlLabel,
-  MenuItem,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
-
 import { useConfig } from "../../common";
 import { CommonDialog } from "../../common/components/dialogs";
 import { notifyError } from "../../common/hooks/useNotification";
 import { ProviderIcon } from "../../icons/Icons";
+import { DownloadIcon } from "../../icons/material";
+import {
+  Checkbox,
+  FormControlLabel,
+  Button,
+  MenuItem,
+  TextField,
+} from "../../ui";
 import { AVAILABLE_TOOL_VERSIONS_QUERY } from "../graphql";
 import {
   TOOL_ARCH_OPTIONS,
@@ -23,8 +19,6 @@ import {
   TOOL_OS_OPTIONS,
   ToolName,
 } from "../types";
-
-import { SELECTED_ICON_SX } from "./selectSx";
 
 const SERVER_DEFAULT = "server_default";
 
@@ -56,7 +50,7 @@ export const ToolDownloadDialog = ({
   const [versions, setVersions] = useState<string[]>([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [version, setVersion] = useState("");
-  // MUI selects render an empty value as blank, so the server default needs its own value
+  // Select renders an empty value as blank, so the server default needs its own value
   const [os, setOs] = useState(SERVER_DEFAULT);
   const [arch, setArch] = useState(SERVER_DEFAULT);
 
@@ -102,34 +96,27 @@ export const ToolDownloadDialog = ({
       onClose={onClose}
       title="Add tool"
       content={
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-            // the outlined labels float above the first row, so the top needs more room to match the bottom
-            pt: 3,
-            pb: 1,
-          }}
+        <div
+          // the outlined labels float above the first row, so the top needs more room to match the bottom
+          className="flex flex-col gap-4 pt-6 pb-2"
         >
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+          <div className="flex flex-col gap-4 sm:flex-row">
             <TextField
               select
               fullWidth
               label="Tool"
-              sx={SELECTED_ICON_SX}
               value={name}
               onChange={(event) => setName(event.target.value as ToolName)}
             >
               {TOOL_NAMES.map((item) => (
-                <MenuItem key={item.value} value={item.value} sx={{ gap: 1 }}>
+                <MenuItem key={item.value} value={item.value} className="gap-2">
                   <ProviderIcon provider={item.value} />
                   {item.label}
                 </MenuItem>
               ))}
             </TextField>
-          </Stack>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+          </div>
+          <div className="flex flex-col gap-4 sm:flex-row">
             <TextField
               select
               fullWidth
@@ -158,8 +145,8 @@ export const ToolDownloadDialog = ({
                 </MenuItem>
               ))}
             </TextField>
-          </Stack>
-          <Box>
+          </div>
+          <div>
             <TextField
               select
               fullWidth
@@ -180,7 +167,7 @@ export const ToolDownloadDialog = ({
               ))}
             </TextField>
             <FormControlLabel
-              sx={{ mt: 0.5 }}
+              className="mt-1"
               control={
                 <Checkbox
                   size="small"
@@ -190,12 +177,10 @@ export const ToolDownloadDialog = ({
                   }
                 />
               }
-              label={
-                <Typography variant="body2">Include pre-releases</Typography>
-              }
+              label={<p className="m-0 text-body2">Include pre-releases</p>}
             />
-          </Box>
-        </Box>
+          </div>
+        </div>
       }
       actions={
         <Button

@@ -1,24 +1,23 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import { Box, Grid, TextField } from "@mui/material";
-
 import { UserAvatarList } from "../../common";
 import {
   EntitySidebar,
   SidebarSection,
 } from "../../common/components/cards/EntitySidebar";
+import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
+import { EditableNameField } from "../../common/components/editors/EditableNameField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import { MultiSelectEditor } from "../../common/components/editors/MultiSelectEditor";
 import { Entity } from "../../common/components/entities/Entity";
-import { CommonField } from "../../common/components/fields/CommonField";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
-import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { notify, notifyError } from "../../common/hooks/useNotification";
+import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
+import { notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
 import { SubscribeNotificationButton } from "../../resources/components/notifications/SubscribeNotificationButton";
 import { IkEntity } from "../../types";
@@ -59,7 +58,7 @@ export const ProjectSidebar = ({
   onSubscriptionChange,
 }: ProjectSidebarProps) => {
   const { ikApi } = useConfig();
-  const { actions, refreshEntity } = useEntityProvider();
+  const { actions } = useEntityProvider();
   const canEdit = actions.includes("edit");
 
   const { loading, isSubscribed, handleSubscribe, handleUnsubscribe } =
@@ -96,21 +95,10 @@ export const ProjectSidebar = ({
     }
   }, [ikApi]);
 
-  const saveField = useCallback(
-    async (input: ProjectUpdateFieldInput) => {
-      try {
-        await ikApi.graphqlRequest(UPDATE_PROJECT_MUTATION, {
-          id: project.id,
-          input,
-        });
-        notify("Project updated successfully", "success");
-        refreshEntity?.();
-      } catch (error) {
-        notifyError(error);
-        throw error;
-      }
-    },
-    [ikApi, project.id, refreshEntity],
+  const saveField = useEntityFieldSaver<ProjectUpdateFieldInput>(
+    UPDATE_PROJECT_MUTATION,
+    project.id,
+    "Project",
   );
 
   const ownerValues = useMemo<UserOption[]>(
@@ -127,24 +115,10 @@ export const ProjectSidebar = ({
   return (
     <EntitySidebar ariaLabel="Project details">
       <SidebarSection title="About">
-        <CommonEditableField<string>
-          name={"Name"}
-          canEdit={canEdit}
+        <EditableNameField
           value={project.name}
-          ariaLabel="Edit name"
-          display={<span>{project.name}</span>}
+          canEdit={canEdit}
           onSave={(value) => saveField({ name: value })}
-          renderEditor={({ value, onChange }) => (
-            <TextField
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              slotProps={{ input: { "aria-label": "Name" } }}
-              fullWidth
-              margin="normal"
-              autoFocus
-            />
-          )}
-          size={12}
         />
         <EditableDescriptionField
           value={project.description}
@@ -159,15 +133,8 @@ export const ProjectSidebar = ({
       </SidebarSection>
 
       <SidebarSection title="Status">
-        <Grid size={12}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 1,
-            }}
-          >
+        <div className="col-span-full">
+          <div className="flex items-center justify-between gap-2">
             <StatusChip status={project.status} />
             <SubscribeNotificationButton
               isSubscribed={isSubscribed}
@@ -181,8 +148,8 @@ export const ProjectSidebar = ({
               entityName="project"
               showIncludeChildren={false}
             />
-          </Box>
-        </Grid>
+          </div>
+        </div>
       </SidebarSection>
 
       <SidebarSection title="Relations">
@@ -212,7 +179,7 @@ export const ProjectSidebar = ({
               placeholder="Select workspace…"
             />
           )}
-          size={12}
+          span="full"
         />
         <CommonEditableField<UserOption[]>
           name={"Owners"}
@@ -236,32 +203,11 @@ export const ProjectSidebar = ({
               getOptionLabel={getUserLabel}
             />
           )}
-          size={12}
+          span="full"
         />
       </SidebarSection>
 
-      <SidebarSection title="Details">
-        <CommonField
-          name="Created by"
-          value={
-            project.creator ? (
-              <Entity entity={{ ...project.creator, entityType: "user" }} />
-            ) : null
-          }
-          size={12}
-        />
-        <CommonField
-          name="Created"
-          value={<RelativeTime date={project.createdAt} />}
-          size={6}
-        />
-        <CommonField
-          name="Last Updated"
-          value={<RelativeTime date={project.updatedAt} />}
-          size={6}
-        />
-        <CommonField name="Revision" value={project.revisionNumber} size={12} />
-      </SidebarSection>
+      <SidebarDetailsSection entity={project} />
     </EntitySidebar>
   );
 };

@@ -1,25 +1,22 @@
 import { useEffect, useState } from "react";
 
-import { Difference, SwapHoriz } from "@mui/icons-material";
-import {
-  Alert,
-  Box,
-  Card,
-  CardContent,
-  CardHeader,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-  SelectChangeEvent,
-  Typography,
-} from "@mui/material";
-
 import { useConfig } from "../common";
 import { DiffEditor } from "../common/components/activity/DiffEditor";
 import { getDateValue } from "../common/components/fields/CommonField";
 import GradientCircularProgress from "../common/GradientCircularProgress";
+import { DifferenceIcon, SwapHorizIcon } from "../icons/material";
+import {
+  Alert,
+  IconButton,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  Card,
+  CardContent,
+  CardHeader,
+} from "../ui";
 
 import {
   REVISIONS_QUERY,
@@ -140,44 +137,21 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
   if (!revisions.length) return <Alert severity="info">No revisions</Alert>;
 
   return (
-    <Box
-      sx={{
-        height: "80vh",
-        display: "flex",
-        flexDirection: "column",
-        minHeight: 0,
-      }}
-    >
-      <Card
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          minHeight: 0,
-          flex: 1,
-          p: 0,
-        }}
-      >
+    <div className="flex h-[80vh] min-h-0 flex-col">
+      <Card className="flex min-h-0 flex-1 flex-col p-0">
         <CardHeader
-          sx={{ mt: 2, mb: 0, ml: 1 }}
+          className="mt-4 mb-0 ml-2"
           title={
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 2,
-                p: 1,
-              }}
-            >
-              <Difference fontSize="small" sx={{ mt: 0.75 }} />
+            <div className="flex flex-row items-center gap-4 p-2">
+              <DifferenceIcon className="mt-1.5" fontSize="small" />
               <FormControl>
                 <InputLabel>From</InputLabel>
                 <Select
+                  className="min-w-45"
                   label="From"
                   variant="outlined"
                   value={String(selectedRevisionLeft)}
                   onChange={handleChangeLeft}
-                  sx={{ minWidth: 180 }}
                   renderValue={(v) => {
                     const r = revisions.find(
                       (r) => String(r.revisionNumber) === v,
@@ -189,44 +163,34 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
                 >
                   {revisions.map((r) => (
                     <MenuItem key={r.id} value={String(r.revisionNumber)}>
-                      <Box>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontWeight: 600,
-                          }}
-                        >
+                      <div>
+                        <p className="m-0 text-body2 font-medium">
                           v{r.revisionNumber}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: "text.secondary",
-                          }}
-                        >
+                        </p>
+                        <span className="text-caption text-fg-muted">
                           {getDateValue(r.createdAt)}
-                        </Typography>
-                      </Box>
+                        </span>
+                      </div>
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
               <IconButton
+                className="mt-1.5"
                 size="small"
                 onClick={handleSwap}
                 title="Swap revisions"
-                sx={{ mt: 0.75 }}
               >
-                <SwapHoriz fontSize="small" />
+                <SwapHorizIcon fontSize="small" />
               </IconButton>
               <FormControl>
                 <InputLabel>To</InputLabel>
                 <Select
+                  className="min-w-45"
                   label="To"
                   variant="outlined"
                   value={String(selectedRevisionRight)}
                   onChange={handleChangeRight}
-                  sx={{ minWidth: 180 }}
                   renderValue={(v) => {
                     const r = revisions.find(
                       (r) => String(r.revisionNumber) === v,
@@ -238,53 +202,28 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
                 >
                   {revisions.map((r) => (
                     <MenuItem key={r.id} value={String(r.revisionNumber)}>
-                      <Box>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontWeight: 600,
-                          }}
-                        >
+                      <div>
+                        <p className="m-0 text-body2 font-medium">
                           v{r.revisionNumber}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: "text.secondary",
-                          }}
-                        >
+                        </p>
+                        <span className="text-caption text-fg-muted">
                           {getDateValue(r.createdAt)}
-                        </Typography>
-                      </Box>
+                        </span>
+                      </div>
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
-            </Box>
+            </div>
           }
         />
-        <CardContent
-          sx={{
-            p: 1,
-            flex: 1,
-            display: "flex",
-            minHeight: 0,
-            overflow: "hidden",
-          }}
-        >
+        <CardContent className="flex min-h-0 flex-1 overflow-hidden p-2">
           {diffLoading ? (
-            <Box
-              sx={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
+            <div className="flex flex-1 items-center justify-center">
               <GradientCircularProgress />
-            </Box>
+            </div>
           ) : leftRevision && rightRevision ? (
-            <Box sx={{ flex: 1, minHeight: 0 }}>
+            <div className="min-h-0 flex-1">
               <DiffEditor
                 originalText={
                   leftRevision?.data
@@ -297,12 +236,12 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
                     : "{}"
                 }
               />
-            </Box>
+            </div>
           ) : (
             <Alert severity="warning">No revisions found</Alert>
           )}
         </CardContent>
       </Card>
-    </Box>
+    </div>
   );
 };

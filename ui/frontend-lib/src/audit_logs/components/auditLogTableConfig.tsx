@@ -1,9 +1,5 @@
 import { Fragment } from "react";
 
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { Box, Tooltip, Typography } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
 import {
   Entity,
   humanizeEntityType,
@@ -17,7 +13,9 @@ import {
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import { Label } from "../../common/components/labels/Label";
-import { CODE_FONT_FAMILY } from "../../common/theme";
+import { InfoOutlinedIcon } from "../../icons/material";
+import { Tooltip } from "../../ui";
+import { RenderCellParams } from "../../ui";
 import { GqlAuditLog } from "../graphql";
 import { getAuditLogEntity } from "../utils/auditLogEntity";
 
@@ -44,26 +42,23 @@ const userTimeColumn = (): EntityTableColumn => ({
     }),
   },
   sortable: false,
-  hideSortIcons: true,
   // 112px (time column) + ~38px avatar.
   width: RELATIVE_TIME_COLUMN_WIDTH + 38,
   align: "right",
   headerAlign: "right",
   sortField: "created_at",
   fetchFields: ["creator", "createdAt"],
-  renderCell: (params: GridRenderCellParams<GqlAuditLog>) => {
+  renderCell: (params: RenderCellParams<GqlAuditLog>) => {
     const user = params.row.creator;
     return (
-      <Box
-        sx={{ display: "flex", alignItems: "center", gap: 0.75, minWidth: 0 }}
-      >
+      <div className="flex min-w-0 items-center gap-1.5">
         <RelativeTime date={params.row.createdAt} compact />
         {user?.id ? (
           <UserAvatar id={user.id} identifier={user.identifier} />
         ) : (
-          <Typography variant="caption">System</Typography>
+          <span className="text-caption">System</span>
         )}
-      </Box>
+      </div>
     );
   },
 });
@@ -103,10 +98,9 @@ export const auditLogColumns: EntityTableColumn[] = [
     headerName: "Entity",
     flex: 2.5,
     sortable: false,
-    hideSortIcons: true,
     hideable: false,
     valueGetter: (value: string) => value,
-    renderCell: (params: GridRenderCellParams<GqlAuditLog>) => {
+    renderCell: (params: RenderCellParams<GqlAuditLog>) => {
       if (params.row.metadata?.denied === "true") {
         return (
           <DeniedEntityCell
@@ -121,34 +115,18 @@ export const auditLogColumns: EntityTableColumn[] = [
       // the model type has no server loader, "[No detail available]").
       const exists = !!entity;
       const uuidLine = params.row.entityId ? (
-        <Box
-          sx={{ display: "flex", alignItems: "center", gap: 0.75, minWidth: 0 }}
-        >
-          <Typography
-            variant="caption"
-            sx={{
-              fontFamily: CODE_FONT_FAMILY,
-              color: "text.secondary",
-              wordBreak: "break-all",
-            }}
-          >
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className="font-mono text-caption break-all text-fg-muted">
             {params.row.entityId}
-          </Typography>
+          </span>
           <Label label={humanizeEntityType(params.row.model)} />
-        </Box>
+        </div>
       ) : null;
       // Only chip the 1st row when it adds the nested template's name;
       // otherwise the type is already stated on the UUID row.
       const showTemplateChip = !!entity?.template?.name;
       return exists ? (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 0.25,
-            minWidth: 0,
-          }}
-        >
+        <div className="flex min-w-0 flex-col gap-0.5">
           <Entity
             entity={{
               ...entity,
@@ -169,7 +147,7 @@ export const auditLogColumns: EntityTableColumn[] = [
             }
           />
           {uuidLine}
-        </Box>
+        </div>
       ) : (
         <DeletedEntityCell
           entityId={params.row.entityId}
@@ -184,7 +162,6 @@ export const auditLogColumns: EntityTableColumn[] = [
     headerName: "Event",
     flex: 1,
     sortable: false,
-    hideSortIcons: true,
     fetchFields: ["action", "metadata"],
     filter: {
       field: "action",
@@ -193,7 +170,7 @@ export const auditLogColumns: EntityTableColumn[] = [
       defaultOperator: "in",
       options: AUDIT_LOG_ACTION_OPTIONS,
     },
-    renderCell: (params: GridRenderCellParams<GqlAuditLog>) => {
+    renderCell: (params: RenderCellParams<GqlAuditLog>) => {
       // Personal access token authentications carry a token_prefix stamp in
       // their metadata; badge the event so token logins stand out from the
       // owner's own SSO/CLI logins at a glance.
@@ -205,69 +182,37 @@ export const auditLogColumns: EntityTableColumn[] = [
         ([key]) => key !== "execution",
       );
       return (
-        <Box
-          sx={{ display: "flex", alignItems: "center", gap: 0.75, minWidth: 0 }}
-        >
+        <div className="flex min-w-0 items-center gap-1.5">
           {params.value}
           {isTokenAuth && <Label label="PAT" tone="info" />}
           {infoEntries.length > 0 && (
             <Tooltip
               title={
-                <Box
-                  component="dl"
-                  sx={{
-                    m: 0,
-                    display: "grid",
-                    gridTemplateColumns: "auto 1fr",
-                    columnGap: 1.5,
-                    rowGap: 0.25,
-                  }}
-                >
+                <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
                   {infoEntries.map(([key, value]) => (
                     <Fragment key={key}>
-                      <Box
-                        component="dt"
-                        sx={{ color: "text.secondary", whiteSpace: "nowrap" }}
-                      >
-                        {key}
-                      </Box>
-                      <Box
-                        component="dd"
-                        sx={{
-                          m: 0,
-                          fontFamily: CODE_FONT_FAMILY,
-                          wordBreak: "break-all",
-                        }}
-                      >
+                      <dt className="whitespace-nowrap text-fg-muted">{key}</dt>
+                      <dd className="m-0 font-mono break-all">
                         {typeof value === "object" && value !== null
                           ? JSON.stringify(value)
                           : String(value)}
-                      </Box>
+                      </dd>
                     </Fragment>
                   ))}
-                </Box>
+                </dl>
               }
               placement="bottom-start"
-              slotProps={{
-                tooltip: { sx: { maxWidth: 480 } },
-              }}
+              className="max-w-[480px]"
             >
-              <Box
-                component="span"
+              <span
+                className="inline-flex shrink-0 cursor-default items-center text-action-active"
                 aria-label="Show event metadata"
-                sx={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  color: "action.active",
-                  flexShrink: 0,
-                  cursor: "default",
-                }}
               >
                 <InfoOutlinedIcon fontSize="small" />
-              </Box>
+              </span>
             </Tooltip>
           )}
-        </Box>
+        </div>
       );
     },
   },
@@ -277,10 +222,9 @@ export const auditLogColumns: EntityTableColumn[] = [
     headerName: "Result",
     flex: 2,
     sortable: false,
-    hideSortIcons: true,
     valueGetter: (_value: unknown, row: GqlAuditLog) =>
       row.metadata?.execution ?? null,
-    renderCell: (params: GridRenderCellParams<GqlAuditLog>) => {
+    renderCell: (params: RenderCellParams<GqlAuditLog>) => {
       // Personal access token authentication rows carry their outcome in
       // metadata: a failed login sets ``reason`` (expired/revoked/invalid
       // credentials), a success has none. Permission denials set metadata.
@@ -297,9 +241,9 @@ export const auditLogColumns: EntityTableColumn[] = [
             : null;
         return reason ? (
           <Tooltip title={`Login failed: ${reason}`} placement="top">
-            <Box component="span" sx={{ display: "inline-flex" }}>
+            <span className="inline-flex">
               <Label label={reason} tone="error" />
-            </Box>
+            </span>
           </Tooltip>
         ) : (
           <Label label="Success" tone="success" />

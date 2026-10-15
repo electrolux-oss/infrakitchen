@@ -1,17 +1,16 @@
 import { useEffect, forwardRef, useCallback } from "react";
 
-import {
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  FormHelperText,
-  SelectChangeEvent,
-} from "@mui/material";
-
 import { InfraKitchenApi } from "../../api/InfraKitchenApi";
 import { notifyError } from "../../common/hooks/useNotification";
 import { IkEntity } from "../../types";
+import {
+  FormControl,
+  FormHelperText,
+  InputLabel,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+} from "../../ui";
 
 import { AZURE_DEVOPS_PROJECTS_QUERY } from "./graphql";
 import { AzureDevopsProject } from "./types";

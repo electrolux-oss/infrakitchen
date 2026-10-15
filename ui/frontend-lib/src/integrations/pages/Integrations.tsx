@@ -3,18 +3,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 
 import { Icon } from "@iconify/react";
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Link,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Typography,
-} from "@mui/material";
+import octiconCloud24Data from "@iconify-icons/octicon/cloud-24";
+import octiconGitBranch24Data from "@iconify-icons/octicon/git-branch-24";
+import octiconReportData from "@iconify-icons/octicon/report";
 
 import { FilterProvider, PermissionWrapper } from "../../common";
 import { EntityCard } from "../../common/components/cards/EntityCard";
@@ -25,7 +16,18 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import { entityCardGridSx } from "../../common/utils/entityCardGrid";
+import { ENTITY_CARD_GRID_CLASSES } from "../../common/utils/entityCardGrid";
+import {
+  Alert,
+  Spinner,
+  Button,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Link,
+} from "../../ui";
+import { cn } from "../../utils/cn";
 import { integrationColumns } from "../components/integrationFilterConfig";
 import { providers } from "../constants";
 import { GqlIntegration, INTEGRATIONS_QUERY } from "../graphql";
@@ -114,18 +116,14 @@ const IntegrationsPage = () => {
 
   const integrationEntityFields = (integration: GqlIntegration) => (
     <>
-      <Box>
-        <Typography sx={{ display: "block", color: "text.secondary" }}>
-          Status
-        </Typography>
+      <div>
+        <p className="m-0 block text-body2 text-fg-muted">Status</p>
         <StatusChip status={integration.status} compact />
-      </Box>
-      <Box>
-        <Typography sx={{ display: "block", color: "text.secondary" }}>
-          Last Updated
-        </Typography>{" "}
+      </div>
+      <div>
+        <p className="m-0 block text-body2 text-fg-muted">Last Updated</p>{" "}
         <RelativeTime date={integration.updatedAt} />
-      </Box>
+      </div>
     </>
   );
 
@@ -139,9 +137,9 @@ const IntegrationsPage = () => {
       requiredPermission="api:integration"
       permissionAction="write"
     >
-      <Box sx={{ display: "flex", gap: 1 }}>
+      <div className="flex gap-2">
         <Button
-          startIcon={<Icon icon="octicon:git-branch-24" />}
+          startIcon={<Icon icon={octiconGitBranch24Data} ssr />}
           onClick={(e) => {
             setSubmenuAnchor(e.currentTarget);
             setActiveCategory(String(IntegrationType.GIT));
@@ -150,7 +148,7 @@ const IntegrationsPage = () => {
           Connect Git
         </Button>
         <Button
-          startIcon={<Icon icon="octicon:cloud-24" />}
+          startIcon={<Icon icon={octiconCloud24Data} ssr />}
           onClick={(e) => {
             setSubmenuAnchor(e.currentTarget);
             setActiveCategory(String(IntegrationType.CLOUD));
@@ -159,7 +157,7 @@ const IntegrationsPage = () => {
           Connect Cloud
         </Button>
         <Button
-          startIcon={<Icon icon="octicon:report" />}
+          startIcon={<Icon icon={octiconReportData} ssr />}
           onClick={(e) => {
             setSubmenuAnchor(e.currentTarget);
             setActiveCategory(String(IntegrationType.NOTIFICATION));
@@ -167,7 +165,7 @@ const IntegrationsPage = () => {
         >
           Connect Notification
         </Button>
-      </Box>
+      </div>
       <Menu
         anchorEl={submenuAnchor}
         open={Boolean(submenuAnchor)}
@@ -201,12 +199,12 @@ const IntegrationsPage = () => {
   if (error) {
     return (
       <PageContainer title="Integrations" actions={actions}>
-        <Box sx={{ width: "100%", py: 4 }}>
-          <Alert severity="error" sx={{ mb: 2 }}>
+        <div className="w-full py-8">
+          <Alert className="mb-4" severity="error">
             {error}
           </Alert>{" "}
           <Button onClick={fetchIntegrations}>Retry</Button>
-        </Box>
+        </div>
       </PageContainer>
     );
   }
@@ -221,7 +219,8 @@ const IntegrationsPage = () => {
             href="https://opensource.electrolux.one/infrakitchen/integrations/overview/"
             target="_blank"
             rel="noopener"
-            sx={{ color: "inherit", textDecoration: "underline" }}
+            color="inherit"
+            className="decoration-current"
           >
             integrations
           </Link>
@@ -232,7 +231,8 @@ const IntegrationsPage = () => {
               href="https://github.com/electrolux-oss/infrakitchen/issues"
               target="_blank"
               rel="noopener"
-              sx={{ color: "inherit", textDecoration: "underline" }}
+              color="inherit"
+              className="decoration-current"
             >
               Let us know
             </Link>
@@ -242,7 +242,7 @@ const IntegrationsPage = () => {
       }
       actions={actions}
     >
-      <Box sx={{ width: "100%" }}>
+      <div className="w-full">
         <FilterProvider
           columns={integrationColumns}
           storageKey="filter_integrations"
@@ -252,45 +252,17 @@ const IntegrationsPage = () => {
           <FilterPanel />
         </FilterProvider>
         {loading ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "50vh",
-            }}
-          >
-            <CircularProgress />
-          </Box>
+          <div className="flex h-[50vh] items-center justify-center">
+            <Spinner />
+          </div>
         ) : integrations.length === 0 ? (
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 3,
-              py: 6,
-            }}
-          >
+          <div className="flex flex-col items-center gap-6 py-12">
             {integrations.length === 0 ? (
               <>
-                <Typography
-                  variant="h5"
-                  component="p"
-                  sx={{
-                    color: "text.secondary",
-                  }}
-                >
+                <p className="m-0 text-h5 text-fg-muted">
                   No integrations connected yet
-                </Typography>
-                <Box
-                  sx={{
-                    display: "flex",
-                    gap: 2,
-                    flexWrap: "wrap",
-                    justifyContent: "center",
-                  }}
-                >
+                </p>
+                <div className="flex flex-wrap justify-center gap-4">
                   {" "}
                   {allProviders.map((p) => (
                     <Button
@@ -303,22 +275,16 @@ const IntegrationsPage = () => {
                       Connect {p.name}
                     </Button>
                   ))}
-                </Box>
+                </div>
               </>
             ) : (
-              <Typography
-                variant="h5"
-                component="p"
-                sx={{
-                  color: "text.secondary",
-                }}
-              >
+              <p className="m-0 text-h5 text-fg-muted">
                 No integrations match your filters
-              </Typography>
+              </p>
             )}
-          </Box>
+          </div>
         ) : (
-          <Box sx={{ ...entityCardGridSx(), mt: 4 }}>
+          <div className={cn(ENTITY_CARD_GRID_CLASSES, "mt-8")}>
             {integrations.map((integration) => {
               const provider = providers.find(
                 (p) =>
@@ -348,9 +314,9 @@ const IntegrationsPage = () => {
                 />
               );
             })}
-          </Box>
+          </div>
         )}
-      </Box>
+      </div>
     </PageContainer>
   );
 };

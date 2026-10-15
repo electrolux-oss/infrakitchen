@@ -1,11 +1,10 @@
-import { Typography } from "@mui/material";
-import type { SxProps, Theme } from "@mui/material/styles";
+import { cn } from "../../../utils/cn";
 
 interface PlaceholderTextProps {
   /** Text to render; defaults to "Not set". */
   text?: string;
-  /** Optional style overrides (e.g. to match a surrounding clamp/font size). */
-  sx?: SxProps<Theme>;
+  /** Optional class overrides (e.g. to match a surrounding clamp/font size). */
+  className?: string;
 }
 
 /**
@@ -15,29 +14,26 @@ interface PlaceholderTextProps {
  */
 export const PlaceholderText = ({
   text = "Not set",
-  sx,
+  className,
 }: PlaceholderTextProps) => (
-  <Typography
-    component="span"
-    variant="body2"
-    color="textDisabled"
-    sx={{ fontStyle: "italic", ...sx }}
-  >
+  <span className={cn("text-body2 text-fg-disabled italic", className)}>
     {text}
-  </Typography>
+  </span>
 );
 
 interface PlaceholderDescriptionProps {
-  /** Optional style overrides (e.g. to match a surrounding clamp/font size). */
-  sx?: SxProps<Theme>;
+  /** Optional class overrides (e.g. to match a surrounding clamp/font size). */
+  className?: string;
 }
 
 /**
  * Muted, italic placeholder for the conventional empty-description state so it
  * reads as a placeholder rather than real content.
  */
-export const PlaceholderDescription = ({ sx }: PlaceholderDescriptionProps) => (
-  <PlaceholderText text="No description" sx={sx} />
+export const PlaceholderDescription = ({
+  className,
+}: PlaceholderDescriptionProps) => (
+  <PlaceholderText text="No description" className={className} />
 );
 
 export default PlaceholderDescription;

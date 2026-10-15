@@ -1,6 +1,5 @@
-import { Button } from "@mui/material";
-
 import { InfraKitchenApi } from "../../../api";
+import { Button } from "../../../ui";
 import { buildEntityDeleteMutation } from "../../graphql/entityActionMutation";
 import { notify, notifyError } from "../../hooks/useNotification";
 

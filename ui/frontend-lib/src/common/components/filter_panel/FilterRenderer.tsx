@@ -1,5 +1,3 @@
-import { Box } from "@mui/material";
-
 import { AdvancedFilter } from "./AdvancedFilter";
 import { FilterConfig, FilterState } from "./FilterConfig";
 
@@ -19,19 +17,13 @@ export const FilterRenderer = ({
     onChange(config.id, newValue);
   };
 
-  const wrapperStyles = {
-    width: "100%",
-    display: "flex",
-    alignItems: "flex-end",
-  };
-
   return (
-    <Box sx={{ ...wrapperStyles, alignItems: "flex-start" }}>
+    <div className="flex w-full items-start">
       <AdvancedFilter
         config={config}
         value={value || []}
         onChange={handleChange}
       />
-    </Box>
+    </div>
   );
 };

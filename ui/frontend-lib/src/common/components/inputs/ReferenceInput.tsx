@@ -1,14 +1,8 @@
 import React, { useEffect, forwardRef, useState } from "react";
 
-import {
-  FormControl,
-  FormHelperText,
-  Autocomplete,
-  TextField,
-} from "@mui/material";
-
 import { InfraKitchenApi } from "../../../api/InfraKitchenApi";
 import { IkEntity } from "../../../types";
+import { Autocomplete, FormControl, FormHelperText } from "../../../ui";
 import { buildGraphqlFields } from "../../graphql/buildGraphqlFields";
 import { notifyError } from "../../hooks/useNotification";
 
@@ -81,7 +75,7 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     allOptions.find((option) => option.id === value) || null;
 
   const handleAutocompleteChange = (
-    _event: React.SyntheticEvent,
+    _event: React.SyntheticEvent | null,
     newValue: IkEntity | null,
   ) => {
     onChange(newValue ? newValue.id : null);
@@ -155,65 +149,44 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
       <Autocomplete
         readOnly={otherProps.readOnly}
         disabled={otherProps.disabled || otherProps.readOnly}
-        size="small"
         value={selectedOption}
         options={options}
         getOptionLabel={(option) => getOptionLabel(option, showFields)}
-        renderOption={(renderProps, option) => (
-          <li {...renderProps} key={option.id}>
-            {renderOptionContent ? (
-              renderOptionContent(option)
-            ) : (
-              <ReferenceContent
-                entityName={entity_name}
-                entity={option}
-                fallback={getOptionLabel(option, showFields)}
-              />
-            )}
-          </li>
-        )}
-        isOptionEqualToValue={(option, value) => option.id === value.id}
-        disableClearable={false}
-        getOptionDisabled={isOptionDisabled}
-        onChange={handleAutocompleteChange}
-        renderValue={(option) => {
-          return (
+        getOptionKey={(option) => option.id}
+        renderOption={(option) =>
+          renderOptionContent ? (
+            renderOptionContent(option)
+          ) : (
             <ReferenceContent
               entityName={entity_name}
               entity={option}
-              fallback={option.name || option.identifier}
+              fallback={getOptionLabel(option, showFields)}
             />
-          );
-        }}
-        renderInput={(params) => {
-          const hasLabel = Boolean(props.label);
-          return (
-            <TextField
-              {...params}
-              {...otherProps}
-              label={hasLabel ? props.label : undefined}
-              placeholder={props.placeholder}
-              error={props.error}
-              slotProps={{
-                ...params.slotProps,
-                htmlInput: {
-                  ...params.slotProps.htmlInput,
-                  ...(!hasLabel
-                    ? { "aria-label": props.ariaLabel || props.label || "" }
-                    : {}),
-                },
-              }}
-            />
-          );
-        }}
+          )
+        }
+        isOptionEqualToValue={(option, value) => option.id === value.id}
+        getOptionDisabled={isOptionDisabled}
+        onChange={handleAutocompleteChange}
+        renderValue={(option) => (
+          <ReferenceContent
+            entityName={entity_name}
+            entity={option}
+            fallback={option.name || option.identifier}
+          />
+        )}
+        label={props.label || undefined}
+        aria-label={props.label ? undefined : props.ariaLabel || undefined}
+        placeholder={props.placeholder}
+        error={props.error}
+        required={otherProps.required}
+        name={otherProps.name}
+        onBlur={otherProps.onBlur}
       />
       <FormHelperText error={props.error}>
         {props.helpertext || ""}
       </FormHelperText>
       {warning && (
-        <FormHelperText sx={{ color: "warning.main" }}>
-          {warning}
-        </FormHelperText>
+        <FormHelperText className="text-warning">{warning}</FormHelperText>
       )}
     </FormControl>
   );

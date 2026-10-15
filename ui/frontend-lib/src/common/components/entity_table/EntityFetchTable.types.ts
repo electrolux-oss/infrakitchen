@@ -1,7 +1,6 @@
 import { MouseEvent, ReactNode } from "react";
 
-import { GridColumnVisibilityModel } from "@mui/x-data-grid";
-
+import { ColumnVisibilityModel } from "../../../ui";
 import { GraphqlFieldMap } from "../../graphql/buildGraphqlFields";
 
 import { EntityTableColumn } from "./EntityTable";
@@ -11,7 +10,7 @@ export interface EntityFetchTableProps {
   subtitle?: string;
   columns: EntityTableColumn[];
   entityName?: string;
-  defaultColumnVisibilityModel?: GridColumnVisibilityModel;
+  defaultColumnVisibilityModel?: ColumnVisibilityModel;
   onFilterChange?: (filterValues: Record<string, any>) => void;
   defaultFilter?: Record<string, any>;
   initialFilters?: Record<string, any>;

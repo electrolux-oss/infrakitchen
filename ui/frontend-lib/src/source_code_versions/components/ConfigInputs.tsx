@@ -3,8 +3,10 @@ import { useState, useCallback, useEffect } from "react";
 
 import { json } from "@codemirror/lang-json";
 import { lintGutter } from "@codemirror/lint";
-import { TextField, FormLabel, Switch, Box, Typography } from "@mui/material";
 import CodeMirror from "@uiw/react-codemirror";
+
+import { Switch, TextField, FormLabel } from "../../ui";
+import { cn } from "../../utils/cn";
 
 interface JsonInputProps {
   field: {
@@ -46,9 +48,9 @@ const JsonInput: React.FC<JsonInputProps> = ({ field }) => {
         extensions={[json(), lintGutter()]}
         value={jsonStr}
         onChange={handleChange}
-        style={{ border: "1px solid var(--template-palette-divider)" }}
+        style={{ border: "1px solid var(--color-divider)" }}
       />
-      {error && <FormLabel color="error">{error}</FormLabel>}
+      {error && <FormLabel>{error}</FormLabel>}
     </div>
   );
 };
@@ -68,7 +70,6 @@ export const DefaultValueInput = (props: {
           {...field}
           value={field.value ?? ""}
           label="Default value"
-          variant="outlined"
           fullWidth
           margin="normal"
           error={error}
@@ -87,7 +88,6 @@ export const DefaultValueInput = (props: {
           }
           label="Default value"
           type="number"
-          variant="outlined"
           fullWidth
           margin="normal"
           error={error}
@@ -97,33 +97,34 @@ export const DefaultValueInput = (props: {
 
     case "boolean":
       return (
-        <Box sx={{ margin: "16px 0 8px 0" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Typography
-              variant="body2"
-              color={!field.value ? "primary" : "text.secondary"}
+        <div className="mt-4 mb-2">
+          <div className="flex items-center gap-2">
+            <p
+              className={cn(
+                "m-0 text-body2",
+                !field.value ? "text-primary" : "text-fg-muted",
+              )}
             >
               Disabled
-            </Typography>
+            </p>
             <Switch
               checked={field.value ?? false}
               onChange={(e) => field.onChange(e.target.checked)}
-              color="primary"
-              slotProps={{
-                input: {
-                  "aria-label":
-                    "Toggle default boolean value between disabled and enabled",
-                },
+              inputProps={{
+                "aria-label":
+                  "Toggle default boolean value between disabled and enabled",
               }}
             />
-            <Typography
-              variant="body2"
-              color={field.value ? "primary" : "text.secondary"}
+            <p
+              className={cn(
+                "m-0 text-body2",
+                field.value ? "text-primary" : "text-fg-muted",
+              )}
             >
               Enabled
-            </Typography>
-          </Box>
-        </Box>
+            </p>
+          </div>
+        </div>
       );
     case "object":
       return <JsonInput field={field} />;
@@ -136,7 +137,6 @@ export const DefaultValueInput = (props: {
         <TextField
           {...field}
           label="Default"
-          variant="outlined"
           fullWidth
           margin="normal"
           error={error}

@@ -1,6 +1,5 @@
 import React from "react";
 
-import { useTheme } from "@mui/material";
 import { Node } from "@xyflow/react";
 
 import { ENTITY_STATUS } from "../../../../utils";
@@ -78,16 +77,28 @@ export function parseTargetHandle(handle: string): {
     : { type: "variable", name: handle.replace(/^input-/, "") };
 }
 
+const tone = (name: string) => ({
+  main: `var(--color-${name})`,
+  light: `var(--color-${name}-light)`,
+  contrastText: `var(--color-${name}-contrast)`,
+});
+
 /**
- * Mode-aware palette. Under `cssVariables`, `theme.palette` holds the light
- * scheme's literal values; only `theme.vars` follows the active scheme. `sx`
- * handles this itself, but the canvas passes plain strings to React Flow, so
- * canvas colours must come from here.
+ * Canvas colours as CSS variable references. The canvas passes plain style
+ * strings to React Flow, and `var(...)` values follow the light/dark switch
+ * without re-rendering.
  */
-export function useCanvasPalette() {
-  const theme = useTheme();
-  return (theme.vars ?? theme).palette;
-}
+export const CANVAS_PALETTE = {
+  background: { paper: "var(--color-paper)", default: "var(--color-canvas)" },
+  divider: "var(--color-divider)",
+  text: { secondary: "var(--color-fg-muted)" },
+  grey: { 500: "var(--color-grey-500)" },
+  info: tone("info"),
+  success: tone("success"),
+  warning: tone("warning"),
+  error: tone("error"),
+  secondary: tone("secondary"),
+};
 
 export function makeHandleStyle(
   color: string,

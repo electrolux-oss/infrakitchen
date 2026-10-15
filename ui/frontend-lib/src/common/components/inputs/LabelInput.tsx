@@ -1,6 +1,6 @@
 import { forwardRef, ReactNode } from "react";
 
-import { Autocomplete, Chip, TextField } from "@mui/material";
+import { Autocomplete } from "../../../ui";
 
 interface LabelInputProps {
   errors: any;
@@ -17,29 +17,18 @@ export const LabelInput = forwardRef<any, LabelInputProps>((props, _ref) => {
     <Autocomplete
       multiple
       freeSolo
-      options={[]}
+      options={[] as string[]}
       value={value}
       onChange={(_event, newValue) => onChange(newValue)}
-      renderValue={(value: readonly string[], getTagProps) =>
-        value.map((option: string, index: number) => {
-          const { key, ...rest } = getTagProps({ index });
-          return <Chip key={key} {...rest} variant="outlined" label={option} />;
-        })
+      label="Labels"
+      error={!!errors.labels}
+      helperText={
+        errors.labels
+          ? errors.labels.message
+          : helpertext || "Add labels and press Enter"
       }
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label="Labels"
-          error={!!errors.labels}
-          helperText={
-            errors.labels
-              ? errors.labels.message
-              : helpertext || "Add labels and press Enter"
-          }
-          fullWidth
-          margin="normal"
-        />
-      )}
+      fullWidth
+      margin="normal"
     />
   );
 });
