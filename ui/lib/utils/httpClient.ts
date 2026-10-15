@@ -1,4 +1,3 @@
-// Is used in Backstage plugin
 export interface Options extends RequestInit {
   user?: {
     authenticated?: boolean;
