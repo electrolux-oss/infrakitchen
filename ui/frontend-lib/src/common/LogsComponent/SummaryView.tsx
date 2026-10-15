@@ -3,6 +3,7 @@ import {
   type SyntheticEvent,
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
@@ -34,6 +35,7 @@ import { useConfig } from "../context";
 import { CODE_FONT_FAMILY } from "../theme";
 
 import { LogLine } from "./LogLine";
+import { ANSI_ESCAPE_RE, PlanDiff } from "./PlanDiff";
 
 const ExecutionAction = {
   CREATE: "CREATE",
@@ -70,8 +72,6 @@ type ErrorBlock = {
   address: string;
   lines: string[];
 };
-
-const ANSI_ESCAPE_RE = new RegExp(String.fromCharCode(27) + "\\[[0-9;]*m", "g");
 
 const stripAnsi = (line: string): string =>
   line.replace(ANSI_ESCAPE_RE, "").trim();
@@ -529,10 +529,14 @@ export const SummaryView = (props: {
     }
   }, [allLogs, loaded, eventAction]);
 
-  const changes = parsePlanSummary(allLogs);
-  const fatalErrorLines = allLogs
-    .map((log) => log.data ?? "")
-    .filter((line) => isFatalErrorLine(stripAnsi(line)));
+  const changes = useMemo(() => parsePlanSummary(allLogs), [allLogs]);
+  const fatalErrorLines = useMemo(
+    () =>
+      allLogs
+        .map((log) => log.data ?? "")
+        .filter((line) => isFatalErrorLine(stripAnsi(line))),
+    [allLogs],
+  );
 
   const handleAccordionChange =
     (id: string) => (_: SyntheticEvent, isExpanded: boolean) => {
@@ -745,12 +749,9 @@ export const SummaryView = (props: {
                     fontFamily: CODE_FONT_FAMILY,
                     fontSize: "0.8rem",
                     bgcolor: "action.hover",
-                    overflowX: "auto",
                   }}
                 >
-                  {change.rawLines.map((line, index) => (
-                    <LogLine key={`${change.id}-${index}`} line={line} />
-                  ))}
+                  <PlanDiff lines={change.rawLines} />
                   {change.errorLines && change.errorLines.length > 0 && (
                     <Box
                       sx={{
