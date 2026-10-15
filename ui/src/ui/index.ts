@@ -13,6 +13,7 @@ export * from "./ClickAwayListener";
 export * from "./Collapse";
 export * from "./colorScheme";
 export * from "./ColumnVisibilityMenu";
+export * from "./DataCardList";
 export * from "./DataTable";
 export * from "./Dialog";
 export * from "./Divider";

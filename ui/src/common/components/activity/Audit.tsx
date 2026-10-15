@@ -271,6 +271,7 @@ export const Audit = ({
         field: "createdAt",
         headerName: "Time",
         width: RELATIVE_TIME_COLUMN_WIDTH,
+        mobile: "badge",
         align: "right",
         headerAlign: "right",
         renderCell: (params: RenderCellParams<AuditLogEntity>) => (
@@ -330,6 +331,7 @@ export const Audit = ({
             rows={auditLogs}
             columns={columns}
             className="md:min-h-[380px]"
+            mobileCards
             sortModel={sortModel}
             onSortModelChange={handleSortModelChange}
             paginationModel={paginationModel}

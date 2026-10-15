@@ -60,4 +60,9 @@ export interface DataTableColumn<R = any> {
   renderCell?: (params: RenderCellParams<R>) => ReactNode;
   /** Client-side sort order for two cell values. */
   sortComparator?: (a: any, b: any) => number;
+  /**
+   * Placement in the phone card layout. Defaults: the first non-hideable
+   * column is the title, header-less columns are badges, the rest are meta.
+   */
+  mobile?: "title" | "badge" | "meta" | "hidden";
 }

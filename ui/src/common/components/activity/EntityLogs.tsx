@@ -108,6 +108,7 @@ export const EntityLogs = ({
         field: "createdAt",
         headerName: "Started",
         width: RELATIVE_TIME_COLUMN_WIDTH,
+        mobile: "badge",
         align: "right",
         headerAlign: "right",
         renderCell: (params) => <RelativeTime date={params.value} compact />,
@@ -161,6 +162,7 @@ export const EntityLogs = ({
               loading={loading}
               getRowId={(row) => row.id}
               className="md:min-h-[380px]"
+              mobileCards
               sortModel={sortModel}
               onSortModelChange={setSortModel}
               paginationModel={paginationModel}

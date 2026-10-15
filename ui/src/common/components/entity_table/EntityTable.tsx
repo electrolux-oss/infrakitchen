@@ -11,6 +11,7 @@ import {
 import {
   ColumnVisibilityMenu,
   ColumnVisibilityModel,
+  DataCardList,
   DataTable,
   DataTableColumn,
   IconButton,
@@ -26,19 +27,12 @@ import { cn } from "../../../utils/cn";
 import { useConfig } from "../../context/ConfigContext";
 import { ColumnFilterSpec } from "../filter_panel/FilterConfig";
 
-import { EntityCardList } from "./EntityCardList";
-
 const EMPTY_LABEL = "No Results Found";
 
 export type EntityTableColumn = DataTableColumn<any> & {
   fetchFields?: string[];
   sortField?: string;
   filter?: ColumnFilterSpec | ColumnFilterSpec[];
-  /**
-   * Placement in the phone card layout. Defaults: the first non-hideable
-   * column is the title, header-less columns are badges, the rest are meta.
-   */
-  mobile?: "title" | "badge" | "meta" | "hidden";
 };
 
 export interface ResourceTableProps {
@@ -266,7 +260,7 @@ export const EntityTable = ({
       <div className="overflow-hidden rounded-surface border border-divider bg-paper">
         {isMobile ? (
           <>
-            <EntityCardList
+            <DataCardList
               rows={entities}
               columns={columns}
               columnVisibilityModel={effectiveColumnVisibilityModel}

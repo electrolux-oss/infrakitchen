@@ -1,5 +1,4 @@
 import {
-  isValidElement,
   MouseEvent,
   PointerEvent as ReactPointerEvent,
   ReactNode,
@@ -26,7 +25,9 @@ import {
 import { ArrowDownwardIcon, ArrowUpwardIcon } from "../icons/material";
 import { cn } from "../utils/cn";
 
+import { getCellValue, renderCellContent } from "./cellContent";
 import { Checkbox } from "./Checkbox";
+import { DataCardList } from "./DataCardList";
 import type {
   ColumnVisibilityModel,
   DataTableColumn,
@@ -35,12 +36,14 @@ import type {
   RowSelectionModel,
   SortModel,
 } from "./DataTable.types";
-import { TablePagination } from "./Pagination";
+import { Pagination, TablePagination } from "./Pagination";
 import { LinearProgress, Skeleton } from "./Progress";
 import { Tooltip } from "./Tooltip";
 import { useControllable } from "./useControllable";
+import { useMediaQuery } from "./useMediaQuery";
 
 export * from "./DataTable.types";
+export { renderCellContent };
 
 export interface DataTableProps<R = any> {
   rows: readonly R[];
@@ -81,6 +84,9 @@ export interface DataTableProps<R = any> {
   /** "compact" tightens rows (36px) and the header. */
   density?: "standard" | "compact";
   hideHeader?: boolean;
+  /** Below `sm`, render rows as stacked cards (see column `mobile`). Not
+   * combined with `checkboxSelection`. */
+  mobileCards?: boolean;
   emptyLabel?: ReactNode;
   /** Root classes, e.g. a min height floor (`md:min-h-[380px]`). */
   className?: string;
@@ -104,31 +110,6 @@ const JUSTIFY = {
   center: "justify-center",
   right: "justify-end",
 };
-
-/** Row value for a column: `valueGetter` result or `row[field]`. */
-function getCellValue<R>(column: DataTableColumn<R>, row: R): unknown {
-  const raw = (row as Record<string, unknown> | null)?.[column.field];
-  return column.valueGetter ? column.valueGetter(raw, row) : raw;
-}
-
-/** What a cell shows: `renderCell`, else the formatted value as text. */
-export function renderCellContent<R>(
-  column: DataTableColumn<R>,
-  row: R,
-  id: RowId,
-): ReactNode {
-  const value = getCellValue(column, row);
-  if (column.renderCell) {
-    return column.renderCell({ id, row, field: column.field, value });
-  }
-  const formatted = column.valueFormatter
-    ? column.valueFormatter(value, row)
-    : value;
-  if (formatted === null || formatted === undefined || formatted === false) {
-    return null;
-  }
-  return isValidElement(formatted) ? formatted : String(formatted);
-}
 
 const defaultGetRowId = (row: any): RowId => row?.id;
 
@@ -186,6 +167,7 @@ export function DataTable<R = any>({
   onRowClick,
   density = "standard",
   hideHeader = false,
+  mobileCards = false,
   emptyLabel = "No Results Found",
   className,
   "aria-label": ariaLabel,
@@ -391,6 +373,9 @@ export function DataTable<R = any>({
     onRowClick?.(row, event);
   };
 
+  const isPhone = useMediaQuery("(max-width: 599.95px)");
+  const showCards = mobileCards && isPhone && !checkboxSelection;
+
   const header = !hideHeader && (
     <thead>
       <tr className={compact ? "h-9" : "h-14"}>
@@ -497,6 +482,52 @@ export function DataTable<R = any>({
       </tr>
     </thead>
   );
+
+  if (showCards) {
+    const pageCount = Math.max(1, lastPage + 1);
+    const page = Math.min(pagination.page, lastPage);
+    const firstRow = totalRows === 0 ? 0 : page * pagination.pageSize + 1;
+    const lastRow = Math.min(totalRows, (page + 1) * pagination.pageSize);
+    return (
+      // containerRef stays attached so column widths are right when the
+      // viewport grows back to table mode.
+      <div ref={containerRef} className={cn("flex w-full flex-col", className)}>
+        <DataCardList
+          rows={tableRows.map((tableRow) => tableRow.original)}
+          columns={visibleColumns}
+          getRowId={getRowId}
+          loading={loading}
+          skeletonCount={SKELETON_ROWS}
+          emptyLabel={emptyLabel}
+          onRowClick={
+            onRowClick
+              ? (row, event) =>
+                  handleRowClick(row, event as MouseEvent<HTMLTableRowElement>)
+              : undefined
+          }
+        />
+        <div className="flex-1" />
+        {!hideFooter && totalRows > 0 && (
+          <div className="flex flex-col items-center gap-1 border-t border-t-divider py-2">
+            {pageCount > 1 && (
+              <Pagination
+                size="small"
+                siblingCount={0}
+                count={pageCount}
+                page={page + 1}
+                onChange={(_event, nextPage) =>
+                  setPaginationModel({ ...pagination, page: nextPage - 1 })
+                }
+              />
+            )}
+            <span className="text-caption text-fg-muted">
+              {firstRow}–{lastRow} of {totalRows}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={cn("flex w-full flex-col", className)}>

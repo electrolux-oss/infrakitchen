@@ -95,7 +95,7 @@ async def guest_callback(scope: Literal["default", "super", "infra"], service: S
         key="guest-token",
         value=token,
         httponly=True,
-        secure=False,
+        secure=True,
         expires=datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=30),
     )  # This cookie will make sure the user is authenticated
     user.updated_at = datetime.datetime.now(datetime.UTC)

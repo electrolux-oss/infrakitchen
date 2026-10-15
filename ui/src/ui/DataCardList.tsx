@@ -1,38 +1,39 @@
 import { Fragment, MouseEvent, ReactNode } from "react";
 
-import {
+import { cn } from "../utils/cn";
+
+import { renderCellContent } from "./cellContent";
+import type {
   ColumnVisibilityModel,
-  LinearProgress,
-  renderCellContent,
-  Skeleton,
-} from "../../../ui";
-import { cn } from "../../../utils/cn";
+  DataTableColumn,
+  RowId,
+} from "./DataTable.types";
+import { LinearProgress, Skeleton } from "./Progress";
 
-import type { EntityTableColumn } from "./EntityTable";
-
-export interface EntityCardListProps {
-  rows: any[];
-  columns: EntityTableColumn[];
+export interface DataCardListProps<R = any> {
+  rows: readonly R[];
+  columns: readonly DataTableColumn<R>[];
+  getRowId?: (row: R) => RowId;
   columnVisibilityModel?: ColumnVisibilityModel;
   loading: boolean;
   skeletonCount: number;
-  emptyLabel: string;
-  onRowClick?: (row: any, event: MouseEvent) => void;
+  emptyLabel: ReactNode;
+  onRowClick?: (row: R, event: MouseEvent<HTMLElement>) => void;
 }
 
-type MobileRole = NonNullable<EntityTableColumn["mobile"]>;
+type MobileRole = NonNullable<DataTableColumn["mobile"]>;
 
 // Columns without an explicit hint: the first non-hideable column (Name) is
 // the card title, header-less columns (favorite star, action icons) sit next
 // to it, everything else becomes a "Label: value" line.
-const resolveRoles = (columns: EntityTableColumn[]) => {
+const resolveRoles = <R,>(columns: DataTableColumn<R>[]) => {
   const explicitTitle = columns.find((c) => c.mobile === "title");
   const title =
     explicitTitle ??
     columns.find((c) => c.hideable === false && !c.mobile) ??
     columns.find((c) => !c.mobile && c.headerName);
 
-  return columns.map((column): [EntityTableColumn, MobileRole] => {
+  return columns.map((column): [DataTableColumn<R>, MobileRole] => {
     if (column === title) return [column, "title"];
     if (column.mobile) return [column, column.mobile];
     return [column, column.headerName ? "meta" : "badge"];
@@ -42,20 +43,19 @@ const resolveRoles = (columns: EntityTableColumn[]) => {
 const isEmptyValue = (value: unknown) =>
   value === null || value === undefined || value === "" || value === false;
 
-const renderValue = (column: EntityTableColumn, row: any): ReactNode => {
-  const value = renderCellContent(column, row, row?.id);
-  return value === "" ? null : value;
-};
+const defaultGetRowId = (row: any): RowId => row?.id;
 
-export const EntityCardList = ({
+/** Stacked card layout for table rows on phone-width screens. */
+export function DataCardList<R = any>({
   rows,
   columns,
+  getRowId = defaultGetRowId,
   columnVisibilityModel,
   loading,
   skeletonCount,
   emptyLabel,
   onRowClick,
-}: EntityCardListProps) => {
+}: DataCardListProps<R>) {
   const visibleColumns = columns.filter(
     (column) =>
       column.mobile !== "hidden" &&
@@ -99,12 +99,14 @@ export const EntityCardList = ({
       )}
       <div role="list">
         {rows.map((row, index) => {
+          const id = getRowId(row);
           let title: ReactNode = null;
           const badges: ReactNode[] = [];
-          const meta: { column: EntityTableColumn; value: ReactNode }[] = [];
+          const meta: { column: DataTableColumn<R>; value: ReactNode }[] = [];
 
           roles.forEach(([column, role]) => {
-            const value = renderValue(column, row);
+            const rendered = renderCellContent(column, row, id);
+            const value = rendered === "" ? null : rendered;
             if (isEmptyValue(value)) return;
             if (role === "title") title = value;
             else if (role === "badge")
@@ -114,7 +116,7 @@ export const EntityCardList = ({
 
           return (
             <div
-              key={row.id ?? index}
+              key={id ?? index}
               role="listitem"
               onClick={
                 onRowClick ? (event) => onRowClick(row, event) : undefined
@@ -153,4 +155,4 @@ export const EntityCardList = ({
       </div>
     </div>
   );
-};
+}
