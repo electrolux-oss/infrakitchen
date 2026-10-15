@@ -1,46 +1,13 @@
 import React from "react";
 
-import ReactDiffViewer, { DiffMethod } from "react-diff-viewer-continued";
-
 import { useEntityProvider } from "../../common";
-import {
-  DIFF_VIEWER_DARK_VARIABLES,
-  DIFF_VIEWER_FONT_SIZE,
-} from "../../common/components/activity/DiffEditor";
+import { DiffEditor } from "../../common/components/activity/DiffEditor";
 import { ActionButton } from "../../common/components/buttons/ActionButton";
 import { CommonDialog } from "../../common/components/dialogs/CommonDialog";
 import { IkEntity } from "../../types";
-import { Spinner, useColorScheme } from "../../ui";
+import { Spinner } from "../../ui";
 import { ENTITY_ACTION, ENTITY_STATUS } from "../../utils/constants";
 import { GqlResourceTempState } from "../graphql";
-
-interface JsonDiffViewerProps {
-  originalText: string;
-  modifiedText: string;
-}
-
-function JsonDiffViewer({ originalText, modifiedText }: JsonDiffViewerProps) {
-  const { resolvedMode: mode } = useColorScheme();
-
-  return (
-    <ReactDiffViewer
-      key={`resource-diff-${mode}`}
-      oldValue={originalText}
-      newValue={modifiedText}
-      splitView={true}
-      compareMethod={DiffMethod.LINES}
-      showDiffOnly={false}
-      hideLineNumbers={false}
-      disableWordDiff={true}
-      useDarkTheme={mode === "dark"}
-      styles={{
-        variables: { dark: DIFF_VIEWER_DARK_VARIABLES },
-        contentText: { fontSize: DIFF_VIEWER_FONT_SIZE },
-        lineNumber: { fontSize: DIFF_VIEWER_FONT_SIZE },
-      }}
-    />
-  );
-}
 
 export interface ResourceStateReviewDialogProps {
   open: boolean;
@@ -99,8 +66,10 @@ export const ResourceStateReviewDialog: React.FC<
                     Updated State
                   </h6>
                 </div>
-                <div className="max-h-[70vh] w-full max-w-full overflow-auto [&_.diff-viewer-wrapper]:min-w-300 [&_table]:mt-0">
-                  <JsonDiffViewer
+                <div className="max-h-[70vh] w-full max-w-full overflow-auto [&_.cm-mergeView]:min-w-300">
+                  <DiffEditor
+                    splitView
+                    highlightChanges={false}
                     originalText={(() => {
                       const filteredEntity: any = {};
                       if (entity && resourceTempState.value) {

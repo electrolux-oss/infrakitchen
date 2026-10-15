@@ -1,43 +1,82 @@
-import DiffViewer, { DiffMethod } from "react-diff-viewer-continued";
+import { useEffect, useRef } from "react";
+
+import { json } from "@codemirror/lang-json";
+import { MergeView, unifiedMergeView } from "@codemirror/merge";
+import { EditorView, getDefaultExtensions } from "@uiw/react-codemirror";
 
 import { useColorScheme } from "../../../ui";
 
-import {
-  DIFF_VIEWER_DARK_VARIABLES,
-  DIFF_VIEWER_FONT_SIZE,
-  DiffEditorProps,
-} from "./DiffEditor";
+import { DIFF_VIEWER_FONT_SIZE, DiffEditorProps } from "./DiffEditor";
 
-const diffStyles = {
-  variables: { dark: DIFF_VIEWER_DARK_VARIABLES },
-  marker: { fontSize: DIFF_VIEWER_FONT_SIZE },
-  line: {
-    fontSize: DIFF_VIEWER_FONT_SIZE,
-    "&:hover": { background: "var(--color-hover)" },
-  },
-  lineNumber: { fontSize: DIFF_VIEWER_FONT_SIZE },
-};
+const fontTheme = EditorView.theme({
+  "&": { fontSize: DIFF_VIEWER_FONT_SIZE },
+});
 
-/** The react-diff-viewer half of DiffEditor, loaded on demand. */
+const collapseUnchanged = { margin: 3, minSize: 4 };
+
+/** The CodeMirror merge half of DiffEditor, loaded on demand. */
 export default function DiffViewerPane({
   originalText,
   modifiedText,
   splitView = false,
   showDiffOnly = false,
+  highlightChanges = true,
 }: DiffEditorProps) {
-  const { resolvedMode: mode } = useColorScheme();
+  const { resolvedMode } = useColorScheme();
+  const parentRef = useRef<HTMLDivElement>(null);
 
-  return (
-    <DiffViewer
-      key={`diffviewer-${mode}-${splitView}-${showDiffOnly}`}
-      oldValue={originalText}
-      newValue={modifiedText}
-      splitView={splitView}
-      hideLineNumbers={false}
-      showDiffOnly={showDiffOnly}
-      styles={diffStyles}
-      useDarkTheme={mode === "dark"}
-      compareMethod={DiffMethod.WORDS}
-    />
-  );
+  useEffect(() => {
+    const parent = parentRef.current;
+    if (!parent) return;
+
+    const extensions = [
+      ...getDefaultExtensions({
+        theme: resolvedMode,
+        readOnly: true,
+        editable: false,
+        indentWithTab: false,
+        basicSetup: {
+          foldGutter: false,
+          highlightActiveLine: false,
+          highlightActiveLineGutter: false,
+        },
+      }),
+      json(),
+      fontTheme,
+    ];
+    const collapse = showDiffOnly ? collapseUnchanged : undefined;
+
+    const view = splitView
+      ? new MergeView({
+          a: { doc: originalText, extensions },
+          b: { doc: modifiedText, extensions },
+          parent,
+          highlightChanges,
+          collapseUnchanged: collapse,
+        })
+      : new EditorView({
+          doc: modifiedText,
+          extensions: [
+            ...extensions,
+            unifiedMergeView({
+              original: originalText,
+              mergeControls: false,
+              highlightChanges,
+              collapseUnchanged: collapse,
+            }),
+          ],
+          parent,
+        });
+
+    return () => view.destroy();
+  }, [
+    originalText,
+    modifiedText,
+    splitView,
+    showDiffOnly,
+    highlightChanges,
+    resolvedMode,
+  ]);
+
+  return <div ref={parentRef} />;
 }
