@@ -21,6 +21,7 @@ import LanIcon from "@mui/icons-material/Lan";
 import LayersIcon from "@mui/icons-material/Layers";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 import MemoryIcon from "@mui/icons-material/Memory";
+import ImportContactsIcon from "@mui/icons-material/ImportContacts";
 import PeopleIcon from "@mui/icons-material/People";
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
@@ -242,6 +243,22 @@ export default function DashboardSidebar({
               expanded={templatesExpanded}
               nestedNavigation={
                 <Box sx={{ pl: 1.25 }}>
+                  {/* The parent "Templates" entry is only needed in the
+                      collapsed flyout; when expanded, the group header itself
+                      is the visible link. */}
+                  {mini && (
+                    <DashboardSidebarPageItem
+                      id="templates_all"
+                      title="Templates"
+                      icon={<LibraryBooksIcon />}
+                      href="/templates"
+                      selected={
+                        pathname === "/templates" ||
+                        !!matchPath("/templates/*", pathname)
+                      }
+                      permissionKey="template"
+                    />
+                  )}
                   <DashboardSidebarPageItem
                     id="source_code_versions"
                     title="Template Versions"
@@ -348,8 +365,6 @@ export default function DashboardSidebar({
               }
             />
 
-            <DashboardSidebarDividerItem />
-
             <DashboardSidebarPageItem
               id="operations"
               title="Operations"
@@ -385,8 +400,6 @@ export default function DashboardSidebar({
               }
             />
 
-            <DashboardSidebarDividerItem />
-
             <DashboardSidebarPageItem
               id="management"
               title="Management"
@@ -421,6 +434,13 @@ export default function DashboardSidebar({
                   <DashboardAdminSidebar />
                 </Box>
               }
+            />
+
+            <DashboardSidebarPageItem
+              id="documentation"
+              title="Documentation"
+              icon={<ImportContactsIcon />}
+              href="https://opensource.electrolux.one/infrakitchen/"
             />
           </List>
         </Box>

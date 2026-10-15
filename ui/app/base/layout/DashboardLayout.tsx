@@ -112,7 +112,7 @@ export default function DashboardLayout() {
           width: "100%",
         }}
       >
-        <Toolbar sx={{ displayPrint: "none" }} />
+        <Toolbar variant="dense" sx={{ displayPrint: "none" }} />
         <Box
           component="main"
           sx={{

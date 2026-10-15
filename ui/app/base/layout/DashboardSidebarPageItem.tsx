@@ -14,6 +14,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
 import { type Theme, SxProps } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 
 import type {} from "@mui/material/themeCssVarsAugmentation";
 import { MINI_DRAWER_WIDTH } from "../../constants";
@@ -62,7 +63,30 @@ export default function DashboardSidebarPageItem({
   } = sidebarContext;
 
   const [isHovered, setIsHovered] = React.useState(false);
+  const [flyoutTop, setFlyoutTop] = React.useState<number>();
+  const flyoutPaperRef = React.useRef<HTMLDivElement>(null);
   const permissions = usePermissionProvider().permissions;
+
+  // Align the flyout with the hovered item; shift it up if the submenu would
+  // overflow the bottom of the viewport.
+  React.useEffect(() => {
+    if (isHovered && flyoutTop !== undefined && flyoutPaperRef.current) {
+      const maxTop =
+        window.innerHeight - flyoutPaperRef.current.offsetHeight - 8;
+      if (flyoutTop > maxTop) {
+        setFlyoutTop(Math.max(8, maxTop));
+      }
+    }
+  }, [isHovered, flyoutTop]);
+
+  const handleMiniMouseEnter = React.useCallback((e) => {
+    setFlyoutTop(e.currentTarget.getBoundingClientRect().top);
+    setIsHovered(true);
+  }, []);
+
+  const handleMiniMouseLeave = React.useCallback(() => {
+    setIsHovered(false);
+  }, []);
 
   const handleClick = React.useCallback(() => {
     if (onPageItemClick) {
@@ -122,12 +146,8 @@ export default function DashboardSidebarPageItem({
         disablePadding
         {...(nestedNavigation && mini
           ? {
-              onMouseEnter: () => {
-                setIsHovered(true);
-              },
-              onMouseLeave: () => {
-                setIsHovered(false);
-              },
+              onMouseEnter: handleMiniMouseEnter,
+              onMouseLeave: handleMiniMouseLeave,
             }
           : {})}
         sx={{
@@ -137,10 +157,14 @@ export default function DashboardSidebarPageItem({
           overflowX: "hidden",
         }}
       >
-        <Tooltip title={mini ? title : ""} placement="right">
+        <Tooltip
+          title={mini && !nestedNavigation ? title : ""}
+          placement="right"
+        >
           <ListItemButton
             selected={selected}
             disabled={disabled}
+            {...(nestedNavigation && mini ? { "aria-label": title } : {})}
             sx={{
               height: mini ? 34 : "auto",
               mx: 0,
@@ -225,17 +249,30 @@ export default function DashboardSidebarPageItem({
               sx={{
                 position: "fixed",
                 left: MINI_DRAWER_WIDTH - 2,
+                top: flyoutTop,
                 pl: "6px",
               }}
             >
               <Paper
+                ref={flyoutPaperRef}
                 elevation={8}
                 sx={{
                   pt: 0.2,
                   pb: 0.2,
-                  transform: "translateY(-50px)",
                 }}
               >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    px: 2,
+                    py: 1,
+                    fontWeight: 500,
+                    color: "text.secondary",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {title}
+                </Typography>
                 <DashboardSidebarContext.Provider
                   value={miniNestedNavigationSidebarContextValue}
                 >
