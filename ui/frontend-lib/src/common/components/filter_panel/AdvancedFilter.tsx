@@ -37,6 +37,7 @@ const OPERATOR_LABELS: Record<FilterOperator, string> = {
   is_none: "is None",
   in: "is any of",
   contains_all: "has all of",
+  contains_entries: "has entries",
   any: "matches any",
 };
 
@@ -48,7 +49,12 @@ function generateClauseId(): string {
 }
 
 function isMultiValueOperator(op: FilterOperator): boolean {
-  return op === "in" || op === "contains_all" || op === "any";
+  return (
+    op === "in" ||
+    op === "contains_all" ||
+    op === "contains_entries" ||
+    op === "any"
+  );
 }
 
 function isValuelessOperator(op: FilterOperator): boolean {
@@ -214,10 +220,12 @@ const ClauseRow = ({
   };
 
   // Available field options (filter out fields where ALL operators are taken)
-  const availableFields = fields.filter((f) => {
-    if (f.field === clause.field) return true;
-    return !usedFields.has(f.field);
-  });
+  const availableFields = fields
+    .filter((f) => {
+      if (f.field === clause.field) return true;
+      return !usedFields.has(f.field);
+    })
+    .sort((a, b) => a.label.localeCompare(b.label));
 
   // Render value input
   const renderValueInput = () => {
@@ -338,7 +346,9 @@ const ClauseRow = ({
           onChange={(newVal) => onUpdate(clause.id, { value: newVal })}
           multiple
           freeSolo
-          placeholder={`Type values, press Enter...`}
+          placeholder={
+            selectedField.placeholder ?? `Type values, press Enter...`
+          }
           sx={MULTI_VALUE_AUTOCOMPLETE_SX}
         />
       );
