@@ -11,14 +11,11 @@
     <title>InfraKitchen</title>
     <script>
       // Apply the saved color scheme before first paint; ColorSchemeProvider
-      // (frontend-lib/src/ui/colorScheme.tsx) takes over once React mounts.
-      // "mui-mode" is the key the former MUI theme stored the choice under.
+      // (src/ui/colorScheme.tsx) takes over once React mounts.
       (function () {
         var mode = null;
         try {
-          mode =
-            localStorage.getItem("ik-color-mode") ||
-            localStorage.getItem("mui-mode");
+          mode = localStorage.getItem("ik-color-mode");
         } catch (e) {}
         if (mode !== "light" && mode !== "dark") {
           mode = window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -169,5 +166,5 @@
       </div>
     </div>
   </body>
-  <script type="module" src="/app/main.tsx"></script>
+  <script type="module" src="/src/main.tsx"></script>
 </html>

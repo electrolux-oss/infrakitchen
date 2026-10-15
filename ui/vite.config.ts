@@ -7,13 +7,12 @@ import react from "@vitejs/plugin-react";
 const DEFAULT_PORT = "7777";
 const port = process.env.VITE_PORT || DEFAULT_PORT;
 const backendHost = process.env.BACKEND_HOST || "localhost";
-const frontendLibSource = resolve(__dirname, "frontend-lib/src/index.ts");
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      "@electrolux-oss/infrakitchen": frontendLibSource,
+      "@": resolve(__dirname, "src"),
     },
   },
   server: {

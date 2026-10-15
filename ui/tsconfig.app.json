@@ -18,9 +18,7 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "paths": {
-      "@electrolux-oss/infrakitchen": [
-        "./frontend-lib/src/index.ts"
-      ]
+      "@/*": ["./src/*"]
     },
     /* Linting */
     "strict": true,
@@ -30,7 +28,6 @@
     "noUncheckedSideEffectImports": true
   },
   "include": [
-    "app",
-    "frontend-lib/src"
+    "src"
   ]
 }
