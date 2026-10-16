@@ -35,5 +35,3 @@ export const PlaceholderDescription = ({
 }: PlaceholderDescriptionProps) => (
   <PlaceholderText text="No description" className={className} />
 );
-
-export default PlaceholderDescription;

@@ -135,5 +135,3 @@ export const AuthProviderConfigurationEditor = ({
     </>
   );
 };
-
-export default AuthProviderConfigurationEditor;

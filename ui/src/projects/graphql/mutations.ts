@@ -21,20 +21,3 @@ export const UPDATE_PROJECT_MUTATION = `
     }
   }
 `;
-
-export const DELETE_PROJECT_MUTATION = `
-  mutation DeleteProject($id: UUID!) {
-    deleteProject(id: $id)
-  }
-`;
-
-export const PROJECT_ACTION_MUTATION = `
-  mutation ProjectAction($id: UUID!, $input: ProjectActionInput!) {
-    projectAction(id: $id, input: $input) {
-      id
-      name
-      status
-      entityName
-    }
-  }
-`;

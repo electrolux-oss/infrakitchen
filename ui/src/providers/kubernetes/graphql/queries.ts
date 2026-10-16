@@ -10,18 +10,6 @@ export const KUBERNETES_DEPLOYMENTS_QUERY = `
   }
 `;
 
-export const KUBERNETES_PODS_QUERY = `
-  query KubernetesPods($k8sService: String!, $resourceId: String!, $namespace: String!) {
-    kubernetesPods(k8sService: $k8sService, resourceId: $resourceId, namespace: $namespace)
-  }
-`;
-
-export const KUBERNETES_SERVICES_QUERY = `
-  query KubernetesServices($k8sService: String!, $resourceId: String!, $namespace: String!) {
-    kubernetesServices(k8sService: $k8sService, resourceId: $resourceId, namespace: $namespace)
-  }
-`;
-
 export const KUBERNETES_DEPLOYMENT_PODS_QUERY = `
   query KubernetesDeploymentPods(
     $k8sService: String!, $resourceId: String!, $namespace: String!, $deploymentName: String!

@@ -53,5 +53,3 @@ export const EditableDescriptionField = ({
     span={span}
   />
 );
-
-export default EditableDescriptionField;

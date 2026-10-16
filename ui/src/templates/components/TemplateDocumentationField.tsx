@@ -116,5 +116,3 @@ export const TemplateDocumentationField = ({
     </>
   );
 };
-
-export default TemplateDocumentationField;

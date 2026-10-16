@@ -42,12 +42,6 @@ export const CREATE_WORKSPACE_MUTATION = `
   }
 `;
 
-export const DELETE_WORKSPACE_MUTATION = `
-  mutation DeleteWorkspace($id: UUID!) {
-    deleteWorkspace(id: $id)
-  }
-`;
-
 /**
  * Re-fetches the workspace's provider metadata (e.g. default branch,
  * description, URLs) from GitHub and updates the stored configuration.

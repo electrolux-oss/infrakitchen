@@ -94,5 +94,3 @@ export const ScheduleApplyButton = ({
     </>
   );
 };
-
-export default ScheduleApplyButton;

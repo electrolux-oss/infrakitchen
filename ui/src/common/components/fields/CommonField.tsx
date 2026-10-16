@@ -3,7 +3,6 @@ import React, { FC, ReactNode, useCallback } from "react";
 import { useNavigate } from "react-router";
 
 import { IconField } from "../../../icons/Icons";
-import { ToggleOffIcon, ToggleOnIcon } from "../../../icons/material";
 import { Link } from "../../../ui";
 import { cn } from "../../../utils/cn";
 import { useConfig } from "../../context";
@@ -71,14 +70,6 @@ export const GetReferenceUrlValue: FC<GetReferenceUrlValueProps> = ({
     >
       {displayText}
     </Link>
-  );
-};
-
-export const getBooleanLabel = (value: boolean) => {
-  return value ? (
-    <ToggleOnIcon color="success" titleAccess="Enabled" />
-  ) : (
-    <ToggleOffIcon color="disabled" titleAccess="Disabled" />
   );
 };
 

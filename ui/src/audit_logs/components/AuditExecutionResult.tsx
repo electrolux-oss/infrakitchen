@@ -114,9 +114,6 @@ export const formatExecutionSummarySegments = (
   return parts;
 };
 
-export const formatExecutionSummary = (execution: AuditExecution): string =>
-  formatExecutionSummarySegments(execution).join(" · ");
-
 // Planned actions in display order, with the color of their chip.
 const RESOURCE_ACTIONS: [string, string, ChipColor][] = [
   ["create", "Create", "success"],

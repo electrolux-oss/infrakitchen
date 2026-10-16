@@ -54,5 +54,3 @@ export const WorkspaceActions = () => {
     </Tooltip>
   );
 };
-
-export default WorkspaceActions;

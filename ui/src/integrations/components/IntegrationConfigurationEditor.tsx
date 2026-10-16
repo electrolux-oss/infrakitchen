@@ -134,5 +134,3 @@ export const IntegrationConfigurationEditor = ({
     </>
   );
 };
-
-export default IntegrationConfigurationEditor;

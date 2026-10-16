@@ -55,5 +55,3 @@ export const EditAffordance = ({
     </Tooltip>
   );
 };
-
-export default EditAffordance;

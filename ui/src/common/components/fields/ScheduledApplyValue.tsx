@@ -29,5 +29,3 @@ export const ScheduledApplyValue = ({
     </>
   );
 };
-
-export default ScheduledApplyValue;

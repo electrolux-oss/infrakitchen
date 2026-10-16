@@ -6,20 +6,11 @@ import {
 
 import {
   SCV_CONFIG_FIELDS,
-  SCV_DETAIL_FIELDS,
   SCV_REFERENCE_LIST_FIELDS,
   TEMPLATE_PORTS_FIELDS,
   SCV_TEMPLATE_OUTPUT_FIELDS,
   SCV_TEMPLATE_REFERENCE_FIELDS,
 } from "./fragments";
-
-export const SOURCE_CODE_VERSION_QUERY = `
-  query SourceCodeVersion($id: UUID!) {
-    sourceCodeVersion(id: $id) {
-      ${SCV_DETAIL_FIELDS}
-    }
-  }
-`;
 
 export const SOURCE_CODE_VERSION_CONFIGS_QUERY = `
   query SourceCodeVersionConfigs($sourceCodeVersionId: UUID!) {

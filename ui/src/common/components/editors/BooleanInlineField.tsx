@@ -54,5 +54,3 @@ export const BooleanInlineField = ({
     />
   );
 };
-
-export default BooleanInlineField;

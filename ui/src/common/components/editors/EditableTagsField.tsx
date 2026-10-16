@@ -60,5 +60,3 @@ export const EditableTagsField = ({
     span={span}
   />
 );
-
-export default EditableTagsField;

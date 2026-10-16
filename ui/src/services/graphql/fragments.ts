@@ -46,11 +46,6 @@ export type ServiceGraphqlRelationKey =
 export type ServiceGraphqlRelationField =
   (typeof SERVICE_GRAPHQL_FIELDS.relations)[ServiceGraphqlRelationKey];
 
-export const SERVICE_SHORT_FIELDS = `
-  ${buildSelection(SERVICE_GRAPHQL_FIELDS.short)}
-  ${buildNestedSelection(SERVICE_GRAPHQL_FIELDS.relations.owners, USER_SHORT_FIELDS)}
-`;
-
 export const SERVICE_LIST_FIELDS = `
   ${buildSelection(SERVICE_GRAPHQL_FIELDS.list)}
 `;

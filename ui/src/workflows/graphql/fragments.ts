@@ -39,21 +39,6 @@ export const WORKFLOW_STEP_FIELDS = `
   completedAt
 `;
 
-export const WORKFLOW_LIST_FIELDS = `
-  id
-  action
-  entityName
-  status
-  errorMessage
-  ${buildNestedSelection("creator", USER_SHORT_FIELDS)}
-  steps {
-    ${WORKFLOW_STEP_SHORT_FIELDS}
-  }
-  startedAt
-  completedAt
-  createdAt
-`;
-
 export const WORKFLOW_FIELDS = `
   id
   action

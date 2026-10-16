@@ -102,5 +102,3 @@ export const SecretConfigurationField = ({
     </>
   );
 };
-
-export default SecretConfigurationField;

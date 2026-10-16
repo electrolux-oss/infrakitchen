@@ -215,5 +215,3 @@ export function InlineEditableField<T>({
     </div>
   );
 }
-
-export default InlineEditableField;

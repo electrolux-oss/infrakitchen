@@ -1,5 +1,4 @@
 import {
-  GraphqlFieldMap,
   buildSelection,
   buildNestedSelection,
 } from "../../common/graphql/buildGraphqlFields";
@@ -57,11 +56,3 @@ export const INTEGRATION_DETAILS_FIELDS = `
   ${INTEGRATION_FIELDS}
   ${buildSelection(INTEGRATION_GRAPHQL_FIELDS.details)}
 `;
-
-/** Maps snake_case table column fields to their GraphQL selection strings. */
-export const INTEGRATION_FIELD_MAP: GraphqlFieldMap = {
-  creator: buildNestedSelection(
-    INTEGRATION_GRAPHQL_FIELDS.relations.creator,
-    USER_SHORT_FIELDS,
-  ),
-};

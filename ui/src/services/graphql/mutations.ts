@@ -22,12 +22,6 @@ export const UPDATE_SERVICE_MUTATION = `
   }
 `;
 
-export const DELETE_SERVICE_MUTATION = `
-  mutation DeleteService($id: UUID!) {
-    deleteService(id: $id)
-  }
-`;
-
 export const CREATE_SERVICE_SUBSCRIPTION_MUTATION = `
   mutation CreateServiceSubscription($input: ServiceSubscriptionCreateInput!) {
     createServiceSubscription(input: $input) {

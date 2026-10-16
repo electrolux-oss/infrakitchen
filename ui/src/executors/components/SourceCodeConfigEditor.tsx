@@ -277,5 +277,3 @@ export const SourceCodeConfigEditor = ({
     />
   );
 };
-
-export default SourceCodeConfigEditor;
