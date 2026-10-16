@@ -19,7 +19,7 @@
     "jsx": "react-jsx",
     "paths": {
       "@electrolux-oss/infrakitchen": [
-        "./frontend-lib/src/index.ts"
+        "./lib/index.ts"
       ]
     },
     /* Linting */
@@ -31,6 +31,6 @@
   },
   "include": [
     "app",
-    "frontend-lib/src"
+    "lib"
   ]
 }
