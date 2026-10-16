@@ -2,10 +2,11 @@ import { useState } from "react";
 
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import { Box, Button } from "@mui/material";
+import { Button } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import {
   TabbedContent,
@@ -17,7 +18,7 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { GqlBlueprint } from "../graphql";
 
-import { BlueprintOverview } from "./BlueprintOverview";
+import { BlueprintSidebar } from "./BlueprintSidebar";
 import { BlueprintWiringEditor } from "./BlueprintWiringEditor";
 import { WorkflowTimeline } from "./WorkflowTimeline";
 
@@ -79,6 +80,7 @@ export const BlueprintContent = () => {
                     wiring={[...blueprint.wiring, ...constantWires]}
                     externalTemplates={externalTemplates}
                     constants={constants}
+                    height="fill"
                     allowFullscreen
                   />
                 )}
@@ -113,11 +115,8 @@ export const BlueprintContent = () => {
   ];
 
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
-    >
-      <BlueprintOverview />
+    <EntitySidebarLayout sidebar={<BlueprintSidebar blueprint={blueprint} />}>
       <TabbedContent tabs={tabs} />
-    </Box>
+    </EntitySidebarLayout>
   );
 };

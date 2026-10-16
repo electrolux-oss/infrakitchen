@@ -1,10 +1,15 @@
 import { useParams } from "react-router";
 
+import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
-import { EntityProvider } from "../../common/context/EntityContext";
+import {
+  EntityProvider,
+  useEntityProvider,
+} from "../../common/context/EntityContext";
 import { ToolContent } from "../components/ToolContent";
 import { ToolHeaderActions } from "../components/ToolHeaderActions";
 import { TOOL_DETAIL_FIELDS } from "../graphql";
+import { ToolDetail, toolLabel } from "../types";
 
 export const ToolPage = () => {
   const { tool_id } = useParams();
@@ -15,10 +20,28 @@ export const ToolPage = () => {
       entity_id={tool_id || ""}
       entityFields={TOOL_DETAIL_FIELDS}
     >
-      <EntityContainer title="Tool Details" actions={<ToolHeaderActions />}>
-        <ToolContent />
-      </EntityContainer>
+      <ToolPageContent />
     </EntityProvider>
+  );
+};
+
+const ToolPageContent = () => {
+  const { entity } = useEntityProvider();
+  const tool = entity as ToolDetail | undefined;
+
+  return (
+    // Tools are headed by name, version and platform, as the overview card was.
+    <EntityContainer
+      title={tool ? toolLabel(tool) : undefined}
+      actions={
+        <>
+          <ToolHeaderActions />
+          <EntityRefreshButton />
+        </>
+      }
+    >
+      <ToolContent />
+    </EntityContainer>
   );
 };
 

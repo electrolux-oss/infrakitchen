@@ -1,6 +1,7 @@
 import { useParams } from "react-router";
 
 import { LogLiveTail } from "../../common";
+import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { WorkspaceActions } from "../components/WorkspaceActions";
@@ -17,8 +18,12 @@ export const WorkspacePage = () => {
       entityFields={WORKSPACE_DETAIL_FIELDS}
     >
       <EntityContainer
-        title={"Workspace Details"}
-        actions={<WorkspaceActions />}
+        actions={
+          <>
+            <WorkspaceActions />
+            <EntityRefreshButton />
+          </>
+        }
       >
         <WorkspaceContent />
         <LogLiveTail />

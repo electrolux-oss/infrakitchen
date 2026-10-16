@@ -1,9 +1,8 @@
 import { useMemo } from "react";
 
-import { Box } from "@mui/material";
-
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
   TabCountLabel,
@@ -13,8 +12,8 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
 
 import { WorkspaceConfiguration } from "./WorkspaceConfiguration";
-import { WorkspaceOverview } from "./WorkspaceOverview";
 import { WorkspacePermissions } from "./WorkspacePermissions";
+import { WorkspaceSidebar } from "./WorkspaceSidebar";
 
 export const WorkspaceContent = () => {
   const { entity } = useEntityProvider();
@@ -58,11 +57,8 @@ export const WorkspaceContent = () => {
   ];
 
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
-    >
-      <WorkspaceOverview workspace={entity} />
+    <EntitySidebarLayout sidebar={<WorkspaceSidebar workspace={entity} />}>
       <TabbedContent tabs={tabs} />
-    </Box>
+    </EntitySidebarLayout>
   );
 };

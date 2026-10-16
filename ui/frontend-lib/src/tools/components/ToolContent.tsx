@@ -2,13 +2,14 @@ import { useEffect, useMemo } from "react";
 
 import { useNavigate } from "react-router";
 
-import { Box, Button } from "@mui/material";
+import { Button } from "@mui/material";
 
 import { useConfig } from "../../common";
 import { Audit } from "../../common/components/activity/Audit";
 import { EntityLogs } from "../../common/components/activity/EntityLogs";
 import { DeleteButton } from "../../common/components/buttons/DeleteEntityButton";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
   TabCountLabel,
@@ -22,7 +23,7 @@ import { EntityResources } from "../../resources/components/EntityResources";
 import { SET_DEFAULT_TOOL_MUTATION } from "../graphql";
 import { ToolDetail, toolLabel } from "../types";
 
-import { ToolOverview } from "./ToolOverview";
+import { ToolSidebar } from "./ToolSidebar";
 
 export const ToolContent = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -149,11 +150,8 @@ export const ToolContent = () => {
   ];
 
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
-    >
-      <ToolOverview tool={tool} />
+    <EntitySidebarLayout sidebar={<ToolSidebar tool={tool} />}>
       <TabbedContent tabs={tabs} />
-    </Box>
+    </EntitySidebarLayout>
   );
 };

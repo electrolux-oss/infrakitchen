@@ -1,46 +1,35 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 
-import { Box, TextField } from "@mui/material";
+import { TextField } from "@mui/material";
 
-import { Entity } from "../../common";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import {
   CommonField,
   GetReferenceUrlValue,
 } from "../../common/components/fields/CommonField";
-import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
-import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { sameStringSet } from "../../common/utils";
-import { ProviderIcon } from "../../icons/Icons";
-import { ToolSelect, toolLabel } from "../../tools";
-import { IkEntity } from "../../types";
 import {
   ExecutorUpdateFieldInput,
   EXECUTOR_UPDATE_MUTATION,
   GqlExecutor,
 } from "../graphql";
 
+import { SourceCodeConfigEditor } from "./SourceCodeConfigEditor";
+
 export interface AdvancedSettingsProps {
   executor: GqlExecutor;
 }
-
-const STORAGE_DANGER_HELPER =
-  "Changing storage can cause OpenTofu/Terraform state issues. Only change it when intentionally migrating state.";
-
-const INTEGRATION_STORAGE_WARNING =
-  "Changing integrations affects storage: a storage belongs to a single integration, so removing the integration that backs the current storage will require selecting a new storage.";
 
 export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
   const { ikApi } = useConfig();
   const { refreshEntity, userEntityPermissions } = useEntityProvider();
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = checkActionPermission("api:executor", "write");
-  const canEditStorage = userEntityPermissions.includes("admin");
+  const canEditSource = userEntityPermissions.includes("admin");
 
   const saveField = useCallback(
     async (input: ExecutorUpdateFieldInput) => {
@@ -58,209 +47,18 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
     },
     [ikApi, executor.id, refreshEntity],
   );
-  const [buffer, setBuffer] = useState<Record<string, IkEntity[]>>({});
-  const [isStorageUnlocked, setIsStorageUnlocked] = useState(false);
-  const [isStoragePathUnlocked, setIsStoragePathUnlocked] = useState(false);
-
-  // Track the live integration selection so the storage list is filtered by the
-  // integrations currently chosen in the editor, not just the saved value. A
-  // storage belongs to a single integration, so the selectable storages must
-  // follow whatever integrations the user has picked.
-  const [selectedIntegrationIds, setSelectedIntegrationIds] = useState<
-    string[] | undefined
-  >(() => executor.integrationIds?.map((i) => i.id));
-
-  useEffect(() => {
-    setSelectedIntegrationIds(executor.integrationIds?.map((i) => i.id));
-  }, [executor.integrationIds]);
-
-  const storageFilter = { integration_id: selectedIntegrationIds };
-
   return (
     <BaseCard>
-      {" "}
-      <CommonField name={"Revision"} value={executor.revisionNumber} />
-      <CommonEditableField<string | null>
-        name={"Storage"}
-        canEdit={canEditStorage && isStorageUnlocked}
-        lock={
-          canEditStorage
-            ? {
-                locked: !isStorageUnlocked,
-                onToggle: () => setIsStorageUnlocked((unlocked) => !unlocked),
-                lockedTitle: "Storage is locked",
-                lockedDescription:
-                  "Changing storage can cause OpenTofu/Terraform state issues. Click to unlock and edit.",
-                unlockedTitle: "Storage editing is enabled",
-                unlockedDescription:
-                  "Click the lock to lock it again when you are done.",
-              }
-            : undefined
-        }
-        disabledTooltip="Only admins can change storage"
-        value={executor.storage?.id ?? null}
-        ariaLabel="Edit storage"
-        display={
-          executor.storage ? (
-            <GetReferenceUrlValue {...executor.storage} />
+      <CommonField
+        name={"Code Repository"}
+        value={
+          executor.sourceCode ? (
+            <GetReferenceUrlValue {...executor.sourceCode} />
           ) : null
         }
-        onSave={(value) => saveField({ storageId: value })}
-        renderEditor={({ value, onChange }) => (
-          <Box sx={{ width: "100%" }}>
-            <ReferenceInput
-              ikApi={ikApi}
-              entity_name="storages"
-              buffer={buffer}
-              setBuffer={setBuffer}
-              showFields={["name", "storage_provider"]}
-              fields={["name", "storage_provider", "state"]}
-              filter={storageFilter}
-              value={value}
-              getOptionDisabled={(option: any) =>
-                option.state !== "PROVISIONED"
-              }
-              onChange={onChange}
-              ariaLabel="Storage"
-              placeholder="Select storage for TF state…"
-              helpertext={STORAGE_DANGER_HELPER}
-            />
-          </Box>
-        )}
-      />
-      <CommonEditableField<string[]>
-        name={"Integrations"}
-        canEdit={canEdit}
-        value={executor.integrationIds?.map((i) => i.id) ?? []}
-        ariaLabel="Edit integrations"
-        isEqual={sameStringSet}
-        display={
-          executor.integrationIds && executor.integrationIds.length > 0 ? (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              {executor.integrationIds.map((parent) => (
-                <Entity key={parent.id} entity={parent} providerIconSize={24} />
-              ))}
-            </Box>
-          ) : null
-        }
-        onSave={(value) => saveField({ integrationIds: value })}
-        renderEditor={({ value, onChange }) => (
-          <ArrayReferenceInput
-            ikApi={ikApi}
-            entity_name="integrations"
-            filter={{ integration_type: "cloud" }}
-            showFields={["integrationProvider", "name"]}
-            buffer={buffer}
-            setBuffer={setBuffer}
-            value={value}
-            onChange={(selected: string[]) => {
-              onChange(selected);
-              setSelectedIntegrationIds(selected);
-            }}
-            ariaLabel="Integrations"
-            placeholder="Select credentials…"
-            helpertext={INTEGRATION_STORAGE_WARNING}
-            multiple
-          />
-        )}
-        size={6}
-      />
-      <CommonEditableField<string[]>
-        name={"Secrets"}
-        canEdit={canEdit}
-        value={executor.secretIds?.map((s) => s.id) ?? []}
-        ariaLabel="Edit secrets"
-        isEqual={sameStringSet}
-        display={
-          executor.secretIds && executor.secretIds.length > 0 ? (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              {executor.secretIds.map((secret) => (
-                <span key={secret.id}>
-                  <GetReferenceUrlValue {...secret} />
-                </span>
-              ))}
-            </Box>
-          ) : null
-        }
-        onSave={(value) => saveField({ secretIds: value })}
-        renderEditor={({ value, onChange }) => (
-          <ArrayReferenceInput
-            ikApi={ikApi}
-            entity_name="secrets"
-            buffer={buffer}
-            setBuffer={setBuffer}
-            value={value}
-            onChange={onChange}
-            ariaLabel="Secrets"
-            placeholder="Select secrets…"
-            singleLine
-            helpertext="Select secrets for the executor"
-            multiple
-          />
-        )}
-        size={6}
-      />{" "}
-      <CommonEditableField<string | null>
-        name={"Storage Path"}
-        canEdit={canEditStorage && isStoragePathUnlocked}
-        lock={
-          canEditStorage
-            ? {
-                locked: !isStoragePathUnlocked,
-                onToggle: () =>
-                  setIsStoragePathUnlocked((unlocked) => !unlocked),
-                lockedTitle: "Storage path is locked",
-                lockedDescription:
-                  "Changing the storage path can cause OpenTofu/Terraform state issues. Click to unlock and edit.",
-                unlockedTitle: "Storage path editing is enabled",
-                unlockedDescription:
-                  "Click the lock to lock it again when you are done.",
-              }
-            : undefined
-        }
-        disabledTooltip="Only admins can change storage path"
-        value={executor.storagePath}
-        ariaLabel="Edit storage path"
-        display={<span>{executor.storagePath}</span>}
-        onSave={(value) => saveField({ storagePath: value })}
-        renderEditor={({ value, onChange }) => (
-          <TextField
-            value={value ?? ""}
-            onChange={(e) => onChange(e.target.value)}
-            label="Storage Path"
-            fullWidth
-            margin="normal"
-            autoFocus
-            helperText="Frozen field used as the OpenTofu/Terraform state path. Make sure the path is unique within the selected storage."
-          />
-        )}
         size={12}
       />
-      <CommonEditableField<string | null>
-        name={"IaC Tool"}
-        canEdit={canEdit}
-        value={executor.tool?.id ?? null}
-        ariaLabel="Edit IaC tool"
-        display={
-          executor.tool ? (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <ProviderIcon provider={executor.tool.name} />
-              <GetReferenceUrlValue
-                id={executor.tool.id}
-                entityName="tool"
-                display_name={toolLabel(executor.tool)}
-              />
-            </Box>
-          ) : (
-            <span>Global default</span>
-          )
-        }
-        onSave={(value) => saveField({ toolId: value })}
-        renderEditor={({ value, onChange }) => (
-          <ToolSelect value={value} onChange={onChange} />
-        )}
-        size={12}
-      />
+      <SourceCodeConfigEditor executor={executor} canEdit={canEditSource} />
       <CommonEditableField<string>
         name={"Command arguments"}
         canEdit={canEdit}

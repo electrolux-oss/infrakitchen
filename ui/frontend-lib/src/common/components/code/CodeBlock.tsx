@@ -4,7 +4,9 @@ import CheckIcon from "@mui/icons-material/Check";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { Box, SxProps, Theme, Tooltip } from "@mui/material";
 
+import { notifyError } from "../../hooks/useNotification";
 import { CODE_FONT_FAMILY } from "../../theme";
+import { copyToClipboard } from "../../utils/clipboard";
 
 interface CodeBlockProps {
   children: ReactNode;
@@ -30,8 +32,9 @@ export const CodeBlock: FC<CodeBlockProps> = ({
       return;
     }
     try {
-      await navigator.clipboard.writeText(text);
-    } catch {
+      await copyToClipboard(text);
+    } catch (error) {
+      notifyError(error);
       return;
     }
     setCopied(true);

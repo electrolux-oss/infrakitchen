@@ -13,8 +13,9 @@ import {
 
 import { CommonField } from "../../common/components/fields/CommonField";
 import { useConfig } from "../../common/context/ConfigContext";
-import { notify } from "../../common/hooks/useNotification";
+import { notify, notifyError } from "../../common/hooks/useNotification";
 import { CODE_FONT_FAMILY } from "../../common/theme";
+import { copyToClipboard } from "../../common/utils/clipboard";
 import { INTEGRATION_OIDC_QUERY } from "../graphql/queries";
 
 interface IntegrationOidcDetails {
@@ -62,8 +63,12 @@ export const IntegrationOidcSection = ({
   if (!details) return null;
 
   const handleCopy = async (value: string) => {
-    await navigator.clipboard.writeText(value);
-    notify("Copied to clipboard", "success");
+    try {
+      await copyToClipboard(value);
+      notify("Copied to clipboard", "success");
+    } catch (error) {
+      notifyError(error);
+    }
   };
 
   const handleDownloadJwks = () => {

@@ -10,12 +10,14 @@ import EntityActions from "../entities/EntityActions";
 export interface EntityContainerProps {
   children: ReactNode;
   title?: string;
+  /** Page-level notice rendered above the page header. */
+  banner?: ReactNode;
   actions?: ReactNode;
   showEditAction?: boolean;
 }
 
 export const EntityContainer = (props: EntityContainerProps) => {
-  const { children, title, actions, showEditAction } = props;
+  const { children, title, banner, actions, showEditAction } = props;
   const { entity, loading, error, notFound } = useEntityProvider();
 
   if (loading) {
@@ -63,6 +65,7 @@ export const EntityContainer = (props: EntityContainerProps) => {
     <PageContainer
       title={title || entity?.name || entity?.identifier || "Entity"}
       documentTitle={entity.name || entity.identifier || title}
+      banner={banner}
       actions={
         <>
           <EntityActions

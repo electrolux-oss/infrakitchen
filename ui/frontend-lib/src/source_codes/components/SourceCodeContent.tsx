@@ -1,7 +1,6 @@
-import { Box } from "@mui/material";
-
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
   TabCountLabel,
@@ -16,7 +15,7 @@ import { GqlSourceCodeTag } from "../graphql";
 import { RefFolders } from "../types";
 
 import { SourceCodeCommits } from "./SourceCodeCommits";
-import { SourceCodeOverview } from "./SourceCodeOverview";
+import { SourceCodeSidebar } from "./SourceCodeSidebar";
 
 export const SourceCodeContent = () => {
   const { entity } = useEntityProvider();
@@ -96,12 +95,9 @@ export const SourceCodeContent = () => {
   ];
 
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
-    >
+    <EntitySidebarLayout sidebar={<SourceCodeSidebar sourceCode={entity} />}>
       <EntityTaskQueueStatus />
-      <SourceCodeOverview sourceCode={entity} />
       <TabbedContent tabs={tabs} />
-    </Box>
+    </EntitySidebarLayout>
   );
 };

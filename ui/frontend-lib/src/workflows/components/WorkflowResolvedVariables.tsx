@@ -14,8 +14,9 @@ import {
   Typography,
 } from "@mui/material";
 
-import { notify } from "../../common/hooks/useNotification";
+import { notify, notifyError } from "../../common/hooks/useNotification";
 import { CODE_FONT_FAMILY } from "../../common/theme";
+import { copyToClipboard } from "../../common/utils/clipboard";
 import { GqlWorkflowStep } from "../graphql";
 
 interface WorkflowResolvedVariablesProps {
@@ -141,10 +142,10 @@ const StepVariablesBlock = ({
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(jsonText);
+      await copyToClipboard(jsonText);
       notify("Copied to clipboard", "success");
-    } catch {
-      notify("Failed to copy", "error");
+    } catch (error) {
+      notifyError(error);
     }
   };
 

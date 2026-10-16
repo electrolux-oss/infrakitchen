@@ -1,9 +1,8 @@
 import { useMemo } from "react";
 
-import { Box } from "@mui/material";
-
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
   TabCountLabel,
@@ -15,7 +14,7 @@ import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
 
 import { SecretConfiguration } from "./SecretConfiguration";
-import { SecretOverview } from "./SecretOverview";
+import { SecretSidebar } from "./SecretSidebar";
 
 export const SecretContent = () => {
   const { entity } = useEntityProvider();
@@ -75,11 +74,8 @@ export const SecretContent = () => {
   ];
 
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
-    >
-      <SecretOverview secret={entity} />
+    <EntitySidebarLayout sidebar={<SecretSidebar secret={entity} />}>
       <TabbedContent tabs={tabs} />
-    </Box>
+    </EntitySidebarLayout>
   );
 };

@@ -1,9 +1,8 @@
 import { useMemo } from "react";
 
-import { Box } from "@mui/material";
-
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
   TabCountLabel,
@@ -16,8 +15,8 @@ import { Revision } from "../../revision/Revision";
 import { EntityStorages } from "../../storages/components/EntityStorages";
 
 import { IntegrationConfiguration } from "./IntegrationConfiguration";
-import { IntegrationOverview } from "./IntegrationOverview";
 import { IntegrationPermissions } from "./IntegrationPermissions";
+import { IntegrationSidebar } from "./IntegrationSidebar";
 import { IntegrationSourceCodeDependencies } from "./IntegrationSourceCodeDependencies";
 import { IntegrationWorkspaceDependencies } from "./IntegrationWorkspaceDependencies";
 
@@ -131,11 +130,8 @@ export const IntegrationContent = () => {
   ];
 
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
-    >
-      <IntegrationOverview integration={entity} />
+    <EntitySidebarLayout sidebar={<IntegrationSidebar integration={entity} />}>
       <TabbedContent tabs={tabs} />
-    </Box>
+    </EntitySidebarLayout>
   );
 };

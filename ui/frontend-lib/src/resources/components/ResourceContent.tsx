@@ -5,6 +5,7 @@ import { Box } from "@mui/material";
 import { Audit } from "../../common/components/activity/Audit";
 import { EntityLogs } from "../../common/components/activity/EntityLogs";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
   TabDefinition,
@@ -17,24 +18,47 @@ import { EntityTaskQueueStatus } from "../../workers/components";
 
 import { DependencyConfiguration } from "./DependencyConfiguration";
 import { ResourceNotificationSubscribersTable } from "./ResourceNotificationSubscribersTable";
-import { ResourceOverview } from "./ResourceOverview";
 import { ResourcePermissions } from "./ResourcePermissions";
-import { TemplateConfiguration } from "./TemplateConfiguration";
+import { ResourceSidebar } from "./ResourceSidebar";
+import {
+  ResourceVariablesEditor,
+  TemplateConfiguration,
+} from "./TemplateConfiguration";
 
 export const ResourceContent = () => {
   const [subscribersRefreshKey, setSubscribersRefreshKey] = useState(0);
+  const [variablesDialogOpen, setVariablesDialogOpen] = useState(false);
   const { entity, userEntityPermissions } = useEntityProvider();
 
   if (!entity) return null;
 
+  const openVariablesDialog = () => setVariablesDialogOpen(true);
+
   const tabs: TabDefinition[] = [
     {
+      // Template/version/storage/tool live in the sidebar now; this tab carries
+      // the input/output variables (non-abstract only, handled inside the
+      // component) together with the dependency configuration. The cards
+      // stack in a column and share a single row of equal columns from xl up.
       label: "Template",
-      content: <TemplateConfiguration resource={entity} />,
-    },
-    {
-      label: "Dependencies",
-      content: <DependencyConfiguration resource={entity} />,
+      content: (
+        <Box
+          sx={{
+            display: "grid",
+            gap: 2,
+            alignItems: "start",
+            gridTemplateColumns: "minmax(0, 1fr)",
+            gridAutoFlow: { xs: "row", xl: "column" },
+            gridAutoColumns: "minmax(0, 1fr)",
+          }}
+        >
+          <TemplateConfiguration
+            resource={entity}
+            onEditVariables={openVariablesDialog}
+          />
+          <DependencyConfiguration resource={entity} />
+        </Box>
+      ),
     },
     {
       label: "Tree View",
@@ -108,20 +132,28 @@ export const ResourceContent = () => {
   ];
 
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
+    <EntitySidebarLayout
+      sidebar={
+        <ResourceSidebar
+          resource={entity}
+          onEditVariables={openVariablesDialog}
+          onSubscriptionChange={() =>
+            setSubscribersRefreshKey((currentKey) => currentKey + 1)
+          }
+        />
+      }
     >
       <EntityTaskQueueStatus />
-      <ResourceOverview
-        resource={entity}
-        onSubscriptionChange={() =>
-          setSubscribersRefreshKey((currentKey) => currentKey + 1)
-        }
-      />
       <TabbedContent
         tabs={tabs}
         userEntityPermissions={userEntityPermissions}
       />
-    </Box>
+      {/* Lives outside the tabs so the sidebar can open it from any tab. */}
+      <ResourceVariablesEditor
+        resource={entity}
+        open={variablesDialogOpen}
+        onClose={() => setVariablesDialogOpen(false)}
+      />
+    </EntitySidebarLayout>
   );
 };

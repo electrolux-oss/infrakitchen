@@ -21,6 +21,8 @@ import {
 import "@xyflow/react/dist/style.css";
 import { useShallow } from "zustand/react/shallow";
 
+import { useFillViewportHeight } from "../../../hooks/useFillViewportHeight";
+
 import { ConstantNode } from "./ConstantNode";
 import { ExternalNode } from "./ExternalNode";
 import { DiagramNode, useCanvasPalette } from "./helpers";
@@ -36,6 +38,10 @@ import { TemplatePorts } from "./WiringCanvas.types";
 
 const COL_WIDTH = 360;
 const ROW_HEIGHT = 280;
+const DEFAULT_HEIGHT = 600;
+const MIN_FILL_HEIGHT = 400;
+// Room kept below a "fill" canvas for the enclosing card and page padding.
+const FILL_BOTTOM_OFFSET = 88;
 const EMPTY_CONSTANTS: Array<{ id: string; name: string }> = [];
 
 /**
@@ -232,7 +238,8 @@ export interface WiringDiagramProps {
   wiring: WiringRule[];
   externalTemplates: Array<{ id: string; name: string }>;
   constants?: Array<{ id: string; name: string }>;
-  height?: number;
+  /** Canvas height in px, or "fill" to take the rest of the viewport. */
+  height?: number | "fill";
   /**
    * Workflow steps - when provided, enables workflow mode:
    * status-coloured nodes/edges, resource links, selectable nodes,
@@ -248,7 +255,7 @@ export const WiringDiagram = ({
   wiring,
   externalTemplates,
   constants = EMPTY_CONSTANTS,
-  height = 600,
+  height = DEFAULT_HEIGHT,
   steps,
   allowFullscreen = false,
 }: WiringDiagramProps) => {
@@ -257,6 +264,14 @@ export const WiringDiagram = ({
   const { mode } = useColorScheme();
   const [fullscreen, setFullscreen] = useState(false);
   const [flow, setFlow] = useState<ReactFlowInstance<DiagramNode>>();
+
+  const { ref: fillRef, height: fillHeight } = useFillViewportHeight({
+    enabled: height === "fill",
+    bottomOffset: FILL_BOTTOM_OFFSET,
+    minHeight: MIN_FILL_HEIGHT,
+  });
+  const canvasHeight =
+    height === "fill" ? (fillHeight ?? DEFAULT_HEIGHT) : height;
 
   const isWorkflowMode = steps !== undefined;
 
@@ -334,6 +349,16 @@ export const WiringDiagram = ({
     useStore.setState({ nodes: computedNodes, edges: computedEdges });
   }, [computedNodes, computedEdges, useStore]);
 
+  // The "fill" height is only known after the first paint, so re-fit once the
+  // canvas has been resized to it.
+  useEffect(() => {
+    if (fillHeight === undefined) return;
+    const frame = requestAnimationFrame(() =>
+      flow?.fitView({ maxZoom: 1, padding: 0.2 }),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [fillHeight, flow]);
+
   // Put dragged nodes back into the dependency layout and re-fit the view
   // once React Flow has measured the reset positions.
   const autoArrange = () => {
@@ -351,9 +376,10 @@ export const WiringDiagram = ({
 
   const canvas = (
     <Box
+      ref={fillRef}
       sx={{
         width: "100%",
-        height: fullscreen ? "100%" : height,
+        height: fullscreen ? "100%" : canvasHeight,
         position: "relative",
         border: fullscreen ? "none" : `1px solid ${palette.divider}`,
         borderRadius: fullscreen ? 0 : "var(--template-surface-radius)",

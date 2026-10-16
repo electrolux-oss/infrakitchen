@@ -6,6 +6,7 @@ import TuneIcon from "@mui/icons-material/Tune";
 import { Button } from "@mui/material";
 
 import { LogLiveTail, PermissionWrapper } from "../../common";
+import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import {
   EntityProvider,
@@ -41,21 +42,23 @@ const SourceCodeVersionPageContent = () => {
   return (
     <>
       <EntityContainer
-        title={"Template Version Details"}
         actions={
-          sourceCodeVersion?.template?.id ? (
-            <PermissionWrapper
-              requiredPermission="api:source_code_version"
-              permissionAction="write"
-            >
-              <Button
-                startIcon={<TuneIcon />}
-                onClick={() => setDialogOpen(true)}
+          <>
+            {sourceCodeVersion?.template?.id ? (
+              <PermissionWrapper
+                requiredPermission="api:source_code_version"
+                permissionAction="write"
               >
-                Manage Versions
-              </Button>
-            </PermissionWrapper>
-          ) : undefined
+                <Button
+                  startIcon={<TuneIcon />}
+                  onClick={() => setDialogOpen(true)}
+                >
+                  Manage Versions
+                </Button>
+              </PermissionWrapper>
+            ) : null}
+            <EntityRefreshButton />
+          </>
         }
       >
         <SourceCodeVersionContent />

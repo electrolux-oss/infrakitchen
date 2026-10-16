@@ -34,6 +34,8 @@ export interface PageContainerProps extends Omit<
   description?: React.ReactNode;
   /** Browser tab title; defaults to `title` when it is a string */
   documentTitle?: string;
+  /** Page-level notice (e.g. an alert) rendered above the page header */
+  banner?: React.ReactNode;
   /** Actions/buttons to render at the right side of the page header */
   actions?: React.ReactNode;
   /** Actions/buttons to render at the bottom of the page, centered */
@@ -46,6 +48,7 @@ export default function PageContainer(props: PageContainerProps) {
     title,
     description,
     documentTitle,
+    banner = null,
     actions = null,
     bottomActions = null,
   } = props;
@@ -65,7 +68,7 @@ export default function PageContainer(props: PageContainerProps) {
     >
       <Stack sx={{ flex: 1, my: 2, minHeight: 0 }} spacing={2}>
         <Stack>
-          {" "}
+          {banner}
           <PageContentHeader sx={{ mt: 2 }}>
             <Box
               sx={{

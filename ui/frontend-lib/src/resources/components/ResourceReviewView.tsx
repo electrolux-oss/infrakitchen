@@ -20,7 +20,6 @@ export const ResourceReviewView = () => {
         <Alert
           severity="warning"
           sx={{
-            mb: 2,
             // MUI anchors the action slot to the top; center it on the message.
             "& .MuiAlert-action": {
               alignItems: "center",

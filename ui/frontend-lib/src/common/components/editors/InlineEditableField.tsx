@@ -1,12 +1,14 @@
 import { ReactNode, useState } from "react";
 
+import { createPortal } from "react-dom";
+
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { Box, CircularProgress, IconButton, Tooltip } from "@mui/material";
 
 import { PlaceholderText } from "../fields/PlaceholderDescription";
 
+import { EditAffordance } from "./EditAffordance";
 import { LockAffordance } from "./LockAffordance";
 
 export interface InlineEditableFieldLock {
@@ -45,11 +47,21 @@ export interface InlineEditableFieldProps<T> {
   /** Optional custom equality check to detect changes for complex values. */
   isEqual?: (a: T, b: T) => boolean;
   /** Placeholder shown when there is no value to display. */
-  placeholder?: string; /** Optional hook called when edit mode is opened. */
+  placeholder?: string;
+  /** Optional hook called when edit mode is opened. */
   onEditStart?: () => void;
   /** Optional lock affordance for protected fields. */
   lock?: InlineEditableFieldLock;
-} /**
+  /**
+   * Element (typically a slot in the field label) to render the edit/lock
+   * affordance into. When provided the affordance is always visible there
+   * instead of appearing beside the value on hover; pass `null` until the
+   * slot has mounted.
+   */
+  affordanceContainer?: HTMLElement | null;
+}
+
+/**
  * Generic click-to-edit field. Renders a read-only view with an edit affordance
  * and, when activated, swaps in a type-specific editor with explicit
  * save/cancel confirmation before persisting the change.
@@ -68,6 +80,7 @@ export function InlineEditableField<T>({
   placeholder,
   onEditStart,
   lock,
+  affordanceContainer,
 }: InlineEditableFieldProps<T>) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<T>(value);
@@ -158,106 +171,71 @@ export function InlineEditableField<T>({
     );
   }
 
+  // When a label slot is supplied the affordance is rendered there (next to
+  // the field label) and stays visible; otherwise it sits beside the value and
+  // is only revealed on hover/focus.
+  const inLabel = affordanceContainer !== undefined;
+  const showEdit = !lock || (canEdit && !lock.locked);
+
+  const affordance = (
+    // Keeps its own space and never shrinks. The negative block margin stops
+    // the icon buttons from making a single-line row taller than its text.
+    <Box
+      component="span"
+      sx={{
+        flexShrink: 0,
+        display: "inline-flex",
+        alignItems: "center",
+        my: -0.75,
+      }}
+    >
+      {lock && (
+        <LockAffordance
+          locked={lock.locked}
+          onClick={lock.onToggle}
+          title={lock.locked ? lock.lockedTitle : lock.unlockedTitle}
+          description={
+            lock.locked ? lock.lockedDescription : lock.unlockedDescription
+          }
+        />
+      )}
+      {showEdit && (
+        <EditAffordance
+          className="inline-edit-action"
+          onClick={startEdit}
+          ariaLabel={ariaLabel}
+          disabled={!canEdit}
+          disabledTooltip={disabledTooltip}
+          revealOnHover={!inLabel}
+        />
+      )}
+    </Box>
+  );
+
   return (
     <Box
       sx={{
-        display: "inline-flex",
-        alignItems: "flex-start",
+        display: "flex",
+        alignItems: "center",
+        gap: 0.5,
         maxWidth: "100%",
-        // Reveal the edit affordance on hover/focus for a cleaner default view.
-        "&:hover .inline-edit-action, &:focus-within .inline-edit-action": {
-          opacity: 1,
-        },
+        // Beside the value the edit affordance is revealed on hover/focus for
+        // a cleaner default view; in the label it is always visible.
+        ...(!inLabel && {
+          "&:hover .inline-edit-action, &:focus-within .inline-edit-action": {
+            opacity: 1,
+          },
+        }),
       }}
     >
-      <Box sx={{ position: "relative", minWidth: 0 }}>
+      {/* The value shrinks and wraps (it can be a long unbroken string such as
+          a storage path) so it never overflows the container. */}
+      <Box sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
         {display ?? <PlaceholderText text={placeholder} />}
-        {/* Affordances are overlaid just past the end of the value text and
-            vertically centered on it, so they never make the value row taller
-            and the label-to-value gap stays consistent across all fields. */}
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "100%",
-            transform: "translateY(-50%)",
-            display: "flex",
-            alignItems: "center",
-            pl: 0.5,
-          }}
-        >
-          {lock ? (
-            <>
-              <LockAffordance
-                locked={lock.locked}
-                onClick={lock.onToggle}
-                title={lock.locked ? lock.lockedTitle : lock.unlockedTitle}
-                description={
-                  lock.locked
-                    ? lock.lockedDescription
-                    : lock.unlockedDescription
-                }
-              />
-              {canEdit && !lock.locked && (
-                <Tooltip title="Edit">
-                  <IconButton
-                    className="inline-edit-action"
-                    size="small"
-                    onClick={startEdit}
-                    aria-label={ariaLabel}
-                    sx={{
-                      opacity: 0,
-                      transition: "opacity 0.15s ease-in-out",
-                      "&:focus-visible": { opacity: 1 },
-                    }}
-                  >
-                    <EditOutlinedIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              )}
-            </>
-          ) : canEdit ? (
-            <Tooltip title="Edit">
-              <IconButton
-                className="inline-edit-action"
-                size="small"
-                onClick={startEdit}
-                aria-label={ariaLabel}
-                sx={{
-                  opacity: 0,
-                  transition: "opacity 0.15s ease-in-out",
-                  width: 24,
-                  height: 24,
-                  padding: 2,
-                  "&:focus-visible": { opacity: 1 },
-                }}
-              >
-                <EditOutlinedIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          ) : (
-            <Tooltip title={disabledTooltip}>
-              <span>
-                <IconButton
-                  className="inline-edit-action"
-                  size="small"
-                  disabled
-                  aria-label={ariaLabel}
-                  sx={{
-                    opacity: 0,
-                    transition: "opacity 0.15s ease-in-out",
-                    width: 24,
-                    height: 24,
-                    padding: 2,
-                  }}
-                >
-                  <EditOutlinedIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-          )}
-        </Box>
       </Box>
+      {inLabel
+        ? affordanceContainer && createPortal(affordance, affordanceContainer)
+        : affordance}
     </Box>
   );
 }

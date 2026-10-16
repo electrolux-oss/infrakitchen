@@ -1,6 +1,6 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 
-import { GridSize } from "@mui/material";
+import { Box, GridSize } from "@mui/material";
 
 import { CommonField } from "../fields/CommonField";
 
@@ -61,9 +61,24 @@ export function CommonEditableField<T>({
   onEditStart,
   lock,
 }: CommonEditableFieldProps<T>) {
+  // Slot in the label row that the edit/lock affordance is rendered into, so
+  // it sits next to the label and stays visible however long the value is.
+  const [affordanceSlot, setAffordanceSlot] = useState<HTMLElement | null>(
+    null,
+  );
+
   return (
     <CommonField
-      name={name}
+      name={
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <span>{name}</span>
+          <Box
+            component="span"
+            ref={setAffordanceSlot}
+            sx={{ display: "inline-flex", alignItems: "center" }}
+          />
+        </Box>
+      }
       size={size}
       value={
         <InlineEditableField<T>
@@ -78,6 +93,7 @@ export function CommonEditableField<T>({
           placeholder={placeholder}
           onEditStart={onEditStart}
           lock={lock}
+          affordanceContainer={affordanceSlot}
         />
       }
     />

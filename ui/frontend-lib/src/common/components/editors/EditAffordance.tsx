@@ -11,12 +11,16 @@ interface EditAffordanceProps {
   disabledTooltip?: string;
   /** Tooltip shown when enabled. */
   title?: string;
+  /**
+   * Keep the button invisible until its container is hovered/focused (the
+   * container reveals it via `className`). Defaults to always visible.
+   */
+  revealOnHover?: boolean;
 }
 
 /**
- * Ghost pencil button used as the click-to-edit affordance for metadata
- * fields. Renders invisible until its container is hovered/focused (via
- * `className`), then appears as a subtle icon that fills on hover.
+ * Ghost pencil button used as the click-to-edit affordance for fields and
+ * sections. Always visible by default; a subtle icon that fills on hover.
  */
 export const EditAffordance = ({
   className,
@@ -25,6 +29,7 @@ export const EditAffordance = ({
   disabled = false,
   disabledTooltip = "You do not have permission to edit this field",
   title = "Edit",
+  revealOnHover = false,
 }: EditAffordanceProps) => {
   const button = (
     <IconButton
@@ -34,12 +39,12 @@ export const EditAffordance = ({
       disabled={disabled}
       aria-label={ariaLabel}
       sx={{
-        opacity: 0,
+        opacity: revealOnHover ? 0 : 1,
         transition:
           "opacity 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out",
-        width: 24,
-        height: 24,
-        padding: 2,
+        width: 20,
+        height: 20,
+        padding: 0,
         flexShrink: 0,
         border: "1px solid transparent",
         backgroundColor: "transparent",
@@ -50,13 +55,13 @@ export const EditAffordance = ({
         "&:focus-visible": { opacity: 1 },
       }}
     >
-      <EditOutlinedIcon fontSize="small" />
+      <EditOutlinedIcon sx={{ fontSize: 16 }} />
     </IconButton>
   );
 
   return (
     <Tooltip title={disabled ? disabledTooltip : title}>
-      <span>{button}</span>
+      <span style={{ display: "inline-flex" }}>{button}</span>
     </Tooltip>
   );
 };

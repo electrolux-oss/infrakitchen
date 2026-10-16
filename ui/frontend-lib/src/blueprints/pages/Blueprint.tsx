@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { Button } from "@mui/material";
 
+import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { useConfig } from "../../common/context/ConfigContext";
 import { EntityProvider } from "../../common/context/EntityContext";
@@ -21,18 +22,20 @@ export const BlueprintPage = () => {
       entityFields={BLUEPRINT_FIELDS}
     >
       <EntityContainer
-        title="Blueprint Details"
         actions={
-          <Button
-            size="small"
-            variant="contained"
-            startIcon={<PlayArrowIcon />}
-            onClick={() =>
-              navigate(`${linkPrefix}blueprints/${blueprint_id}/use`)
-            }
-          >
-            Use Blueprint
-          </Button>
+          <>
+            <Button
+              size="small"
+              variant="contained"
+              startIcon={<PlayArrowIcon />}
+              onClick={() =>
+                navigate(`${linkPrefix}blueprints/${blueprint_id}/use`)
+              }
+            >
+              Use Blueprint
+            </Button>
+            <EntityRefreshButton />
+          </>
         }
       >
         <BlueprintContent />

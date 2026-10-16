@@ -1,8 +1,9 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { useLocation, useNavigate, useParams } from "react-router";
 
-import { Box, Chip, Tab, Tabs } from "@mui/material";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import { Box, Button, Chip, Menu, MenuItem, Tab, Tabs } from "@mui/material";
 
 import { usePermissionProvider } from "../../context";
 import { solidChipColorSx } from "../../utils/softChip";
@@ -87,31 +88,195 @@ export const TabbedContent = ({
     navigate,
   ]);
 
+  // Tabs that do not fit the available width collapse into a "More" dropdown
+  // instead of scrolling. Widths come from a hidden copy of the full tab row.
+  const tabBarRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
+  const [overflowLabels, setOverflowLabels] = useState<string[]>([]);
+  const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null);
+
+  const tabLabelsKey = visibleTabs.map((t) => t.label).join("\n");
+  const activeLabel = activeTab?.label;
+
+  useLayoutEffect(() => {
+    const tabBar = tabBarRef.current;
+    const measure = measureRef.current;
+    if (!tabBar || !measure || !activeLabel) return;
+
+    const labels = tabLabelsKey.split("\n");
+
+    const recompute = () => {
+      const widths = Array.from(
+        measure.querySelectorAll<HTMLElement>("[data-measure-tab]"),
+      ).map((el) => el.offsetWidth);
+      const moreWidth =
+        measure.querySelector<HTMLElement>("[data-measure-more]")
+          ?.offsetWidth ?? 0;
+      const available = tabBar.clientWidth;
+      const total = widths.reduce((sum, w) => sum + w, 0);
+
+      let shown = labels;
+      if (total > available) {
+        // Leading tabs that fit next to the "More" button.
+        let count = 0;
+        let used = moreWidth;
+        while (count < labels.length && used + widths[count] <= available) {
+          used += widths[count];
+          count += 1;
+        }
+        // The active tab always stays in the bar: if it would be hidden, drop
+        // trailing tabs until it fits and show it last.
+        const activeIndex = labels.indexOf(activeLabel);
+        if (activeIndex >= count) {
+          while (count > 0 && used + widths[activeIndex] > available) {
+            count -= 1;
+            used -= widths[count];
+          }
+          shown = [...labels.slice(0, count), activeLabel];
+        } else {
+          shown = labels.slice(0, count);
+        }
+      }
+
+      const hidden = labels.filter((label) => !shown.includes(label));
+      setOverflowLabels((prev) =>
+        prev.join("\n") === hidden.join("\n") ? prev : hidden,
+      );
+    };
+
+    recompute();
+    // The bar resizes with the window/sidebar; the hidden row resizes when a
+    // label changes (e.g. a count chip).
+    const observer = new ResizeObserver(recompute);
+    observer.observe(tabBar);
+    observer.observe(measure);
+    return () => observer.disconnect();
+  }, [tabLabelsKey, activeLabel]);
+
   if (!activeTab) return null;
+
+  const selectTab = (label: string) => {
+    const parts = location.pathname.replace(/\/$/, "").split("/");
+    parts[parts.length - 1] = label.toLowerCase();
+    navigate(parts.join("/") + location.search);
+    onChange?.(label);
+  };
+
+  const overflowTabs = visibleTabs.filter((t) =>
+    overflowLabels.includes(t.label),
+  );
+  const barTabs = visibleTabs.filter((t) => !overflowLabels.includes(t.label));
+  // An active tab pulled out of the dropdown is shown last, after the tabs
+  // that precede the hidden ones.
+  const firstHiddenIndex = visibleTabs.findIndex((t) =>
+    overflowLabels.includes(t.label),
+  );
+  const activePulledIn =
+    firstHiddenIndex !== -1 &&
+    visibleTabs.indexOf(activeTab) > firstHiddenIndex;
+  const orderedBarTabs = activePulledIn
+    ? [...barTabs.filter((t) => t !== activeTab), activeTab]
+    : barTabs;
+
+  const tabSx = { textTransform: "none" } as const;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Tabs
-        value={activeTab.label}
-        onChange={(_, v) => {
-          const parts = location.pathname.replace(/\/$/, "").split("/");
-          parts[parts.length - 1] = v.toLowerCase();
-          navigate(parts.join("/") + location.search);
-          onChange?.(v);
-        }}
-        variant="scrollable"
-        scrollButtons="auto"
+      <Box
+        ref={tabBarRef}
         sx={{
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          minWidth: 0,
           borderBottom: 1,
           borderColor: "divider",
           mb: 1.5,
-          "& .MuiTab-root": { textTransform: "none" },
         }}
       >
-        {visibleTabs.map(({ label, tabLabel }) => (
-          <Tab key={label} label={tabLabel ?? label} value={label} />
-        ))}
-      </Tabs>
+        <Tabs
+          value={activeTab.label}
+          onChange={(_, v) => selectTab(v)}
+          sx={{ minWidth: 0, "& .MuiTab-root": tabSx }}
+        >
+          {orderedBarTabs.map(({ label, tabLabel }) => (
+            <Tab key={label} label={tabLabel ?? label} value={label} />
+          ))}
+        </Tabs>
+        {overflowTabs.length > 0 && (
+          <>
+            <Button
+              color="inherit"
+              onClick={(e) => setMoreAnchor(e.currentTarget)}
+              endIcon={<ArrowDropDownIcon />}
+              aria-haspopup="menu"
+              aria-expanded={Boolean(moreAnchor)}
+              aria-label={`More tabs (${overflowTabs.length})`}
+              sx={{ ...tabSx, flexShrink: 0, color: "text.secondary" }}
+            >
+              More
+            </Button>
+            <Menu
+              anchorEl={moreAnchor}
+              open={Boolean(moreAnchor)}
+              onClose={() => setMoreAnchor(null)}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+              {overflowTabs.map(({ label, tabLabel }) => (
+                <MenuItem
+                  key={label}
+                  onClick={() => {
+                    setMoreAnchor(null);
+                    selectTab(label);
+                  }}
+                >
+                  {tabLabel ?? label}
+                </MenuItem>
+              ))}
+            </Menu>
+          </>
+        )}
+        {/* Hidden, non-interactive copy of every tab plus the "More" button,
+            used only to measure how many tabs fit. */}
+        <Box
+          ref={measureRef}
+          aria-hidden
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            display: "flex",
+            height: 0,
+            overflow: "hidden",
+            width: "max-content",
+            visibility: "hidden",
+            pointerEvents: "none",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {/* Tabs must be rendered inside a Tabs container. */}
+          <Tabs value={false} sx={{ flexShrink: 0, "& .MuiTab-root": tabSx }}>
+            {visibleTabs.map(({ label, tabLabel }) => (
+              <Tab
+                key={label}
+                data-measure-tab
+                tabIndex={-1}
+                label={tabLabel ?? label}
+                value={label}
+              />
+            ))}
+          </Tabs>
+          <Button
+            data-measure-more
+            tabIndex={-1}
+            endIcon={<ArrowDropDownIcon />}
+            sx={{ ...tabSx, flexShrink: 0 }}
+          >
+            More
+          </Button>
+        </Box>
+      </Box>
       {activeTab.content}
     </Box>
   );

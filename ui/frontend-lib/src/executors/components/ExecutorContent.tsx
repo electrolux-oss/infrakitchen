@@ -1,8 +1,7 @@
-import { Box } from "@mui/material";
-
 import { Audit } from "../../common/components/activity/Audit";
 import { EntityLogs } from "../../common/components/activity/EntityLogs";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
   TabDefinition,
@@ -12,8 +11,8 @@ import { Revision } from "../../revision/Revision";
 import { EntityTaskQueueStatus } from "../../workers/components";
 
 import { AdvancedSettings } from "./AdvancedSettings";
-import { ExecutorOverview } from "./ExecutorOverview";
 import { ExecutorPermissions } from "./ExecutorPermissions";
+import { ExecutorSidebar } from "./ExecutorSidebar";
 
 export const ExecutorContent = () => {
   const { entity } = useEntityProvider();
@@ -60,12 +59,9 @@ export const ExecutorContent = () => {
   ];
 
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
-    >
+    <EntitySidebarLayout sidebar={<ExecutorSidebar executor={entity} />}>
       <EntityTaskQueueStatus />
-      <ExecutorOverview executor={entity} />
       <TabbedContent tabs={tabs} />
-    </Box>
+    </EntitySidebarLayout>
   );
 };

@@ -22,6 +22,7 @@ export const SCV_GRAPHQL_FIELDS = {
   ] as const,
   detail: [
     "id",
+    "identifier",
     "sourceCodeVersion",
     "sourceCodeBranch",
     "sourceCodeFolder",

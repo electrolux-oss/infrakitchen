@@ -4,6 +4,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { Button, Tooltip } from "@mui/material";
 
 import { useConfig } from "../../common";
+import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import {
   EntityProvider,
@@ -47,15 +48,17 @@ const TemplatePageContent = () => {
 
   return (
     <EntityContainer
-      title={"Template Details"}
       actions={
-        !isDisabled ? (
-          <Tooltip title="Create a new resource from this template">
-            <Button onClick={handleUseTemplate} startIcon={<AddIcon />}>
-              Create Resource
-            </Button>
-          </Tooltip>
-        ) : undefined
+        <>
+          {!isDisabled && (
+            <Tooltip title="Create a new resource from this template">
+              <Button onClick={handleUseTemplate} startIcon={<AddIcon />}>
+                Create Resource
+              </Button>
+            </Tooltip>
+          )}
+          <EntityRefreshButton />
+        </>
       }
     >
       <TemplateContent />
