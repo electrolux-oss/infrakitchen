@@ -79,6 +79,11 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+// Highest index is the newest version and is shown first.
+function toIndex(position: number, total: number) {
+  return total - 1 - position;
+}
+
 function normalizeLifecycleState(lifecycleState: string | null | undefined) {
   return (
     lifecycleState || VERSION_LIFECYCLE_STATE.UNKNOWN
@@ -99,6 +104,10 @@ export const TemplateVersionReorderDialog = ({
   const [initialItems, setInitialItems] = useState<GqlSourceCodeVersionShort[]>(
     [],
   );
+  // Values as stored in the backend, keyed by id; used to send only real changes.
+  const [storedById, setStoredById] = useState<
+    Map<string, { index: number; lifecycleState: string }>
+  >(new Map());
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(
     null,
@@ -116,13 +125,25 @@ export const TemplateVersionReorderDialog = ({
         sourceCodeVersions: GqlSourceCodeVersionShort[];
       }>(SOURCE_CODE_VERSIONS_BY_TEMPLATE_QUERY, {
         filter: { template_id: [templateId] },
-        sort: ["index", "ASC"],
+        sort: ["index", "DESC"],
         range: [0, 1000],
       });
-      const loadedItems = (response.sourceCodeVersions || []).map((item) => ({
+      const storedItems = (response.sourceCodeVersions || []).map((item) => ({
         ...item,
         lifecycleState: normalizeLifecycleState(item.lifecycleState),
       }));
+      const loadedItems = storedItems.map((item, position) => ({
+        ...item,
+        index: toIndex(position, storedItems.length),
+      }));
+      setStoredById(
+        new Map(
+          storedItems.map((item) => [
+            item.id,
+            { index: item.index, lifecycleState: item.lifecycleState },
+          ]),
+        ),
+      );
       setItems(loadedItems);
       setInitialItems(loadedItems);
     } catch (error) {
@@ -206,9 +227,9 @@ export const TemplateVersionReorderDialog = ({
       if (normalizedToIndex === fromIndex) return current;
 
       return moveItem(current, fromIndex, normalizedToIndex).map(
-        (item, index) => ({
+        (item, position) => ({
           ...item,
-          index,
+          index: toIndex(position, current.length),
         }),
       );
     });
@@ -233,36 +254,52 @@ export const TemplateVersionReorderDialog = ({
   );
 
   const handleSave = useCallback(async () => {
-    const changedItems = items.filter(
-      (item, index) =>
-        item.id !== initialItems[index]?.id ||
-        item.lifecycleState !== initialItems[index]?.lifecycleState,
-    );
+    const updates = items
+      .map((item) => {
+        const stored = storedById.get(item.id);
+        const input: SourceCodeVersionUpdateFieldInput = {};
+        if (item.index !== stored?.index) input.index = item.index;
+        if (item.lifecycleState !== stored?.lifecycleState) {
+          input.lifecycleState = (
+            item.lifecycleState || VERSION_LIFECYCLE_STATE.UNKNOWN
+          ).toLocaleUpperCase();
+        }
+        return { id: item.id, input };
+      })
+      .filter(({ input }) => Object.keys(input).length > 0);
+
+    if (updates.length === 0) {
+      onClose();
+      return;
+    }
 
     setSaving(true);
     try {
-      await Promise.all(
-        changedItems.map((item) =>
+      const results = await Promise.allSettled(
+        updates.map(({ id, input }) =>
           ikApi.graphqlRequest(UPDATE_SOURCE_CODE_VERSION_MUTATION, {
-            id: item.id,
-            input: {
-              index: item.index,
-              lifecycleState: (
-                item.lifecycleState || VERSION_LIFECYCLE_STATE.UNKNOWN
-              ).toLocaleUpperCase(),
-            } satisfies SourceCodeVersionUpdateFieldInput,
+            id,
+            input,
           }),
         ),
       );
-      notify("Template version order updated", "success");
+      const failures = results.filter(
+        (result): result is PromiseRejectedResult =>
+          result.status === "rejected",
+      );
+
       onSaved?.();
-      onClose();
-    } catch (error) {
-      notifyError(error);
+      if (failures.length === 0) {
+        notify("Template version order updated", "success");
+        onClose();
+      } else {
+        notifyError(failures[0].reason);
+        await loadVersions();
+      }
     } finally {
       setSaving(false);
     }
-  }, [ikApi, initialItems, items, onClose, onSaved]);
+  }, [ikApi, items, loadVersions, onClose, onSaved, storedById]);
 
   const handleDelete = useCallback(
     async (id: string) => {

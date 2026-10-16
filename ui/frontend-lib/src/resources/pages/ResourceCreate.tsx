@@ -1195,7 +1195,7 @@ const ResourceCreatePageInner = () => {
                             : ""
                         }
                         filter={filter_template}
-                        sort={["index", "ASC"]}
+                        sort={["index", "DESC"]}
                         value={field.value}
                         label="Template Version"
                         required
