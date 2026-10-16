@@ -1,5 +1,6 @@
 import CallSplitOutlinedIcon from "@mui/icons-material/CallSplitOutlined";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
+import { Box } from "@mui/material";
 import {
   GridColumnVisibilityModel,
   GridRenderCellParams,
@@ -13,6 +14,7 @@ import {
   labelsColumn,
   userColumn,
 } from "../../common/components/entity_table/tableColumns";
+import { ColumnFilterSpec } from "../../common/components/filter_panel/FilterConfig";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
@@ -45,6 +47,40 @@ export const resourceDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
   dependency_tags: false,
   dependency_config: false,
   sourceCodeVersion: true,
+};
+
+// Filter for JSON lists of { name, value } entries.
+const nameValueFilter = (field: string): ColumnFilterSpec => ({
+  field,
+  operators: ["contains_entries"],
+  valueType: "text",
+  defaultOperator: "contains_entries",
+  placeholder: "Type name or name:value, press Enter...",
+});
+
+// Entity renders as a block, so items and commas need an inline wrapping row.
+const renderEntityList = (entities: Array<{ id: string }>) => {
+  if (entities.length === 0) return null;
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "center",
+        columnGap: 0.5,
+      }}
+    >
+      {entities.map((entity, index) => (
+        <Box
+          key={entity.id}
+          sx={{ display: "inline-flex", alignItems: "center" }}
+        >
+          <Entity entity={entity} />
+          {index < entities.length - 1 && ","}
+        </Box>
+      ))}
+    </Box>
+  );
 };
 
 export const resourceColumns: EntityTableColumn[] = [
@@ -381,6 +417,7 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "integrationIds",
     headerName: "Integrations",
     flex: 1,
+    sortable: false,
     filter: {
       field: "integration_ids",
       operators: ["any"],
@@ -398,17 +435,7 @@ export const resourceColumns: EntityTableColumn[] = [
     renderCell: (params: GridRenderCellParams) => {
       const integrations: GqlIntegrationShort[] =
         params.row.integrationIds || [];
-      if (integrations.length === 0) return null;
-      return (
-        <span>
-          {integrations.map((integration, index) => (
-            <span key={integration.id}>
-              <Entity entity={integration} />
-              {index < integrations.length - 1 ? ", " : ""}
-            </span>
-          ))}
-        </span>
-      );
+      return renderEntityList(integrations);
     },
   },
   {
@@ -428,20 +455,8 @@ export const resourceColumns: EntityTableColumn[] = [
     },
     valueGetter: (_value: any, row: any) =>
       (row.secretIds || []).map((s: GqlSecretShort) => s.name).join(", "),
-    renderCell: (params: GridRenderCellParams) => {
-      const secrets: GqlSecretShort[] = params.row.secretIds || [];
-      if (secrets.length === 0) return null;
-      return (
-        <span>
-          {secrets.map((secret, index) => (
-            <span key={secret.id}>
-              <Entity entity={secret} />
-              {index < secrets.length - 1 ? ", " : ""}
-            </span>
-          ))}
-        </span>
-      );
-    },
+    renderCell: (params: GridRenderCellParams) =>
+      renderEntityList(params.row.secretIds || []),
   },
   {
     field: "parents",
@@ -450,20 +465,8 @@ export const resourceColumns: EntityTableColumn[] = [
     flex: 1,
     valueGetter: (_value: any, row: any) =>
       (row.parents || []).map((p: GqlResourceShort) => p.name).join(", "),
-    renderCell: (params: GridRenderCellParams) => {
-      const parents: GqlResourceShort[] = params.row.parents || [];
-      if (parents.length === 0) return null;
-      return (
-        <span>
-          {parents.map((parent, index) => (
-            <span key={parent.id}>
-              <Entity entity={parent} />
-              {index < parents.length - 1 ? ", " : ""}
-            </span>
-          ))}
-        </span>
-      );
-    },
+    renderCell: (params: GridRenderCellParams) =>
+      renderEntityList(params.row.parents || []),
   },
   {
     field: "children",
@@ -472,25 +475,15 @@ export const resourceColumns: EntityTableColumn[] = [
     flex: 1,
     valueGetter: (_value: any, row: any) =>
       (row.children || []).map((c: GqlResourceShort) => c.name).join(", "),
-    renderCell: (params: GridRenderCellParams) => {
-      const children: GqlResourceShort[] = params.row.children || [];
-      if (children.length === 0) return null;
-      return (
-        <span>
-          {children.map((child, index) => (
-            <span key={child.id}>
-              <Entity entity={child} />
-              {index < children.length - 1 ? ", " : ""}
-            </span>
-          ))}
-        </span>
-      );
-    },
+    renderCell: (params: GridRenderCellParams) =>
+      renderEntityList(params.row.children || []),
   },
   {
     field: "variables",
     headerName: "Variables",
     flex: 1,
+    sortable: false,
+    filter: nameValueFilter("variables"),
     valueGetter: (_value: any, row: any) =>
       (row.variables || []).map((v: { name: string }) => v.name).join(", "),
     renderCell: (params: GridRenderCellParams) =>
@@ -502,6 +495,8 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "outputs",
     headerName: "Outputs",
     flex: 1,
+    sortable: false,
+    filter: nameValueFilter("outputs"),
     valueGetter: (_value: any, row: any) =>
       (row.outputs || []).map((o: { name: string }) => o.name).join(", "),
     renderCell: (params: GridRenderCellParams) =>
@@ -514,6 +509,8 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "dependencyTags",
     headerName: "Dependency Tags",
     flex: 1,
+    sortable: false,
+    filter: nameValueFilter("dependency_tags"),
     valueGetter: (_value: any, row: any) =>
       (row.dependencyTags || [])
         .map(
@@ -533,6 +530,8 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "dependencyConfig",
     headerName: "Dependency Config",
     flex: 1,
+    sortable: false,
+    filter: nameValueFilter("dependency_config"),
     valueGetter: (_value: any, row: any) =>
       (row.dependencyConfig || [])
         .map(

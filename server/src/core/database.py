@@ -1,8 +1,9 @@
+import json
 import re
 from typing import Any, TypeVar
 
-from sqlalchemy import BinaryExpression, ColumnElement, and_, cast, or_
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import JSON, BinaryExpression, ColumnElement, and_, cast, func, literal, or_
+from sqlalchemy.dialects.postgresql import JSONB, JSONPATH
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import RelationshipProperty, aliased, load_only
 from sqlalchemy.orm.query import inspect
@@ -90,7 +91,7 @@ def evaluate_sqlalchemy_sorting[*Ts](
             column = related_column
         else:
             related_column = getattr(related_model, rel_field, None)
-            if related_column is None:
+            if related_column is None or _is_json_column(related_column):
                 return statement
             statement = statement.outerjoin(getattr(model, rel_name))
             column = related_column
@@ -99,8 +100,9 @@ def evaluate_sqlalchemy_sorting[*Ts](
         if column is None:
             return statement
 
-        if is_column_relationship(model, field_name) is True:
-            raise ValueError(f"Cannot sort by relationship field: {field_name}")
+        # Relationships and JSON columns have no SQL ordering, so ignore the sort.
+        if is_column_relationship(model, field_name) or _is_json_column(column):
+            return statement
 
     match direction.lower():
         case "asc" | "ASC":
@@ -114,6 +116,54 @@ def evaluate_sqlalchemy_sorting[*Ts](
         statement = statement.order_by(*sorting)
 
     return statement
+
+
+def _is_json_column(column: Any) -> bool:
+    return isinstance(getattr(column, "type", None), JSON)
+
+
+def _parse_entry_filter(entry: Any) -> tuple[str, Any | None, bool]:
+    """Parse a name/value entry filter into (name, value, has_value).
+
+    Accepts {"name": ..., "value": ...} dicts or "name" / "name:value" strings.
+    """
+    if isinstance(entry, dict):
+        name = entry.get("name")
+        if not isinstance(name, str) or not name:
+            raise ValueError("Entry filter 'name' must be a non-empty string")
+        return name, entry.get("value"), "value" in entry
+    if isinstance(entry, str) and entry:
+        name, sep, value = entry.partition(":")
+        if not name:
+            raise ValueError("Entry filter 'name' must be a non-empty string")
+        return name, value, bool(sep)
+    raise ValueError("Entry filter must be a string or an object with 'name'")
+
+
+def _entry_value_candidates(value: Any) -> list[Any]:
+    # Values may be stored as numbers/booleans while filter input arrives as text.
+    candidates = [value]
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except ValueError:
+            parsed = None
+        if isinstance(parsed, (bool, int, float)) and parsed != value:
+            candidates.append(parsed)
+    return candidates
+
+
+def _entry_filter_condition(column: Any, entry: Any) -> ColumnElement[Any]:
+    name, value, has_value = _parse_entry_filter(entry)
+    if not has_value:
+        return cast(column, JSONB).contains([{"name": name}])
+
+    # Sensitive entries never match on value, otherwise the filter would leak secrets.
+    candidates = _entry_value_candidates(value)
+    value_match = " || ".join(f"@.value == $v{i}" for i in range(len(candidates)))
+    path = f"$[*] ? (@.name == $name && !(@.sensitive == true) && ({value_match}))"
+    path_vars = {"name": name, **{f"v{i}": candidate for i, candidate in enumerate(candidates)}}
+    return func.jsonb_path_exists(cast(column, JSONB), cast(literal(path), JSONPATH), literal(path_vars, type_=JSONB))
 
 
 def evaluate_sqlalchemy_pagination[*Ts](statement: Select[*Ts], range: tuple[int, int] | None = None) -> Select[*Ts]:
@@ -165,7 +215,17 @@ def _build_sqlalchemy_filters(model: type, body: dict[str, Any]) -> list[BinaryE
             parts = key.split("__")
             potential_operator = parts[-1]
 
-            if potential_operator in ["contains_all", "any", "eq", "like", "in", "not_like", "is_none", "not_eq"]:
+            if potential_operator in [
+                "contains_all",
+                "contains_entries",
+                "any",
+                "eq",
+                "like",
+                "in",
+                "not_like",
+                "is_none",
+                "not_eq",
+            ]:
                 operator = potential_operator
                 field_path = parts[:-1]
             else:
@@ -216,6 +276,12 @@ def _build_sqlalchemy_filters(model: type, body: dict[str, Any]) -> list[BinaryE
                 if isinstance(value, list) and value:
                     conditions = [cast(column, JSONB).op("?")(label) for label in value]
                     filters.append(and_(*conditions))
+
+            case "contains_entries":
+                entries = value if isinstance(value, list) else [value]
+                entry_conditions = [_entry_filter_condition(column, entry) for entry in entries]
+                if entry_conditions:
+                    filters.append(and_(*entry_conditions))
 
             case "any":
                 if isinstance(value, list):
