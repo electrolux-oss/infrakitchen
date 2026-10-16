@@ -15,6 +15,7 @@ import {
   Select,
   TextField,
 } from "../../../ui";
+import { dashedAddButtonClass } from "../../utils/dashedAddButton";
 import { deleteIconButtonClass } from "../buttons/deleteIconButtonClass";
 import { AutocompleteSelect, ReferenceAutocomplete } from "../inputs";
 
@@ -653,10 +654,8 @@ export const AdvancedFilter = ({
               instead of floating centered over the panel. */}
           <span className="self-start">
             <Button
-              className="h-7 min-h-0"
-              startIcon={
-                <AddIcon className="rounded-surface border border-dashed border-divider px-2.5 py-0 text-fg-muted hover:border-fg-muted hover:bg-hover hover:text-fg [&_svg]:text-base" />
-              }
+              className={dashedAddButtonClass}
+              startIcon={<AddIcon />}
               onClick={handleAdd}
               disabled={!canAddMore}
             >
