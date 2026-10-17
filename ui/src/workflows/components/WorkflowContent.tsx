@@ -1,0 +1,136 @@
+import { useState } from "react";
+
+import { useLocalStorage } from "../../common";
+import { Audit } from "../../common/components/activity/Audit";
+import { EntityLogs } from "../../common/components/activity/EntityLogs";
+import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
+import {
+  TabbedContent,
+  TabDefinition,
+} from "../../common/components/cards/TabbedContent";
+import { useEntityProvider } from "../../common/context/EntityContext";
+import { AccountTreeIcon, ListIcon } from "../../icons/material";
+import { ToggleButton, ToggleButtonGroup } from "../../ui";
+import { EntityTaskQueueStatus } from "../../workers/components";
+import { GqlWorkflow } from "../graphql";
+
+import { WorkflowResolvedVariables } from "./WorkflowResolvedVariables";
+import { WorkflowSidebar } from "./WorkflowSidebar";
+import { WorkflowSteps } from "./WorkflowSteps";
+import { WorkflowWiringViewer } from "./WorkflowWiringViewer";
+
+const WorkflowStepsTab = ({ workflow }: { workflow: GqlWorkflow }) => {
+  const storageKey = `workflow_view`;
+  const { get, setKey } = useLocalStorage<Record<string, any>>();
+  const savedState = get(storageKey);
+
+  const [view, setView] = useState<"list" | "diagram">(
+    savedState?.view || "list",
+  );
+
+  const setViewAndPersist = (v: "list" | "diagram") => {
+    setView(v);
+    setKey(storageKey, { view: v });
+  };
+
+  const hasWiring = workflow.wiringSnapshot.length > 0;
+
+  return (
+    <PropertyCard
+      title="Workflow Steps"
+      action={
+        hasWiring && (
+          <ToggleButtonGroup
+            value={view}
+            exclusive
+            onChange={(_, v) => v && setViewAndPersist(v)}
+            size="small"
+          >
+            <ToggleButton value="list">
+              <ListIcon className="mr-1" fontSize="small" />
+              List
+            </ToggleButton>
+            <ToggleButton value="diagram">
+              <AccountTreeIcon className="mr-1" fontSize="small" />
+              Diagram
+            </ToggleButton>
+          </ToggleButtonGroup>
+        )
+      }
+    >
+      {view === "list" ? (
+        <WorkflowSteps
+          steps={workflow.steps}
+          workflowAction={workflow.action}
+        />
+      ) : hasWiring ? (
+        <WorkflowWiringViewer
+          wiring={workflow.wiringSnapshot}
+          steps={workflow.steps}
+        />
+      ) : (
+        <WorkflowSteps
+          steps={workflow.steps}
+          workflowAction={workflow.action}
+        />
+      )}
+    </PropertyCard>
+  );
+};
+
+export const WorkflowContent = () => {
+  const { entity } = useEntityProvider();
+
+  const workflow = entity as GqlWorkflow | undefined;
+
+  if (!workflow) return null;
+
+  const tabs: TabDefinition[] = [
+    {
+      label: "Steps",
+      content: <WorkflowStepsTab workflow={workflow} />,
+    },
+    ...(workflow.action !== "destroy"
+      ? [
+          {
+            label: "Variables",
+            content: (
+              <PropertyCard title="Resolved Variables">
+                <WorkflowResolvedVariables steps={workflow.steps} />
+              </PropertyCard>
+            ),
+          },
+        ]
+      : []),
+    {
+      label: "Logs",
+      content: (
+        <EntityLogs traceId={workflow.id} sourceCodeLanguage={"opentofu"} />
+      ),
+    },
+    {
+      label: "Audit",
+      content: (
+        <Audit
+          entityId={workflow.id}
+          showRevisionColumn
+          showTimelineView
+          sourceCodeLanguage={"opentofu"}
+        />
+      ),
+    },
+    {
+      label: "Settings",
+      content: <DangerZoneCard />,
+    },
+  ];
+
+  return (
+    <EntitySidebarLayout sidebar={<WorkflowSidebar workflow={workflow} />}>
+      <EntityTaskQueueStatus />
+      <TabbedContent tabs={tabs} />
+    </EntitySidebarLayout>
+  );
+};

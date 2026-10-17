@@ -1,0 +1,191 @@
+import { Entity } from "../../common/components/entities/Entity";
+import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
+import {
+  relativeTimeColumn,
+  userColumn,
+} from "../../common/components/entity_table/tableColumns";
+import StatusChip from "../../common/StatusChip";
+import { DeleteIcon } from "../../icons/material";
+import { Button, Chip } from "../../ui";
+import { RenderCellParams } from "../../ui";
+import {
+  Tool,
+  TOOL_ARCH_OPTIONS,
+  TOOL_NAMES,
+  toolStatus,
+  formatToolSize,
+} from "../types";
+
+export const TOOL_PENDING_STATUSES = ["queued", "in_progress"];
+
+export interface ToolRowActions {
+  onRetry: (tool: Tool) => void;
+  onSetDefault: (tool: Tool) => void;
+  onAction: (tool: Tool, action: "disable" | "enable") => void;
+  onDelete: (tool: Tool) => void;
+}
+
+export const toolColumns = (actions: ToolRowActions): EntityTableColumn[] => [
+  {
+    field: "name",
+    headerName: "Tool",
+    flex: 1,
+    hideable: false,
+    filter: {
+      field: "name",
+      operators: ["eq"],
+      valueType: "select",
+      defaultOperator: "eq",
+      selectOptions: TOOL_NAMES,
+    },
+    fetchFields: ["name", "entityName"],
+    renderCell: (params: RenderCellParams) => (
+      <Entity
+        entity={{
+          ...params.row,
+          tool: params.value,
+          name:
+            TOOL_NAMES.find((item) => item.value === params.value)?.label ||
+            params.value,
+        }}
+      />
+    ),
+  },
+  {
+    field: "version",
+    headerName: "Version",
+    flex: 1,
+    hideable: false,
+    filter: {
+      field: "version",
+      operators: ["like", "eq", "not_like"],
+      valueType: "text",
+      defaultOperator: "like",
+      defaultSelected: true,
+    },
+  },
+  {
+    field: "arch",
+    fetchFields: ["os", "arch"],
+    headerName: "Platform",
+    flex: 1,
+    filter: {
+      field: "arch",
+      operators: ["eq"],
+      valueType: "select",
+      defaultOperator: "eq",
+      selectOptions: TOOL_ARCH_OPTIONS,
+    },
+    valueGetter: (_value: any, row: any) => `${row.os}/${row.arch}`,
+  },
+  {
+    field: "status",
+    fetchFields: ["status", "isDefault"],
+    headerName: "Status",
+    flex: 1,
+    filter: {
+      field: "status",
+      operators: ["eq"],
+      valueType: "select",
+      defaultOperator: "eq",
+      selectOptions: [
+        { label: "queued", value: "queued" },
+        { label: "in progress", value: "in_progress" },
+        { label: "ready", value: "ready" },
+        { label: "error", value: "error" },
+        { label: "disabled", value: "disabled" },
+      ],
+    },
+    renderCell: (params: RenderCellParams) => (
+      <div className="flex h-full flex-row items-center gap-1">
+        <StatusChip status={toolStatus(params.row as Tool)} />
+        {params.row.isDefault && (
+          <Chip size="small" label="default" color="primary" />
+        )}
+      </div>
+    ),
+  },
+  {
+    field: "size",
+    headerName: "Size",
+    width: 100,
+    valueGetter: (value: number) => formatToolSize(value),
+  },
+  {
+    field: "resourcesCount",
+    fetchFields: ["resourcesCount"],
+    headerName: "Resources",
+    width: 110,
+    sortable: false,
+    filterable: false,
+  },
+  {
+    field: "executorsCount",
+    fetchFields: ["executorsCount"],
+    headerName: "Executors",
+    width: 110,
+    sortable: false,
+    filterable: false,
+  },
+  userColumn({ headerName: "Added by" }),
+  relativeTimeColumn("createdAt", "Created", { sortField: "created_at" }),
+  {
+    field: "actions",
+    fetchFields: ["name", "version", "os", "arch", "status", "isDefault"],
+    headerName: "",
+    width: 240,
+    sortable: false,
+    filterable: false,
+    hideable: false,
+    align: "right",
+    renderCell: (params: RenderCellParams) => {
+      const tool = params.row as Tool;
+      const status = toolStatus(tool);
+      return (
+        <div
+          className="flex h-full flex-row items-center justify-end gap-2"
+          // buttons must not also open the tool page via the row click
+          onClick={(event) => event.stopPropagation()}
+        >
+          {status === "error" && (
+            <Button size="small" onClick={() => actions.onRetry(tool)}>
+              Retry
+            </Button>
+          )}
+          {status === "ready" && !tool.isDefault && (
+            <Button size="small" onClick={() => actions.onSetDefault(tool)}>
+              Set default
+            </Button>
+          )}
+          {["ready", "error"].includes(status) && !tool.isDefault && (
+            <Button
+              size="small"
+              color="warning"
+              onClick={() => actions.onAction(tool, "disable")}
+            >
+              Disable
+            </Button>
+          )}
+          {status === "disabled" && (
+            <Button
+              size="small"
+              onClick={() => actions.onAction(tool, "enable")}
+            >
+              Enable
+            </Button>
+          )}
+          {status === "disabled" && (
+            <Button
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={() => actions.onDelete(tool)}
+            >
+              Delete
+            </Button>
+          )}
+        </div>
+      );
+    },
+  },
+];

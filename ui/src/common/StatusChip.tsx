@@ -1,0 +1,83 @@
+import React from "react";
+
+import {
+  BlockOutlinedIcon,
+  CancelOutlinedIcon,
+  CheckCircleOutlinedIcon,
+  PendingOutlinedIcon,
+} from "../icons/material";
+import { Tooltip } from "../ui";
+import { cn } from "../utils/cn";
+import {
+  ENTITY_STATE,
+  ENTITY_STATUS,
+  INTEGRATION_STATUS,
+  WORKER_STATUS,
+} from "../utils/constants";
+
+import { getStateColor, paletteTextClass } from "./utils";
+
+interface StatusChipProps {
+  status: INTEGRATION_STATUS | ENTITY_STATUS | WORKER_STATUS | string;
+  state?: ENTITY_STATE | string;
+  /** Class names applied to the status icon. */
+  className?: string;
+  compact?: boolean;
+}
+
+const iconMap: Record<string, React.ComponentType<any>> = {
+  "success.main": CheckCircleOutlinedIcon,
+  "error.main": CancelOutlinedIcon,
+  "grey.400": BlockOutlinedIcon,
+};
+
+const renderIconWithText = (
+  icon: React.ComponentType<any>,
+  stateValue: string,
+  colors: any,
+  compact: boolean,
+  className?: string,
+) => {
+  const Icon = icon;
+  const colorClass = paletteTextClass(colors.backgroundColor);
+
+  if (compact) {
+    return (
+      <Tooltip title={stateValue.toUpperCase()}>
+        <Icon
+          fontSize="small"
+          className={cn("cursor-pointer", colorClass, className)}
+        />
+      </Tooltip>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <Icon fontSize="small" className={cn(colorClass, className)} />
+      <div className={colorClass}>{stateValue.toUpperCase()}</div>
+    </div>
+  );
+};
+
+const StatusChip = ({
+  status,
+  state,
+  compact = false,
+  className,
+}: StatusChipProps) => {
+  const colors = getStateColor(status, state);
+  const stateValue = state ? `${state} [${status}]` : status;
+
+  const IconComponent = iconMap[colors.backgroundColor] || PendingOutlinedIcon;
+
+  return renderIconWithText(
+    IconComponent,
+    stateValue,
+    colors,
+    compact,
+    className,
+  );
+};
+
+export default StatusChip;

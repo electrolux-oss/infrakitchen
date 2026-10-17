@@ -1,0 +1,121 @@
+import { useEffect, forwardRef, useState, useCallback } from "react";
+
+import { InfraKitchenApi } from "../../api/InfraKitchenApi";
+import { notifyError } from "../../common/hooks/useNotification";
+import { IkEntity } from "../../types";
+import { Autocomplete } from "../../ui";
+
+import { AZURE_DEVOPS_REPOS_QUERY } from "./graphql";
+import { AzureDevopsRepo } from "./types";
+
+interface AzureDevopsReposProps {
+  ikApi: InfraKitchenApi;
+  onChange: (selectedEntity: any) => void;
+  project: string;
+  value: any;
+  label: string;
+  error?: boolean;
+  helpertext?: string;
+  buffer: Record<string, IkEntity>;
+  setBuffer: (selectedEntity: any) => void;
+  queryParams?: Record<string, string>;
+  [key: string]: any; // Allow additional props
+}
+
+const AzureDevopsRepos = forwardRef<any, AzureDevopsReposProps>(
+  (props, _ref) => {
+    const {
+      ikApi,
+      onChange,
+      setBuffer,
+      project,
+      buffer,
+      value,
+      label,
+      helpertext,
+      queryParams,
+      ...otherProps
+    } = props;
+    const [isLoading, setIsLoading] = useState(false);
+    const options = buffer["azure_devops_repos"] || [];
+
+    const [fetchError, setFetchError] = useState<Error | null>(null);
+
+    const handleEntityChange = (
+      _event: any,
+      newValue: AzureDevopsRepo | null,
+    ) => {
+      const selectedItem =
+        buffer["azure_devops_repos"]?.find(
+          (e: AzureDevopsRepo) => e.name === newValue?.name,
+        ) || null;
+      onChange(selectedItem);
+    };
+
+    const getRepos = useCallback(async () => {
+      if (!project) return;
+      if (
+        !buffer["azure_devops_repos"] ||
+        buffer["azure_devops_repos"].length === 0
+      ) {
+        setIsLoading(true);
+        try {
+          const response = (await ikApi.graphqlRequest(
+            AZURE_DEVOPS_REPOS_QUERY,
+            {
+              integrationId: queryParams?.integration_id,
+              project,
+            },
+          )) as {
+            azureDevopsRepos: AzureDevopsRepo[];
+          };
+          setBuffer((prev: Record<string, AzureDevopsRepo[]>) => ({
+            ...prev,
+            ["azure_devops_repos"]: response.azureDevopsRepos,
+          }));
+        } catch (error: any) {
+          notifyError(error);
+          setFetchError(new Error(error.message));
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    }, [ikApi, project, buffer, setBuffer, queryParams]);
+
+    useEffect(() => {
+      getRepos();
+    }, [getRepos]);
+
+    return (
+      <Autocomplete
+        fullWidth
+        options={options}
+        loading={isLoading}
+        value={value || null}
+        onChange={handleEntityChange}
+        getOptionLabel={(option) => option.name || ""}
+        isOptionEqualToValue={(option, val) => option.uuid === val.uuid}
+        renderOption={(option) => (
+          <div>
+            <p className="m-0 text-body1">{option.name}</p>
+            {option.description && (
+              <p className="m-0 text-body2 text-fg-muted">
+                {option.description}
+              </p>
+            )}
+          </div>
+        )}
+        noOptionsText={isLoading ? "Loading..." : "No repositories found"}
+        disabled={isLoading || !!fetchError}
+        {...otherProps}
+        label={label}
+        margin="normal"
+        error={!!fetchError}
+        helperText={fetchError ? fetchError.message : helpertext || ""}
+      />
+    );
+  },
+);
+
+AzureDevopsRepos.displayName = "AzureDevopsRepos";
+export default AzureDevopsRepos;

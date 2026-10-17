@@ -1,0 +1,108 @@
+import { useEffect, forwardRef, useState, useCallback } from "react";
+
+import { InfraKitchenApi } from "../../api/InfraKitchenApi";
+import { notifyError } from "../../common/hooks/useNotification";
+import { IkEntity } from "../../types";
+import { Autocomplete } from "../../ui";
+
+import { BITBUCKET_REPOS_QUERY } from "./graphql";
+import { BitbucketRepo } from "./types";
+
+interface BitbucketReposProps {
+  ikApi: InfraKitchenApi;
+  onChange: (selectedEntity: any) => void;
+  org: string;
+  value: any;
+  label: string;
+  error?: boolean;
+  helpertext?: string;
+  buffer: Record<string, IkEntity>;
+  queryParams?: Record<string, string>;
+  setBuffer: (selectedEntity: any) => void;
+  [key: string]: any; // Allow additional props
+}
+
+const BitbucketRepos = forwardRef<any, BitbucketReposProps>((props, _ref) => {
+  const {
+    ikApi,
+    onChange,
+    setBuffer,
+    org,
+    label,
+    buffer,
+    value,
+    helpertext,
+    queryParams,
+    ...otherProps
+  } = props;
+  const [isLoading, setIsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<Error | null>(null);
+
+  const options = buffer["bitbucket_repos"] || [];
+
+  const handleEntityChange = (_event: any, newValue: BitbucketRepo | null) => {
+    const selectedItem =
+      buffer["bitbucket_repos"]?.find(
+        (e: BitbucketRepo) => e.name === newValue?.name,
+      ) || null;
+    onChange(selectedItem);
+  };
+
+  const getRepos = useCallback(async () => {
+    if (!org) return;
+    if (!buffer["bitbucket_repos"] || buffer["bitbucket_repos"].length === 0) {
+      setIsLoading(true);
+      try {
+        const response = (await ikApi.graphqlRequest(BITBUCKET_REPOS_QUERY, {
+          integrationId: queryParams?.integration_id,
+          org,
+        })) as {
+          bitbucketRepos: BitbucketRepo[];
+        };
+        setBuffer((prev: Record<string, BitbucketRepo[]>) => ({
+          ...prev,
+          ["bitbucket_repos"]: response.bitbucketRepos,
+        }));
+      } catch (error: any) {
+        notifyError(error);
+        setFetchError(new Error(error.message));
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }, [ikApi, org, buffer, queryParams, setBuffer]);
+
+  useEffect(() => {
+    getRepos();
+  }, [getRepos]);
+
+  return (
+    <Autocomplete
+      fullWidth
+      options={options}
+      loading={isLoading}
+      value={value || null}
+      onChange={handleEntityChange}
+      getOptionLabel={(option) => option.name || ""}
+      isOptionEqualToValue={(option, val) => option.uuid === val.uuid}
+      renderOption={(option) => (
+        <div>
+          <p className="m-0 text-body1">{option.name}</p>
+          {option.description && (
+            <p className="m-0 text-body2 text-fg-muted">{option.description}</p>
+          )}
+        </div>
+      )}
+      noOptionsText={isLoading ? "Loading..." : "No repositories found"}
+      disabled={isLoading || !!fetchError}
+      {...otherProps}
+      label={label}
+      margin="normal"
+      error={!!fetchError}
+      helperText={fetchError ? fetchError.message : helpertext || ""}
+    />
+  );
+});
+
+BitbucketRepos.displayName = "BitbucketRepos";
+export default BitbucketRepos;

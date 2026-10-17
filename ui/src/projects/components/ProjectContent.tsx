@@ -1,0 +1,142 @@
+import { useMemo, useState } from "react";
+
+import { Audit } from "../../common/components/activity/Audit";
+import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
+import {
+  TabbedContent,
+  TabCountLabel,
+  TabDefinition,
+} from "../../common/components/cards/TabbedContent";
+import { useConfig } from "../../common/context/ConfigContext";
+import { useEntityProvider } from "../../common/context/EntityContext";
+import { GoldenStateWidget } from "../../golden_state/GoldenStateWidget";
+import { DependencyConfiguration } from "../../resources/components/DependencyConfiguration";
+import { EntityResources } from "../../resources/components/EntityResources";
+import { Revision } from "../../revision/Revision";
+import { ProjectServices } from "../../services/components/ProjectServices";
+import { UPDATE_PROJECT_MUTATION } from "../graphql/mutations";
+
+import { ProjectNotificationSubscribersTable } from "./ProjectNotificationSubscribersTable";
+import { ProjectPermissions } from "./ProjectPermissions";
+import { ProjectSettings } from "./ProjectSettings";
+import { ProjectSidebar } from "./ProjectSidebar";
+
+export const ProjectContent = () => {
+  const [subscribersRefreshKey, setSubscribersRefreshKey] = useState(0);
+  const { entity, userEntityPermissions } = useEntityProvider();
+  const { globalConfig } = useConfig();
+
+  const fixedFilters = useMemo(
+    () => ({ project_id: [entity?.id] }),
+    [entity?.id],
+  );
+
+  if (!entity) return null;
+
+  const tabs: TabDefinition[] = [
+    {
+      label: "Golden State",
+      content: (
+        <GoldenStateWidget
+          goldenStateReport={{
+            overallScore: entity.goldenState?.score ?? 100,
+            projects: entity.goldenState ? [entity.goldenState] : [],
+          }}
+        />
+      ),
+    },
+    ...(globalConfig?.services
+      ? [
+          {
+            label: "Services",
+            tabLabel: (
+              <TabCountLabel
+                label="Services"
+                count={entity.servicesCount ?? 0}
+              />
+            ),
+            content: <ProjectServices projectId={entity.id} />,
+          },
+        ]
+      : []),
+    {
+      label: "Resources",
+      tabLabel: (
+        <TabCountLabel label="Resources" count={entity.resourcesCount ?? 0} />
+      ),
+      content: (
+        <EntityResources
+          fixedFilters={fixedFilters}
+          filterStorageKey="filter_storage_resources"
+        />
+      ),
+    },
+    {
+      label: "Dependencies",
+      content: (
+        <DependencyConfiguration
+          resource={entity}
+          updateMutation={UPDATE_PROJECT_MUTATION}
+          toUpdateInput={(input) => ({
+            dependencyTags: input.dependencyTags,
+            dependencyConfig: input.dependencyConfig,
+          })}
+          permissionEntity="api:project"
+        />
+      ),
+    },
+    {
+      label: "Policies",
+      content: <ProjectPermissions project={entity} />,
+    },
+    {
+      label: "Notifications",
+      content: (
+        <ProjectNotificationSubscribersTable
+          projectId={entity.id}
+          key={subscribersRefreshKey}
+        />
+      ),
+    },
+    {
+      label: "Audit",
+      content: <Audit entityId={entity.id} />,
+    },
+    {
+      label: "Revisions",
+      content: <Revision resourceId={entity.id} resourceRevision={0} />,
+      requiredPermission: `project:${entity.id}`,
+      permissionAction: "write",
+    },
+    {
+      label: "Settings",
+      content: (
+        <div className="flex flex-col gap-4">
+          <ProjectSettings project={entity} />
+          <DangerZoneCard />
+        </div>
+      ),
+      requiredPermission: `project:${entity.id}`,
+      permissionAction: "write",
+    },
+  ];
+
+  return (
+    <EntitySidebarLayout
+      sidebar={
+        <ProjectSidebar
+          project={entity}
+          onSubscriptionChange={() =>
+            setSubscribersRefreshKey((currentKey) => currentKey + 1)
+          }
+        />
+      }
+    >
+      <TabbedContent
+        tabs={tabs}
+        userEntityPermissions={userEntityPermissions}
+      />
+    </EntitySidebarLayout>
+  );
+};

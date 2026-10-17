@@ -1,0 +1,81 @@
+import { Entity } from "../../common/components/entities/Entity";
+import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
+import {
+  NUMERIC_COLUMN_ALIGN,
+  userColumn,
+} from "../../common/components/entity_table/tableColumns";
+import { getDateValue } from "../../common/components/fields/CommonField";
+import StatusChip from "../../common/StatusChip";
+import { RenderCellParams } from "../../ui";
+import { ENTITY_STATUS } from "../../utils/constants";
+
+export const workflowColumns: EntityTableColumn[] = [
+  {
+    field: "id",
+    headerName: "Workflow",
+    flex: 1,
+    hideable: false,
+    renderCell: (params: RenderCellParams) => (
+      <Entity
+        entity={{
+          id: params.row.id,
+          entityType: "workflow",
+          name: params.row.id.slice(0, 8) + "...",
+        }}
+      />
+    ),
+  },
+  {
+    field: "action",
+    headerName: "Action",
+    flex: 0.7,
+    valueGetter: (_value: any, row: any) => row.action.toUpperCase() ?? "",
+  },
+  {
+    field: "status",
+    headerName: "Status",
+    flex: 0.7,
+    filter: {
+      field: "status",
+      operators: ["eq"],
+      valueType: "select",
+      defaultOperator: "eq",
+      selectOptions: [
+        { label: "Pending", value: ENTITY_STATUS.PENDING },
+        { label: "In Progress", value: ENTITY_STATUS.IN_PROGRESS },
+        { label: "Done", value: ENTITY_STATUS.DONE },
+        { label: "Error", value: ENTITY_STATUS.ERROR },
+        { label: "Approval Pending", value: ENTITY_STATUS.APPROVAL_PENDING },
+        { label: "Rejected", value: ENTITY_STATUS.REJECTED },
+        { label: "Ready", value: ENTITY_STATUS.READY },
+      ],
+    },
+    renderCell: (params: RenderCellParams) => (
+      <StatusChip status={String(params.row.status).toLowerCase()} />
+    ),
+  },
+  {
+    field: "steps",
+    headerName: "Steps",
+    flex: 0.5,
+    sortable: false,
+    ...NUMERIC_COLUMN_ALIGN,
+    valueGetter: (_value: any, row: any) => row.steps?.length ?? 0,
+  },
+  userColumn(),
+  {
+    field: "createdAt",
+    headerName: "Created At",
+    flex: 1,
+    sortField: "created_at",
+    renderCell: (params: RenderCellParams) => getDateValue(params.value),
+  },
+  {
+    field: "completedAt",
+    headerName: "Completed At",
+    flex: 1,
+    sortField: "completed_at",
+    renderCell: (params: RenderCellParams) =>
+      params.value ? getDateValue(params.value) : "-",
+  },
+];

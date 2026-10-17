@@ -9,7 +9,27 @@
     <link rel="manifest" href="/manifest.json" />
     <link rel="shortcut icon" href="/favicon.png" />
     <title>InfraKitchen</title>
+    <script>
+      // Apply the saved color scheme before first paint; ColorSchemeProvider
+      // (src/ui/colorScheme.tsx) takes over once React mounts.
+      (function () {
+        var mode = null;
+        try {
+          mode = localStorage.getItem("ik-color-mode");
+        } catch (e) {}
+        if (mode !== "light" && mode !== "dark") {
+          mode = window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+        }
+        document.documentElement.dataset.colorScheme = mode;
+      })();
+    </script>
     <style>
+      /* Declared first so the layer order matches styles.css regardless of
+         which stylesheet the browser sees first. */
+      @layer theme, base, components, utilities;
+
       html,
       body,
       #root {
@@ -18,7 +38,15 @@
       body {
         margin: 0;
         padding: 0;
-        font-family: "Geist Sans", -apple-system, "system-ui", "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+        font-family:
+          "Geist Sans",
+          -apple-system,
+          "system-ui",
+          "Segoe UI",
+          "Noto Sans",
+          Helvetica,
+          Arial,
+          sans-serif;
       }
 
       .loader-container {
@@ -34,8 +62,8 @@
         background-color: #ffffff;
       }
 
-      /* Follow MUI's persisted color scheme (set on <html> via data-attr). */
-      html[data-mui-color-scheme="dark"] .loader-container {
+      /* Follow the persisted color scheme (set on <html> by the script below). */
+      html[data-color-scheme="dark"] .loader-container {
         background-color: hsl(0, 0%, 8%);
       }
 
@@ -61,7 +89,7 @@
         transform: translateZ(0);
       }
 
-      html[data-mui-color-scheme="dark"] .loader {
+      html[data-color-scheme="dark"] .loader {
         color: hsl(0, 0%, 55%);
       }
 
@@ -84,7 +112,7 @@
         animation: load2 2s infinite ease 1.5s;
       }
 
-      html[data-mui-color-scheme="dark"] .loader:before {
+      html[data-color-scheme="dark"] .loader:before {
         background: hsl(0, 0%, 8%);
       }
 
@@ -101,7 +129,7 @@
         animation: load2 2s infinite ease;
       }
 
-      html[data-mui-color-scheme="dark"] .loader:after {
+      html[data-color-scheme="dark"] .loader:after {
         background: hsl(0, 0%, 8%);
       }
 
@@ -138,5 +166,5 @@
       </div>
     </div>
   </body>
-  <script type="module" src="/app/main.tsx"></script>
+  <script type="module" src="/src/main.tsx"></script>
 </html>

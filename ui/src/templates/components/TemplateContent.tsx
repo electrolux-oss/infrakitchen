@@ -1,0 +1,121 @@
+import { useMemo } from "react";
+
+import { Audit } from "../../common/components/activity/Audit";
+import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
+import {
+  TabbedContent,
+  TabCountLabel,
+  TabDefinition,
+} from "../../common/components/cards/TabbedContent";
+import { EntityGraphViewTab } from "../../common/components/graph/GraphViewTab";
+import { EntityTreeViewTab } from "../../common/components/tree/TreeViewTab";
+import { MarkdownViewer } from "../../common/components/viewers/MarkdownViewer";
+import { useEntityProvider } from "../../common/context/EntityContext";
+import { EntityResources } from "../../resources/components/EntityResources";
+import { Revision } from "../../revision/Revision";
+import { EntitySourceCodeVersions } from "../../source_code_versions/components/EntitySourceCodeVersions";
+import { Chip, Card, CardContent } from "../../ui";
+
+import { TemplateSidebar } from "./TemplateSidebar";
+
+export const TemplateContent = () => {
+  const { entity } = useEntityProvider();
+
+  const fixedFilters = useMemo(
+    () => ({ template_id: [entity?.id] }),
+    [entity?.id],
+  );
+
+  if (!entity) return null;
+
+  const tabs: TabDefinition[] = [
+    ...(entity.documentation
+      ? [
+          {
+            label: "Documentation",
+            content: (
+              <Card className="relative overflow-visible">
+                <Chip
+                  className="absolute -top-2.5 left-4 z-1"
+                  label="Template Documentation"
+                  color="info"
+                  variant="filled"
+                />
+                <CardContent>
+                  <MarkdownViewer content={entity.documentation} />
+                </CardContent>
+              </Card>
+            ),
+          },
+        ]
+      : []),
+    {
+      label: "Resources",
+      tabLabel: (
+        <TabCountLabel label="Resources" count={entity.resourcesCount ?? 0} />
+      ),
+      content: (
+        <EntityResources
+          fixedFilters={fixedFilters}
+          filterStorageKey="filter_storage_resources"
+        />
+      ),
+    },
+    {
+      label: "Template Versions",
+      tabLabel: (
+        <TabCountLabel
+          label="Template Versions"
+          count={entity.sourceCodeVersionsCount ?? 0}
+        />
+      ),
+      content: (
+        <EntitySourceCodeVersions
+          fixedFilters={fixedFilters}
+          filterStorageKey="filter_storage_source_code_versions"
+        />
+      ),
+    },
+    {
+      label: "Tree View",
+      content: (
+        <EntityTreeViewTab
+          entity_id={entity.id}
+          entity_name={entity.entityName}
+        />
+      ),
+    },
+    {
+      label: "Graph View",
+      content: (
+        <EntityGraphViewTab
+          entity_id={entity.id}
+          entity_name={entity.entityName}
+        />
+      ),
+    },
+    {
+      label: "Audit",
+      content: <Audit entityId={entity.id} showRevisionColumn />,
+    },
+    {
+      label: "Revisions",
+      content: <Revision resourceId={entity.id} resourceRevision={0} />,
+      requiredPermission: `api:template`,
+      permissionAction: "write",
+    },
+    {
+      label: "Settings",
+      content: <DangerZoneCard />,
+      requiredPermission: `api:template`,
+      permissionAction: "write",
+    },
+  ];
+
+  return (
+    <EntitySidebarLayout sidebar={<TemplateSidebar template={entity} />}>
+      <TabbedContent tabs={tabs} />
+    </EntitySidebarLayout>
+  );
+};
