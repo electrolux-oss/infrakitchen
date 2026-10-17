@@ -1178,6 +1178,49 @@ class TestToolSelection:
         mock_tool_service.validate_ready.assert_not_awaited()
         assert mock_executor_crud.update.call_args.args[1] == {"tool_id": None}
 
+    @pytest.mark.asyncio
+    async def test_update_source_code_folder_as_admin(
+        self,
+        mock_executor_service,
+        mock_executor_crud,
+        mock_user_permissions,
+        monkeypatch,
+        editable_executor,
+        mocked_user_response,
+    ):
+        mock_user_permissions(["admin"], monkeypatch, "application.executors.service.user_entity_permissions")
+        editable_executor.source_code_folder = "executors/01-db-migration"
+
+        _ = await mock_executor_service.update_executor(
+            str(editable_executor.id),
+            ExecutorUpdate(source_code_folder="executors/02-data-import"),
+            mocked_user_response,
+        )
+
+        assert mock_executor_crud.update.call_args.args[1] == {"source_code_folder": "executors/02-data-import"}
+
+    @pytest.mark.asyncio
+    async def test_update_source_code_folder_requires_admin(
+        self,
+        mock_executor_service,
+        mock_executor_crud,
+        mock_user_permissions,
+        monkeypatch,
+        editable_executor,
+        mocked_user_response,
+    ):
+        mock_user_permissions(["write"], monkeypatch, "application.executors.service.user_entity_permissions")
+        editable_executor.source_code_folder = "executors/01-db-migration"
+
+        with pytest.raises(ValueError, match="Only admin can change source code folder"):
+            _ = await mock_executor_service.update_executor(
+                str(editable_executor.id),
+                ExecutorUpdate(source_code_folder="executors/02-data-import"),
+                mocked_user_response,
+            )
+
+        mock_executor_crud.update.assert_not_awaited()
+
     def test_update_without_tool_keeps_it_unset(self):
         update = ExecutorUpdate(description="new")
         assert "tool_id" not in update.model_fields_set

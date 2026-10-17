@@ -51,7 +51,7 @@ def fake_outputs(template: str, ctx: dict[str, Any]) -> dict[str, Any]:
                 "instance_names": [f"{prefix}-{_words(2, '-')}" for _ in range(int(ctx.get("instance_count", 2)))],
                 "tags": ctx.get("tags", {}),
             }
-        case "dummy_account":
+        case "account":
             role_name = f"{ctx.get('environment_name', 'dev')}-cicd-admin"
             return {
                 "account": account,
@@ -59,7 +59,7 @@ def fake_outputs(template: str, ctx: dict[str, Any]) -> dict[str, Any]:
                 "cicd_admin_role_name": role_name,
                 "cicd_admin_role_arn": f"arn:aws:iam::{account}:role/{role_name}",
             }
-        case "dummy_vpc":
+        case "vpc":
             subnets = {
                 tier: [f"subnet-{_hex(16)}" for _ in range(2)]
                 for tier in ("private", "public", "database", "elasticache")
@@ -70,7 +70,7 @@ def fake_outputs(template: str, ctx: dict[str, Any]) -> dict[str, Any]:
                 "cidr": ctx.get("cidr_block"),
                 "vpc_owner_id": account,
             }
-        case "dummy_redis":
+        case "redis":
             endpoint_id = _hex(6)
             user_arn = f"arn:aws:elasticache:{region}:{account}:user:{ctx.get('user_prefix')}"
             return {
@@ -82,7 +82,7 @@ def fake_outputs(template: str, ctx: dict[str, Any]) -> dict[str, Any]:
                 "iam_user_read_only_arn": f"{user_arn}-ro",
                 "user_prefix": ctx.get("user_prefix"),
             }
-        case "dummy_redis_iam":
+        case "redis_iam":
             policy_name = f"{ctx.get('policy_name')}-redis-iam"
             username = str(ctx.get("iam_user_arn", "")).rsplit("user:", 1)[-1]
             return {
@@ -95,7 +95,7 @@ def fake_outputs(template: str, ctx: dict[str, Any]) -> dict[str, Any]:
                     f"rediss://{username}@{ctx.get('redis_primary_endpoint')}:{ctx.get('redis_port', 6379)}"
                 ),
             }
-        case "dummy_eks":
+        case "eks":
             cluster_id = _hex(32).upper()
             oidc_issuer = f"oidc.eks.{region}.amazonaws.com/id/{cluster_id}"
             return {
@@ -111,7 +111,7 @@ def fake_outputs(template: str, ctx: dict[str, Any]) -> dict[str, Any]:
                 "node_group_name": f"{name}-default",
                 "node_role_arn": f"arn:aws:iam::{account}:role/{name}-eks-node",
             }
-        case "dummy_rds_postgres":
+        case "rds_postgres":
             address = f"{name}.{_hex(12)}.{region}.rds.amazonaws.com"
             version = str(ctx.get("engine_version", "17"))
             return {
@@ -129,14 +129,14 @@ def fake_outputs(template: str, ctx: dict[str, Any]) -> dict[str, Any]:
                 "engine_version_actual": version if "." in version else f"{version}.1",
                 "security_group_id": f"sg-{_hex(16)}",
             }
-        case "dummy_eks_namespace":
+        case "eks_namespace":
             return {
                 "namespace": ctx.get("namespace"),
                 "namespace_uid": str(uuid.uuid4()),
                 "cluster_name": ctx.get("cluster_name"),
                 "resource_quota_name": f"{ctx.get('namespace')}-quota",
             }
-        case "dummy_eks_service_account":
+        case "eks_service_account":
             role_name = f"{ctx.get('cluster_name')}-{ctx.get('namespace')}-{ctx.get('service_account_name')}"
             return {
                 "iam_role_arn": f"arn:aws:iam::{account}:role/{role_name}",
@@ -144,7 +144,7 @@ def fake_outputs(template: str, ctx: dict[str, Any]) -> dict[str, Any]:
                 "service_account_name": ctx.get("service_account_name"),
                 "namespace": ctx.get("namespace"),
             }
-        case "dummy_rds_postgres_credentials":
+        case "rds_postgres_credentials":
             policy_name = f"{ctx.get('policy_name')}-rds-iam"
             username = ctx.get("db_username")
             return {
@@ -201,11 +201,11 @@ SERVICE_NAMES = ["checkout", "payments", "catalog", "orders", "notifications", "
 
 # Dependency tags and configuration of the regional resources, inherited by their children
 REGIONAL_DEPENDENCIES: dict[str, dict[str, Any]] = {
-    "dummy_account": {
-        "dependency_tags": [DependencyTag(name="account", value="dummy_account", inherited_by_children=True)],
+    "account": {
+        "dependency_tags": [DependencyTag(name="account", value="account", inherited_by_children=True)],
     },
-    "dummy_vpc": {
-        "dependency_tags": [DependencyTag(name="vpc", value="dummy_vpc", inherited_by_children=True)],
+    "vpc": {
+        "dependency_tags": [DependencyTag(name="vpc", value="vpc", inherited_by_children=True)],
     },
 }
 
@@ -248,7 +248,7 @@ async def insert_regional_resources(
                 ),
             ],
         },
-        "dummy_environment": {
+        "environment": {
             "dependency_config": [
                 DependencyConfig(name="environment_name", value=env, inherited_by_children=True),
                 DependencyConfig(name="region", value=region, inherited_by_children=True),
