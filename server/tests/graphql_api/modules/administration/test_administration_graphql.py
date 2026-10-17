@@ -45,7 +45,7 @@ RELOAD_PERMISSIONS_MUTATION = """
 def make_context(user):
     request = Mock()
     request.state = SimpleNamespace(user=user)
-    return {"session": Mock(), "user": user, "request": request}
+    return {"session": AsyncMock(), "user": user, "request": request}
 
 
 class TestAdministrationGraphql:
@@ -86,10 +86,12 @@ class TestAdministrationGraphql:
     )
     @patch("graphql_api.modules.administration.mutations.user_is_super_admin", new_callable=AsyncMock)
     @patch("graphql_api.helpers.user_is_super_admin", new_callable=AsyncMock)
+    @patch("graphql_api.modules.administration.mutations.InfrakitchenConfig")
     @patch("graphql_api.modules.administration.mutations.get_feature_flag_service")
     async def test_update_feature_flag_returns_updated(
         self,
         mock_get_service,
+        mock_config,
         mock_permission_is_super_admin,
         mock_is_super_admin,
         mock_reload,
@@ -105,19 +107,24 @@ class TestAdministrationGraphql:
                     "config_name": "flag_a",
                     "enabled": False,
                     "updated_by": None,
-                }
+                },
+                config_name="flag_a",
+                enabled=False,
             )
         )
         mock_get_service.return_value = service
+        context = make_context(mocked_user)
 
         result = await schema.execute(
             UPDATE_FEATURE_FLAG_MUTATION,
             variable_values={"input": {"name": "flagA", "enabled": False}},
-            context_value=make_context(mocked_user),
+            context_value=context,
         )
 
         assert result.errors is None
         assert result.data == {"updateFeatureFlag": {"name": "flagA", "configName": "flag_a", "enabled": False}}
+        context["session"].commit.assert_awaited_once()
+        assert mock_config.flag_a is False
         mock_reload.assert_awaited_once()
 
     @pytest.mark.asyncio

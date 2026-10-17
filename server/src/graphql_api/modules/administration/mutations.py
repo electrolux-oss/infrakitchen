@@ -2,6 +2,7 @@ import strawberry
 from strawberry.types import Info
 
 from core.casbin.enforcer import CasbinEnforcer
+from core.config import InfrakitchenConfig
 from core.feature_flags.dependencies import get_feature_flag_service
 from core.feature_flags.enforcer import FeatureFlagEnforcer
 from core.feature_flags.model import FeatureFlagDTO
@@ -35,6 +36,9 @@ class AdministrationMutation:
             ),
             requester,
         )
+        # Commit before publishing so the event consumer (own session) sees the new value
+        await session.commit()
+        setattr(InfrakitchenConfig, updated.config_name, updated.enabled)
         await FeatureFlagEnforcer().send_reload_configs_event()
         return FeatureFlagType(**updated.model_dump())
 
