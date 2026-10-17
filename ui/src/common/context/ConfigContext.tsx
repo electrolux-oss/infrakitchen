@@ -4,6 +4,7 @@ import {
   useState,
   ReactNode,
   useCallback,
+  useMemo,
 } from "react";
 
 import { InfraKitchenApi } from "../../api/InfraKitchenApi";
@@ -34,6 +35,7 @@ interface ConfigContextType {
   serverInfo?: ServerInfo | null;
   serverInfoLoading?: boolean;
   serverInfoError?: string | null;
+  refreshGlobalConfig?: () => Promise<void>;
 }
 
 interface GlobalConfigType {
@@ -149,8 +151,13 @@ export const ConfigProvider = ({
     getBootstrapConfig();
   });
 
+  const value = useMemo(
+    () => ({ ...config, refreshGlobalConfig: getBootstrapConfig }),
+    [config, getBootstrapConfig],
+  );
+
   return (
-    <ConfigContext.Provider value={config}>{children}</ConfigContext.Provider>
+    <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>
   );
 };
 

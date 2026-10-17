@@ -30,7 +30,7 @@ const FEATURE_FLAG_DESCRIPTIONS: Record<string, string> = {
 const EXPERIMENTAL_FEATURE_FLAGS = new Set(["Services"]);
 
 export const FeatureFlagSection = () => {
-  const { ikApi } = useConfig();
+  const { ikApi, refreshGlobalConfig } = useConfig();
   const [featureFlags, setFeatureFlags] = useState<FeatureFlagDTO[]>([]);
   const [changes, setChanges] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
@@ -84,6 +84,7 @@ export const FeatureFlagSection = () => {
       );
 
       setChanges({});
+      await refreshGlobalConfig?.();
       notify("Feature flags updated successfully", "success");
     } catch (error: any) {
       notifyError(error);
@@ -104,6 +105,7 @@ export const FeatureFlagSection = () => {
       setLoading(true);
       await ikApi.graphqlRequest(RELOAD_FEATURE_FLAGS_MUTATION);
       await fetchFeatureFlags();
+      await refreshGlobalConfig?.();
       setChanges({});
       notify("Feature flags reloaded successfully", "success");
     } catch (error: any) {
