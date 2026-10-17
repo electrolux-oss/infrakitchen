@@ -60,6 +60,27 @@ import {
 } from "../utils/formValidation";
 import { buildValidationRuleMaps } from "../utils/validationRules";
 
+const CLONE_NAME_SUFFIX = "-copy";
+
+const toCloneDefaults = (source: GqlResource): Partial<ResourceCreate> => ({
+  name: `${source.name}${CLONE_NAME_SUFFIX}`,
+  description: source.description ?? "",
+  templateId: source.template?.id,
+  parents: (source.parents ?? []).map((parent) => String(parent.id)),
+  integrationIds: (source.integrationIds ?? []).map((i) => String(i.id)),
+  secretIds: (source.secretIds ?? []).map((s) => String(s.id)),
+  sourceCodeVersionId: source.sourceCodeVersion?.id ?? "",
+  variables: [],
+  workspaceId: source.workspace?.id ?? "",
+  projectId: source.project?.id ?? "",
+  dependencyTags: source.dependencyTags ?? [],
+  dependencyConfig: source.dependencyConfig ?? [],
+  labels: source.labels ?? [],
+  storageId: source.storage?.id ?? "",
+  storagePath: "",
+  toolId: source.tool?.id ?? "",
+});
+
 const ResourceCreatePageInner = () => {
   const { ikApi, linkPrefix } = useConfig();
   const { permissions } = usePermissionProvider();
@@ -88,9 +109,27 @@ const ResourceCreatePageInner = () => {
   const [validationRuleByVariable, setValidationRuleByVariable] = useState<
     Record<string, ValidationRule | null>
   >({});
+  const navigate = useNavigate();
+  const location = useLocation();
+  const cloneSource = location.state?.clone as GqlResource | undefined;
+
   const [parentSelections, setParentSelections] = useState<
     Record<string, string[]>
-  >({});
+  >(() => {
+    const selections: Record<string, string[]> = {};
+    for (const parent of cloneSource?.parents ?? []) {
+      const templateId = String(parent.template?.id);
+      selections[templateId] = [
+        ...(selections[templateId] ?? []),
+        String(parent.id),
+      ];
+    }
+    return selections;
+  });
+  // Template-dependent resets must not wipe the values copied from the clone
+  // source, so they only run once the template differs from the one last seen.
+  const sourceCodeVersionTemplateRef = useRef(cloneSource?.template?.id);
+  const parentsTemplateRef = useRef(cloneSource?.template?.id);
 
   const [namingConvention, setNamingConvention] = useState(null);
   const [namingConventionEditable, setNamingConventionEditable] =
@@ -101,8 +140,6 @@ const ResourceCreatePageInner = () => {
   const dependencyConfigSectionRef = useRef<HTMLDivElement>(null);
   const templateConfigSectionRef = useRef<HTMLDivElement>(null);
   const inputVariablesSectionRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
-  const location = useLocation();
 
   const scrollToErrorSection = useCallback(
     (submitErrors: Record<string, any>) => {
@@ -286,15 +323,19 @@ const ResourceCreatePageInner = () => {
       watchedTemplate?.configuration?.naming_convention;
     if (templateNamingConvention) {
       setNamingConvention(templateNamingConvention);
-      setValue("name", templateNamingConvention, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-      setNamingConventionEditable(false);
+      if (!cloneSource) {
+        setValue("name", templateNamingConvention, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+        setNamingConventionEditable(false);
+      }
     }
-  }, [watchedTemplate, setValue]);
+  }, [watchedTemplate, setValue, cloneSource]);
 
   useEffect(() => {
+    if (sourceCodeVersionTemplateRef.current === watchedTemplateId) return;
+    sourceCodeVersionTemplateRef.current = watchedTemplateId;
     setValue("sourceCodeVersionId", null);
   }, [watchedTemplateId, setValue]);
 
@@ -343,6 +384,8 @@ const ResourceCreatePageInner = () => {
   }, [watchedTemplate, setValue, watch]);
 
   useEffect(() => {
+    if (parentsTemplateRef.current === watchedTemplateId) return;
+    parentsTemplateRef.current = watchedTemplateId;
     setParentSelections({});
     setValue("parents", [], { shouldValidate: true });
   }, [watchedTemplateId, setValue]);
@@ -502,7 +545,26 @@ const ResourceCreatePageInner = () => {
               return a.index - b.index;
             }),
           );
-          setValue("variables", response);
+          let variables = response;
+          if (
+            cloneSource &&
+            watchedSourceCodeVersionId === cloneSource.sourceCodeVersion?.id
+          ) {
+            // sensitive values are never returned, restricted and unique ones
+            // must not be carried over
+            const sourceValues = new Map(
+              (cloneSource.variables ?? []).map((v: any) => [v.name, v.value]),
+            );
+            variables = response.map((variable) =>
+              sourceValues.has(variable.name) &&
+              !variable.sensitive &&
+              !variable.restricted &&
+              !variable.unique
+                ? { ...variable, value: sourceValues.get(variable.name) }
+                : variable,
+            );
+          }
+          setValue("variables", variables);
         })
         .catch((error: any) => {
           notifyError(error);
@@ -521,6 +583,7 @@ const ResourceCreatePageInner = () => {
     watchedProjectId,
     setSchema,
     setValue,
+    cloneSource,
   ]);
 
   useEffect(() => {
@@ -553,7 +616,9 @@ const ResourceCreatePageInner = () => {
 
   return (
     <PageContainer
-      title="Create Resource"
+      title={
+        cloneSource ? `Clone Resource ${cloneSource.name}` : "Create Resource"
+      }
       bottomActions={
         <>
           <Button onClick={handleBack}>Cancel</Button>
@@ -1212,24 +1277,27 @@ const ResourceCreatePageInner = () => {
 const ResourceCreatePage = () => {
   const location = useLocation();
   const template = location.state?.template as GqlTemplateShort | undefined;
+  const cloneSource = location.state?.clone as GqlResource | undefined;
 
   const methods = useForm<ResourceCreate>({
-    defaultValues: {
-      name: "",
-      description: "",
-      templateId: template?.id,
-      parents: [],
-      integrationIds: [],
-      sourceCodeVersionId: "",
-      variables: [],
-      workspaceId: "",
-      projectId: "",
-      dependencyTags: [],
-      dependencyConfig: [],
-      storageId: "",
-      storagePath: "",
-      toolId: "",
-    },
+    defaultValues: cloneSource
+      ? toCloneDefaults(cloneSource)
+      : {
+          name: "",
+          description: "",
+          templateId: template?.id,
+          parents: [],
+          integrationIds: [],
+          sourceCodeVersionId: "",
+          variables: [],
+          workspaceId: "",
+          projectId: "",
+          dependencyTags: [],
+          dependencyConfig: [],
+          storageId: "",
+          storagePath: "",
+          toolId: "",
+        },
     mode: "onChange",
   });
 
