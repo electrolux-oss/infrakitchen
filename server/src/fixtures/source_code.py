@@ -52,12 +52,20 @@ _DUMMY_MODULE_FOLDERS = [
     "dummy/08-eks-service-account/",
     "dummy/09-rds-postgres-credentials/",
 ]
+_EXECUTOR_FOLDERS = [
+    "executors/",
+    "executors/01-db-migration/",
+    "executors/02-data-import/",
+    "executors/03-cleanup/",
+]
 # "Update ManagedBy tag (#2)"
 AWS_DEMO_FOLDERS = ["/", *_AWS_DEMO_FOLDERS, *_TEST_FOLDERS]
 # "Merge pull request #4 from electrolux-oss/dummy_module"
 DUMMY_DEMO_FOLDERS = ["/", *_DUMMY_DEMO_FOLDERS, *_TEST_FOLDERS]
 # "Merge pull request #5 from electrolux-oss/dummy_modules", the current main
 DUMMY_MODULES_FOLDERS = ["/", *_DUMMY_DEMO_FOLDERS, *_DUMMY_MODULE_FOLDERS, *_TEST_FOLDERS]
+# The same plus the executor modules, only the main branch has them
+MAIN_FOLDERS = ["/", *_DUMMY_DEMO_FOLDERS, *_EXECUTOR_FOLDERS, *_DUMMY_MODULE_FOLDERS, *_TEST_FOLDERS]
 
 # Tag -> folders available at it; fixture source code versions use the tags of the catalog
 GIT_TAG_FOLDERS: dict[str, list[str]] = {
@@ -124,7 +132,7 @@ async def insert_source_code(session: AsyncSession, user: UserDTO):
             },
             git_folders_map=[
                 *({"ref": tag, "folders": folders} for tag, folders in GIT_TAG_FOLDERS.items()),
-                {"ref": MAIN_BRANCH, "folders": DUMMY_MODULES_FOLDERS},
+                {"ref": MAIN_BRANCH, "folders": MAIN_FOLDERS},
             ],
         )
         await session.execute(statement)

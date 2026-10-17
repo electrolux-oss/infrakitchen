@@ -213,7 +213,9 @@ class ExecutorService:
             executor.source_code_folder is not None
             and existing_executor.source_code_folder != executor.source_code_folder
         ):
-            raise ValueError("Source code folder cannot be changed once set")
+            requester_permissions = await user_entity_permissions(requester, executor_id, "executor")
+            if "admin" not in requester_permissions:
+                raise ValueError("Only admin can change source code folder of the executor")
 
         if executor.source_code_id is not None and existing_executor.source_code_id != executor.source_code_id:
             raise ValueError("Source code ID cannot be changed once set")
