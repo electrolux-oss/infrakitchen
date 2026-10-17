@@ -12,6 +12,10 @@ export interface GraphNodeData extends Record<string, unknown> {
   entity_id: string;
   item: TreeResponse;
   isRoot: boolean;
+  /** Set while a node is hovered: this node is the hovered one or its neighbour. */
+  highlighted?: boolean;
+  /** Set while a node is hovered: this node is unrelated to the hovered one. */
+  dimmed?: boolean;
 }
 
 export type GraphNode = Node<GraphNodeData, "graphNode">;
@@ -27,7 +31,7 @@ export type GraphNode = Node<GraphNodeData, "graphNode">;
 export function GraphViewNode({ data }: NodeProps<GraphNode>) {
   const isDark = useColorScheme().resolvedMode === "dark";
   const { linkPrefix } = useConfig();
-  const { entity_name, entity_id, item, isRoot } = data;
+  const { entity_name, entity_id, item, isRoot, highlighted, dimmed } = data;
 
   const status = String(item.status || "").toLowerCase();
   const state = String(item.state || "").toLowerCase();
@@ -36,13 +40,16 @@ export function GraphViewNode({ data }: NodeProps<GraphNode>) {
   const borderColor = isDark ? "#3d444d" : "#d0d7de";
   const highlightColor = isDark ? "#58a6ff" : "#0969da";
 
+  const emphasised = isRoot || highlighted;
+
   return (
     <div
-      className="box-border flex w-[280px] max-w-[280px] min-w-[180px] cursor-grab items-start gap-2 rounded-surface px-3 py-2 active:cursor-grabbing"
+      className="box-border flex w-[280px] max-w-[280px] min-w-[180px] cursor-grab items-start gap-2 rounded-surface px-3 py-2 transition-opacity active:cursor-grabbing"
       style={{
+        opacity: dimmed ? 0.35 : 1,
         backgroundColor,
-        border: `1px solid ${isRoot ? highlightColor : borderColor}`,
-        boxShadow: isRoot
+        border: `1px solid ${emphasised ? highlightColor : borderColor}`,
+        boxShadow: emphasised
           ? `0 0 0 2px ${highlightColor}33`
           : "0 1px 2px rgba(0, 0, 0, 0.1)",
       }}

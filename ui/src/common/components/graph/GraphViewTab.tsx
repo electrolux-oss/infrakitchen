@@ -133,6 +133,41 @@ export const EntityGraphViewTab = ({
     setNodes(computedNodes);
   }, [computedNodes]);
 
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [pinnedId, setPinnedId] = useState<string | null>(null);
+  // Hover wins while it lasts; otherwise the clicked (pinned) node stays highlighted.
+  const activeId = hoveredId ?? pinnedId;
+
+  // The active node is highlighted with its direct neighbours and the edges
+  // between them; everything else is dimmed.
+  const { displayNodes, displayEdges } = useMemo(() => {
+    if (!activeId) return { displayNodes: nodes, displayEdges: edges };
+    const neighbours = new Set<string>([activeId]);
+    edges.forEach((edge) => {
+      if (edge.source === activeId) neighbours.add(edge.target);
+      if (edge.target === activeId) neighbours.add(edge.source);
+    });
+    const accent = mode === "dark" ? "#58a6ff" : "#0969da";
+    return {
+      displayNodes: nodes.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          highlighted: neighbours.has(node.id),
+          dimmed: !neighbours.has(node.id),
+        },
+      })),
+      displayEdges: edges.map((edge) => {
+        const active = edge.source === activeId || edge.target === activeId;
+        return {
+          ...edge,
+          zIndex: active ? 1 : 0,
+          style: active ? { stroke: accent, strokeWidth: 2 } : { opacity: 0.2 },
+        };
+      }),
+    };
+  }, [activeId, nodes, edges, mode]);
+
   const onNodesChange = useCallback(
     (changes: NodeChange<GraphNode>[]) =>
       setNodes((current) => applyNodeChanges(changes, current)),
@@ -149,9 +184,15 @@ export const EntityGraphViewTab = ({
     >
       {tree && (
         <ReactFlow
-          nodes={nodes}
-          edges={edges}
+          nodes={displayNodes}
+          edges={displayEdges}
           onNodesChange={onNodesChange}
+          onNodeMouseEnter={(_, node) => setHoveredId(node.id)}
+          onNodeMouseLeave={() => setHoveredId(null)}
+          onNodeClick={(_, node) =>
+            setPinnedId((current) => (current === node.id ? null : node.id))
+          }
+          onPaneClick={() => setPinnedId(null)}
           nodeTypes={NODE_TYPES}
           fitView
           fitViewOptions={{ maxZoom: 1, padding: 0.3 }}
