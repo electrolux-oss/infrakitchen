@@ -6,6 +6,7 @@ import { ScheduleApplyButton } from "../../common/components/buttons/ScheduleApp
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { TASK_QUEUE_STATUS_SELECTION } from "../../workers/graphql";
+import { CloneExecutorButton } from "../components/CloneExecutorButton";
 import { ExecutorContent } from "../components/ExecutorContent";
 import { EXECUTOR_DETAIL_FIELDS } from "../graphql";
 
@@ -25,6 +26,7 @@ export const ExecutorPage = () => {
         actions={
           <>
             <ScheduleApplyButton entityType="executor" />
+            <CloneExecutorButton />
             <EntityRefreshButton />
           </>
         }

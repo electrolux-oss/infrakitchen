@@ -6,7 +6,7 @@ import {
   useFormContext,
   FormProvider,
 } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 import { LabelInput } from "../../common";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
@@ -20,7 +20,25 @@ import { ToolSelect } from "../../tools";
 import { IkEntity } from "../../types";
 import { Autocomplete, Button, TextField, MenuItem } from "../../ui";
 import { EXECUTOR_CREATE_MUTATION } from "../graphql";
+import { GqlExecutor } from "../graphql/transforms";
 import { ExecutorCreate } from "../types";
+
+const toCloneDefaults = (source: GqlExecutor): Partial<ExecutorCreate> => ({
+  name: `${source.name}-copy`,
+  description: source.description ?? "",
+  runtime: source.runtime,
+  commandArgs: source.commandArgs ?? "",
+  labels: source.labels ?? [],
+  integrationIds: (source.integrationIds ?? []).map((i) => String(i.id)),
+  secretIds: (source.secretIds ?? []).map((s) => String(s.id)),
+  sourceCodeId: source.sourceCode?.id ?? "",
+  sourceCodeVersion: source.sourceCodeVersion ?? undefined,
+  sourceCodeBranch: source.sourceCodeBranch ?? undefined,
+  sourceCodeFolder: source.sourceCodeFolder ?? "",
+  storageId: source.storage?.id ?? "",
+  storagePath: "",
+  toolId: source.tool?.id ?? "",
+});
 
 const ExecutorCreatePageInner = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -48,6 +66,8 @@ const ExecutorCreatePageInner = () => {
   const [gitFolders, setGitFolders] = useState<string[]>([]);
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const cloneSource = location.state?.clone as GqlExecutor | undefined;
 
   const handleBack = () => navigate(`${linkPrefix}executors`);
 
@@ -58,7 +78,7 @@ const ExecutorCreatePageInner = () => {
   useEffect(() => {
     if (watchedSourceCode) {
       if (buffer["source_codes"]) {
-        const sourceCode = buffer["source_codes"].find(
+        const sourceCode = buffer["source_codes"]?.find(
           (code: IkEntity) => code.id === watchedSourceCode,
         );
         if (sourceCode) {
@@ -93,7 +113,7 @@ const ExecutorCreatePageInner = () => {
 
   useEffect(() => {
     if (watchedVersion && watchedSourceCode) {
-      const sourceCode = buffer["source_codes"].find(
+      const sourceCode = buffer["source_codes"]?.find(
         (code: IkEntity) => code.id === watchedSourceCode,
       );
       if (sourceCode) {
@@ -114,7 +134,7 @@ const ExecutorCreatePageInner = () => {
 
   useEffect(() => {
     if (watchedBranch && watchedSourceCode) {
-      const sourceCode = buffer["source_codes"].find(
+      const sourceCode = buffer["source_codes"]?.find(
         (code: IkEntity) => code.id === watchedSourceCode,
       );
       if (sourceCode) {
@@ -168,9 +188,15 @@ const ExecutorCreatePageInner = () => {
   const watchedStorage = watch("storageId");
 
   const filter_storage = useMemo(
-    () => ({
-      integration_id: watchedIntegrationIds ? watchedIntegrationIds : [],
-    }),
+    () =>
+      watchedIntegrationIds?.length > 0
+        ? {
+            or: [
+              { integration_id: watchedIntegrationIds },
+              { storage_provider: "postgresql" },
+            ],
+          }
+        : { storage_provider: "postgresql" },
     [watchedIntegrationIds],
   );
 
@@ -188,7 +214,9 @@ const ExecutorCreatePageInner = () => {
 
   return (
     <PageContainer
-      title="Create Executor"
+      title={
+        cloneSource ? `Clone Executor ${cloneSource.name}` : "Create Executor"
+      }
       bottomActions={
         <>
           <Button onClick={handleBack}>Cancel</Button>
@@ -380,13 +408,6 @@ const ExecutorCreatePageInner = () => {
             <Controller
               name="integrationIds"
               control={control}
-              rules={{
-                validate: {
-                  required: (value: string[]) => {
-                    if (value.length === 0) return "*Required";
-                  },
-                },
-              }}
               render={({ field }) => (
                 <ArrayReferenceInput
                   {...field}
@@ -404,7 +425,6 @@ const ExecutorCreatePageInner = () => {
                   }
                   value={field.value}
                   label="Cloud Integration"
-                  required
                   multiple
                   fullWidth
                 />
@@ -436,35 +456,31 @@ const ExecutorCreatePageInner = () => {
               )}
             />
 
-            {watchedIntegrationIds.length > 0 && (
-              <Controller
-                name="storageId"
-                control={control}
-                rules={{ required: "*Required" }}
-                render={({ field }) => (
-                  <ReferenceInput
-                    {...field}
-                    ikApi={ikApi}
-                    entity_name="storages"
-                    buffer={buffer}
-                    showFields={["name", "storage_provider"]}
-                    fields={["name", "storage_provider", "state"]}
-                    setBuffer={setBuffer}
-                    error={!!errors.storageId}
-                    helpertext={
-                      errors.storageId ? errors.storageId.message : ""
-                    }
-                    filter={filter_storage}
-                    value={field.value}
-                    getOptionDisabled={(option: any) =>
-                      option.state !== "PROVISIONED"
-                    }
-                    label="Select Storage for storing TF state"
-                    required
-                  />
-                )}
-              />
-            )}
+            <Controller
+              name="storageId"
+              control={control}
+              rules={{ required: "*Required" }}
+              render={({ field }) => (
+                <ReferenceInput
+                  {...field}
+                  ikApi={ikApi}
+                  entity_name="storages"
+                  buffer={buffer}
+                  showFields={["name", "storage_provider"]}
+                  fields={["name", "storage_provider", "state"]}
+                  setBuffer={setBuffer}
+                  error={!!errors.storageId}
+                  helpertext={errors.storageId ? errors.storageId.message : ""}
+                  filter={filter_storage}
+                  value={field.value}
+                  getOptionDisabled={(option: any) =>
+                    option.state !== "PROVISIONED"
+                  }
+                  label="Select Storage for storing TF state"
+                  required
+                />
+              )}
+            />
 
             {watchedStorage && (
               <Controller
@@ -511,19 +527,24 @@ const ExecutorCreatePageInner = () => {
 };
 
 const ExecutorCreatePage = () => {
+  const location = useLocation();
+  const cloneSource = location.state?.clone as GqlExecutor | undefined;
+
   const methods = useForm<ExecutorCreate>({
-    defaultValues: {
-      name: "",
-      runtime: "tofu",
-      commandArgs: "",
-      labels: [],
-      description: "",
-      integrationIds: [],
-      sourceCodeId: "",
-      storageId: "",
-      storagePath: "",
-      toolId: "",
-    },
+    defaultValues: cloneSource
+      ? toCloneDefaults(cloneSource)
+      : {
+          name: "",
+          runtime: "tofu",
+          commandArgs: "",
+          labels: [],
+          description: "",
+          integrationIds: [],
+          sourceCodeId: "",
+          storageId: "",
+          storagePath: "",
+          toolId: "",
+        },
     mode: "onChange",
   });
 
