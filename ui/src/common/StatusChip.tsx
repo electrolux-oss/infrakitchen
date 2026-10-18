@@ -5,8 +5,9 @@ import {
   CancelOutlinedIcon,
   CheckCircleOutlinedIcon,
   PendingOutlinedIcon,
+  WarningAmberIcon,
 } from "../icons/material";
-import { Tooltip } from "../ui";
+import { Chip, Tooltip } from "../ui";
 import { cn } from "../utils/cn";
 import {
   ENTITY_STATE,
@@ -23,6 +24,8 @@ interface StatusChipProps {
   /** Class names applied to the status icon. */
   className?: string;
   compact?: boolean;
+  /** The entity has pending changes in its temporary state to review. */
+  needsReview?: boolean;
 }
 
 const iconMap: Record<string, React.ComponentType<any>> = {
@@ -60,23 +63,45 @@ const renderIconWithText = (
   );
 };
 
+const REVIEW_HINT = "Has pending changes that should be reviewed";
+
 const StatusChip = ({
   status,
   state,
   compact = false,
   className,
+  needsReview = false,
 }: StatusChipProps) => {
   const colors = getStateColor(status, state);
   const stateValue = state ? `${state} [${status}]` : status;
 
   const IconComponent = iconMap[colors.backgroundColor] || PendingOutlinedIcon;
 
-  return renderIconWithText(
+  const chip = renderIconWithText(
     IconComponent,
     stateValue,
     colors,
     compact,
     className,
+  );
+
+  if (!needsReview) return chip;
+
+  return (
+    <div className="flex items-center gap-2">
+      {chip}
+      <Tooltip title={REVIEW_HINT}>
+        {compact ? (
+          <span className="inline-flex text-warning">
+            <WarningAmberIcon fontSize="small" aria-label="Needs review" />
+          </span>
+        ) : (
+          <span className="inline-flex">
+            <Chip size="small" color="warning" label="Needs review" />
+          </span>
+        )}
+      </Tooltip>
+    </div>
   );
 };
 

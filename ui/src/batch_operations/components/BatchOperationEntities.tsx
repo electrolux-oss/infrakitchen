@@ -16,8 +16,14 @@ import { LogActionButtons } from "../../common/LogsComponent/LogActionButtons";
 import { Logs } from "../../common/LogsComponent/Logs";
 import StatusChip from "../../common/StatusChip";
 import { EXECUTOR_FIELD_MAP } from "../../executors/graphql";
-import { AddIcon, DeleteIcon, RefreshIcon } from "../../icons/material";
+import {
+  AddIcon,
+  DeleteIcon,
+  EditIcon,
+  RefreshIcon,
+} from "../../icons/material";
 import { RESOURCE_FIELD_MAP } from "../../resources/graphql";
+import { hasPendingChanges } from "../../resources/utils/pendingChanges";
 import {
   Button,
   Chip,
@@ -42,6 +48,9 @@ import {
 import { BatchOperationCreate } from "../types";
 
 import { BatchOperationEntitySelector } from "./BatchOperationEntitySelector";
+import { BatchReviewDialog } from "./BatchReviewDialog";
+import { BatchVariablesEditDialog } from "./BatchVariablesEditDialog";
+import { BatchVersionChangeDialog } from "./BatchVersionChangeDialog";
 
 interface BatchOperationEntitiesProps {
   batchOperation: GqlBatchOperation;
@@ -61,6 +70,9 @@ export const BatchOperationEntities = ({
   const [auditId, setAuditId] = useState<string | null>(null);
   const [logView, setLogView] = useState<"summary" | "logs">("logs");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [variablesDialogOpen, setVariablesDialogOpen] = useState(false);
+  const [versionDialogOpen, setVersionDialogOpen] = useState(false);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [selectedEntityIds, setSelectedEntityIds] = useState<string[]>([]);
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
   const [actionType, setActionType] = useState<"dryrun" | "execute" | null>(
@@ -109,7 +121,9 @@ export const BatchOperationEntities = ({
             "status",
             "created_at",
             "updated_at",
+            "tempState",
             "template",
+            "sourceCodeVersion",
             "entityName",
           ]
         : [
@@ -119,6 +133,9 @@ export const BatchOperationEntities = ({
             "status",
             "created_at",
             "updated_at",
+            "sourceCodeVersion",
+            "sourceCodeBranch",
+            "sourceCodeFolder",
             "entityName",
           ];
       const fieldMap = isResource ? RESOURCE_FIELD_MAP : EXECUTOR_FIELD_MAP;
@@ -145,9 +162,20 @@ export const BatchOperationEntities = ({
         status: item.status,
         created_at: item.createdAt,
         updated_at: item.updatedAt,
+        tempState: item.tempState ?? null,
         entityName: entityName,
         ...(isResource && item.template
           ? { template: { ...item.template, entityName: "template" } }
+          : {}),
+        ...(isResource && item.sourceCodeVersion
+          ? { sourceCodeVersion: item.sourceCodeVersion }
+          : {}),
+        ...(!isResource
+          ? {
+              sourceCodeVersion: item.sourceCodeVersion ?? null,
+              sourceCodeBranch: item.sourceCodeBranch ?? null,
+              sourceCodeFolder: item.sourceCodeFolder ?? null,
+            }
           : {}),
       }));
 
@@ -375,6 +403,7 @@ export const BatchOperationEntities = ({
           <StatusChip
             status={String(params.row.status).toLowerCase()}
             state={String(params.row.state).toLowerCase()}
+            needsReview={hasPendingChanges(params.row)}
           />
         ),
       },
@@ -437,10 +466,48 @@ export const BatchOperationEntities = ({
           return <Entity entity={template} />;
         },
       });
+      baseColumns.splice(2, 0, {
+        field: "sourceCodeVersion",
+        headerName: "Template Version",
+        flex: 1,
+        valueGetter: (value: any) => value?.identifier || "",
+        renderCell: (params: RenderCellParams) => {
+          const version = params.row.sourceCodeVersion;
+          return version ? (
+            <Entity entity={version} lifecycleVariant="dot" />
+          ) : null;
+        },
+      });
+    }
+
+    // Add executor-specific columns
+    if (batchOperation?.entityType !== "resource") {
+      baseColumns.splice(
+        1,
+        0,
+        {
+          field: "sourceCodeRef",
+          headerName: "Branch / Tag",
+          flex: 1,
+          valueGetter: (_value: any, row: any) =>
+            row.sourceCodeVersion || row.sourceCodeBranch || "",
+        },
+        {
+          field: "sourceCodeFolder",
+          headerName: "Folder",
+          flex: 1,
+          valueGetter: (value: any) => value || "",
+        },
+      );
     }
 
     return baseColumns;
   }, [batchOperation?.entityType, handleRemoveEntity, handleOpenLogs]);
+
+  const pendingReviewIds = useMemo(
+    () => entities.filter(hasPendingChanges).map((entity) => entity.id),
+    [entities],
+  );
 
   return (
     <PropertyCard
@@ -455,6 +522,39 @@ export const BatchOperationEntities = ({
           >
             Add
           </Button>
+          {batchOperation?.entityType === "resource" && (
+            <Button
+              startIcon={<EditIcon />}
+              onClick={() => setVariablesDialogOpen(true)}
+              variant="outlined"
+              size="small"
+              disabled={entityIds.length === 0}
+            >
+              Edit variables
+            </Button>
+          )}
+          {batchOperation?.entityType === "resource" && (
+            <Button
+              startIcon={<EditIcon />}
+              onClick={() => setVersionDialogOpen(true)}
+              variant="outlined"
+              size="small"
+              disabled={entityIds.length === 0}
+            >
+              Change version
+            </Button>
+          )}
+          {batchOperation?.entityType === "resource" && (
+            <Button
+              onClick={() => setReviewDialogOpen(true)}
+              variant="outlined"
+              size="small"
+              color="warning"
+              disabled={pendingReviewIds.length === 0}
+            >
+              {`Review changes (${pendingReviewIds.length})`}
+            </Button>
+          )}
           <Button
             onClick={() => handleOpenActionDialog("dryrun")}
             disabled={selectedEntityIds.length === 0}
@@ -495,6 +595,30 @@ export const BatchOperationEntities = ({
           className="md:min-h-[380px]"
         />
       </div>
+      {batchOperation?.entityType === "resource" && (
+        <BatchReviewDialog
+          open={reviewDialogOpen}
+          onClose={() => setReviewDialogOpen(false)}
+          resourceIds={pendingReviewIds}
+          onChanged={loadEntities}
+        />
+      )}
+      {batchOperation?.entityType === "resource" && (
+        <BatchVariablesEditDialog
+          open={variablesDialogOpen}
+          onClose={() => setVariablesDialogOpen(false)}
+          resourceIds={entityIds}
+          onSaved={loadEntities}
+        />
+      )}
+      {batchOperation?.entityType === "resource" && (
+        <BatchVersionChangeDialog
+          open={versionDialogOpen}
+          onClose={() => setVersionDialogOpen(false)}
+          resourceIds={entityIds}
+          onSaved={loadEntities}
+        />
+      )}
       <Dialog
         open={Boolean(logsEntityId)}
         onClose={handleCloseLogs}

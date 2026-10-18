@@ -7,6 +7,7 @@ from application.resources.schema import (
     ResourceResponse,
     ResourceUpdate,
 )
+from application.common.schema import DependencyTag
 from core.base_models import PatchBodyModel
 from core.config import InfrakitchenConfig
 from core.constants.model import EventType, ModelActions, ModelState, ModelStatus
@@ -217,9 +218,117 @@ class TestPatch:
         assert result.state == expected_state
         assert result.status == expected_status
         mock_resource_crud.get_by_id.assert_awaited_once_with(str(resource_id))
-        expected_resource = model_db_dump(resource_patch, exclude_unset=True)
+        expected_resource = {
+            key: value
+            for key, value in model_db_dump(resource_patch, exclude_unset=True).items()
+            if value != getattr(existing_resource, key)
+        }
         mocked_resource_temp_state_handler.set_resource_temp_state.assert_awaited_once_with(
             resource_id=resource_id, value=expected_resource, created_by=mocked_user_response.id
+        )
+
+    @pytest.mark.asyncio
+    async def test_patch_back_to_applied_value_discards_pending_change(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_resource,
+        mocked_user_response,
+        mocked_resource_temp_state_handler,
+        mock_revision_handler,
+        mock_event_sender,
+        mock_user_permissions,
+        monkeypatch,
+    ):
+        resource_id = uuid4()
+        mocked_resource.id = resource_id
+        mocked_resource.state = ModelState.PROVISIONED
+        mocked_resource.status = ModelStatus.DONE
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        mock_resource_service.resource_temp_state_handler = mocked_resource_temp_state_handler
+        mock_resource_service.revision_handler = mock_revision_handler
+        mocked_resource_temp_state_handler.discard_keys = AsyncMock(return_value=True)
+        mock_user_permissions(
+            ["read", "write", "admin"], monkeypatch, "application.resources.service.user_entity_permissions"
+        )
+
+        resource_patch = ResourceUpdate(description=mocked_resource.description)
+        await mock_resource_service.update_resource(
+            resource_id=str(resource_id), resource=resource_patch, requester=mocked_user_response
+        )
+
+        mocked_resource_temp_state_handler.discard_keys.assert_awaited_once_with(resource_id, ["description"])
+        mocked_resource_temp_state_handler.set_resource_temp_state.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_patch_back_to_default_value_discards_pending_change(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_resource,
+        mocked_user_response,
+        mocked_resource_temp_state_handler,
+        mock_revision_handler,
+        mock_event_sender,
+        mock_user_permissions,
+        monkeypatch,
+    ):
+        resource_id = uuid4()
+        mocked_resource.id = resource_id
+        mocked_resource.state = ModelState.PROVISIONED
+        mocked_resource.status = ModelStatus.DONE
+        mocked_resource.labels = []
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        mock_resource_service.resource_temp_state_handler = mocked_resource_temp_state_handler
+        mock_resource_service.revision_handler = mock_revision_handler
+        mocked_resource_temp_state_handler.discard_keys = AsyncMock(return_value=True)
+        mock_user_permissions(
+            ["read", "write", "admin"], monkeypatch, "application.resources.service.user_entity_permissions"
+        )
+
+        # labels=[] is the field default, so it is dropped from the change body
+        resource_patch = ResourceUpdate(labels=[])
+        await mock_resource_service.update_resource(
+            resource_id=str(resource_id), resource=resource_patch, requester=mocked_user_response
+        )
+
+        mocked_resource_temp_state_handler.discard_keys.assert_awaited_once_with(resource_id, ["labels"])
+        mocked_resource_temp_state_handler.set_resource_temp_state.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_patch_partial_revert_keeps_only_changed_fields_pending(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_resource,
+        mocked_user_response,
+        mocked_resource_temp_state_handler,
+        mock_revision_handler,
+        mock_event_sender,
+        mock_user_permissions,
+        monkeypatch,
+    ):
+        resource_id = uuid4()
+        mocked_resource.id = resource_id
+        mocked_resource.state = ModelState.PROVISIONED
+        mocked_resource.status = ModelStatus.DONE
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        mock_resource_service.resource_temp_state_handler = mocked_resource_temp_state_handler
+        mock_resource_service.revision_handler = mock_revision_handler
+        mock_resource_service.publish_approval_required_event = AsyncMock()
+        mocked_resource_temp_state_handler.discard_keys = AsyncMock(return_value=True)
+        mock_user_permissions(
+            ["read", "write", "admin"], monkeypatch, "application.resources.service.user_entity_permissions"
+        )
+
+        resource_patch = ResourceUpdate(description=mocked_resource.description, labels=["changed-label"])
+        await mock_resource_service.update_resource(
+            resource_id=str(resource_id), resource=resource_patch, requester=mocked_user_response
+        )
+
+        mocked_resource_temp_state_handler.discard_keys.assert_awaited_once_with(resource_id, ["description"])
+        mocked_resource_temp_state_handler.set_resource_temp_state.assert_awaited_once_with(
+            resource_id=resource_id, value={"labels": ["changed-label"]}, created_by=mocked_user_response.id
         )
 
     @pytest.mark.asyncio
@@ -280,7 +389,10 @@ class TestPatch:
         existing_resource.status = ModelStatus.DONE
         existing_resource.abstract = True
 
-        resource_patch = ResourceUpdate(description="Updated description", dependency_tags=[])
+        resource_patch = ResourceUpdate(
+            description="Updated description",
+            dependency_tags=[DependencyTag(name="team", value="ops")],
+        )
 
         mock_resource_crud.get_by_id.return_value = existing_resource
 

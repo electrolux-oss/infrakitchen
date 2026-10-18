@@ -85,6 +85,16 @@ _RESOURCE_NOTIFICATION_TEXT: dict[str, tuple[str, str, str]] = {
 }
 
 
+def _equals_applied(existing: Resource, key: str, value: Any) -> bool:
+    """True if a patched value equals the resource's applied one; relation lists (*_ids) compare by id."""
+    if not hasattr(existing, key):
+        return False
+    current = getattr(existing, key)
+    if key.endswith("_ids") and isinstance(current, list):
+        return sorted(str(getattr(item, "id", item)) for item in current) == sorted(str(item) for item in value or [])
+    return value == current
+
+
 class ResourceService:
     """
     ResourceService implements all required business-logic. It uses additional services and utils as helpers
@@ -474,7 +484,10 @@ class ResourceService:
             exclude_defaults=True,
         )
 
-        if not body:
+        # Unlike `body`, keeps fields set to their default (e.g. labels=[]) so they can cancel a pending change
+        set_fields = model_db_dump(resource, exclude_unset=True)
+
+        if not set_fields:
             raise ValueError("At least one field must be provided in Resource update.")
 
         existing_resource = await self.crud.get_by_id(resource_id)
@@ -618,6 +631,15 @@ class ResourceService:
             _ = await self.tool_service.validate_ready(resource.tool_id)
 
         if not has_field_changes(body, existing_resource):
+            # Values set back to the applied ones cancel the pending changes for those fields
+            reverted = [k for k, v in set_fields.items() if _equals_applied(existing_resource, k, v)]
+            if reverted and await self.resource_temp_state_handler.discard_keys(existing_resource.id, reverted):
+                existing_resource = await self.crud.get_by_id(existing_resource.id)
+                if not existing_resource:
+                    raise EntityNotFound("Resource not found after update")
+                response_pydantic = ResourceResponse.model_validate(existing_resource)
+                await self.event_sender.send_event(response_pydantic, ModelActions.UPDATE)
+                return existing_resource
             raise ValueError("No changes detected; the resource is already up to date.")
 
         # Check if the project allows unapproved metadata edits and if the fields being updated are allowed
@@ -651,9 +673,15 @@ class ResourceService:
                 resource,
                 exclude_unset=True,
             )
-            await self.resource_temp_state_handler.set_resource_temp_state(
-                resource_id=existing_resource.id, value=full_body, created_by=requester.id
-            )
+            # Fields set back to the applied value are not pending changes anymore
+            reverted = [k for k, v in full_body.items() if _equals_applied(existing_resource, k, v)]
+            changed_body = {k: v for k, v in full_body.items() if k not in reverted}
+            if reverted:
+                await self.resource_temp_state_handler.discard_keys(existing_resource.id, reverted)
+            if changed_body:
+                await self.resource_temp_state_handler.set_resource_temp_state(
+                    resource_id=existing_resource.id, value=changed_body, created_by=requester.id
+                )
             await self.publish_approval_required_event(existing_resource, requester, ModelActions.UPDATE)
 
         response_pydantic = ResourceResponse.model_validate(existing_resource)

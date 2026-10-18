@@ -32,6 +32,21 @@ class ResourceTempStateHandler:
         new_value_dict.update(updated_value)
         updated_resource_temp_state.value = new_value_dict
 
+    async def discard_keys(self, resource_id: UUID | str, keys: list[str]) -> bool:
+        """Drop pending changes for the keys; the row is deleted once nothing is left. True if anything was dropped."""
+        temp_entity_state = await self.get_by_resource_id(resource_id)
+        if not temp_entity_state:
+            return False
+        remaining = {k: v for k, v in temp_entity_state.value.items() if k not in keys}
+        if len(remaining) == len(temp_entity_state.value):
+            return False
+        if remaining:
+            temp_entity_state.value = remaining
+        else:
+            await self.session.delete(temp_entity_state)
+            await self.session.flush()
+        return True
+
     async def get_by_resource_id(self, resource_id: str | UUID) -> ResourceTempState | None:
         statement = select(ResourceTempState).where(ResourceTempState.resource_id == str(resource_id))
         result = await self.session.execute(statement)
