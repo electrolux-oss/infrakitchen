@@ -25,6 +25,7 @@ import { executorColumns as filterableExecutorColumns } from "../../executors/co
 import { EXECUTOR_FIELD_MAP } from "../../executors/graphql";
 import { resourceColumns as filterableResourceColumns } from "../../resources/components/resourceTableConfig";
 import { RESOURCE_FIELD_MAP } from "../../resources/graphql";
+import { hasPendingChanges } from "../../resources/utils/pendingChanges";
 import { IkEntity } from "../../types";
 import { FormControl, FormHelperText, InputLabel } from "../../ui";
 import { DataTable, RenderCellParams, SortModel } from "../../ui";
@@ -41,6 +42,7 @@ const selectionStateColumn: EntityTableColumn = {
     <StatusChip
       status={String(params.row.status).toLowerCase()}
       state={String(params.row.state).toLowerCase()}
+      needsReview={hasPendingChanges(params.row)}
     />
   ),
 };
@@ -233,6 +235,7 @@ export const BatchOperationEntitySelector = (
               "sourceCodeVersion",
               "state",
               "status",
+              "tempState",
               "createdAt",
               "labels",
               "entityName",

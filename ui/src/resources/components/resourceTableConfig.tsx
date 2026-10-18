@@ -24,6 +24,7 @@ import {
   VERSION_LIFECYCLE_STATE,
 } from "../../utils/constants";
 import { GqlResourceShort } from "../graphql";
+import { hasPendingChanges } from "../utils/pendingChanges";
 
 // --- Column visibility defaults ---
 
@@ -304,7 +305,7 @@ export const resourceColumns: EntityTableColumn[] = [
 
   {
     field: "state",
-    fetchFields: ["state", "status"],
+    fetchFields: ["state", "status", "tempState"],
     headerName: "State",
     flex: 1,
     mobile: "badge",
@@ -347,6 +348,7 @@ export const resourceColumns: EntityTableColumn[] = [
       <StatusChip
         status={String(params.row.status).toLowerCase()}
         state={String(params.row.state).toLowerCase()}
+        needsReview={hasPendingChanges(params.row)}
       />
     ),
   },

@@ -151,4 +151,8 @@ export const RESOURCE_FIELD_MAP: GraphqlFieldMap = {
     RESOURCE_GRAPHQL_FIELDS.relations.children,
     RESOURCE_SHORT_FIELDS,
   ),
+  tempState: buildNestedSelection(
+    RESOURCE_GRAPHQL_FIELDS.relations.tempState,
+    RESOURCE_TEMP_STATE_FIELDS,
+  ),
 };
