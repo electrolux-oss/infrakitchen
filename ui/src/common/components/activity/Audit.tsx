@@ -5,6 +5,7 @@ import { buildAuditLogsQuery, GqlAuditLog } from "../../../audit_logs/graphql";
 import { CommonDialog, useConfig } from "../../../common";
 import GradientCircularProgress from "../../../common/GradientCircularProgress";
 import { useHashParams } from "../../../common/hooks/useHashParams";
+import { usePersistedPagination } from "../../../common/hooks/usePersistedPagination";
 import {
   SearchIcon,
   TableRowsIcon,
@@ -147,10 +148,11 @@ export const Audit = ({
     { field: "createdAt", sort: "desc" },
   ]);
 
-  const [paginationModel, setPaginationModel] = useState<PaginationModel>({
-    page: 0,
-    pageSize: 10,
-  });
+  const [paginationModel, setPaginationModel] = usePersistedPagination(
+    "audit_pageSize",
+    10,
+    [10, 25, 50, 100],
+  );
 
   useEffect(() => {
     const id = setTimeout(() => {

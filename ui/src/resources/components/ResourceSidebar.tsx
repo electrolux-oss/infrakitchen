@@ -104,7 +104,29 @@ export const ResourceSidebar = ({
 
   return (
     <EntitySidebar ariaLabel="Resource details">
-      <SidebarSection title="About">
+      <SidebarSection
+        title="About"
+        action={
+          <div className="flex items-center">
+            <FavoriteButton
+              componentId={String(resource.id)}
+              componentType="resource"
+              ariaLabel="Add resource to favorites"
+              isFavorite={resource.isFavorite}
+            />
+            <SubscribeNotificationButton
+              isSubscribed={isSubscribed}
+              isLoading={loading}
+              onSubscribeClick={(inheritChildren) =>
+                void handleSubscribe(inheritChildren)
+              }
+              onUnsubscribeClick={(inheritChildren) =>
+                void handleUnsubscribe(inheritChildren)
+              }
+            />
+          </div>
+        }
+      >
         <EditableNameField
           value={resource.name}
           canEdit={canEdit}
@@ -137,15 +159,7 @@ export const ResourceSidebar = ({
 
       <SidebarSection title="Status">
         <div className="col-span-full">
-          <div className="flex items-center justify-between gap-2">
-            <StatusChip status={resource.status} state={resource.state} />
-            <FavoriteButton
-              componentId={String(resource.id)}
-              componentType="resource"
-              ariaLabel="Add resource to favorites"
-              isFavorite={resource.isFavorite}
-            />
-          </div>
+          <StatusChip status={resource.status} state={resource.state} />
         </div>
         {pendingScheduledAction && (
           <CommonField
@@ -302,26 +316,6 @@ export const ResourceSidebar = ({
       </SidebarSection>
 
       <SidebarDetailsSection entity={resource} />
-
-      <SidebarSection title="Notifications">
-        <div className="col-span-full">
-          <div className="flex items-center justify-between gap-2">
-            <p className="m-0 text-body2 text-fg-muted">
-              {isSubscribed ? "Subscribed" : "Not subscribed"}
-            </p>
-            <SubscribeNotificationButton
-              isSubscribed={isSubscribed}
-              isLoading={loading}
-              onSubscribeClick={(inheritChildren) =>
-                void handleSubscribe(inheritChildren)
-              }
-              onUnsubscribeClick={(inheritChildren) =>
-                void handleUnsubscribe(inheritChildren)
-              }
-            />
-          </div>
-        </div>
-      </SidebarSection>
     </EntitySidebar>
   );
 };

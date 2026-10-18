@@ -3,6 +3,7 @@ import { forwardRef, useEffect, useState, useMemo, useRef } from "react";
 import { useLocalStorage } from "../..";
 import { IkEntity } from "../../../types";
 import { ColumnVisibilityModel, PaginationModel, SortModel } from "../../../ui";
+import { usePersistedPagination } from "../../hooks/usePersistedPagination";
 import { buildAdvancedApiFilters } from "../filter_panel/buildAdvancedApiFilters";
 import { FilterProvider } from "../filter_panel/FilterContext";
 
@@ -97,10 +98,11 @@ export const EntityFetchTable = forwardRef<
     return savedSortModel.length > 0 ? savedSortModel : defaultSortModel;
   });
 
-  const [paginationModel, setPaginationModel] = useState<PaginationModel>({
-    page: 0,
-    pageSize: 10,
-  });
+  const [paginationModel, setPaginationModel] = usePersistedPagination(
+    `${storageKey}_pageSize`,
+    10,
+    [10, 25, 50, 100],
+  );
 
   const [columnVisibilityModel, setColumnVisibilityModel] =
     useState<ColumnVisibilityModel>(() => ({

@@ -19,6 +19,7 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { useLocalStorage } from "../../common/context/UIStateContext";
 import { buildGraphqlFields } from "../../common/graphql/buildGraphqlFields";
 import { notifyError } from "../../common/hooks/useNotification";
+import { usePersistedPagination } from "../../common/hooks/usePersistedPagination";
 import StatusChip from "../../common/StatusChip";
 import { executorColumns as filterableExecutorColumns } from "../../executors/components/executorTableConfig";
 import { EXECUTOR_FIELD_MAP } from "../../executors/graphql";
@@ -26,12 +27,7 @@ import { resourceColumns as filterableResourceColumns } from "../../resources/co
 import { RESOURCE_FIELD_MAP } from "../../resources/graphql";
 import { IkEntity } from "../../types";
 import { FormControl, FormHelperText, InputLabel } from "../../ui";
-import {
-  DataTable,
-  PaginationModel,
-  RenderCellParams,
-  SortModel,
-} from "../../ui";
+import { DataTable, RenderCellParams, SortModel } from "../../ui";
 import { BatchOperationCreate } from "../types";
 
 // State + Created columns are identical across the resource and executor
@@ -84,10 +80,11 @@ export const BatchOperationEntitySelector = (
   const [entities, setEntities] = useState<IkEntity[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalRows, setTotalRows] = useState(0);
-  const [paginationModel, setPaginationModel] = useState<PaginationModel>({
-    page: 0,
-    pageSize: 10,
-  });
+  const [paginationModel, setPaginationModel] = usePersistedPagination(
+    "batch_operation_entity_selector_pageSize",
+    10,
+    [10, 25, 50, 100],
+  );
   const [sortModel, setSortModel] = useState<SortModel>([]);
 
   const resourceSelectionColumns: EntityTableColumn[] = useMemo(
@@ -199,10 +196,13 @@ export const BatchOperationEntitySelector = (
     [entityType],
   );
 
-  const handleFilterChange = useCallback((values: Record<string, any>) => {
-    setFilterValues(values);
-    setPaginationModel((prev) => ({ ...prev, page: 0 }));
-  }, []);
+  const handleFilterChange = useCallback(
+    (values: Record<string, any>) => {
+      setFilterValues(values);
+      setPaginationModel((prev) => ({ ...prev, page: 0 }));
+    },
+    [setPaginationModel],
+  );
 
   useEffect(() => {
     let cancelled = false;

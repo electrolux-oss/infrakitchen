@@ -4,12 +4,8 @@ import { useConfig } from "../../../common";
 import { buildLogsQuery, GqlLog } from "../../../logs/graphql";
 import { LogEntity } from "../../../types";
 import { Card, CardContent } from "../../../ui";
-import {
-  DataTable,
-  DataTableColumn,
-  PaginationModel,
-  SortModel,
-} from "../../../ui";
+import { DataTable, DataTableColumn, SortModel } from "../../../ui";
+import { usePersistedPagination } from "../../hooks/usePersistedPagination";
 import { LogActionButtons } from "../../LogsComponent/LogActionButtons";
 import { LogsDialog } from "../../LogsComponent/LogsDialog";
 import { RELATIVE_TIME_COLUMN_WIDTH } from "../entity_table/tableColumns";
@@ -42,10 +38,11 @@ export const EntityLogs = ({
     { field: "createdAt", sort: "desc" },
   ]);
 
-  const [paginationModel, setPaginationModel] = useState<PaginationModel>({
-    page: 0,
-    pageSize: 10,
-  });
+  const [paginationModel, setPaginationModel] = usePersistedPagination(
+    "entity_logs_pageSize",
+    10,
+    [10, 25, 50, 100],
+  );
 
   const filter = useMemo(() => {
     const baseFilter: Record<string, any> = {

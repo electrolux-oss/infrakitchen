@@ -8,15 +8,11 @@ import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notifyError } from "../../common/hooks/useNotification";
+import { usePersistedPagination } from "../../common/hooks/usePersistedPagination";
 import { CODE_FONT_FAMILY } from "../../common/theme";
 import { LocalOfferOutlinedIcon } from "../../icons/material";
 import { Alert, Link } from "../../ui";
-import {
-  DataTable,
-  DataTableColumn,
-  PaginationModel,
-  RenderCellParams,
-} from "../../ui";
+import { DataTable, DataTableColumn, RenderCellParams } from "../../ui";
 import { cn } from "../../utils/cn";
 import {
   GqlSourceCodeCommit,
@@ -58,10 +54,11 @@ export const SourceCodeCommits = ({
 }: SourceCodeCommitsProps) => {
   const { ikApi } = useConfig();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [paginationModel, setPaginationModel] = useState<PaginationModel>({
-    page: 0,
-    pageSize: ROWS_PER_PAGE_OPTIONS[0],
-  });
+  const [paginationModel, setPaginationModel] = usePersistedPagination(
+    "source_code_commits_pageSize",
+    ROWS_PER_PAGE_OPTIONS[0],
+    ROWS_PER_PAGE_OPTIONS,
+  );
   const [commits, setCommits] = useState<GqlSourceCodeCommit[]>([]);
   const [count, setCount] = useState(total);
   const [loading, setLoading] = useState(false);
@@ -156,7 +153,7 @@ export const SourceCodeCommits = ({
         notifyError(e);
       }
     },
-    [ikApi, sourceCodeId, branch, setHighlightedSha],
+    [ikApi, sourceCodeId, branch, setHighlightedSha, setPaginationModel],
   );
 
   // A shared link opens the page of its commit.
