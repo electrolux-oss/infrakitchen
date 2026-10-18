@@ -5,7 +5,7 @@ import {
   DELETE_FAVORITE_MUTATION,
 } from "../../../favorites/graphql";
 import { FavoriteBorderIcon, FavoriteIcon } from "../../../icons/material";
-import { IconButton } from "../../../ui";
+import { IconButton, Tooltip } from "../../../ui";
 import { cn } from "../../../utils/cn";
 import { useConfig } from "../../context/ConfigContext";
 import { notifyError } from "../../hooks/useNotification";
@@ -69,26 +69,30 @@ export const FavoriteButton = ({
   };
 
   return (
-    <IconButton
-      className={cn(
-        "border-0 bg-transparent outline-none hover:bg-transparent",
-        format === "table" && "size-5 min-w-0 p-0",
-      )}
-      size="small"
-      aria-label={ariaLabel}
-      onClick={handleAddFavorite}
-      disabled={submittingState}
+    <Tooltip
+      title={favoriteState ? "Remove from favorites" : "Add to favorites"}
     >
-      {favoriteState ? (
-        <FavoriteIcon
-          className="text-primary"
-          fontSize={format === "table" ? "small" : "medium"}
-        />
-      ) : (
-        <FavoriteBorderIcon
-          fontSize={format === "table" ? "small" : "medium"}
-        />
-      )}
-    </IconButton>
+      <IconButton
+        className={cn(
+          "border-0 bg-transparent outline-none hover:bg-transparent",
+          format === "table" && "size-5 min-w-0 p-0",
+        )}
+        size="small"
+        aria-label={ariaLabel}
+        onClick={handleAddFavorite}
+        disabled={submittingState}
+      >
+        {favoriteState ? (
+          <FavoriteIcon
+            className="text-primary"
+            fontSize={format === "table" ? "small" : "medium"}
+          />
+        ) : (
+          <FavoriteBorderIcon
+            fontSize={format === "table" ? "small" : "medium"}
+          />
+        )}
+      </IconButton>
+    </Tooltip>
   );
 };
