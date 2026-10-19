@@ -17,12 +17,12 @@ import {
 import { ScheduledApplyValue } from "../../common/components/fields/ScheduledApplyValue";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
+import { EntityStatusChip } from "../../common/components/labels";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import { usePendingScheduledAction } from "../../common/hooks/usePendingScheduledAction";
-import StatusChip from "../../common/StatusChip";
 import { sameStringSet } from "../../common/utils";
 import { ProviderIcon } from "../../icons/Icons";
 import { ToolSelect, toolLabel } from "../../tools";
@@ -45,7 +45,7 @@ export interface ExecutorSidebarProps {
 }
 
 /**
- * GitHub-style right sidebar for the executor detail page: groups the
+ * Right context sidebar for the executor detail page: groups the
  * executor's description, status, infrastructure bindings and history so the main
  * column can focus on its source configuration and activity.
  */
@@ -101,7 +101,7 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
       <SidebarSection title="Status">
         <div className="col-span-full">
           <div className="flex items-center justify-between gap-2">
-            <StatusChip status={executor.status} state={executor.state} />
+            <EntityStatusChip status={executor.status} state={executor.state} />
             <FavoriteButton
               componentId={String(executor.id)}
               componentType="executor"
@@ -135,7 +135,7 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
                   <Entity
                     key={parent.id}
                     entity={parent}
-                    providerIconSize={24}
+                    providerIconSize={18}
                   />
                 ))}
               </div>

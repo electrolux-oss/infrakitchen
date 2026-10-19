@@ -1,6 +1,8 @@
 "use client";
 import * as React from "react";
 
+import { cn } from "../utils/cn";
+
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
 
 export interface PageContainerProps {
@@ -11,6 +13,8 @@ export interface PageContainerProps {
   documentTitle?: string;
   /** Page-level notice (e.g. an alert) rendered above the page header */
   banner?: React.ReactNode;
+  /** Label/content rendered inline next to the title (e.g. entity status) */
+  titleAdornment?: React.ReactNode;
   /** Actions/buttons to render at the right side of the page header */
   actions?: React.ReactNode;
   /** Actions/buttons to render at the bottom of the page, centered */
@@ -23,6 +27,7 @@ export default function PageContainer(props: PageContainerProps) {
     title,
     description,
     documentTitle,
+    titleAdornment = null,
     banner = null,
     actions = null,
     bottomActions = null,
@@ -40,7 +45,15 @@ export default function PageContainer(props: PageContainerProps) {
           <div className="mt-4 flex flex-row flex-wrap justify-between gap-4">
             <div className="flex min-w-0 flex-col wrap-anywhere">
               {title ? (
-                <h1 className="m-0 text-h5 font-semibold">{title}</h1>
+                <h1
+                  className={cn(
+                    "m-0 text-h5 font-semibold",
+                    titleAdornment && "flex items-center gap-3",
+                  )}
+                >
+                  <span className="min-w-0">{title}</span>
+                  {titleAdornment}
+                </h1>
               ) : null}
               {description ? (
                 <p className="m-0 mt-2 text-body2 text-fg-muted">

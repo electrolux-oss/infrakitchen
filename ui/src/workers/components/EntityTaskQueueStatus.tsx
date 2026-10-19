@@ -7,8 +7,8 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { useNow } from "../../common/hooks/useNow";
 import { formatTimeUntil } from "../../common/utils";
-import { HourglassEmptyIcon } from "../../icons/material";
-import { Alert, AlertTitle, Button, Chip } from "../../ui";
+import { HeroClockIcon } from "../../icons";
+import { Alert, AlertTitle, Button, Label } from "../../ui";
 import {
   CANCEL_QUEUED_TASK_MUTATION,
   GqlEntityQueueStatus,
@@ -98,11 +98,10 @@ const QueuedTaskRow = ({
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2">
-        <Chip
+        <Label
           size="small"
           label={running ? "Running" : "Queued"}
-          color={running ? "info" : "default"}
-          variant={running ? "filled" : "outlined"}
+          tone={running ? "info" : "default"}
         />
         <p className="m-0 text-body2 font-medium">
           {taskLabel(task, entityName)}
@@ -174,7 +173,7 @@ export const EntityTaskQueueStatus = () => {
     <Alert
       className="w-full"
       severity={noWorkers ? "warning" : "info"}
-      icon={<HourglassEmptyIcon />}
+      icon={<HeroClockIcon />}
     >
       <AlertTitle>{title}</AlertTitle>
       <div className="flex flex-col gap-2">

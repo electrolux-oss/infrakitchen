@@ -3,7 +3,6 @@ import { EntityTableColumn } from "../../common/components/entity_table/EntityTa
 import {
   createdUpdatedColumns,
   NUMERIC_COLUMN_ALIGN,
-  userColumn,
 } from "../../common/components/entity_table/tableColumns";
 import { RenderCellParams } from "../../ui";
 
@@ -51,6 +50,5 @@ export const batchOperationColumns: EntityTableColumn[] = [
     ...NUMERIC_COLUMN_ALIGN,
     valueGetter: (value: any) => (value ? value.length : 0),
   },
-  ...createdUpdatedColumns(),
-  userColumn(),
+  ...createdUpdatedColumns({ withCreator: true }),
 ];

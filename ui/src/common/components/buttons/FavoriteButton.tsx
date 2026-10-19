@@ -4,7 +4,7 @@ import {
   CREATE_FAVORITE_MUTATION,
   DELETE_FAVORITE_MUTATION,
 } from "../../../favorites/graphql";
-import { FavoriteBorderIcon, FavoriteIcon } from "../../../icons/material";
+import { HeroHeartIcon, HeroHeartSolidIcon } from "../../../icons";
 import { IconButton, Tooltip } from "../../../ui";
 import { cn } from "../../../utils/cn";
 import { useConfig } from "../../context/ConfigContext";
@@ -83,14 +83,12 @@ export const FavoriteButton = ({
         disabled={submittingState}
       >
         {favoriteState ? (
-          <FavoriteIcon
+          <HeroHeartSolidIcon
             className="text-primary"
             fontSize={format === "table" ? "small" : "medium"}
           />
         ) : (
-          <FavoriteBorderIcon
-            fontSize={format === "table" ? "small" : "medium"}
-          />
+          <HeroHeartIcon fontSize={format === "table" ? "small" : "medium"} />
         )}
       </IconButton>
     </Tooltip>

@@ -10,10 +10,10 @@ import "@xyflow/react/dist/style.css";
 import { useShallow } from "zustand/react/shallow";
 
 import {
-  AccountTreeIcon,
-  CloseFullscreenIcon,
-  FullscreenIcon,
-} from "../../../../icons/material";
+  HeroArrowsPointingInIcon,
+  HeroArrowsPointingOutIcon,
+  HeroSquares2X2Icon,
+} from "../../../../icons";
 import {
   IconButton,
   Tooltip,
@@ -404,7 +404,7 @@ export const WiringDiagram = ({
             aria-label="Auto arrange nodes"
             onClick={autoArrange}
           >
-            <AccountTreeIcon fontSize="small" />
+            <HeroSquares2X2Icon fontSize="small" />
           </IconButton>
         </Tooltip>
         {allowFullscreen && (
@@ -415,9 +415,9 @@ export const WiringDiagram = ({
             onClick={() => setFullscreen((v) => !v)}
           >
             {fullscreen ? (
-              <CloseFullscreenIcon fontSize="small" />
+              <HeroArrowsPointingInIcon fontSize="small" />
             ) : (
-              <FullscreenIcon fontSize="small" />
+              <HeroArrowsPointingOutIcon fontSize="small" />
             )}
           </IconButton>
         )}

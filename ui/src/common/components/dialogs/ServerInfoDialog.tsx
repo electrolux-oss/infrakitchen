@@ -1,5 +1,5 @@
+import { HeroArrowTopRightOnSquareIcon } from "../../../icons";
 import { InfrakitchenLogo } from "../../../icons/InfrakitchenLogo";
-import { LaunchIcon } from "../../../icons/material";
 import {
   Alert,
   Divider,
@@ -59,7 +59,7 @@ const InfoRow = ({
           rel="noreferrer"
         >
           {displayValue}
-          <LaunchIcon className="text-[14px]" />
+          <HeroArrowTopRightOnSquareIcon className="text-[14px]" />
         </Link>
       ) : (
         <p className="m-0 font-mono text-body2 [word-break:break-word]">

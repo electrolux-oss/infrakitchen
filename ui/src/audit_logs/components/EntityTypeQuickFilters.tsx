@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 import { humanizeEntityType } from "../../common/components/entities/Entity";
-import { Label } from "../../common/components/labels/Label";
+import { Label } from "../../ui/Label";
 
 const AUDIT_ENTITY_TYPES = [
   "template",
@@ -65,7 +65,6 @@ export const EntityTypeQuickFilters = ({
           aria-pressed={selectedSet.has(type)}
           aria-label={`Filter audit logs by ${humanizeEntityType(type)}`}
           tone={selectedSet.has(type) ? "info" : "default"}
-          size="medium"
         />
       ))}
     </div>

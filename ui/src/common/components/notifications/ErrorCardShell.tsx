@@ -1,6 +1,6 @@
 import { forwardRef, ReactNode } from "react";
 
-import { CloseIcon } from "../../../icons/material";
+import { HeroXMarkIcon } from "../../../icons";
 import { IconButton, Card } from "../../../ui";
 
 interface ErrorCardShellProps {
@@ -27,7 +27,7 @@ export const ErrorCardShell = forwardRef<HTMLDivElement, ErrorCardShellProps>(
               size="small"
               onClick={onDismiss}
             >
-              <CloseIcon fontSize="small" />
+              <HeroXMarkIcon fontSize="small" />
             </IconButton>
           </div>
           {children && <div className="mt-1">{children}</div>}

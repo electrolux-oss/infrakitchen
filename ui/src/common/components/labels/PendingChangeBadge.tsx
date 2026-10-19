@@ -1,4 +1,5 @@
-import { Chip, Tooltip } from "../../../ui";
+import { Tooltip } from "../../../ui";
+import { Label } from "../../../ui/Label";
 
 interface PendingChangeBadgeProps {
   label?: string;
@@ -9,12 +10,7 @@ export const PendingChangeBadge = ({
 }: PendingChangeBadgeProps) => {
   return (
     <Tooltip title="This update is staged and will take effect after approval.">
-      <Chip
-        label={label.toUpperCase()}
-        size="medium"
-        appearance="solid"
-        color="warning"
-      />
+      <Label tone="warning" label={label} />
     </Tooltip>
   );
 };

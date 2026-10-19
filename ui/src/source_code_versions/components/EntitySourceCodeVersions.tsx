@@ -7,7 +7,7 @@ import {
 } from "../../common/components/entity_table/EntityFetchTable";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { TuneIcon } from "../../icons/material";
+import { HeroAdjustmentsHorizontalIcon } from "../../icons";
 import { Button } from "../../ui";
 import { SCV_FIELD_MAP } from "../graphql/fragments";
 
@@ -39,7 +39,7 @@ export const EntitySourceCodeVersions = ({
         <div className="mb-1 flex w-full justify-end">
           <Button
             size="small"
-            startIcon={<TuneIcon />}
+            startIcon={<HeroAdjustmentsHorizontalIcon />}
             onClick={() => setDialogOpen(true)}
           >
             Manage Versions

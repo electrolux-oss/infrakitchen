@@ -4,8 +4,9 @@ import {
 } from "../../common/components/cards/EntitySidebar";
 import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
 import { CommonField } from "../../common/components/fields/CommonField";
-import StatusChip from "../../common/StatusChip";
-import { Chip, Link } from "../../ui";
+import { Label } from "../../common/components/labels";
+import { StatusLabel } from "../../common/components/labels";
+import { Link } from "../../ui";
 import { ToolDetail, toolStatus, formatToolSize } from "../types";
 
 export interface ToolSidebarProps {
@@ -13,7 +14,7 @@ export interface ToolSidebarProps {
 }
 
 /**
- * GitHub-style right sidebar for the tool detail page: groups the tool's
+ * Right context sidebar for the tool detail page: groups the tool's
  * status, binary details and history so the main column can focus on the
  * resources and executors that use it.
  */
@@ -22,10 +23,8 @@ export const ToolSidebar = ({ tool }: ToolSidebarProps) => (
     <SidebarSection title="Status">
       <div className="col-span-full">
         <div className="flex flex-row items-center gap-1">
-          <StatusChip status={toolStatus(tool)} />
-          {tool.isDefault && (
-            <Chip size="small" label="default" color="primary" />
-          )}
+          <StatusLabel status={toolStatus(tool)} />
+          {tool.isDefault && <Label tone="primary" label="default" />}
         </div>
       </div>
       {toolStatus(tool) === "error" && (

@@ -3,13 +3,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 
 import {
-  ContentPasteIcon,
-  EditIcon,
-  PendingActionsIcon,
-  RedoIcon,
-  SyncIcon,
-  UpdateIcon,
-} from "../../../icons/material";
+  HeroArrowPathRoundedSquareIcon,
+  HeroArrowUturnRightIcon,
+  HeroClipboardDocumentIcon,
+  HeroClipboardDocumentListIcon,
+  HeroPencilSquareIcon,
+  HeroPlayCircleIcon,
+} from "../../../icons";
 import { Button, Tooltip } from "../../../ui";
 import { ENTITY_ACTION } from "../../../utils/constants";
 import { useConfig } from "../../context/ConfigContext";
@@ -85,7 +85,7 @@ export function EntityActions(props: EntityActionsProps) {
         <Tooltip title="Preview what will change before applying">
           <Button
             onClick={() => changeDialog("dryrun")}
-            startIcon={<ContentPasteIcon />}
+            startIcon={<HeroClipboardDocumentListIcon />}
           >
             Plan
           </Button>
@@ -96,7 +96,7 @@ export function EntityActions(props: EntityActionsProps) {
         actions.includes("has_temporary_state") && (
           <Button
             onClick={() => changeDialog("dryrun_with_temp_state")}
-            startIcon={<PendingActionsIcon />}
+            startIcon={<HeroClipboardDocumentIcon />}
           >
             Plan (Temp State)
           </Button>
@@ -105,7 +105,7 @@ export function EntityActions(props: EntityActionsProps) {
         <Tooltip title="Apply changes to infrastructure">
           <Button
             onClick={() => changeDialog("execute")}
-            startIcon={<UpdateIcon />}
+            startIcon={<HeroPlayCircleIcon />}
           >
             Apply
           </Button>
@@ -116,7 +116,10 @@ export function EntityActions(props: EntityActionsProps) {
       )}
 
       {actions.includes("sync") && (
-        <Button onClick={() => changeDialog("sync")} startIcon={<SyncIcon />}>
+        <Button
+          onClick={() => changeDialog("sync")}
+          startIcon={<HeroArrowPathRoundedSquareIcon />}
+        >
           Sync
         </Button>
       )}
@@ -124,7 +127,7 @@ export function EntityActions(props: EntityActionsProps) {
       {actions.includes("recreate") && (
         <Button
           onClick={() => changeDialog("recreate")}
-          startIcon={<RedoIcon />}
+          startIcon={<HeroArrowUturnRightIcon />}
         >
           Recreate
         </Button>
@@ -142,7 +145,7 @@ export function EntityActions(props: EntityActionsProps) {
               navigate(`${linkPrefix}${entity_name}s/${entity_id}/edit`)
             }
           >
-            <EditIcon />
+            <HeroPencilSquareIcon />
           </Button>
         </Tooltip>
       )}

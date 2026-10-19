@@ -2,13 +2,13 @@ import { forwardRef } from "react";
 
 import { toast } from "sonner";
 
+import { HeroCheckCircleIcon } from "../../../icons";
 import {
-  CheckCircleOutlinedIcon,
-  CloseIcon,
-  ErrorOutlinedIcon,
-  InfoOutlinedIcon,
-  WarningAmberIcon,
-} from "../../../icons/material";
+  HeroExclamationCircleIcon,
+  HeroExclamationTriangleIcon,
+  HeroInformationCircleIcon,
+} from "../../../icons";
+import { HeroXMarkIcon } from "../../../icons";
 import { IconButton } from "../../../ui";
 import { cn } from "../../../utils/cn";
 
@@ -33,11 +33,11 @@ const VARIANT_BG: Record<SnackbarVariant, string> = {
 };
 
 const variantIcons = {
-  default: InfoOutlinedIcon,
-  success: CheckCircleOutlinedIcon,
-  error: ErrorOutlinedIcon,
-  warning: WarningAmberIcon,
-  info: InfoOutlinedIcon,
+  default: HeroInformationCircleIcon,
+  success: HeroCheckCircleIcon,
+  error: HeroExclamationCircleIcon,
+  warning: HeroExclamationTriangleIcon,
+  info: HeroInformationCircleIcon,
 };
 
 export const NotificationContent = forwardRef<
@@ -75,7 +75,7 @@ export const NotificationContent = forwardRef<
             onClick={() => closeSnackbar(id)}
             size="small"
           >
-            <CloseIcon fontSize="small" />
+            <HeroXMarkIcon fontSize="small" />
           </IconButton>
         </div>
       </div>

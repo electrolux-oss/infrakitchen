@@ -2,7 +2,7 @@ import { forwardRef, useCallback } from "react";
 
 import { toast } from "sonner";
 
-import { ErrorOutlinedIcon } from "../../../icons/material";
+import { HeroExclamationCircleIcon } from "../../../icons";
 import { CodeBlock } from "../code/CodeBlock";
 
 import { ErrorCardShell } from "./ErrorCardShell";
@@ -29,7 +29,7 @@ export const ErrorWithStatusCode = forwardRef<
     <ErrorCardShell ref={ref} title={message} onDismiss={handleDismiss}>
       {text && (
         <div className="flex gap-2 rounded-surface bg-error/8 p-3">
-          <ErrorOutlinedIcon
+          <HeroExclamationCircleIcon
             className="mt-0.25"
             color="error"
             fontSize="small"

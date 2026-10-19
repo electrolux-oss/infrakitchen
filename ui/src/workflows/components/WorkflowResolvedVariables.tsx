@@ -1,15 +1,12 @@
 import { useMemo } from "react";
 
+import { Label } from "../../common/components/labels";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { copyToClipboard } from "../../common/utils/clipboard";
-import {
-  CodeIcon,
-  ContentCopyIcon,
-  ExpandMoreIcon,
-} from "../../icons/material";
+import { HeroDocumentDuplicateIcon } from "../../icons";
+import { HeroCodeBracketIcon, HeroChevronDownIcon } from "../../icons";
 import {
   IconButton,
-  Chip,
   Tooltip,
   Accordion,
   AccordionDetails,
@@ -73,18 +70,17 @@ export const WorkflowResolvedVariables = ({
           defaultExpanded
         >
           <AccordionSummary
-            expandIcon={<ExpandMoreIcon className="bg-canvas" />}
+            expandIcon={<HeroChevronDownIcon className="bg-canvas" />}
           >
             <div className="flex w-full items-center gap-3">
-              <CodeIcon fontSize="small" color="action" />
+              <HeroCodeBracketIcon fontSize="small" color="action" />
               <h6 className="m-0 text-subtitle1 font-semibold text-grey-500">
                 {group.templateName}
               </h6>
-              <Chip
+              <Label
                 label={`${group.steps.length} step${
                   group.steps.length === 1 ? "" : "s"
                 }`}
-                variant="outlined"
               />
             </div>
           </AccordionSummary>
@@ -128,11 +124,7 @@ const StepVariablesBlock = ({
     <div className="border-t border-divider first-of-type:border-t-0">
       <div className="flex items-center gap-2 bg-hover px-4 py-2">
         {showPosition && (
-          <Chip
-            className="min-w-9 font-bold"
-            label={`#${step.position + 1}`}
-            color="primary"
-          />
+          <Label label={`#${step.position + 1}`} tone="primary" />
         )}
         <span className="text-caption text-fg-muted">
           {entries.length} variable{entries.length === 1 ? "" : "s"}
@@ -140,7 +132,7 @@ const StepVariablesBlock = ({
         <div className="flex-1" />
         <Tooltip title="Copy JSON">
           <IconButton size="small" onClick={handleCopy}>
-            <ContentCopyIcon fontSize="small" />
+            <HeroDocumentDuplicateIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       </div>

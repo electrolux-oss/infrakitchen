@@ -5,16 +5,39 @@ import { useParams } from "react-router";
 import { LogLiveTail, PermissionWrapper, useConfig } from "../../common";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
-import { EntityProvider } from "../../common/context/EntityContext";
+import { EntityStatusChip } from "../../common/components/labels/EntityStatusChip";
+import {
+  EntityProvider,
+  useEntityProvider,
+} from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { TaskAltIcon } from "../../icons/material";
+import { HeroCheckBadgeIcon, HeroPuzzlePieceIcon } from "../../icons";
 import { Button } from "../../ui";
+import { Label } from "../../ui/Label";
 import { IntegrationContent } from "../components/IntegrationContent";
 import {
   INTEGRATION_DETAILS_FIELDS,
   VALIDATE_INTEGRATION_MUTATION,
 } from "../graphql";
 import { IntegrationValidationResult } from "../types";
+import { integrationTypeChipColor } from "../types";
+
+export const EntityStatusChipSlot = () => {
+  const { entity } = useEntityProvider();
+  if (!entity?.status) return null;
+  return <EntityStatusChip status={entity.status} state={entity.state} />;
+};
+
+export const IntegrationHeaderTypeLabel = () => {
+  const { entity } = useEntityProvider();
+  if (!entity?.integrationType) return null;
+  return (
+    <Label
+      tone={integrationTypeChipColor(entity.integrationType)}
+      label={entity.integrationType.toUpperCase()}
+    />
+  );
+};
 
 export const IntegrationPage = () => {
   const { integration_id } = useParams();
@@ -57,6 +80,13 @@ export const IntegrationPage = () => {
       entityFields={INTEGRATION_DETAILS_FIELDS}
     >
       <EntityContainer
+        titleIcon={<HeroPuzzlePieceIcon />}
+        titleAdornment={
+          <>
+            <IntegrationHeaderTypeLabel />
+            <EntityStatusChipSlot />
+          </>
+        }
         actions={
           <>
             <PermissionWrapper
@@ -64,7 +94,7 @@ export const IntegrationPage = () => {
               permissionAction="write"
             >
               <Button
-                startIcon={<TaskAltIcon />}
+                startIcon={<HeroCheckBadgeIcon />}
                 variant="outlined"
                 onClick={handleValidation}
                 loading={loading}

@@ -6,6 +6,7 @@ import {
   EntityProvider,
   useEntityProvider,
 } from "../../common/context/EntityContext";
+import { HeroCommandLineIcon } from "../../icons";
 import { ToolContent } from "../components/ToolContent";
 import { ToolHeaderActions } from "../components/ToolHeaderActions";
 import { TOOL_DETAIL_FIELDS } from "../graphql";
@@ -32,6 +33,7 @@ const ToolPageContent = () => {
   return (
     // Tools are headed by name, version and platform, as the overview card was.
     <EntityContainer
+      titleIcon={<HeroCommandLineIcon />}
       title={tool ? toolLabel(tool) : undefined}
       actions={
         <>

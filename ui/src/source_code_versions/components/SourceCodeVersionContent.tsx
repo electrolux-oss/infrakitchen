@@ -10,10 +10,10 @@ import {
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
 import { HclItemList } from "../../common/components/hcl/HclItemList";
+import { Label } from "../../common/components/labels";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
-import { Chip } from "../../ui";
 import { EntityTaskQueueStatus } from "../../workers/components";
 import { GqlSourceCodeVersion } from "../graphql";
 
@@ -22,13 +22,13 @@ import { InputTab } from "./InputTab";
 import { ConfigurationTabContent } from "./SourceCodeRefRow";
 import { SourceCodeVersionSidebar } from "./SourceCodeVersionSidebar";
 
-/** Card title with an info-tinted count chip, e.g. "Input Variables" + [4]. */
+/** Card title with a count pill, e.g. "Input Variables" [4]. */
 const CardCountTitle = ({ title, count }: { title: string; count: number }) => (
   <div className="flex items-center gap-2">
     {/* Inherit the card-title styling so this header matches the
         plain-string titles used by the other cards. */}
     <span>{title}</span>
-    <Chip label={String(count)} appearance="solid" color="info" />
+    <Label label={String(count)} />
   </div>
 );
 

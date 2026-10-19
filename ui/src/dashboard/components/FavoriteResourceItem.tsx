@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import { useConfig } from "../../common";
 import { Entity } from "../../common/components/entities/Entity";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
-import StatusChip from "../../common/StatusChip";
+import { StatusLabel } from "../../common/components/labels";
 import { FavoriteResource } from "../types";
 
 export interface FavoriteResourceItemProps {
@@ -73,7 +73,7 @@ export const FavoriteResourceItem = ({
         </p>
       )}
       {(resource.status || resource.state) && (
-        <StatusChip
+        <StatusLabel
           status={resource.status ?? ""}
           state={resource.state}
           compact

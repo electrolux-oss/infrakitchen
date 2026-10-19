@@ -8,14 +8,13 @@ import {
   TabCountLabel,
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
-import { EntityGraphViewTab } from "../../common/components/graph/GraphViewTab";
-import { EntityTreeViewTab } from "../../common/components/tree/TreeViewTab";
+import { TopologyTab } from "../../common/components/graph/TopologyTab";
 import { MarkdownViewer } from "../../common/components/viewers/MarkdownViewer";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
 import { EntitySourceCodeVersions } from "../../source_code_versions/components/EntitySourceCodeVersions";
-import { Chip, Card, CardContent } from "../../ui";
+import { Card, CardContent } from "../../ui";
 
 import { TemplateSidebar } from "./TemplateSidebar";
 
@@ -35,13 +34,7 @@ export const TemplateContent = () => {
           {
             label: "Documentation",
             content: (
-              <Card className="relative overflow-visible">
-                <Chip
-                  className="absolute -top-2.5 left-4 z-1"
-                  label="Template Documentation"
-                  color="info"
-                  variant="filled"
-                />
+              <Card>
                 <CardContent>
                   <MarkdownViewer content={entity.documentation} />
                 </CardContent>
@@ -78,21 +71,9 @@ export const TemplateContent = () => {
       ),
     },
     {
-      label: "Tree View",
+      label: "Topology",
       content: (
-        <EntityTreeViewTab
-          entity_id={entity.id}
-          entity_name={entity.entityName}
-        />
-      ),
-    },
-    {
-      label: "Graph View",
-      content: (
-        <EntityGraphViewTab
-          entity_id={entity.id}
-          entity_name={entity.entityName}
-        />
+        <TopologyTab entity_id={entity.id} entity_name={entity.entityName} />
       ),
     },
     {

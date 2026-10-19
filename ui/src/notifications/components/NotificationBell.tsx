@@ -6,7 +6,7 @@ import { getNotificationEntityLink } from "../../common/components/notifications
 import { useConfig } from "../../common/context/ConfigContext";
 import { useNotificationProvider } from "../../common/context/NotificationContext";
 import { notifyError } from "../../common/hooks/useNotification";
-import { NotificationsNoneOutlinedIcon } from "../../icons/material";
+import { HeroBellIcon } from "../../icons";
 import { Divider, Button, IconButton, Popover, List, Badge } from "../../ui";
 import { GqlUserNotification } from "../graphql";
 
@@ -81,7 +81,7 @@ export const NotificationBell = () => {
   return (
     <>
       <IconButton
-        className="border-0 bg-transparent hover:bg-transparent"
+        className="border-0 bg-transparent hover:bg-transparent [&_svg]:size-4.5"
         size="small"
         aria-label={
           unreadCount > 0
@@ -94,7 +94,7 @@ export const NotificationBell = () => {
         onClick={handleIconClick}
       >
         <Badge badgeContent={unreadCount} color="error" max={99}>
-          <NotificationsNoneOutlinedIcon />
+          <HeroBellIcon />
         </Badge>
       </IconButton>
       <Popover

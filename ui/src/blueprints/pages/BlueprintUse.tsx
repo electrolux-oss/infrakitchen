@@ -14,14 +14,14 @@ import {
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import { HeroExclamationCircleIcon } from "../../icons";
 import {
-  ErrorOutlinedIcon,
-  ExpandMoreIcon,
-  LinkIcon,
-  TuneIcon,
-  VisibilityIcon,
-  VisibilityOffIcon,
-} from "../../icons/material";
+  HeroChevronDownIcon,
+  HeroLinkIcon,
+  HeroAdjustmentsHorizontalIcon,
+  HeroEyeIcon,
+  HeroEyeSlashIcon,
+} from "../../icons";
 import { ResourceVariableRow } from "../../resources/components/variables/ResourceVariablesForm";
 import { ResourceVariableSchema } from "../../resources/types";
 import { GqlTemplateShort } from "../../templates/graphql";
@@ -31,13 +31,13 @@ import {
   Alert,
   Spinner,
   Button,
-  Chip,
   Tooltip,
   TextField,
   Accordion,
   AccordionDetails,
   AccordionSummary,
 } from "../../ui";
+import { Label } from "../../ui/Label";
 import { cn } from "../../utils/cn";
 import { GqlWorkflow } from "../../workflows/graphql";
 import {
@@ -894,13 +894,12 @@ export const BlueprintUsePage = () => {
                   fullWidth
                   margin="normal"
                   startAdornment={
-                    <Chip
-                      className="mr-2"
-                      icon={<TuneIcon />}
-                      label={isNumber ? "Number" : "String"}
+                    <Label
                       size="small"
-                      color="secondary"
-                      variant="outlined"
+                      tone="secondary"
+                      icon={<HeroAdjustmentsHorizontalIcon />}
+                      label={isNumber ? "Number" : "String"}
+                      className="mr-2"
                     />
                   }
                 />
@@ -946,25 +945,20 @@ export const BlueprintUsePage = () => {
               key={t.id}
               title={
                 <div className="flex items-center gap-2">
-                  <Chip
-                    className="min-w-7 font-bold"
-                    label={idx + 1}
-                    color="primary"
-                  />
+                  <Label size="large" tone="primary" label={idx + 1} />
                   <span>{t.name}</span>
                   {Object.keys(wired).length > 0 && (
-                    <Chip
+                    <Label
+                      tone="info"
+                      icon={<HeroLinkIcon />}
                       label={`${Object.keys(wired).length} wired`}
-                      color="info"
-                      variant="outlined"
-                      icon={<LinkIcon />}
                     />
                   )}
                   {missingCount > 0 && (
-                    <Chip
+                    <Label
+                      tone="error"
+                      icon={<HeroExclamationCircleIcon />}
                       label={`${missingCount} required missing`}
-                      color="error"
-                      icon={<ErrorOutlinedIcon />}
                     />
                   )}
                 </div>
@@ -1024,13 +1018,13 @@ export const BlueprintUsePage = () => {
                             }
                             arrow
                           >
-                            <Chip
+                            <Label
                               className="mt-2"
                               icon={
                                 wiredCfg.isConstantWire ? (
-                                  <TuneIcon />
+                                  <HeroAdjustmentsHorizontalIcon fontSize="small" />
                                 ) : (
-                                  <LinkIcon />
+                                  <HeroLinkIcon fontSize="small" />
                                 )
                               }
                               label={
@@ -1039,10 +1033,9 @@ export const BlueprintUsePage = () => {
                                   : `Wired: ${wiredCfg.sourceTemplateName} -> ${wiredCfg.sourceOutput}`
                               }
                               size="small"
-                              color={
+                              tone={
                                 wiredCfg.isConstantWire ? "secondary" : "info"
                               }
-                              variant="outlined"
                             />
                           </Tooltip>
                         ) : (
@@ -1074,7 +1067,7 @@ export const BlueprintUsePage = () => {
               {/* Variables */}
               {totalNonRestricted > 0 ? (
                 <Accordion standalone className="mt-4" defaultExpanded>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <AccordionSummary expandIcon={<HeroChevronDownIcon />}>
                     <div className="flex w-full items-center gap-2">
                       <h4 className="m-0 text-h5">
                         Input Variables ({visibleVars.length}
@@ -1107,9 +1100,9 @@ export const BlueprintUsePage = () => {
                           onFocus={(e) => e.stopPropagation()}
                         >
                           {hideDefaults ? (
-                            <VisibilityIcon fontSize="small" />
+                            <HeroEyeIcon fontSize="small" />
                           ) : (
-                            <VisibilityOffIcon fontSize="small" />
+                            <HeroEyeSlashIcon fontSize="small" />
                           )}
                         </span>
                       </Tooltip>
@@ -1167,13 +1160,14 @@ export const BlueprintUsePage = () => {
                                 }
                                 arrow
                               >
-                                <Chip
+                                <Label
+                                  size="small"
                                   className="mt-2"
                                   icon={
                                     wiredInfo.isConstantWire ? (
-                                      <TuneIcon />
+                                      <HeroAdjustmentsHorizontalIcon fontSize="small" />
                                     ) : (
-                                      <LinkIcon />
+                                      <HeroLinkIcon fontSize="small" />
                                     )
                                   }
                                   label={
@@ -1181,13 +1175,11 @@ export const BlueprintUsePage = () => {
                                       ? `Constant: ${wiredInfo.sourceTemplateName}`
                                       : `Wired: ${wiredInfo.sourceTemplateName} -> ${wiredInfo.sourceOutput}`
                                   }
-                                  size="small"
-                                  color={
+                                  tone={
                                     wiredInfo.isConstantWire
                                       ? "secondary"
                                       : "info"
                                   }
-                                  variant="outlined"
                                 />
                               </Tooltip>
                             ) : undefined}

@@ -1,5 +1,5 @@
+import { HeroArrowPathRoundedSquareIcon } from "../../../icons";
 import { SlackIcon } from "../../../icons/Icons";
-import { SyncIcon } from "../../../icons/material";
 import { Spinner, Button, Tooltip } from "../../../ui";
 import { notify, notifyError } from "../../hooks/useNotification";
 
@@ -35,7 +35,11 @@ export const SlackSync = ({ userId, slackId }: SlackSyncProps) => {
       ) : integrationAvailable ? (
         <Button
           startIcon={
-            linking ? <Spinner size={14} /> : <SyncIcon fontSize="small" />
+            linking ? (
+              <Spinner size={14} />
+            ) : (
+              <HeroArrowPathRoundedSquareIcon fontSize="small" />
+            )
           }
           onClick={handleSyncSlack}
           disabled={linking}

@@ -44,8 +44,9 @@ export const CREATE_WORKSPACE_MUTATION = `
 
 /**
  * Re-fetches the workspace's provider metadata (e.g. default branch,
- * description, URLs) from GitHub and updates the stored configuration.
- * Currently GitHub-only; the workspace's `name` is left untouched.
+ * description, URLs) from the Git provider and updates the stored
+ * configuration. Currently Git-provider-only; the workspace's `name` is
+ * left untouched.
  */
 export const SYNC_WORKSPACE_METADATA_MUTATION = `
   mutation SyncWorkspaceMetadata($id: UUID!) {

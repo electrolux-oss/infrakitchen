@@ -4,7 +4,7 @@ import { useConfig } from "../common";
 import { DiffEditor } from "../common/components/activity/DiffEditor";
 import { getDateValue } from "../common/components/fields/CommonField";
 import GradientCircularProgress from "../common/GradientCircularProgress";
-import { DifferenceIcon, SwapHorizIcon } from "../icons/material";
+import { HeroArrowsRightLeftIcon, HeroDocumentDuplicateIcon } from "../icons";
 import {
   Alert,
   IconButton,
@@ -143,7 +143,7 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
           className="mt-4 mb-0 ml-2"
           title={
             <div className="flex flex-row items-center gap-4 p-2">
-              <DifferenceIcon className="mt-1.5" fontSize="small" />
+              <HeroDocumentDuplicateIcon className="mt-1.5" fontSize="small" />
               <FormControl>
                 <InputLabel>From</InputLabel>
                 <Select
@@ -181,7 +181,7 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
                 onClick={handleSwap}
                 title="Swap revisions"
               >
-                <SwapHorizIcon fontSize="small" />
+                <HeroArrowsRightLeftIcon fontSize="small" />
               </IconButton>
               <FormControl>
                 <InputLabel>To</InputLabel>

@@ -11,18 +11,17 @@ import {
   humanizeEntityType,
 } from "../../common/components/entities/Entity";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
-import { Label } from "../../common/components/labels/Label";
 import { useConfig } from "../../common/context/ConfigContext";
 import { paletteTextClass } from "../../common/utils";
+import { HeroArrowUturnLeftIcon, HeroCheckCircleIcon } from "../../icons";
 import {
-  CheckCircleOutlinedIcon,
-  ErrorOutlinedIcon,
-  HistoryIcon,
-  PendingOutlinedIcon,
-  WarningAmberOutlinedIcon,
-} from "../../icons/material";
+  HeroClockIcon,
+  HeroExclamationCircleIcon,
+  HeroExclamationTriangleIcon,
+} from "../../icons";
 import { Divider, Spinner, Button, useMediaQuery } from "../../ui";
 import { DataTable, DataTableColumn, RenderCellParams } from "../../ui";
+import { Label } from "../../ui/Label";
 import { cn } from "../../utils/cn";
 import { ActivityLogEntry } from "../types";
 
@@ -114,10 +113,10 @@ function activityStatus(
 }
 
 const STATUS_ICONS = {
-  success: CheckCircleOutlinedIcon,
-  failure: ErrorOutlinedIcon,
-  warning: WarningAmberOutlinedIcon,
-  pending: PendingOutlinedIcon,
+  success: HeroCheckCircleIcon,
+  failure: HeroExclamationCircleIcon,
+  warning: HeroExclamationTriangleIcon,
+  pending: HeroClockIcon,
 } as const;
 
 const STATUS_COLORS = {
@@ -312,7 +311,7 @@ export const RecentActivityWidget = ({
   return (
     <div className="h-full w-full">
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <HistoryIcon className="text-[20px] text-primary" />
+        <HeroArrowUturnLeftIcon className="text-[20px] text-primary" />
         <h6 className="m-0 text-subtitle1 font-semibold text-grey-500">
           Recent Activities
         </h6>
@@ -330,7 +329,7 @@ export const RecentActivityWidget = ({
           </div>
         ) : count === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-fg-muted">
-            <HistoryIcon className="mb-2 text-[32px] opacity-50" />
+            <HeroArrowUturnLeftIcon className="mb-2 text-[32px] opacity-50" />
             <p className="m-0 text-body2">
               No recent activities {hasFavorites ? "on your favorites." : "."}
             </p>

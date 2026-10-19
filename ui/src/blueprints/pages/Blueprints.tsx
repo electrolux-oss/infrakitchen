@@ -4,7 +4,7 @@ import { PermissionWrapper } from "../../common";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import { useConfig } from "../../common/context/ConfigContext";
 import PageContainer from "../../common/PageContainer";
-import { AddIcon } from "../../icons/material";
+import { HeroPlusCircleIcon } from "../../icons";
 import { Button } from "../../ui";
 import { blueprintColumns } from "../components/blueprintTableConfig";
 import { BLUEPRINT_FIELD_MAP } from "../graphql";
@@ -21,7 +21,7 @@ export const BlueprintsPage = () => {
       >
         <Button
           onClick={() => navigate(`${linkPrefix}blueprints/create`)}
-          startIcon={<AddIcon />}
+          startIcon={<HeroPlusCircleIcon />}
         >
           Create
         </Button>

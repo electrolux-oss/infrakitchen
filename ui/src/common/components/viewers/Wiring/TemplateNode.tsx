@@ -1,7 +1,8 @@
 import { Handle, NodeProps, Position } from "@xyflow/react";
 
-import { DeleteIcon, StorageIcon } from "../../../../icons/material";
-import { IconButton, Chip, Tooltip } from "../../../../ui";
+import { HeroTrashIcon } from "../../../../icons";
+import { HeroCircleStackIcon } from "../../../../icons";
+import { IconButton, Label, Tooltip } from "../../../../ui";
 import { STATUS_CHIP_COLOR } from "../../../utils";
 import { InlineCode } from "../../code/InlineCode";
 import { GetReferenceUrlValue } from "../../fields/CommonField";
@@ -52,22 +53,13 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
         }}
       >
         {isExternal && (
-          <StorageIcon
+          <HeroCircleStackIcon
             style={{ color: headerText }}
             className="shrink-0"
             fontSize="small"
           />
         )}
-        {displayOrder != null && (
-          // Not a Chip: the theme's dark-mode Chip background out-specifies
-          // `sx` and would force a grey badge onto the coloured header.
-          <div
-            className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-[10px] bg-[rgba(255,_255,_255,_0.25)] px-1 text-[11px] leading-[1] font-bold"
-            style={{ color: headerText }}
-          >
-            {displayOrder}
-          </div>
-        )}
+        {displayOrder != null && <Label size="small" label={displayOrder} />}
         <h6
           className="m-0 flex-1 overflow-hidden text-subtitle2 font-bold text-ellipsis whitespace-nowrap text-grey-500"
           style={{ color: headerText }}
@@ -75,10 +67,10 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
           {data.label}
         </h6>
         {data.status && !canRemove && (
-          <Chip
-            className="h-5 text-[10px] font-semibold"
+          <Label
+            size="small"
             label={data.status.replace("_", " ").toUpperCase()}
-            color={STATUS_CHIP_COLOR[data.status]}
+            tone={STATUS_CHIP_COLOR[data.status]}
           />
         )}
         {canRemove && (
@@ -89,7 +81,7 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
               size="small"
               onClick={() => data.onRemove?.(data.templateId)}
             >
-              <DeleteIcon className="text-[16px]" />
+              <HeroTrashIcon className="text-[16px]" />
             </IconButton>
           </Tooltip>
         )}
@@ -97,7 +89,7 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
       {/* External badge */}
       {isExternal && (
         <div className="px-3 pt-2">
-          <Chip label="External" variant="outlined" color="warning" />
+          <Label label="External" tone="warning" />
           <span className="mt-1 mb-1 block text-caption text-fg-muted">
             Parent resource as input
           </span>
@@ -157,11 +149,11 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
                   />
                 </Tooltip>
                 <Tooltip title={input} arrow>
-                  <Chip
-                    className="min-w-0 flex-initial text-[11px]"
+                  <Label
+                    size="small"
+                    className="min-w-0 flex-initial"
                     label={input}
-                    variant="outlined"
-                    color="info"
+                    tone="info"
                   />
                 </Tooltip>
                 <Tooltip
@@ -203,11 +195,11 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
                 key={`out-${output}`}
               >
                 <Tooltip title={output} arrow>
-                  <Chip
-                    className="min-w-0 flex-initial text-[11px]"
+                  <Label
+                    size="small"
+                    className="min-w-0 flex-initial"
                     label={output}
-                    variant="outlined"
-                    color="success"
+                    tone="success"
                   />
                 </Tooltip>
                 <Tooltip
@@ -275,11 +267,11 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
                 </Tooltip>
               )}
               <Tooltip title={config} arrow>
-                <Chip
-                  className="mr-auto min-w-0 flex-initial text-[11px]"
+                <Label
+                  size="small"
+                  className="mr-auto min-w-0 flex-initial"
                   label={config}
-                  variant="outlined"
-                  color="secondary"
+                  tone="secondary"
                 />
               </Tooltip>
               <Tooltip

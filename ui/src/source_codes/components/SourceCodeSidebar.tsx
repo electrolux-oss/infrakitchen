@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Entity, IconField } from "../../common";
+import { Entity } from "../../common";
 import {
   EntitySidebar,
   SidebarSection,
@@ -15,10 +15,11 @@ import {
 } from "../../common/components/fields/CommonField";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
+import { StatusLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
-import StatusChip from "../../common/StatusChip";
+import { ProviderIcon } from "../../icons/Icons";
 import { IkEntity } from "../../types";
 import { GqlSourceCode } from "../graphql";
 import {
@@ -31,7 +32,7 @@ export interface SourceCodeSidebarProps {
 }
 
 /**
- * GitHub-style right sidebar for the code repository detail page: groups the
+ * Right context sidebar for the code repository detail page: groups the
  * repository's description, status, remote and history so the main column can
  * focus on its commits, tags and branches.
  */
@@ -67,7 +68,7 @@ export const SourceCodeSidebar = ({ sourceCode }: SourceCodeSidebarProps) => {
 
       <SidebarSection title="Status">
         <div className="col-span-full">
-          <StatusChip status={sourceCode.status} />
+          <StatusLabel status={sourceCode.status} />
         </div>
       </SidebarSection>
 
@@ -75,8 +76,13 @@ export const SourceCodeSidebar = ({ sourceCode }: SourceCodeSidebarProps) => {
         <CommonField
           name={"URL"}
           value={
-            <div className="flex items-center gap-2">
-              {IconField(sourceCode.sourceCodeProvider)}
+            <div className="flex items-start gap-2">
+              <span className="mt-0.5 flex">
+                <ProviderIcon
+                  provider={sourceCode.sourceCodeProvider}
+                  size={18}
+                />
+              </span>
               {getRemoteUrlValue(sourceCode.sourceCodeUrl)}
             </div>
           }
@@ -86,7 +92,10 @@ export const SourceCodeSidebar = ({ sourceCode }: SourceCodeSidebarProps) => {
           name={"Type"}
           value={
             <div className="flex items-center gap-2">
-              {IconField(sourceCode.sourceCodeLanguage)}
+              <ProviderIcon
+                provider={sourceCode.sourceCodeLanguage}
+                size={18}
+              />
               {sourceCode.sourceCodeLanguage}
             </div>
           }
@@ -110,7 +119,7 @@ export const SourceCodeSidebar = ({ sourceCode }: SourceCodeSidebarProps) => {
           ariaLabel="Edit integration"
           display={
             sourceCode.integration ? (
-              <Entity entity={sourceCode.integration} providerIconSize={24} />
+              <Entity entity={sourceCode.integration} providerIconSize={18} />
             ) : null
           }
           onSave={(value) => saveField({ integrationId: value })}

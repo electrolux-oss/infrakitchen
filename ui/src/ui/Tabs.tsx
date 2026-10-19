@@ -22,6 +22,8 @@ export interface TabProps extends Omit<
   selected?: boolean;
   /** Set by Tabs. */
   fullWidth?: boolean;
+  /** Set by Tabs: raised-pill style inside a tinted track (appearance="segmented"). */
+  segmented?: boolean;
   /** Set by Tabs. */
   onTabSelect?: (event: SyntheticEvent, value: unknown) => void;
 }
@@ -33,6 +35,7 @@ export function Tab({
   disabled = false,
   selected = false,
   fullWidth = false,
+  segmented = false,
   onTabSelect,
   className,
   onClick,
@@ -50,9 +53,17 @@ export function Tab({
         if (!disabled) onTabSelect?.(event, value);
       }}
       className={cn(
-        "d-tab relative h-auto min-h-12 max-w-[360px] min-w-[90px] shrink-0 border-0 bg-transparent px-4 py-3 font-sans text-body2 leading-[1.25] font-medium text-fg-muted normal-case transition-colors",
-        "after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-primary after:opacity-0 after:transition-opacity",
-        selected && "text-primary after:opacity-100",
+        "d-tab relative h-auto max-w-[360px] shrink-0 border-0 bg-transparent font-sans text-body2 leading-[1.25] font-medium text-fg-muted normal-case transition-colors",
+        segmented
+          ? cn(
+              "min-h-0 min-w-0 rounded-surface px-4 py-1.5 whitespace-nowrap hover:text-fg",
+              selected && "bg-paper text-fg shadow-sm",
+            )
+          : cn(
+              "min-h-12 px-0 py-3",
+              "after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-primary after:opacity-0 after:transition-opacity",
+              selected && "text-primary after:opacity-100",
+            ),
         disabled && "opacity-38",
         fullWidth && "max-w-none flex-1",
         className,
@@ -72,18 +83,23 @@ export interface TabsProps extends Omit<
   onChange?: (event: SyntheticEvent, value: never) => void;
   /** `fullWidth` stretches tabs to fill the bar. */
   variant?: "standard" | "fullWidth" | "scrollable";
-  /** Hide the active-tab underline (segmented tab styles). */
+  /** `underline` (default) for page navigation; `segmented` (tinted track,
+   * raised pill) for small mutually exclusive view switches. */
+  appearance?: "underline" | "segmented";
+  /** Hide the active-tab underline (custom tab styles such as StyledTab). */
   hideIndicator?: boolean;
 }
 
 /**
- * Tab bar (daisyUI `tabs`): an underline marks the
- * selected tab; arrow keys move between tabs.
+ * Tab bar: an underline marks the selected tab (page navigation), or use
+ * `appearance="segmented"` for a small view switch; arrow keys move between
+ * tabs. `hideIndicator` drops the underline for custom tab styles.
  */
 export function Tabs({
   value,
   onChange,
   variant = "standard",
+  appearance = "underline",
   hideIndicator = false,
   className,
   children,
@@ -91,6 +107,7 @@ export function Tabs({
 }: TabsProps) {
   const tabs = Children.toArray(children).filter(isValidElement);
   const fullWidth = variant === "fullWidth";
+  const segmented = appearance === "segmented";
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
@@ -114,8 +131,13 @@ export function Tabs({
       role="tablist"
       onKeyDown={onKeyDown}
       className={cn(
-        "d-tabs flex min-h-12 flex-nowrap overflow-x-auto overflow-y-hidden bg-transparent",
-        hideIndicator && "[&>[role=tab]]:after:hidden",
+        "d-tabs flex flex-nowrap overflow-x-auto overflow-y-hidden bg-transparent",
+        segmented
+          ? "min-h-0 w-fit max-w-full gap-1 rounded-surface bg-hover p-1"
+          : "min-h-12 gap-6",
+        hideIndicator &&
+          "gap-0 [&>[role=tab]]:px-4 [&>[role=tab]]:after:hidden",
+        fullWidth && "w-full",
         className,
       )}
       {...rest}
@@ -128,6 +150,7 @@ export function Tabs({
           value: tabValue,
           selected: tabValue === value,
           fullWidth,
+          segmented,
           onTabSelect: (event: SyntheticEvent, v: unknown) =>
             onChange?.(event, v as never),
         });

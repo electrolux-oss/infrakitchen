@@ -4,8 +4,8 @@ import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { StatusLabel } from "../../common/components/labels";
 import PageContainer from "../../common/PageContainer";
-import StatusChip from "../../common/StatusChip";
 import { PermissionWrapper } from "../../common/wrappers/PermissionWrapper";
 import { TaskQueueButton } from "../../tasks/components/TaskQueueDialog";
 import { Tooltip } from "../../ui";
@@ -81,7 +81,7 @@ export default function WorkerList() {
         headerName: "Status",
         flex: 1,
         renderCell: (params: RenderCellParams) => (
-          <StatusChip status={String(params.row.status).toLowerCase()} />
+          <StatusLabel status={String(params.row.status).toLowerCase()} />
         ),
       },
       {

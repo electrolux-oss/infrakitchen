@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { BugReportIcon } from "../../../icons/material";
+import { HeroBugAntIcon } from "../../../icons";
 import { RESOURCE_DOWNLOAD_QUERY } from "../../../resources/graphql/queries";
 import { IconButton, Tooltip } from "../../../ui";
 import { useConfig } from "../../context/ConfigContext";
@@ -56,7 +56,7 @@ export const DownloadSourceCodeButton = ({
         disabled={isLoading}
         aria-label="Download source code for debugging"
       >
-        <BugReportIcon fontSize="small" />
+        <HeroBugAntIcon fontSize="small" />
       </IconButton>
     </Tooltip>
   );

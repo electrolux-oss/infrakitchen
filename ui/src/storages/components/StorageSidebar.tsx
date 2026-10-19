@@ -5,9 +5,9 @@ import {
 import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
+import { StatusLabel } from "../../common/components/labels";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
-import StatusChip from "../../common/StatusChip";
 import { GqlStorage } from "../graphql";
 import {
   StorageUpdateFieldInput,
@@ -19,7 +19,7 @@ export interface StorageSidebarProps {
 }
 
 /**
- * GitHub-style right sidebar for the storage detail page: groups the
+ * Right context sidebar for the storage detail page: groups the
  * storage's description, status and history so the main column can focus on
  * its configuration and the entities that use it.
  */
@@ -52,7 +52,7 @@ export const StorageSidebar = ({ storage }: StorageSidebarProps) => {
 
       <SidebarSection title="Status">
         <div className="col-span-full">
-          <StatusChip status={storage.status} state={storage.state} />
+          <StatusLabel status={storage.status} state={storage.state} />
         </div>
       </SidebarSection>
 

@@ -6,7 +6,7 @@ import { PermissionWrapper, useConfig } from "../../common";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import PageContainer from "../../common/PageContainer";
-import { AddIcon } from "../../icons/material";
+import { HeroPlusCircleIcon } from "../../icons";
 import { Button } from "../../ui";
 import {
   storageColumns,
@@ -34,7 +34,7 @@ export const StoragesPage = () => {
         >
           <Button
             onClick={() => navigate(`${linkPrefix}storages/create`)}
-            startIcon={<AddIcon />}
+            startIcon={<HeroPlusCircleIcon />}
           >
             Create
           </Button>

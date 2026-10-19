@@ -2,11 +2,10 @@ import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
   NUMERIC_COLUMN_ALIGN,
-  relativeTimeColumn,
-  userColumn,
+  createdByColumn,
 } from "../../common/components/entity_table/tableColumns";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
-import StatusChip from "../../common/StatusChip";
+import { StatusLabel } from "../../common/components/labels";
 import { getRepoNameFromUrl } from "../../common/utils";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
 import { ProviderIcon } from "../../icons/Icons";
@@ -16,7 +15,6 @@ import { ENTITY_STATUS, VERSION_LIFECYCLE_STATE } from "../../utils/constants";
 export const sourceCodeVersionDefaultColumnVisibilityModel: ColumnVisibilityModel =
   {
     createdAt: false,
-    creator: false,
     lifecycleState: false,
   };
 
@@ -148,7 +146,7 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
       ],
     },
     renderCell: (params: RenderCellParams) => (
-      <StatusChip status={params.row.status} />
+      <StatusLabel status={params.row.status} />
     ),
   },
   {
@@ -180,8 +178,5 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
       />
     ),
   },
-  relativeTimeColumn("createdAt", "Created", {
-    value: (params) => params.row.createdAt,
-  }),
-  userColumn(),
+  createdByColumn({ createdValue: (params) => params.row.createdAt }),
 ];

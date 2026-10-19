@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { PermissionWrapper, useConfig } from "../../common";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
-import { AddIcon } from "../../icons/material";
+import { HeroPlusCircleIcon } from "../../icons";
 import { Button } from "../../ui";
 import { workspaceColumns } from "../components/workspaceTableConfig";
 import { WORKSPACE_FIELD_MAP } from "../graphql/fragments";
@@ -24,7 +24,7 @@ export const WorkspacesPage = () => {
         >
           <Button
             onClick={() => navigate(`${linkPrefix}workspaces/create`)}
-            startIcon={<AddIcon />}
+            startIcon={<HeroPlusCircleIcon />}
           >
             Create
           </Button>

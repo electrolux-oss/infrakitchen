@@ -1,13 +1,13 @@
 import React, { useState, useMemo } from "react";
 
 import {
-  Chip,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   SelectChangeEvent,
 } from "../../../ui";
+import { Label } from "../labels";
 
 import { HclInputVariable } from "./HclInputVariable";
 import { HclOutputValue } from "./HclOutputValue";
@@ -99,25 +99,21 @@ export const HclItemList: React.FC<HclItemListProps> = ({
             {/* Variable counts */}
             <div className="flex flex-row gap-2">
               {" "}
-              <Chip
+              <Label
+                tone="error"
                 label={`${variableCounts.required} required`}
-                appearance="solid"
-                color="error"
               />
-              <Chip
+              <Label
+                tone="info"
                 label={`${variableCounts.optional} optional`}
-                appearance="solid"
-                color="info"
               />
-              <Chip
+              <Label
+                tone="warning"
                 label={`${variableCounts.restricted} restricted`}
-                appearance="solid"
-                color="warning"
               />
-              <Chip
+              <Label
+                tone="secondary"
                 label={`${variableCounts.sensitive} sensitive`}
-                appearance="solid"
-                color="secondary"
               />
             </div>
 

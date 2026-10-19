@@ -13,11 +13,8 @@ import {
 import { Audit } from "../../common/components/activity/Audit";
 import { HclItemList } from "../../common/components/hcl/HclItemList";
 import { notify } from "../../common/hooks/useNotification";
-import {
-  CallSplitIcon,
-  KeyboardArrowDownIcon,
-  SellOutlinedIcon,
-} from "../../icons/material";
+import { HeroShareIcon, HeroTagIcon } from "../../icons";
+import { HeroChevronDownIcon } from "../../icons";
 import { Revision } from "../../revision/Revision";
 import {
   Divider,
@@ -25,7 +22,7 @@ import {
   Switch,
   IconButton,
   Button,
-  Chip,
+  Label,
   Tabs,
   Tab,
   Collapse,
@@ -110,7 +107,7 @@ export const SourceCodeRefRow = ({
     entity?.status === ENTITY_STATUS.READY;
   const inProgress = localInProgress || isEntityInProgress;
 
-  const SrcIcon = type === RefType.BRANCH ? CallSplitIcon : SellOutlinedIcon;
+  const SrcIcon = type === RefType.BRANCH ? HeroShareIcon : HeroTagIcon;
   const isTag = type === RefType.TAG;
   const accentClass = isTag ? "border-l-primary" : "border-l-warning";
   const accentHoverClass = isTag
@@ -178,11 +175,9 @@ export const SourceCodeRefRow = ({
           <p className="m-0 text-[0.82rem] font-normal">{entry}</p>
           {hasVersion &&
             !!entity.resourcesCount && ( // Render only when the SCV has resources
-              <Chip
-                className="h-5 text-[0.7rem] hover:border-primary hover:text-primary"
-                labelClassName="px-1.5"
+              <Label
+                size="small"
                 label={`${entity.resourcesCount}`}
-                variant="outlined"
                 onClick={handleResourcesClick}
               />
             )}
@@ -213,7 +208,7 @@ export const SourceCodeRefRow = ({
               setOpen((prev) => !prev);
             }}
           >
-            <KeyboardArrowDownIcon fontSize="small" />
+            <HeroChevronDownIcon fontSize="small" />
           </IconButton>
         </div>
       </div>

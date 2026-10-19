@@ -3,6 +3,7 @@ import { useParams } from "react-router";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
+import { HeroFolderIcon } from "../../icons";
 import { ProjectContent } from "../components/ProjectContent";
 import { PROJECT_DETAIL_FIELDS } from "../graphql";
 
@@ -15,7 +16,10 @@ export const ProjectPage = () => {
       entity_id={project_id || ""}
       entityFields={PROJECT_DETAIL_FIELDS}
     >
-      <EntityContainer actions={<EntityRefreshButton />}>
+      <EntityContainer
+        titleIcon={<HeroFolderIcon />}
+        actions={<EntityRefreshButton />}
+      >
         <ProjectContent />
       </EntityContainer>
     </EntityProvider>

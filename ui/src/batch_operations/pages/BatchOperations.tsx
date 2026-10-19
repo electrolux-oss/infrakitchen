@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { PermissionWrapper, useConfig } from "../../common";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
-import { AddIcon } from "../../icons/material";
+import { HeroPlusCircleIcon } from "../../icons";
 import { Button } from "../../ui";
 import { batchOperationColumns } from "../components/batchOperationTableConfig";
 import { BATCH_OPERATION_FIELD_MAP } from "../graphql";
@@ -23,7 +23,7 @@ export const BatchOperationsPage = () => {
         >
           <Button
             onClick={() => navigate(`${linkPrefix}batch_operations/create`)}
-            startIcon={<AddIcon />}
+            startIcon={<HeroPlusCircleIcon />}
           >
             Create
           </Button>

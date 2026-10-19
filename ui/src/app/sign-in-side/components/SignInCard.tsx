@@ -1,11 +1,6 @@
 import React, { useState } from "react";
 
-import { Icon } from "@iconify/react";
-import icBaselineAccountCircleData from "@iconify-icons/ic/baseline-account-circle";
-import logosGoogleIconData from "@iconify-icons/logos/google-icon";
-import logosMicrosoftIconData from "@iconify-icons/logos/microsoft-icon";
-import octiconMarkGithub24Data from "@iconify-icons/octicon/mark-github-24";
-
+import { GitHubIcon, GoogleIcon, MicrosoftIcon } from "../../../icons/Icons";
 import { useAuth } from "../../base/auth/AuthContext";
 
 import {
@@ -16,6 +11,7 @@ import {
   Menu,
   MenuItem,
   Card,
+  HeroUserCircleIcon,
 } from "@/index";
 
 export default function SignInCard() {
@@ -81,7 +77,7 @@ export default function SignInCard() {
             onClick={() => handleSubmit("microsoft")}
           >
             {loading && <Spinner size={25} />}
-            <Icon icon={logosMicrosoftIconData} ssr width={24} height={24} />
+            <MicrosoftIcon width={24} height={24} />
             Log in with Microsoft
           </Button>
         )}
@@ -95,7 +91,7 @@ export default function SignInCard() {
             onClick={() => handleSubmit("github")}
           >
             {loading && <Spinner size={25} />}
-            <Icon icon={octiconMarkGithub24Data} ssr width={24} height={24} />
+            <GitHubIcon width={24} height={24} />
             Log in with GitHub
           </Button>
         )}
@@ -109,7 +105,7 @@ export default function SignInCard() {
             onClick={() => handleSubmit("google")}
           >
             {loading && <Spinner size={25} />}
-            <Icon icon={logosGoogleIconData} ssr width={24} height={24} />
+            <GoogleIcon width={24} height={24} />
             Log in with Google
           </Button>
         )}
@@ -121,12 +117,7 @@ export default function SignInCard() {
             fullWidth
             onClick={handleGuestClick}
           >
-            <Icon
-              icon={icBaselineAccountCircleData}
-              ssr
-              width={24}
-              height={24}
-            />
+            <HeroUserCircleIcon className="size-6" />
             Log in as a Guest
           </Button>
         )}

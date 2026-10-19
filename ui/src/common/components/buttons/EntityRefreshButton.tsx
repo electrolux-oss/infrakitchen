@@ -1,4 +1,4 @@
-import { RefreshIcon } from "../../../icons/material";
+import { HeroArrowPathIcon } from "../../../icons";
 import { IconButton, Tooltip } from "../../../ui";
 import { useEntityProvider } from "../../context/EntityContext";
 
@@ -12,7 +12,7 @@ export const EntityRefreshButton = () => {
         onClick={() => refreshEntity?.()}
         aria-label="refresh"
       >
-        <RefreshIcon />
+        <HeroArrowPathIcon />
       </IconButton>
     </Tooltip>
   );

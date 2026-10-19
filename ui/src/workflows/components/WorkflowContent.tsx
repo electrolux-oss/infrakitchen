@@ -11,8 +11,8 @@ import {
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { AccountTreeIcon, ListIcon } from "../../icons/material";
-import { ToggleButton, ToggleButtonGroup } from "../../ui";
+import { HeroRectangleGroupIcon, HeroBars3Icon } from "../../icons";
+import { Tab, Tabs } from "../../ui";
 import { EntityTaskQueueStatus } from "../../workers/components";
 import { GqlWorkflow } from "../graphql";
 
@@ -42,21 +42,31 @@ const WorkflowStepsTab = ({ workflow }: { workflow: GqlWorkflow }) => {
       title="Workflow Steps"
       action={
         hasWiring && (
-          <ToggleButtonGroup
+          <Tabs
+            appearance="segmented"
             value={view}
-            exclusive
-            onChange={(_, v) => v && setViewAndPersist(v)}
-            size="small"
+            onChange={(_, v) => setViewAndPersist(v)}
+            aria-label="Workflow steps view"
           >
-            <ToggleButton value="list">
-              <ListIcon className="mr-1" fontSize="small" />
-              List
-            </ToggleButton>
-            <ToggleButton value="diagram">
-              <AccountTreeIcon className="mr-1" fontSize="small" />
-              Diagram
-            </ToggleButton>
-          </ToggleButtonGroup>
+            <Tab
+              value="list"
+              label={
+                <span className="flex items-center gap-1">
+                  <HeroBars3Icon fontSize="small" />
+                  List
+                </span>
+              }
+            />
+            <Tab
+              value="diagram"
+              label={
+                <span className="flex items-center gap-1">
+                  <HeroRectangleGroupIcon fontSize="small" />
+                  Diagram
+                </span>
+              }
+            />
+          </Tabs>
         )
       }
     >

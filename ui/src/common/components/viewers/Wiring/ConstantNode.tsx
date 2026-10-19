@@ -1,11 +1,8 @@
 import { Handle, NodeProps, Position } from "@xyflow/react";
 
-import {
-  DeleteIcon,
-  NumbersIcon,
-  TextFieldsIcon,
-} from "../../../../icons/material";
-import { IconButton, Chip, Tooltip, TextField } from "../../../../ui";
+import { HeroTrashIcon } from "../../../../icons";
+import { HeroHashtagIcon, HeroLanguageIcon } from "../../../../icons";
+import { IconButton, Label, Tooltip, TextField } from "../../../../ui";
 import { cn } from "../../../../utils/cn";
 import { InlineCode } from "../../code/InlineCode";
 
@@ -27,12 +24,12 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
       <div className="flex items-center justify-between gap-2 rounded-t-[6px] border-b border-divider px-3 py-1 [background:color-mix(in_srgb,var(--color-secondary)_85%,transparent)]">
         <div className="flex min-w-0 items-center gap-1.5">
           {data.constantType === "number" ? (
-            <NumbersIcon
+            <HeroHashtagIcon
               style={{ color: palette.secondary.contrastText }}
               fontSize="small"
             />
           ) : (
-            <TextFieldsIcon
+            <HeroLanguageIcon
               style={{ color: palette.secondary.contrastText }}
               fontSize="small"
             />
@@ -57,7 +54,7 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
                 data.onRemove?.(data.constantId ?? data.templateId)
               }
             >
-              <DeleteIcon className="text-[16px]" />
+              <HeroTrashIcon className="text-[16px]" />
             </IconButton>
           </Tooltip>
         )}
@@ -96,7 +93,7 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
                 className="my-[3.2px] flex items-center justify-end"
                 key={`out-${output}`}
               >
-                <Chip label={output} variant="outlined" color="secondary" />
+                <Label label={output} tone="secondary" />
                 <Tooltip
                   title={
                     <>
@@ -127,7 +124,7 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
 
         {!hasOutputs && (
           <div className="mt-1 flex items-center justify-end">
-            <Chip label={valueLabel} variant="outlined" color="secondary" />
+            <Label label={valueLabel} tone="secondary" />
             <Tooltip
               title={
                 <>

@@ -10,7 +10,7 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import { usePersistedPagination } from "../../common/hooks/usePersistedPagination";
 import { CODE_FONT_FAMILY } from "../../common/theme";
-import { LocalOfferOutlinedIcon } from "../../icons/material";
+import { HeroTagIcon } from "../../icons";
 import { Alert, Link } from "../../ui";
 import { DataTable, DataTableColumn, RenderCellParams } from "../../ui";
 import { cn } from "../../utils/cn";
@@ -33,7 +33,7 @@ const SHA_PARAM = "sha";
 export const TagChip = ({ tag }: { tag: string }) => {
   return (
     <div className="inline-flex min-w-0 items-center gap-1.5">
-      <LocalOfferOutlinedIcon className="shrink-0 text-[16px]" color="action" />
+      <HeroTagIcon className="shrink-0 text-[16px]" color="action" />
       <span>{tag}</span>
     </div>
   );
@@ -225,8 +225,8 @@ export const SourceCodeCommits = ({
         renderCell: (params: RenderCellParams<GqlSourceCodeCommit>) => {
           const commit = params.row;
           return (
-            <div className="flex min-w-0 items-center gap-1.5">
-              <RelativeTime date={commit.authoredAt} />
+            <div className="flex min-w-0 items-center justify-end gap-1.5">
+              <RelativeTime date={commit.authoredAt} compact />
               <UserAvatar
                 id={commit.author?.id}
                 identifier={commit.author?.identifier ?? commit.authorName}

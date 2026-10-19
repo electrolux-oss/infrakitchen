@@ -1,5 +1,6 @@
 import { RenderCellParams } from "../../../ui";
 import { Entity } from "../entities/Entity";
+import { UserAvatar } from "../entities/UserAvatar";
 import { RelativeTime } from "../fields/RelativeTime";
 import { serverSearchReference } from "../filter_panel/referenceLoaders";
 import { Labels } from "../labels/Labels";
@@ -35,6 +36,11 @@ export interface CreatedUpdatedColumnOptions {
   updatedSortField?: string;
   createdValue?: (params: RenderCellParams) => string | Date | null | undefined;
   updatedValue?: (params: RenderCellParams) => string | Date | null | undefined;
+  /**
+   * Fold the creator avatar into the Created cell (time + avatar) instead of
+   * a separate Creator column; the creator reference filter is kept.
+   */
+  withCreator?: boolean;
 }
 
 /** A single "relative time" column (e.g. Created, Last Updated, Time). */
@@ -57,14 +63,55 @@ export const relativeTimeColumn = (
   },
 });
 
+/** Created time plus creator avatar in one cell; filters by creator. */
+export const createdByColumn = (
+  options: CreatedUpdatedColumnOptions,
+): EntityTableColumn => {
+  const field = options.createdField ?? "createdAt";
+  const time = relativeTimeColumn(field, "Created", {
+    sortField: options.createdSortField,
+    value: options.createdValue,
+    width: RELATIVE_TIME_COLUMN_WIDTH,
+  });
+  return {
+    ...time,
+    fetchFields: ["creator", field],
+    filter: {
+      field: "created_by",
+      label: "Creator",
+      operators: ["eq", "in"],
+      valueType: "reference",
+      defaultOperator: "eq",
+      makeReferenceLoader: serverSearchReference({
+        entityPlural: "users",
+        labelField: "identifier",
+      }),
+    },
+    renderCell: (params: RenderCellParams) => {
+      const date = options.createdValue
+        ? options.createdValue(params)
+        : (params.value as string | Date | null | undefined);
+      const user = params.row.creator;
+      return (
+        <div className="flex min-w-0 items-center justify-end gap-1.5">
+          {date ? <RelativeTime date={date} compact /> : null}
+          {user?.id && <UserAvatar id={user.id} identifier={user.identifier} />}
+        </div>
+      );
+    },
+  };
+};
+
 /** The recurring Created / Last Updated column pair. */
 export const createdUpdatedColumns = (
   options: CreatedUpdatedColumnOptions = {},
 ): EntityTableColumn[] => [
-  relativeTimeColumn(options.createdField ?? "createdAt", "Created", {
-    sortField: options.createdSortField,
-    value: options.createdValue,
-  }),
+  options.withCreator
+    ? createdByColumn(options)
+    : relativeTimeColumn(options.createdField ?? "createdAt", "Created", {
+        sortField: options.createdSortField,
+        value: options.createdValue,
+      }),
   relativeTimeColumn(options.updatedField ?? "updatedAt", "Updated", {
     sortField: options.updatedSortField,
     value: options.updatedValue,

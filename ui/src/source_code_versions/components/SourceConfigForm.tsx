@@ -8,13 +8,13 @@ import {
   useFormContext,
 } from "react-hook-form";
 
+import { Label } from "../../common/components/labels";
 import {
   Autocomplete,
   Divider,
   Checkbox,
   FormControlLabel,
   Switch,
-  Chip,
   Tooltip,
   Accordion,
   AccordionSummary,
@@ -141,24 +141,18 @@ export const SourceConfigForm = (props: {
       <div className="mb-2 flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-subtitle1 font-bold text-fg">{configName}</span>
-          <Chip label={configType} variant="outlined" />
+          <Label size="small" label={configType} />
           {required ? (
-            <Chip label="required" color="warning" variant="outlined" />
+            <Label size="small" tone="warning" label="required" />
           ) : (
-            <Chip label="optional" color="info" variant="outlined" />
+            <Label size="small" tone="info" label="optional" />
           )}
           {validationSummary && (
-            <Chip
-              label={validationSummary}
-              color="success"
-              variant="outlined"
-            />
+            <Label size="small" tone="success" label={validationSummary} />
           )}
-          {restricted && (
-            <Chip label="restricted" color="error" variant="outlined" />
-          )}
+          {restricted && <Label size="small" tone="error" label="restricted" />}
           {sensitive && (
-            <Chip label="sensitive" color="secondary" variant="outlined" />
+            <Label size="small" tone="secondary" label="sensitive" />
           )}
         </div>
       </div>

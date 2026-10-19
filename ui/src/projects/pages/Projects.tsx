@@ -7,13 +7,14 @@ import { EntityCard } from "../../common/components/cards/EntityCard";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
+import { Label } from "../../common/components/labels";
+import { StatusLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import StatusChip from "../../common/StatusChip";
 import { getScoreChipColor } from "../../golden_state/GoldenStateWidget";
-import { AddIcon } from "../../icons/material";
-import { Alert, Spinner, Button, Chip, Link } from "../../ui";
+import { HeroPlusCircleIcon } from "../../icons";
+import { Alert, Spinner, Button, Link } from "../../ui";
 import { projectColumns } from "../components/projectTableConfig";
 import { GqlProject, PROJECT_LIST_FIELDS } from "../graphql";
 
@@ -80,7 +81,7 @@ export const ProjectsPage = () => {
       >
         <Button
           onClick={() => navigate(`${linkPrefix}projects/create`)}
-          startIcon={<AddIcon />}
+          startIcon={<HeroPlusCircleIcon />}
         >
           Create
         </Button>
@@ -93,7 +94,7 @@ export const ProjectsPage = () => {
       <>
         <div>
           <p className="m-0 block text-body2 text-fg-muted">Status</p>
-          <StatusChip status={project.status} compact />
+          <StatusLabel status={project.status} compact />
         </div>
         <div>
           <p className="m-0 block text-body2 text-fg-muted">Resources</p>
@@ -102,11 +103,9 @@ export const ProjectsPage = () => {
         <div>
           <p className="m-0 block text-body2 text-fg-muted">Golden State</p>
           {project.goldenState ? (
-            <Chip
-              className="font-semibold"
+            <Label
+              tone={getScoreChipColor(project.goldenState.score)}
               label={`${project.goldenState.score}%`}
-              color={getScoreChipColor(project.goldenState.score)}
-              variant="outlined"
             />
           ) : (
             <p className="m-0 text-body2">-</p>

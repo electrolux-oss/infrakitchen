@@ -19,13 +19,13 @@ export const WorkspaceConfiguration = ({
         <CommonField
           name={"Integration"}
           value={
-            <Entity entity={workspace.integration} providerIconSize={24} />
+            <Entity entity={workspace.integration} providerIconSize={18} />
           }
         />
       )}
       <CommonField
         name={"Workspace Provider"}
-        value={getProviderValue(workspace.workspaceProvider)}
+        value={getProviderValue(workspace.workspaceProvider, 18)}
       />
       {Object.entries(workspace.configuration || []).map(([k, v]) => {
         return <CommonField key={`${k}${v}`} name={formatLabel(k)} value={v} />;

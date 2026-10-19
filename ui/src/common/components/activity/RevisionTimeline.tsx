@@ -1,8 +1,5 @@
-import { Icon } from "@iconify/react";
-import ixLogData from "@iconify-icons/ix/log";
-
 import { AuditExecutionResult } from "../../../audit_logs/components/AuditExecutionResult";
-import { AutoAwesomeIcon } from "../../../icons/material";
+import { HeroCommandLineIcon, HeroSparklesIcon } from "../../../icons";
 import { AuditLogEntity } from "../../../types";
 import { IconButton, Tooltip } from "../../../ui";
 import { RelativeTime } from "../fields/RelativeTime";
@@ -30,7 +27,7 @@ export const RevisionTimeline = ({
       <div className="flex flex-row items-center gap-2">
         <RevisionChip
           revision={revision}
-          variant="outlined"
+          tone="primary"
           onClick={
             logs[0].revisionNumber && onRevisionClick
               ? () => onRevisionClick(logs[0].revisionNumber as number)
@@ -57,7 +54,7 @@ export const RevisionTimeline = ({
                         size="small"
                         onClick={() => onOpenDialog(log.id, "summary")}
                       >
-                        <AutoAwesomeIcon className="text-[1rem]" />
+                        <HeroSparklesIcon className="text-[1rem]" />
                       </IconButton>
                     </Tooltip>
                   )}
@@ -66,7 +63,7 @@ export const RevisionTimeline = ({
                       size="small"
                       onClick={() => onOpenDialog(log.id, "logs")}
                     >
-                      <Icon icon={ixLogData} ssr width={16} />
+                      <HeroCommandLineIcon className="text-[1rem]" />
                     </IconButton>
                   </Tooltip>
                 </div>

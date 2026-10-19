@@ -1,8 +1,8 @@
 import * as React from "react";
 
 import {
-  DarkModeIcon,
-  LightModeIcon,
+  HeroMoonIcon,
+  HeroSunIcon,
   IconButton,
   Tooltip,
   useColorScheme,
@@ -22,13 +22,13 @@ export default function ThemeSwitcher() {
     >
       <div>
         <IconButton
-          className="border-0 bg-transparent hover:bg-transparent"
+          className="border-0 bg-transparent hover:bg-transparent [&_svg]:size-4.5"
           size="small"
           aria-label={`Switch to ${paletteMode === "dark" ? "light" : "dark"} mode`}
           onClick={toggleMode}
         >
-          <LightModeIcon className="inline dark:hidden" />
-          <DarkModeIcon className="hidden dark:inline" />
+          <HeroSunIcon className="inline dark:hidden" />
+          <HeroMoonIcon className="hidden dark:inline" />
         </IconButton>
       </div>
     </Tooltip>

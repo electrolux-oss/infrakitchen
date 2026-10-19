@@ -15,7 +15,7 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { makeWriteAccessFilter, sameStringSet } from "../../common/utils";
-import { SyncIcon } from "../../icons/material";
+import { HeroArrowPathRoundedSquareIcon } from "../../icons";
 import { IkEntity } from "../../types";
 import { IconButton, Tooltip, TextField } from "../../ui";
 import { GqlResource, SYNC_WORKSPACE_MUTATION } from "../graphql";
@@ -135,7 +135,7 @@ export const ResourceInfrastructureSection = ({
                       onClick={handleSync}
                       disabled={isSyncing}
                     >
-                      <SyncIcon />
+                      <HeroArrowPathRoundedSquareIcon />
                     </IconButton>
                   </span>
                 </Tooltip>
@@ -175,7 +175,7 @@ export const ResourceInfrastructureSection = ({
                 <Entity
                   key={integration.id}
                   entity={integration}
-                  providerIconSize={20}
+                  providerIconSize={18}
                 />
               ))}
             </div>

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, ReactNode } from "react";
 
-import { RefreshIcon } from "../../icons/material";
+import { HeroArrowPathIcon } from "../../icons";
 import { IconButton, Tooltip } from "../../ui";
 
 import { LogsView } from "./LogsView";
@@ -62,7 +62,7 @@ export const Logs = (props: {
             disabled={isRefreshing}
             aria-label="Refresh"
           >
-            <RefreshIcon />
+            <HeroArrowPathIcon />
           </IconButton>
         </span>
       </Tooltip>

@@ -3,11 +3,10 @@ import { EntityTableColumn } from "../../common/components/entity_table/EntityTa
 import {
   createdUpdatedColumns,
   labelsColumn,
-  userColumn,
 } from "../../common/components/entity_table/tableColumns";
 import { getProviderValue } from "../../common/components/fields/CommonField";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
-import StatusChip from "../../common/StatusChip";
+import { StatusLabel } from "../../common/components/labels";
 import { ColumnVisibilityModel, RenderCellParams } from "../../ui";
 import { ENTITY_STATUS } from "../../utils/constants";
 
@@ -73,14 +72,13 @@ export const secretColumns: EntityTableColumn[] = [
     },
     valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
     renderCell: (params: RenderCellParams) => (
-      <StatusChip
+      <StatusLabel
         status={String(params.row.status).toLowerCase()}
         state={String(params.row.state).toLowerCase()}
       />
     ),
   },
-  ...createdUpdatedColumns(),
-  userColumn(),
+  ...createdUpdatedColumns({ withCreator: true }),
   {
     field: "integration",
     headerName: "Integration",

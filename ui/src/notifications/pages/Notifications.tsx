@@ -11,7 +11,7 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { useNotificationProvider } from "../../common/context/NotificationContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import { DoneAllIcon } from "../../icons/material";
+import { HeroCheckIcon } from "../../icons";
 import { Button } from "../../ui";
 import { userNotificationColumns } from "../components/userNotificationTableConfig";
 import { GqlUserNotification, USER_NOTIFICATION_FIELD_MAP } from "../graphql";
@@ -77,7 +77,7 @@ export const NotificationsPage = () => {
       actions={
         <Button
           size="small"
-          startIcon={<DoneAllIcon />}
+          startIcon={<HeroCheckIcon />}
           onClick={handleMarkAllRead}
           disabled={unreadCount === 0}
         >

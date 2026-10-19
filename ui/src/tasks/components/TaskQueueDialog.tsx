@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { HeroClockIcon } from "../..//icons";
 import { CommonDialog } from "../../common/components/dialogs/CommonDialog";
 import { Entity } from "../../common/components/entities/Entity";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { StatusLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { useNow } from "../../common/hooks/useNow";
-import StatusChip from "../../common/StatusChip";
 import { formatTimeUntil } from "../../common/utils";
-import { HourglassEmptyIcon, RefreshIcon } from "../../icons/material";
+import { HeroArrowPathIcon } from "../../icons";
 import { Divider, Spinner, Button, IconButton, Tooltip, Badge } from "../../ui";
 import { ENTITY_STATUS } from "../../utils/constants";
 import { CANCEL_QUEUED_TASK_MUTATION } from "../../workers/graphql";
@@ -103,7 +104,7 @@ const QueueRow = ({
             : ""}
         </div>
       </div>
-      <StatusChip
+      <StatusLabel
         status={running ? ENTITY_STATUS.IN_PROGRESS : ENTITY_STATUS.QUEUED}
       />
       {!running && canCancel && (
@@ -173,7 +174,7 @@ export const TaskQueueButton = () => {
         <Badge badgeContent={count} color="primary" max={99}>
           <Button
             variant="outlined"
-            startIcon={<HourglassEmptyIcon />}
+            startIcon={<HeroClockIcon />}
             onClick={handleOpen}
           >
             Queue
@@ -190,7 +191,7 @@ export const TaskQueueButton = () => {
           <Tooltip title="Refresh">
             <span>
               <IconButton size="small" onClick={loadQueue} disabled={loading}>
-                <RefreshIcon fontSize="small" />
+                <HeroArrowPathIcon fontSize="small" />
               </IconButton>
             </span>
           </Tooltip>

@@ -18,12 +18,12 @@ export const StorageConfiguration = ({
       {storage.integration && (
         <CommonField
           name={"Integration"}
-          value={<Entity entity={storage.integration} providerIconSize={24} />}
+          value={<Entity entity={storage.integration} providerIconSize={18} />}
         />
       )}
       <CommonField
         name={"Storage Provider"}
-        value={getProviderValue(storage.storageProvider)}
+        value={getProviderValue(storage.storageProvider, 18)}
       />
       <CommonField name={"Storage Type"} value={storage.storageType} />
       {Object.entries(storage.configuration || {}).map(([k, v]) => {

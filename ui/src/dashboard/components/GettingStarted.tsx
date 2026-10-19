@@ -1,15 +1,13 @@
 import { useNavigate } from "react-router";
 
-import { Icon } from "@iconify/react";
-import octiconCloud24Data from "@iconify-icons/octicon/cloud-24";
-import octiconGitBranch24Data from "@iconify-icons/octicon/git-branch-24";
-
 import { useConfig } from "../../common";
 import {
-  InventoryIcon,
-  LibraryBooksIcon,
-  RocketLaunchOutlinedIcon,
-} from "../../icons/material";
+  HeroCircleStackIcon,
+  HeroCloudIcon,
+  HeroCodeBracketSquareIcon,
+  HeroRocketLaunchIcon,
+  HeroSquare3Stack3DIcon,
+} from "../../icons";
 import { Divider, Button } from "../../ui";
 
 const steps = [
@@ -19,7 +17,7 @@ const steps = [
       "Connect your git providers (GitHub, GitLab, Bitbucket, Azure Repos) to access infrastructure templates",
     button: "Connect Git",
     navigateTo: "integrations#git",
-    icon: <Icon icon={octiconGitBranch24Data} ssr width="20" height="20" />,
+    icon: <HeroCodeBracketSquareIcon fontSize="small" />,
   },
   {
     title: "Integrate Cloud Provider(s)",
@@ -27,21 +25,21 @@ const steps = [
       "Link your cloud providers (AWS, Azure, GCP) for resource provisioning",
     button: "Connect Cloud",
     navigateTo: "integrations#cloud",
-    icon: <Icon icon={octiconCloud24Data} ssr width="20" height="20" />,
+    icon: <HeroCloudIcon fontSize="small" />,
   },
   {
     title: "Import Templates",
     description: "Import infrastructure templates from your git repositories",
     button: "Import Templates",
     navigateTo: "templates",
-    icon: <LibraryBooksIcon fontSize="small" />,
+    icon: <HeroSquare3Stack3DIcon fontSize="small" />,
   },
   {
     title: "Provision Resources",
     description: "Deploy your infrastructure based on your templates",
     button: "Provision Resources",
     navigateTo: "resources",
-    icon: <InventoryIcon fontSize="small" />,
+    icon: <HeroCircleStackIcon fontSize="small" />,
   },
 ];
 
@@ -52,7 +50,7 @@ export const GettingStartedContent = () => {
   return (
     <div className="w-full">
       <div className="mb-3 flex items-center gap-2">
-        <RocketLaunchOutlinedIcon className="text-[20px] text-primary" />
+        <HeroRocketLaunchIcon className="text-[20px] text-primary" />
         <h6 className="m-0 text-subtitle1 font-semibold text-grey-500">
           Getting Started
         </h6>

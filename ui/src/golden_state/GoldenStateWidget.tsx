@@ -1,22 +1,23 @@
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 
 import { Link as RouterLink } from "react-router";
 
 import { FilterClause } from "../common/components/filter_panel/FilterConfig";
+import { Label } from "../common/components/labels";
 import {
   GoldenStateProjectReport,
   GoldenStateSummary,
 } from "../dashboard/types";
 import {
-  CheckCircleOutlinedIcon,
-  CloseFullscreenIcon,
-  ErrorOutlinedIcon,
-  OpenInFullIcon,
-  SecurityIcon,
-  UpdateIcon,
-  WarningAmberIcon,
-} from "../icons/material";
-import { Divider, Spinner, IconButton, Chip, Tooltip, Link } from "../ui";
+  HeroArrowPathIcon,
+  HeroArrowsPointingInIcon,
+  HeroArrowsPointingOutIcon,
+  HeroCheckCircleIcon,
+  HeroExclamationCircleIcon,
+  HeroExclamationTriangleIcon,
+  HeroShieldCheckIcon,
+} from "../icons";
+import { Divider, Spinner, IconButton, Tooltip, Link } from "../ui";
 import { cn } from "../utils/cn";
 import { VERSION_LIFECYCLE_STATE } from "../utils/constants";
 
@@ -137,7 +138,7 @@ function ProjectHeatMapTile({
         {project.projectName}
       </Link>
       <div className="flex flex-wrap items-center gap-2">
-        <Chip label={`${project.score}%`} color={scoreColor} variant="filled" />
+        <Label tone={scoreColor} label={`${project.score}%`} />
         <span className="text-caption text-fg-muted">
           {project.compliant}/{comparable} at golden state
         </span>
@@ -145,62 +146,57 @@ function ProjectHeatMapTile({
 
       <div className="mt-auto grid grid-cols-[repeat(2,_minmax(0,_1fr))] gap-1.5">
         {project.compliant > 0 && (
-          <Chip
-            className="justify-start"
-            component={RouterLink}
-            clickable
-            to={activeResourcesUrl}
-            icon={<CheckCircleOutlinedIcon />}
-            label={project.compliant}
+          <Label
             size="small"
-            color="success"
-            variant="outlined"
+            tone="success"
+            icon={<HeroCheckCircleIcon />}
+            label={project.compliant}
+            component={RouterLink}
+            to={activeResourcesUrl}
+            onClick={(e: MouseEvent) => e.stopPropagation()}
+            className="justify-self-start"
           />
         )}
         {project.updateAvailable > 0 && (
-          <Chip
-            className="justify-start"
-            component={RouterLink}
-            clickable
-            to={previewResourcesUrl}
-            icon={<UpdateIcon />}
-            label={project.updateAvailable}
+          <Label
             size="small"
-            color="info"
-            variant="outlined"
+            tone="info"
+            icon={<HeroArrowPathIcon />}
+            label={project.updateAvailable}
+            component={RouterLink}
+            to={previewResourcesUrl}
+            onClick={(e: MouseEvent) => e.stopPropagation()}
+            className="justify-self-start"
           />
         )}
         {project.deprecated > 0 && (
-          <Chip
-            className="justify-start"
-            component={RouterLink}
-            clickable
-            to={deprecatedResourcesUrl}
-            icon={<WarningAmberIcon />}
-            label={project.deprecated}
+          <Label
             size="small"
-            color="warning"
-            variant="outlined"
+            tone="warning"
+            icon={<HeroExclamationTriangleIcon />}
+            label={project.deprecated}
+            component={RouterLink}
+            to={deprecatedResourcesUrl}
+            onClick={(e: MouseEvent) => e.stopPropagation()}
+            className="justify-self-start"
           />
         )}
         {project.critical > 0 && (
-          <Chip
-            className="justify-start"
-            component={RouterLink}
-            clickable
-            to={archivedResourcesUrl}
-            icon={<ErrorOutlinedIcon />}
-            label={project.critical}
+          <Label
             size="small"
-            color="error"
-            variant="outlined"
+            tone="error"
+            icon={<HeroExclamationCircleIcon />}
+            label={project.critical}
+            component={RouterLink}
+            to={archivedResourcesUrl}
+            onClick={(e: MouseEvent) => e.stopPropagation()}
+            className="justify-self-start"
           />
         )}
         {project.noGolden > 0 && (
-          <Chip
-            className="col-[1_/_-1] justify-start"
+          <Label
+            className="col-[1_/_-1] justify-self-start"
             label={`${project.noGolden} no golden`}
-            variant="outlined"
           />
         )}
       </div>
@@ -220,15 +216,15 @@ export const GoldenStateWidget = ({
   return (
     <div className="w-full">
       <div className="mb-3 flex items-center gap-2">
-        <SecurityIcon className="text-[20px] text-primary" />
+        <HeroShieldCheckIcon className="text-[20px] text-primary" />
         <h6 className="m-0 text-subtitle1 font-semibold text-grey-500">
           Golden State Compliance
         </h6>
         {goldenStateReport ? (
-          <Chip
-            className="ml-auto font-bold"
+          <Label
+            className="ml-auto"
+            tone={getScoreChipColor(goldenStateReport.overallScore)}
             label={`${goldenStateReport.overallScore}%`}
-            color={getScoreChipColor(goldenStateReport.overallScore)}
           />
         ) : null}
         {expandable ? (
@@ -243,9 +239,9 @@ export const GoldenStateWidget = ({
               }
             >
               {expanded ? (
-                <CloseFullscreenIcon fontSize="small" />
+                <HeroArrowsPointingInIcon fontSize="small" />
               ) : (
-                <OpenInFullIcon fontSize="small" />
+                <HeroArrowsPointingOutIcon fontSize="small" />
               )}
             </IconButton>
           </Tooltip>
@@ -265,7 +261,7 @@ export const GoldenStateWidget = ({
           </div>
         ) : goldenStateReport && goldenStateReport.projects.length === 0 ? (
           <div className="flex flex-col items-center py-6 text-fg-muted">
-            <SecurityIcon className="mb-2 text-[36px] opacity-50" />
+            <HeroShieldCheckIcon className="mb-2 text-[36px] opacity-50" />
             <p className="m-0 text-center text-body2">
               No resources to evaluate.
             </p>
@@ -277,9 +273,9 @@ export const GoldenStateWidget = ({
         ) : (
           <div>
             <div className="mb-3 flex flex-wrap gap-2">
-              <Chip label="90-100%" color="success" variant="outlined" />
-              <Chip label="70-89%" color="warning" variant="outlined" />
-              <Chip label="0-69%" color="error" variant="outlined" />
+              <Label tone="success" label="90-100%" />
+              <Label tone="warning" label="70-89%" />
+              <Label tone="error" label="0-69%" />
             </div>
             <div className="grid grid-cols-[1fr] gap-3 sm:grid-cols-[repeat(2,_minmax(0,_1fr))] lg:grid-cols-[repeat(3,_minmax(0,_1fr))]">
               {goldenStateReport?.projects.map((project) => (

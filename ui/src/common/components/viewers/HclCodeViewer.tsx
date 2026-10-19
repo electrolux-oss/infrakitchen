@@ -21,6 +21,7 @@ export const HclCodeViewer: FC<HclCodeViewerProps> = ({
   return (
     <CodeMirror
       value={value}
+      style={{ fontSize: "0.75rem" }}
       theme={resolvedMode}
       extensions={hclExtensions}
       readOnly={readOnly}

@@ -10,7 +10,7 @@ import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import { AddIcon } from "../../icons/material";
+import { HeroPlusCircleIcon } from "../../icons";
 import { Alert, Spinner, Button } from "../../ui";
 import { serviceColumns } from "../components/serviceTableConfig";
 import { GqlService, SERVICES_QUERY } from "../graphql";
@@ -70,7 +70,7 @@ export const ServicesPage = () => {
       >
         <Button
           onClick={() => navigate(`${linkPrefix}services/create`)}
-          startIcon={<AddIcon />}
+          startIcon={<HeroPlusCircleIcon />}
         >
           Create
         </Button>

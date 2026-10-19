@@ -4,7 +4,7 @@ import { CommonField } from "../../common/components/fields/CommonField";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { copyToClipboard } from "../../common/utils/clipboard";
-import { ContentCopyIcon, DownloadIcon } from "../../icons/material";
+import { HeroArrowDownTrayIcon, HeroDocumentDuplicateIcon } from "../../icons";
 import { Button, IconButton, Tooltip } from "../../ui";
 import { INTEGRATION_OIDC_QUERY } from "../graphql/queries";
 
@@ -79,7 +79,7 @@ export const IntegrationOidcSection = ({
       <span className="font-mono break-all">{value}</span>
       <Tooltip title="Copy">
         <IconButton size="small" onClick={() => handleCopy(value)}>
-          <ContentCopyIcon fontSize="small" />
+          <HeroDocumentDuplicateIcon fontSize="small" />
         </IconButton>
       </Tooltip>
     </div>
@@ -99,7 +99,10 @@ export const IntegrationOidcSection = ({
         name={"OIDC JWKS (offline upload)"}
         value={
           <div>
-            <Button startIcon={<DownloadIcon />} onClick={handleDownloadJwks}>
+            <Button
+              startIcon={<HeroArrowDownTrayIcon />}
+              onClick={handleDownloadJwks}
+            >
               Download JWKS
             </Button>
             <span className="mt-1 block text-caption text-fg-muted">

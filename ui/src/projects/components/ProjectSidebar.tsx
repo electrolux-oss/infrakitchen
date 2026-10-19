@@ -14,11 +14,11 @@ import { MultiSelectEditor } from "../../common/components/editors/MultiSelectEd
 import { Entity } from "../../common/components/entities/Entity";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
+import { EntityStatusChip } from "../../common/components/labels";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import { notifyError } from "../../common/hooks/useNotification";
-import StatusChip from "../../common/StatusChip";
 import { SubscribeNotificationButton } from "../../resources/components/notifications/SubscribeNotificationButton";
 import { IkEntity } from "../../types";
 import { GqlUserShort, USERS_SHORT_QUERY } from "../../users/graphql";
@@ -49,7 +49,7 @@ export interface ProjectSidebarProps {
 }
 
 /**
- * GitHub-style right sidebar for the project detail page: groups the
+ * Right context sidebar for the project detail page: groups the
  * project's description, status, relations and history so the main column can
  * focus on its golden state, resources and settings.
  */
@@ -135,7 +135,7 @@ export const ProjectSidebar = ({
       <SidebarSection title="Status">
         <div className="col-span-full">
           <div className="flex items-center justify-between gap-2">
-            <StatusChip status={project.status} />
+            <EntityStatusChip status={project.status} />
             <SubscribeNotificationButton
               isSubscribed={isSubscribed}
               isLoading={loading}

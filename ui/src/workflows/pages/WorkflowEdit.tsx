@@ -10,16 +10,16 @@ import CodeMirror from "@uiw/react-codemirror";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
+import { StatusLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useEffectOnce } from "../../common/hooks/useEffectOnce";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import StatusChip from "../../common/StatusChip";
 import { IkEntity } from "../../types";
 import {
   Alert,
   Button,
-  Chip,
+  Label,
   FormControl,
   FormLabel,
   useColorScheme,
@@ -211,7 +211,7 @@ const WorkflowEditPageInner = (props: { workflow: GqlWorkflow }) => {
           <Alert className="mb-4" severity="warning">
             This workflow cannot be edited. Only pending or errored workflows
             are editable. Current status:{" "}
-            <StatusChip status={workflow.status} />
+            <StatusLabel status={workflow.status} />
           </Alert>
         )}
 
@@ -233,11 +233,7 @@ const WorkflowEditPageInner = (props: { workflow: GqlWorkflow }) => {
               key={step.id}
               title={
                 <div className="flex items-center gap-2">
-                  <Chip
-                    className="min-w-7 font-bold"
-                    label={idx + 1}
-                    color="primary"
-                  />
+                  <Label label={idx + 1} tone="primary" />
                   <span>
                     {step.template?.name ?? step.template.id.slice(0, 8)}
                   </span>

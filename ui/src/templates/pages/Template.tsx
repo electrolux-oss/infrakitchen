@@ -3,11 +3,12 @@ import { useParams, useNavigate } from "react-router";
 import { useConfig } from "../../common";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
+import { EntityStatusChip, Label } from "../../common/components/labels";
 import {
   EntityProvider,
   useEntityProvider,
 } from "../../common/context/EntityContext";
-import { AddIcon } from "../../icons/material";
+import { HeroPlusCircleIcon, HeroSquare3Stack3DIcon } from "../../icons";
 import { Button, Tooltip } from "../../ui";
 import { ENTITY_STATUS } from "../../utils/constants";
 import { TemplateContent } from "../components/TemplateContent";
@@ -47,11 +48,23 @@ const TemplatePageContent = () => {
 
   return (
     <EntityContainer
+      titleIcon={<HeroSquare3Stack3DIcon />}
+      titleAdornment={
+        entity?.abstract ? (
+          <>
+            <Label tone="info" label="ABSTRACT" />
+            <EntityStatusChip status={entity.status} state={entity.state} />
+          </>
+        ) : undefined
+      }
       actions={
         <>
           {!isDisabled && (
             <Tooltip title="Create a new resource from this template">
-              <Button onClick={handleUseTemplate} startIcon={<AddIcon />}>
+              <Button
+                onClick={handleUseTemplate}
+                startIcon={<HeroPlusCircleIcon />}
+              >
                 Create Resource
               </Button>
             </Tooltip>

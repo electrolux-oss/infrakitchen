@@ -2,7 +2,7 @@ import { useNavigate } from "react-router";
 
 import { useConfig } from "../../common";
 import { Entity } from "../../common/components/entities/Entity";
-import StatusChip from "../../common/StatusChip";
+import { StatusLabel } from "../../common/components/labels";
 import {
   Table,
   TableBody,
@@ -48,7 +48,7 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
                   {exec.id.slice(0, 8)}…
                 </Link>
               </h6>
-              <StatusChip status={exec.status} />
+              <StatusLabel status={exec.status} />
             </div>
             <span className="text-caption text-fg-muted">
               {new Date(exec.createdAt).toLocaleString()}
@@ -82,7 +82,7 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
                       />
                     </TableCell>
                     <TableCell>
-                      <StatusChip status={step.status} />
+                      <StatusLabel status={step.status} />
                     </TableCell>
                     <TableCell>
                       {step.resource ? (

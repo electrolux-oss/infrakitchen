@@ -12,7 +12,8 @@ import { WiringRule } from "../../common/components/viewers/Wiring/types";
 import { WiringDiagram } from "../../common/components/viewers/Wiring/WiringDiagram";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
-import { EditIcon, VisibilityIcon } from "../../icons/material";
+import { HeroPencilSquareIcon } from "../../icons";
+import { HeroEyeIcon } from "../../icons";
 import { Button } from "../../ui";
 import { GqlBlueprint } from "../graphql";
 
@@ -59,7 +60,9 @@ export const BlueprintContent = () => {
                   canEdit ? (
                     <Button
                       size="small"
-                      startIcon={wiringEdit ? <VisibilityIcon /> : <EditIcon />}
+                      startIcon={
+                        wiringEdit ? <HeroEyeIcon /> : <HeroPencilSquareIcon />
+                      }
                       onClick={() => setWiringEdit((prev) => !prev)}
                     >
                       {wiringEdit ? "View" : "Edit"}

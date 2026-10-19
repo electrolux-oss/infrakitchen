@@ -12,7 +12,7 @@ import {
 } from "../../common";
 import { DeleteButton } from "../../common/components/buttons/DeleteEntityButton";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { OpenInNewIcon } from "../../icons/material";
+import { HeroArrowTopRightOnSquareIcon } from "../../icons";
 import { IkEntity } from "../../types";
 import { Autocomplete, Button, IconButton, Tooltip } from "../../ui";
 import { ENTITY_STATUS } from "../../utils";
@@ -187,7 +187,7 @@ export const MetadataTab = ({
                   navigate(`${linkPrefix}source_code_versions/${entity.id}`);
                 }}
               >
-                <OpenInNewIcon fontSize="small" />
+                <HeroArrowTopRightOnSquareIcon fontSize="small" />
               </IconButton>
             </Tooltip>
 

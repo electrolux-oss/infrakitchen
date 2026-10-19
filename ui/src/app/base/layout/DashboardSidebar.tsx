@@ -13,31 +13,32 @@ import { drawerTransition } from "./mixins";
 import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from "@/constants";
 import { breakpointUp, useMediaQuery } from "@/index";
 import {
-  AccountTreeIcon,
-  AdminPanelSettingsIcon,
-  ArticleIcon,
-  BadgeIcon,
-  CodeIcon,
-  ConstructionIcon,
-  DashboardIcon,
-  DiscountOutlinedIcon,
-  DoneAllIcon,
-  EngineeringIcon,
-  ExtensionIcon,
-  FolderIcon,
-  ImportContactsIcon,
-  InventoryIcon,
-  KeyIcon,
-  LanIcon,
-  LayersIcon,
-  LibraryBooksIcon,
-  MemoryIcon,
-  PeopleIcon,
-  PlaylistAddCheckIcon,
-  ReceiptLongIcon,
-  StorageIcon,
-  TerminalIcon,
-  WorkspacesIcon,
+  HeroRectangleGroupIcon,
+  HeroArrowsRightLeftIcon,
+  HeroShieldCheckIcon,
+  HeroUserGroupIcon,
+  HeroCodeBracketSquareIcon,
+  HeroCodeBracketIcon,
+  HeroWrenchScrewdriverIcon,
+  HeroSquares2X2Icon,
+  HeroTagIcon,
+  HeroServerStackIcon,
+  HeroCogIcon,
+  HeroPuzzlePieceIcon,
+  HeroFolderIcon,
+  HeroBookOpenIcon,
+  HeroArrowTopRightOnSquareIcon,
+  HeroSquare3Stack3DIcon,
+  HeroKeyIcon,
+  HeroAdjustmentsHorizontalIcon,
+  HeroRectangleStackIcon,
+  HeroCpuChipIcon,
+  HeroUsersIcon,
+  HeroClipboardDocumentCheckIcon,
+  HeroClipboardDocumentListIcon,
+  HeroQueueListIcon,
+  HeroCircleStackIcon,
+  HeroCommandLineIcon,
 } from "@/index";
 import { cn } from "@/index";
 import { useConfig } from "@/index";
@@ -194,14 +195,14 @@ export default function DashboardSidebar({
             <DashboardSidebarPageItem
               id="dashboard"
               title="Dashboard"
-              icon={<DashboardIcon />}
+              icon={<HeroSquares2X2Icon />}
               href="/"
               selected={pathname === "/"}
             />
             <DashboardSidebarPageItem
               id="projects"
               title="Projects"
-              icon={<FolderIcon />}
+              icon={<HeroFolderIcon />}
               href="/projects"
               selected={!!matchPath("/projects/*", pathname)}
               permissionKey="project"
@@ -210,7 +211,7 @@ export default function DashboardSidebar({
               <DashboardSidebarPageItem
                 id="services"
                 title="Services"
-                icon={<LayersIcon />}
+                icon={<HeroRectangleStackIcon />}
                 href="/services"
                 selected={!!matchPath("/services/*", pathname)}
                 permissionKey="service"
@@ -219,7 +220,7 @@ export default function DashboardSidebar({
             <DashboardSidebarPageItem
               id="templates"
               title="Templates"
-              icon={<LibraryBooksIcon />}
+              icon={<HeroSquare3Stack3DIcon />}
               href="/templates"
               selected={!!matchPath("/templates/*", pathname)}
               permissionKey="template"
@@ -233,7 +234,7 @@ export default function DashboardSidebar({
                     <DashboardSidebarPageItem
                       id="templates_all"
                       title="Templates"
-                      icon={<LibraryBooksIcon />}
+                      icon={<HeroSquare3Stack3DIcon />}
                       href="/templates"
                       selected={
                         pathname === "/templates" ||
@@ -245,7 +246,7 @@ export default function DashboardSidebar({
                   <DashboardSidebarPageItem
                     id="source_code_versions"
                     title="Template Versions"
-                    icon={<DiscountOutlinedIcon />}
+                    icon={<HeroTagIcon />}
                     href="/source_code_versions"
                     selected={!!matchPath("/source_code_versions/*", pathname)}
                     permissionKey="source_code_version"
@@ -256,7 +257,7 @@ export default function DashboardSidebar({
             <DashboardSidebarPageItem
               id="resources"
               title="Resources"
-              icon={<InventoryIcon />}
+              icon={<HeroCircleStackIcon />}
               href="/resources"
               selected={!!matchPath("/resources/*", pathname)}
               permissionKey="resource"
@@ -264,7 +265,7 @@ export default function DashboardSidebar({
             <DashboardSidebarPageItem
               id="batch_operations"
               title="Batch Operations"
-              icon={<DoneAllIcon />}
+              icon={<HeroQueueListIcon />}
               href="/batch_operations"
               selected={!!matchPath("/batch_operations/*", pathname)}
               permissionKey="batch_operation"
@@ -272,7 +273,7 @@ export default function DashboardSidebar({
             <DashboardSidebarPageItem
               id="executors"
               title="Executors"
-              icon={<MemoryIcon />}
+              icon={<HeroCpuChipIcon />}
               href="/executors"
               selected={!!matchPath("/executors/*", pathname)}
               permissionKey="executor"
@@ -281,7 +282,7 @@ export default function DashboardSidebar({
               id="blueprints"
               title="Blueprints"
               label="alpha"
-              icon={<ArticleIcon />}
+              icon={<HeroRectangleGroupIcon />}
               href="/blueprints"
               selected={!!matchPath("/blueprints/*", pathname)}
               permissionKey="blueprint"
@@ -292,14 +293,14 @@ export default function DashboardSidebar({
             <DashboardSidebarPageItem
               id="configurations"
               title="Configurations"
-              icon={<LanIcon />}
+              icon={<HeroAdjustmentsHorizontalIcon />}
               expanded={configurationsExpanded}
               nestedNavigation={
                 <div className="pl-2.5">
                   <DashboardSidebarPageItem
                     id="integrations"
                     title="Integrations"
-                    icon={<ExtensionIcon />}
+                    icon={<HeroPuzzlePieceIcon />}
                     href="/integrations"
                     selected={!!matchPath("/integrations/*", pathname)}
                     permissionKey="integration"
@@ -307,7 +308,7 @@ export default function DashboardSidebar({
                   <DashboardSidebarPageItem
                     id="source_codes"
                     title="Code Repositories"
-                    icon={<CodeIcon />}
+                    icon={<HeroCodeBracketSquareIcon />}
                     href="/source_codes"
                     selected={!!matchPath("/source_codes/*", pathname)}
                     permissionKey="source_code"
@@ -315,7 +316,7 @@ export default function DashboardSidebar({
                   <DashboardSidebarPageItem
                     id="workspaces"
                     title="Workspaces"
-                    icon={<WorkspacesIcon />}
+                    icon={<HeroCodeBracketIcon />}
                     href="/workspaces"
                     selected={!!matchPath("/workspaces/*", pathname)}
                     permissionKey="workspace"
@@ -323,7 +324,7 @@ export default function DashboardSidebar({
                   <DashboardSidebarPageItem
                     id="storages"
                     title="Storage"
-                    icon={<StorageIcon />}
+                    icon={<HeroServerStackIcon />}
                     href="/storages"
                     selected={!!matchPath("/storages/*", pathname)}
                     permissionKey="storage"
@@ -331,7 +332,7 @@ export default function DashboardSidebar({
                   <DashboardSidebarPageItem
                     id="secrets"
                     title="Secrets"
-                    icon={<KeyIcon />}
+                    icon={<HeroKeyIcon />}
                     href="/secrets"
                     selected={!!matchPath("/secrets/*", pathname)}
                     permissionKey="secret"
@@ -339,7 +340,7 @@ export default function DashboardSidebar({
                   <DashboardSidebarPageItem
                     id="tools"
                     title="IaC Tools"
-                    icon={<TerminalIcon />}
+                    icon={<HeroCommandLineIcon />}
                     href="/tools"
                     selected={!!matchPath("/tools/*", pathname)}
                     permissionKey="tool"
@@ -351,14 +352,14 @@ export default function DashboardSidebar({
             <DashboardSidebarPageItem
               id="operations"
               title="Operations"
-              icon={<ConstructionIcon />}
+              icon={<HeroWrenchScrewdriverIcon />}
               expanded={operationsExpanded}
               nestedNavigation={
                 <div className="pl-2.5">
                   <DashboardSidebarPageItem
                     id="tasks"
                     title="Tasks"
-                    icon={<PlaylistAddCheckIcon />}
+                    icon={<HeroClipboardDocumentCheckIcon />}
                     href="/tasks"
                     selected={!!matchPath("/tasks/*", pathname)}
                     permissionKey="task"
@@ -366,7 +367,7 @@ export default function DashboardSidebar({
                   <DashboardSidebarPageItem
                     id="workflows"
                     title="Workflows"
-                    icon={<AccountTreeIcon />}
+                    icon={<HeroArrowsRightLeftIcon />}
                     href="/workflows"
                     selected={!!matchPath("/workflows/*", pathname)}
                     permissionKey="workflow"
@@ -374,7 +375,7 @@ export default function DashboardSidebar({
                   <DashboardSidebarPageItem
                     id="workers"
                     title="Workers"
-                    icon={<EngineeringIcon />}
+                    icon={<HeroCogIcon />}
                     href="/workers"
                     selected={!!matchPath("/workers/*", pathname)}
                     permissionKey="worker"
@@ -386,14 +387,14 @@ export default function DashboardSidebar({
             <DashboardSidebarPageItem
               id="management"
               title="Management"
-              icon={<AdminPanelSettingsIcon />}
+              icon={<HeroShieldCheckIcon />}
               expanded={managementExpanded}
               nestedNavigation={
                 <div className="pl-2.5">
                   <DashboardSidebarPageItem
                     id="users"
                     title="Users"
-                    icon={<PeopleIcon />}
+                    icon={<HeroUsersIcon />}
                     href="/users"
                     selected={!!matchPath("/users/*", pathname)}
                     permissionKey="user"
@@ -401,7 +402,7 @@ export default function DashboardSidebar({
                   <DashboardSidebarPageItem
                     id="roles"
                     title="Roles"
-                    icon={<BadgeIcon />}
+                    icon={<HeroUserGroupIcon />}
                     href="/roles"
                     selected={!!matchPath("/roles/*", pathname)}
                     permissionKey="permission"
@@ -409,7 +410,7 @@ export default function DashboardSidebar({
                   <DashboardSidebarPageItem
                     id="audit_logs"
                     title="Audit Logs"
-                    icon={<ReceiptLongIcon />}
+                    icon={<HeroClipboardDocumentListIcon />}
                     href="/audit_logs"
                     selected={!!matchPath("/audit_logs/*", pathname)}
                     permissionKey="audit_log"
@@ -422,7 +423,10 @@ export default function DashboardSidebar({
             <DashboardSidebarPageItem
               id="documentation"
               title="Documentation"
-              icon={<ImportContactsIcon />}
+              icon={<HeroBookOpenIcon />}
+              action={
+                <HeroArrowTopRightOnSquareIcon className="size-3.5! shrink-0" />
+              }
               href="https://opensource.electrolux.one/infrakitchen/"
             />
           </ul>

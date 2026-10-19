@@ -1,7 +1,4 @@
-import { Icon } from "@iconify/react";
-import ixLogData from "@iconify-icons/ix/log";
-
-import { AutoAwesomeIcon } from "../../icons/material";
+import { HeroCommandLineIcon, HeroSparklesIcon } from "../../icons";
 import { IconButton, Tooltip } from "../../ui";
 
 const isTerraformLanguage = (lang?: string): boolean =>
@@ -43,7 +40,7 @@ export const LogActionButtons = ({
                 onOpenSummary();
               }}
             >
-              <AutoAwesomeIcon fontSize="small" />
+              <HeroSparklesIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         )}
@@ -55,7 +52,7 @@ export const LogActionButtons = ({
             onOpenLogs();
           }}
         >
-          <Icon icon={ixLogData} ssr />
+          <HeroCommandLineIcon fontSize="small" />
         </IconButton>
       </Tooltip>
     </div>

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
-import { Label } from "../../common/components/labels/Label";
 import { Switch, Tooltip } from "../../ui";
+import { Label } from "../../ui/Label";
 import { cn } from "../../utils/cn";
 
 export interface FeatureFlagDTO {

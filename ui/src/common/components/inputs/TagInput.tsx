@@ -1,15 +1,16 @@
 import { forwardRef } from "react";
 
-import { AddIcon, DeleteOutlinedIcon } from "../../../icons/material";
+import { HeroPlusCircleIcon } from "../../../icons";
+import { HeroTrashIcon } from "../../../icons";
 import {
   FormControlLabel,
   Switch,
   Button,
   IconButton,
-  Chip,
   Tooltip,
   TextField,
 } from "../../../ui";
+import { Label } from "../../../ui/Label";
 import { cn } from "../../../utils/cn";
 import { dashedAddButtonClass } from "../../utils/dashedAddButton";
 import { deleteIconButtonClass } from "../buttons/deleteIconButtonClass";
@@ -83,12 +84,7 @@ const TagInput = forwardRef<any, TagInputProps>((props, _ref) => {
         /* Section header: label, entry count */
         <div className="mb-2 flex items-center gap-2">
           <p className="m-0 text-body2 font-semibold">{label}</p>
-          <Chip
-            label={String(currentValue.length)}
-            appearance="solid"
-            color="info"
-            compact
-          />
+          <Label label={String(currentValue.length)} />
         </div>
       )}
 
@@ -157,7 +153,7 @@ const TagInput = forwardRef<any, TagInputProps>((props, _ref) => {
               onClick={() => handleRemove(index)}
               aria-label="Remove"
             >
-              <DeleteOutlinedIcon fontSize="small" />
+              <HeroTrashIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         </div>
@@ -166,7 +162,7 @@ const TagInput = forwardRef<any, TagInputProps>((props, _ref) => {
         /* Add action sits under the rows, matching the other list editors. */
         <div className="mt-2">
           <Button
-            startIcon={<AddIcon />}
+            startIcon={<HeroPlusCircleIcon />}
             onClick={handleAdd}
             className={dashedAddButtonClass}
           >

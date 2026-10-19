@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 
+import { HeroPlusCircleIcon } from "../../../../icons";
 import {
-  AddIcon,
-  DataObjectIcon,
-  NumbersIcon,
-  SearchIcon,
-  StorageIcon,
-  TextFieldsIcon,
-} from "../../../../icons/material";
+  HeroCodeBracketIcon,
+  HeroHashtagIcon,
+  HeroMagnifyingGlassIcon,
+  HeroCircleStackIcon,
+  HeroLanguageIcon,
+} from "../../../../icons";
 import {
   TEMPLATE_SHORT_FIELDS,
   GqlTemplateShort,
@@ -22,9 +22,9 @@ import {
   List,
   ListItemButton,
 } from "../../../../ui";
+import { Label } from "../../../../ui/Label";
 import { cn } from "../../../../utils/cn";
 import { useConfig } from "../../../context";
-import { AbstractChip } from "../../labels/AbstractChip";
 
 import { GenericTemplate } from "./types";
 import {
@@ -132,7 +132,10 @@ export function WiringCanvasSidebar({
           fullWidth
           startAdornment={
             <InputAdornment position="start">
-              <SearchIcon className="text-fg-disabled" fontSize="small" />
+              <HeroMagnifyingGlassIcon
+                className="text-fg-disabled"
+                fontSize="small"
+              />
             </InputAdornment>
           }
         />
@@ -163,9 +166,12 @@ export function WiringCanvasSidebar({
               primary={t.name}
               primaryClassName="truncate font-normal"
             />
-            {t.abstract && <AbstractChip />}
+            {t.abstract && <Label tone="info" label="ABSTRACT" />}
             <Tooltip title="Add to canvas" arrow>
-              <AddIcon className="ml-1 text-fg-disabled" fontSize="small" />
+              <HeroPlusCircleIcon
+                className="ml-1 text-fg-disabled"
+                fontSize="small"
+              />
             </Tooltip>
           </ListItemButton>
         ))}
@@ -175,7 +181,7 @@ export function WiringCanvasSidebar({
           <Divider />
           <div className="px-3 pt-2 pb-1">
             <span className="flex items-center gap-1 text-caption font-bold text-warning">
-              <StorageIcon className="text-[14px]" />
+              <HeroCircleStackIcon className="text-[14px]" />
               Input Templates
             </span>
             <span className="text-caption text-fg-muted">
@@ -202,9 +208,12 @@ export function WiringCanvasSidebar({
                   primary={t.name}
                   primaryClassName="truncate font-normal"
                 />
-                {t.abstract && <AbstractChip />}
+                {t.abstract && <Label tone="info" label="ABSTRACT" />}
                 <Tooltip title="Add as input" arrow>
-                  <AddIcon className="ml-1 text-warning" fontSize="small" />
+                  <HeroPlusCircleIcon
+                    className="ml-1 text-warning"
+                    fontSize="small"
+                  />
                 </Tooltip>
               </ListItemButton>
             ))}
@@ -214,7 +223,7 @@ export function WiringCanvasSidebar({
       <Divider />
       <div className="px-3 pt-2 pb-3">
         <span className="flex items-center gap-1 text-caption font-bold text-secondary">
-          <DataObjectIcon className="text-[14px]" />
+          <HeroCodeBracketIcon className="text-[14px]" />
           Constants
         </span>
         <span className="text-caption text-fg-muted">
@@ -224,7 +233,7 @@ export function WiringCanvasSidebar({
           <Button
             className="flex-1"
             color="secondary"
-            startIcon={<TextFieldsIcon />}
+            startIcon={<HeroLanguageIcon />}
             onClick={() => onConstantAdd("string")}
           >
             String
@@ -232,7 +241,7 @@ export function WiringCanvasSidebar({
           <Button
             className="flex-1"
             color="secondary"
-            startIcon={<NumbersIcon />}
+            startIcon={<HeroHashtagIcon />}
             onClick={() => onConstantAdd("number")}
           >
             Number

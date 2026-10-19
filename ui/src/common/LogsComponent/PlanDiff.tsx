@@ -2,7 +2,10 @@ import { Fragment, useMemo, useState } from "react";
 
 import Ansi from "ansi-to-react";
 
-import { UnfoldLessIcon, UnfoldMoreIcon } from "../../icons/material";
+import {
+  HeroChevronDoubleUpIcon,
+  HeroChevronDoubleDownIcon,
+} from "../../icons";
 import { IconButton, Tooltip } from "../../ui";
 
 const ESC = String.fromCharCode(27);
@@ -203,9 +206,9 @@ export const PlanDiff = ({ lines }: { lines: string[] }) => {
               className="shadow-2 mt-1 mr-1 border border-divider bg-paper hover:bg-paper"
             >
               {showAll ? (
-                <UnfoldLessIcon fontSize="small" />
+                <HeroChevronDoubleUpIcon fontSize="small" />
               ) : (
-                <UnfoldMoreIcon fontSize="small" />
+                <HeroChevronDoubleDownIcon fontSize="small" />
               )}
             </IconButton>
           </Tooltip>
@@ -238,7 +241,7 @@ export const PlanDiff = ({ lines }: { lines: string[] }) => {
                     }
                     className="my-0.5 flex w-full cursor-pointer items-center justify-start gap-1 rounded-[2px] border-0 bg-selected px-1 py-0.5 font-[inherit] text-[0.75rem] text-fg-muted hover:bg-[hsla(0,0%,4%,0.12)] dark:hover:bg-[hsla(0,0%,96%,0.2)]"
                   >
-                    <UnfoldMoreIcon className="size-4!" />
+                    <HeroChevronDoubleDownIcon className="size-4!" />
                     {count} unchanged lines
                   </button>
                 );

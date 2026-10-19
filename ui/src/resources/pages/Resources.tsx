@@ -5,7 +5,7 @@ import { useNavigate, useLocation } from "react-router";
 import { useConfig, PermissionWrapper } from "../../common";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
-import { AddIcon } from "../../icons/material";
+import { HeroPlusCircleIcon } from "../../icons";
 import { Button } from "../../ui";
 import {
   buildAdvancedApiFilters,
@@ -37,7 +37,7 @@ export const ResourcesPage = () => {
           {" "}
           <Button
             onClick={() => navigate(`${linkPrefix}resources/create`)}
-            startIcon={<AddIcon />}
+            startIcon={<HeroPlusCircleIcon />}
           >
             Create
           </Button>

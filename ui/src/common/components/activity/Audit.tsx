@@ -7,10 +7,10 @@ import GradientCircularProgress from "../../../common/GradientCircularProgress";
 import { useHashParams } from "../../../common/hooks/useHashParams";
 import { usePersistedPagination } from "../../../common/hooks/usePersistedPagination";
 import {
-  SearchIcon,
-  TableRowsIcon,
-  TimelineIcon,
-} from "../../../icons/material";
+  HeroChartBarIcon,
+  HeroMagnifyingGlassIcon,
+  HeroTableCellsIcon,
+} from "../../../icons";
 import { REVISION_FIELDS, GqlRevision } from "../../../revision/graphql";
 import { AuditLogEntity } from "../../../types";
 import {
@@ -18,8 +18,8 @@ import {
   Tooltip,
   InputAdornment,
   TextField,
-  ToggleButton,
-  ToggleButtonGroup,
+  Tab,
+  Tabs,
 } from "../../../ui";
 import {
   DataTable,
@@ -215,7 +215,8 @@ export const Audit = ({
             {
               field: "revisionNumber",
               headerName: "",
-              flex: 0.25,
+              width: 88,
+              minWidth: 88,
               renderCell: (params: RenderCellParams<AuditLogEntity>) => {
                 const rev = params.row.revisionNumber;
                 if (!rev) return null;
@@ -301,30 +302,42 @@ export const Audit = ({
           size="small"
           startAdornment={
             <InputAdornment position="start">
-              <SearchIcon className="text-fg-muted" fontSize="small" />
+              <HeroMagnifyingGlassIcon
+                className="text-fg-muted"
+                fontSize="small"
+              />
             </InputAdornment>
           }
           inputProps={{ spellCheck: false }}
         />
         {showTimelineView && (
-          <ToggleButtonGroup
-            className="[&>button]:py-1"
+          <Tabs
+            appearance="segmented"
             value={viewMode}
-            exclusive
-            onChange={(_, value) => value && setViewMode(value)}
-            size="small"
+            onChange={(_, value) => setViewMode(value)}
+            aria-label="Audit view"
           >
-            <ToggleButton value="table">
-              <Tooltip title="Table view">
-                <TableRowsIcon className="text-[1rem]" />
-              </Tooltip>
-            </ToggleButton>
-            <ToggleButton value="timeline">
-              <Tooltip title="Timeline view">
-                <TimelineIcon className="text-[1rem]" />
-              </Tooltip>
-            </ToggleButton>
-          </ToggleButtonGroup>
+            <Tab
+              value="table"
+              aria-label="Table view"
+              className="px-3"
+              label={
+                <Tooltip title="Table view">
+                  <HeroTableCellsIcon className="text-[1rem]" />
+                </Tooltip>
+              }
+            />
+            <Tab
+              value="timeline"
+              aria-label="Timeline view"
+              className="px-3"
+              label={
+                <Tooltip title="Timeline view">
+                  <HeroChartBarIcon className="text-[1rem]" />
+                </Tooltip>
+              }
+            />
+          </Tabs>
         )}
       </div>
       <div className="min-h-75 w-full overflow-x-auto rounded-surface border border-divider bg-paper">

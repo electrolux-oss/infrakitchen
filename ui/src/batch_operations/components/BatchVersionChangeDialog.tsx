@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { Label } from "../../common/components/labels";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
@@ -11,7 +12,6 @@ import { ResourceVariableSchema, VariableInput } from "../../resources/types";
 import {
   Alert,
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -189,7 +189,7 @@ const VariableChanges = ({
   <div className="flex flex-col gap-2">
     {change.added.map((variable) => (
       <div key={variable.name} className="flex flex-wrap items-center gap-3">
-        <Chip size="small" color="success" label="New" />
+        <Label tone="success" label="New" />
         <span className="min-w-40 text-body2">
           {variable.name}
           {variable.required ? " *" : ""}
@@ -214,7 +214,7 @@ const VariableChanges = ({
     ))}
     {change.removed.length > 0 && (
       <div className="flex flex-wrap items-center gap-2">
-        <Chip size="small" color="error" label="Removed" />
+        <Label tone="error" label="Removed" />
         {change.removed.map((variable) => (
           <span
             key={variable.name}
@@ -642,10 +642,9 @@ export const BatchVersionChangeDialog = ({
                         <TableCell>
                           {resource.name}
                           {resource.hasPendingVersion && (
-                            <Chip
+                            <Label
                               className="ml-2"
-                              size="small"
-                              color="warning"
+                              tone="warning"
                               label="Pending version"
                             />
                           )}

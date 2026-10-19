@@ -25,7 +25,7 @@ interface MarkdownViewerProps {
 
 /**
  * Renders Markdown content with the app's typography styles.
- * Supports GitHub Flavored Markdown (tables, strikethrough, task lists).
+ * Supports tables, strikethrough and task-list syntax (GFM-style).
  */
 export const MarkdownViewer: FC<MarkdownViewerProps> = ({
   content,

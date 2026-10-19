@@ -4,7 +4,7 @@ import { Controller, useFormContext } from "react-hook-form";
 
 import { VariableCard } from "../../../common/components/fields/VariableCard";
 import { ValidationRule } from "../../../types";
-import { Chip } from "../../../ui";
+import { Label } from "../../../ui/Label";
 import { ResourceVariableSchema } from "../../types";
 import { validateResourceVariableValue } from "../../utils/validationRules";
 
@@ -49,29 +49,10 @@ export const ResourceVariableRow = ({
       }
       chips={
         <>
-          {isNew && (
-            <Chip
-              label="Added"
-              className="ml-2"
-              appearance="solid"
-              color="info"
-            />
-          )}
-          {isDeleted && (
-            <Chip
-              label="Deleted"
-              className="ml-2"
-              appearance="solid"
-              color="warning"
-            />
-          )}
+          {isNew && <Label size="small" tone="info" label="Added" />}
+          {isDeleted && <Label size="small" tone="warning" label="Deleted" />}
           {validationSummary && (
-            <Chip
-              label={validationSummary}
-              className="ml-2"
-              appearance="solid"
-              color="success"
-            />
+            <Label size="small" tone="success" label={validationSummary} />
           )}
         </>
       }

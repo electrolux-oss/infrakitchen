@@ -1,8 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import { Icon } from "@iconify/react";
-import iconParkOutlineAddData from "@iconify-icons/icon-park-outline/add";
-
 import { Entity, PermissionWrapper } from "../../../common";
 import {
   EntityFetchTable,
@@ -13,6 +10,7 @@ import {
   userColumn,
 } from "../../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../../common/components/fields/RelativeTime";
+import { HeroPlusCircleIcon } from "../../../icons";
 import { Button } from "../../../ui";
 import { RenderCellParams } from "../../../ui";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
@@ -117,7 +115,7 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
           <Button
             size="small"
             onClick={() => handleOpenDialog()}
-            startIcon={<Icon icon={iconParkOutlineAddData} ssr />}
+            startIcon={<HeroPlusCircleIcon />}
           >
             Add Resource Policy
           </Button>

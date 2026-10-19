@@ -7,7 +7,7 @@ import { EntityRefreshButton } from "../../common/components/buttons/EntityRefre
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { TaskAltIcon } from "../../icons/material";
+import { HeroCheckBadgeIcon, HeroKeyIcon } from "../../icons";
 import { Button } from "../../ui";
 import { SecretContent } from "../components/SecretContent";
 import { SECRET_DETAIL_FIELDS, VALIDATE_SECRET_MUTATION } from "../graphql";
@@ -55,6 +55,7 @@ export const SecretPage = () => {
       entityFields={SECRET_DETAIL_FIELDS}
     >
       <EntityContainer
+        titleIcon={<HeroKeyIcon />}
         actions={
           <>
             <PermissionWrapper
@@ -62,7 +63,7 @@ export const SecretPage = () => {
               permissionAction="write"
             >
               <Button
-                startIcon={<TaskAltIcon />}
+                startIcon={<HeroCheckBadgeIcon />}
                 variant="outlined"
                 onClick={handleValidation}
                 loading={loading}

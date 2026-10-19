@@ -2,10 +2,10 @@ import React from "react";
 
 import { SourceConfigResponse } from "../../../source_code_versions/types";
 import { getValidationSummary } from "../../../source_code_versions/utils/validationSummary";
-import { Chip } from "../../../ui";
 import { CodeBlock } from "../code/CodeBlock";
 import { PlaceholderText } from "../fields/PlaceholderDescription";
 import { VariableCard } from "../fields/VariableCard";
+import { Label } from "../labels";
 
 type HclInputVariableData = SourceConfigResponse & {
   source?: string;
@@ -54,28 +54,13 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
       chips={
         <>
           {validationSummary && (
-            <Chip
-              label={validationSummary}
-              className="ml-2"
-              appearance="solid"
-              color="success"
-            />
+            <Label size="small" tone="success" label={validationSummary} />
           )}
           {variable.restricted && (
-            <Chip
-              label="restricted"
-              className="ml-2"
-              appearance="solid"
-              color="warning"
-            />
+            <Label size="small" tone="warning" label="restricted" />
           )}
           {variable.sensitive && (
-            <Chip
-              label="sensitive"
-              className="ml-2"
-              appearance="solid"
-              color="secondary"
-            />
+            <Label size="small" tone="secondary" label="sensitive" />
           )}
         </>
       }

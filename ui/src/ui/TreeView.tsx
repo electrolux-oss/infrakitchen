@@ -11,7 +11,7 @@ import {
   useState,
 } from "react";
 
-import { ChevronRightIcon } from "../icons/material";
+import { HeroChevronDownIcon } from "../icons";
 import { cn } from "../utils/cn";
 
 import { Collapse } from "./Collapse";
@@ -235,7 +235,7 @@ export function TreeView<Multiple extends boolean | undefined = undefined>({
 
 export interface TreeItemProps {
   itemId: string;
-  label: ReactNode;
+  label: ReactNode | ((state: { expanded: boolean }) => ReactNode);
   disabled?: boolean;
   /** Classes for the item's row. */
   className?: string;
@@ -292,16 +292,17 @@ export function TreeItem({
       >
         <span className="flex size-6 shrink-0 items-center justify-center text-fg-muted">
           {hasChildren && (
-            <ChevronRightIcon
-              fontSize="small"
+            <HeroChevronDownIcon
               className={cn(
-                "transition-transform duration-150",
-                expanded && "rotate-90",
+                "size-4 transition-transform duration-150",
+                !expanded && "-rotate-90",
               )}
             />
           )}
         </span>
-        <div className="min-w-0 flex-1">{label}</div>
+        <div className="min-w-0 flex-1">
+          {typeof label === "function" ? label({ expanded }) : label}
+        </div>
       </div>
       {hasChildren && (
         <Collapse in={expanded} inert={!expanded}>

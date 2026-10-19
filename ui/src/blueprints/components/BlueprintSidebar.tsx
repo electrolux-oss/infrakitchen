@@ -9,12 +9,14 @@ import { EditableDescriptionField } from "../../common/components/editors/Editab
 import { EditableNameField } from "../../common/components/editors/EditableNameField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import { Entity } from "../../common/components/entities/Entity";
+import { Label, StatusLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context/ConfigContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
-import StatusChip from "../../common/StatusChip";
-import { StorageIcon, TuneIcon } from "../../icons/material";
-import { Chip } from "../../ui";
+import {
+  HeroCircleStackIcon,
+  HeroAdjustmentsHorizontalIcon,
+} from "../../icons";
 import { GqlBlueprint, UPDATE_BLUEPRINT_MUTATION } from "../graphql";
 import { BlueprintUpdateFieldInput } from "../graphql/mutations";
 
@@ -23,7 +25,7 @@ export interface BlueprintSidebarProps {
 }
 
 /**
- * GitHub-style right sidebar for the blueprint detail page: groups the
+ * Right context sidebar for the blueprint detail page: groups the
  * blueprint's description, status, building blocks and history so the main
  * column can focus on its wiring and workflows.
  */
@@ -70,7 +72,7 @@ export const BlueprintSidebar = ({ blueprint }: BlueprintSidebarProps) => {
 
       <SidebarSection title="Status">
         <div className="col-span-full">
-          <StatusChip status={blueprint.status} />
+          <StatusLabel status={blueprint.status} />
         </div>
       </SidebarSection>
 
@@ -92,12 +94,11 @@ export const BlueprintSidebar = ({ blueprint }: BlueprintSidebarProps) => {
           <div className="col-span-full">
             <div className="flex flex-wrap gap-2">
               {externalTemplates.map((t) => (
-                <Chip
+                <Label
                   key={t.id}
                   label={t.name}
-                  variant="outlined"
-                  color="warning"
-                  icon={<StorageIcon />}
+                  tone="warning"
+                  icon={<HeroCircleStackIcon />}
                   onClick={() => navigate(`${linkPrefix}templates/${t.id}`)}
                 />
               ))}
@@ -111,12 +112,11 @@ export const BlueprintSidebar = ({ blueprint }: BlueprintSidebarProps) => {
           <div className="col-span-full">
             <div className="flex flex-wrap gap-2">
               {constants.map((c) => (
-                <Chip
+                <Label
                   key={c.id}
                   label={c.name}
-                  variant="outlined"
-                  color="secondary"
-                  icon={<TuneIcon />}
+                  tone="secondary"
+                  icon={<HeroAdjustmentsHorizontalIcon />}
                 />
               ))}
             </div>

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { useConfig, PermissionWrapper } from "../../common";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
-import { AddIcon } from "../../icons/material";
+import { HeroPlusCircleIcon } from "../../icons";
 import { Button } from "../../ui";
 import {
   sourceCodeVersionColumns,
@@ -25,7 +25,7 @@ export const SourceCodeVersionsPage = () => {
           permissionAction="write"
         >
           <Button
-            startIcon={<AddIcon />}
+            startIcon={<HeroPlusCircleIcon />}
             onClick={() => navigate(`${linkPrefix}source_code_versions/create`)}
           >
             Create

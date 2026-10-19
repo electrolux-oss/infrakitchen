@@ -12,7 +12,7 @@ export interface BatchOperationSidebarProps {
 }
 
 /**
- * GitHub-style right sidebar for the batch operation detail page: groups the
+ * Right context sidebar for the batch operation detail page: groups the
  * operation's description, scope and history so the main column can focus on
  * the entities it runs against.
  */

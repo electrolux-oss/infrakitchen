@@ -8,8 +8,8 @@ import {
   cn,
   ListItemIcon,
   ListItemText,
-  MenuIcon,
-  MenuOpenIcon,
+  HeroBars3Icon,
+  HeroBars3BottomLeftIcon,
   Tooltip,
 } from "@/index";
 
@@ -32,7 +32,7 @@ export default function DashboardSidebarToggleItem({
     setExpanded(!expanded);
   }, [expanded, setExpanded]);
 
-  const icon = expanded ? <MenuOpenIcon /> : <MenuIcon />;
+  const icon = expanded ? <HeroBars3BottomLeftIcon /> : <HeroBars3Icon />;
 
   return (
     <Tooltip

@@ -8,8 +8,7 @@ import {
   TabbedContent,
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
-import { EntityGraphViewTab } from "../../common/components/graph/GraphViewTab";
-import { EntityTreeViewTab } from "../../common/components/tree/TreeViewTab";
+import { TopologyTab } from "../../common/components/graph/TopologyTab";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { Revision } from "../../revision/Revision";
 import { EntityTaskQueueStatus } from "../../workers/components";
@@ -17,6 +16,7 @@ import { EntityTaskQueueStatus } from "../../workers/components";
 import { DependencyConfiguration } from "./DependencyConfiguration";
 import { ResourceNotificationSubscribersTable } from "./ResourceNotificationSubscribersTable";
 import { ResourcePermissions } from "./ResourcePermissions";
+import { ResourceReviewView } from "./ResourceReviewView";
 import { ResourceSidebar } from "./ResourceSidebar";
 import {
   ResourceVariablesEditor,
@@ -50,21 +50,9 @@ export const ResourceContent = () => {
       ),
     },
     {
-      label: "Tree View",
+      label: "Topology",
       content: (
-        <EntityTreeViewTab
-          entity_id={entity.id}
-          entity_name={entity.entityName}
-        />
-      ),
-    },
-    {
-      label: "Graph View",
-      content: (
-        <EntityGraphViewTab
-          entity_id={entity.id}
-          entity_name={entity.entityName}
-        />
+        <TopologyTab entity_id={entity.id} entity_name={entity.entityName} />
       ),
     },
     {
@@ -122,6 +110,7 @@ export const ResourceContent = () => {
 
   return (
     <EntitySidebarLayout
+      banner={<ResourceReviewView />}
       sidebar={
         <ResourceSidebar
           resource={entity}

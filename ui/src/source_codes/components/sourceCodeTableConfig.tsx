@@ -6,7 +6,7 @@ import {
   relativeTimeColumn,
   userColumn,
 } from "../../common/components/entity_table/tableColumns";
-import StatusChip from "../../common/StatusChip";
+import { StatusLabel } from "../../common/components/labels";
 import { ColumnVisibilityModel, RenderCellParams } from "../../ui";
 import { ENTITY_STATUS } from "../../utils/constants";
 
@@ -59,7 +59,7 @@ export const sourceCodeColumns: EntityTableColumn[] = [
       ],
     },
     renderCell: (params: RenderCellParams) => (
-      <StatusChip status={params.row.status} />
+      <StatusLabel status={params.row.status} />
     ),
   },
   relativeTimeColumn("updatedAt", "Updated", {

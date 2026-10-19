@@ -2,7 +2,7 @@ import { Fragment, ReactNode, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import { WarningAmberIcon } from "../../../icons/material";
+import { HeroExclamationTriangleIcon } from "../../../icons";
 import { CASCADE_DESTROY_RESOURCE_MUTATION } from "../../../resources/graphql";
 import { Alert, Button, Card, CardHeader } from "../../../ui";
 import { ENTITY_ACTION } from "../../../utils";
@@ -285,7 +285,7 @@ export const DangerZoneCard = ({
                   severity={
                     config.severity === "destructive" ? "error" : "warning"
                   }
-                  icon={<WarningAmberIcon />}
+                  icon={<HeroExclamationTriangleIcon />}
                 >
                   {config.helperText ?? (
                     <>

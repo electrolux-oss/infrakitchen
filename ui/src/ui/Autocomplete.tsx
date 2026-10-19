@@ -22,10 +22,9 @@ import {
   useMultipleSelection,
 } from "downshift";
 
-import { ArrowDropDownIcon, CloseIcon } from "../icons/material";
+import { HeroChevronDownIcon, HeroXMarkIcon } from "../icons";
 import { cn } from "../utils/cn";
 
-import { Chip } from "./Chip";
 import {
   FormControl,
   FormHelperText,
@@ -33,6 +32,8 @@ import {
   inputBoxClasses,
   InputLabel,
 } from "./FormControl";
+import { Label } from "./Label";
+import { RemovableLabel } from "./RemovableLabel";
 import { Spinner } from "./Spinner";
 import { useControllable } from "./useControllable";
 
@@ -499,30 +500,23 @@ export function Autocomplete<
         }}
       >
         {multiple &&
-          selectedItems.slice(0, limitTags).map((item, index) => (
-            <Chip
-              key={`${itemKey(item)}-${index}`}
-              size="small"
-              variant="outlined"
-              className="max-w-full"
-              label={renderValue ? renderValue(item) : getOptionLabel(item)}
-              {...getSelectedItemProps({ selectedItem: item, index })}
-              onDelete={
-                interactive
-                  ? (event) => {
-                      event.stopPropagation();
-                      removeSelectedItem(item);
-                    }
-                  : undefined
-              }
-            />
-          ))}
+          selectedItems
+            .slice(0, limitTags)
+            .map((item, index) => (
+              <RemovableLabel
+                key={`${itemKey(item)}-${index}`}
+                size="small"
+                className="max-w-full"
+                label={renderValue ? renderValue(item) : getOptionLabel(item)}
+                {...getSelectedItemProps({ selectedItem: item, index })}
+                removeLabel={`Remove ${getOptionLabel(item)}`}
+                onRemove={
+                  interactive ? () => removeSelectedItem(item) : undefined
+                }
+              />
+            ))}
         {limitTags !== undefined && selectedItems.length > limitTags && (
-          <Chip
-            size="small"
-            variant="outlined"
-            label={`+${selectedItems.length - limitTags}`}
-          />
+          <Label size="small" label={`+${selectedItems.length - limitTags}`} />
         )}
         {richSingle && selectedItem !== null && inputValue === "" && (
           <span className="inline-flex min-w-0 shrink items-center">
@@ -545,7 +539,7 @@ export function Autocomplete<
             onClick={clear}
             className="invisible flex shrink-0 cursor-pointer items-center rounded-full border-0 bg-transparent p-0.5 text-fg-muted group-focus-within/field:visible group-hover/field:visible hover:bg-hover"
           >
-            <CloseIcon fontSize="small" />
+            <HeroXMarkIcon fontSize="small" />
           </button>
         )}
         {!readOnly && !freeSolo && (
@@ -556,10 +550,9 @@ export function Autocomplete<
             aria-label={isOpen ? "Close" : "Open"}
             className="flex shrink-0 cursor-pointer items-center rounded-full border-0 bg-transparent p-0.5 text-fg-muted hover:bg-hover disabled:cursor-default"
           >
-            <ArrowDropDownIcon
-              fontSize="small"
+            <HeroChevronDownIcon
               className={cn(
-                "transition-transform duration-150",
+                "size-4 transition-transform duration-150",
                 listOpen && "rotate-180",
               )}
             />

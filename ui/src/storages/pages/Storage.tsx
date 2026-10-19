@@ -4,6 +4,7 @@ import { LogLiveTail } from "../../common";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
+import { HeroServerStackIcon } from "../../icons";
 import { TASK_QUEUE_STATUS_SELECTION } from "../../workers/graphql";
 import { StorageContent } from "../components/StorageContent";
 import { STORAGE_DETAIL_FIELDS } from "../graphql";
@@ -20,7 +21,10 @@ export const StoragePage = () => {
       entity_id={storage_id || ""}
       entityFields={PAGE_FIELDS}
     >
-      <EntityContainer actions={<EntityRefreshButton />}>
+      <EntityContainer
+        titleIcon={<HeroServerStackIcon />}
+        actions={<EntityRefreshButton />}
+      >
         <StorageContent />
         <LogLiveTail />
       </EntityContainer>

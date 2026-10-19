@@ -8,6 +8,7 @@ import {
   useEntityProvider,
 } from "../../common/context/EntityContext";
 import { getRepoNameFromUrl } from "../../common/utils";
+import { HeroCodeBracketSquareIcon } from "../../icons";
 import { TASK_QUEUE_STATUS_SELECTION } from "../../workers/graphql";
 import { SourceCodeContent } from "../components/SourceCodeContent";
 import { SOURCE_CODE_DETAIL_FIELDS } from "../graphql";
@@ -36,6 +37,7 @@ const SourceCodePageContent = () => {
     // Code repositories are headed by the repository name from their URL, as
     // the overview card was.
     <EntityContainer
+      titleIcon={<HeroCodeBracketSquareIcon />}
       title={
         entity?.sourceCodeUrl
           ? getRepoNameFromUrl(entity.sourceCodeUrl)

@@ -1,5 +1,5 @@
-import { Label } from "../../common/components/labels/Label";
-import { Divider, Chip, Tooltip, type ChipColor } from "../../ui";
+import { Divider, Tooltip } from "../../ui";
+import { Label, type LabelTone } from "../../ui/Label";
 import { cn } from "../../utils/cn";
 import type { GqlAuditLog } from "../graphql";
 
@@ -114,8 +114,8 @@ export const formatExecutionSummarySegments = (
   return parts;
 };
 
-// Planned actions in display order, with the color of their chip.
-const RESOURCE_ACTIONS: [string, string, ChipColor][] = [
+// Planned actions in display order, with the tone of their count pill.
+const RESOURCE_ACTIONS: [string, string, LabelTone][] = [
   ["create", "Create", "success"],
   ["update", "Update in-place", "warning"],
   ["replace", "Replace", "error"],
@@ -143,25 +143,19 @@ const getTofuResult = (execution: AuditExecution): ChangeCounts | undefined =>
 const ResourceActionGroup = ({
   label,
   count,
-  color,
+  tone,
   addresses,
 }: {
   label: string;
   count: number;
-  color: ChipColor;
+  tone: LabelTone;
   addresses: string[];
 }) => {
   const shown = addresses.slice(0, MAX_ROWS_PER_GROUP);
   const hidden = addresses.length - shown.length;
   return (
     <div className="flex flex-col gap-1">
-      <Chip
-        className="self-start font-semibold"
-        label={`${count} ${label}`}
-        color={color}
-        variant="outlined"
-        size="small"
-      />
+      <Label tone={tone} label={`${count} ${label}`} className="self-start" />
       {shown.map((address) => (
         <span
           className="ml-2 min-w-0 font-mono text-[0.8125rem] font-normal tracking-[0.01em] break-all"
@@ -186,12 +180,12 @@ const ExecutionResources = ({ result }: { result: ChangeCounts }) => {
     ([action, label, color]): {
       label: string;
       count: number;
-      color: ChipColor;
+      tone: LabelTone;
       addresses: string[];
     }[] => {
       const addresses = result.resources?.[action] ?? [];
       return addresses.length
-        ? [{ label, count: addresses.length, color, addresses }]
+        ? [{ label, count: addresses.length, tone: color, addresses }]
         : [];
     },
   );
@@ -203,7 +197,7 @@ const ExecutionResources = ({ result }: { result: ChangeCounts }) => {
           key={group.label}
           label={group.label}
           count={group.count}
-          color={group.color}
+          tone={group.tone}
           addresses={group.addresses}
         />
       ))}

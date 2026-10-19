@@ -5,12 +5,14 @@ import { useParams } from "react-router";
 import { LogLiveTail, PermissionWrapper } from "../../common";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
+import { EntityStatusChip } from "../../common/components/labels/EntityStatusChip";
 import {
   EntityProvider,
   useEntityProvider,
 } from "../../common/context/EntityContext";
-import { TuneIcon } from "../../icons/material";
-import { Button } from "../../ui";
+import { HeroAdjustmentsHorizontalIcon } from "../../icons";
+import { HeroShareIcon, HeroTagIcon } from "../../icons";
+import { Button, Label } from "../../ui";
 import { TASK_QUEUE_STATUS_SELECTION } from "../../workers/graphql";
 import { SourceCodeVersionContent } from "../components/SourceCodeVersionContent";
 import { TemplateVersionReorderDialog } from "../components/TemplateVersionReorderDialog";
@@ -38,9 +40,39 @@ const SourceCodeVersionPageContent = () => {
   const sourceCodeVersion = entity as GqlSourceCodeVersion | undefined;
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  // The identifier ("repo/folder/:tag") is unwieldy as a heading; lead with the
+  // template name and show the git ref and status next to it.
+  const templateName = sourceCodeVersion?.template?.name;
+  const gitRef =
+    sourceCodeVersion?.sourceCodeVersion || sourceCodeVersion?.sourceCodeBranch;
+
   return (
     <>
       <EntityContainer
+        title={templateName}
+        titleIcon={<HeroTagIcon />}
+        titleAdornment={
+          sourceCodeVersion && templateName ? (
+            <>
+              {gitRef && (
+                <Label
+                  label={gitRef}
+                  size="large"
+                  icon={
+                    sourceCodeVersion.sourceCodeVersion ? (
+                      <HeroTagIcon />
+                    ) : (
+                      <HeroShareIcon />
+                    )
+                  }
+                />
+              )}
+              {sourceCodeVersion.status && (
+                <EntityStatusChip status={sourceCodeVersion.status} />
+              )}
+            </>
+          ) : undefined
+        }
         actions={
           <>
             {sourceCodeVersion?.template?.id ? (
@@ -49,7 +81,7 @@ const SourceCodeVersionPageContent = () => {
                 permissionAction="write"
               >
                 <Button
-                  startIcon={<TuneIcon />}
+                  startIcon={<HeroAdjustmentsHorizontalIcon />}
                   onClick={() => setDialogOpen(true)}
                 >
                   Manage Versions

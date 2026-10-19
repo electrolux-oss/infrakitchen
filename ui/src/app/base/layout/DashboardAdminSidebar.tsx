@@ -3,7 +3,7 @@ import { matchPath, useLocation } from "react-router";
 import DashboardSidebarPageItem from "./DashboardSidebarPageItem";
 
 import { PermissionWrapper } from "@/index";
-import { MiscellaneousServicesIcon, VerifiedUserIcon } from "@/index";
+import { HeroCog6ToothIcon, HeroFingerPrintIcon } from "@/index";
 
 export const DashboardAdminSidebar = () => {
   const { pathname } = useLocation();
@@ -12,7 +12,7 @@ export const DashboardAdminSidebar = () => {
       <DashboardSidebarPageItem
         id="auth_providers"
         title="Auth Providers"
-        icon={<VerifiedUserIcon />}
+        icon={<HeroFingerPrintIcon />}
         href="/auth_providers"
         selected={!!matchPath("/auth_providers/*", pathname)}
         permissionKey="auth_provider"
@@ -20,7 +20,7 @@ export const DashboardAdminSidebar = () => {
       <DashboardSidebarPageItem
         id="admin"
         title="Settings"
-        icon={<MiscellaneousServicesIcon />}
+        icon={<HeroCog6ToothIcon />}
         href="/admin"
         selected={!!matchPath("/admin/*", pathname)}
         permissionKey="*"

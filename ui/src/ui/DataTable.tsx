@@ -22,7 +22,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-import { ArrowDownwardIcon, ArrowUpwardIcon } from "../icons/material";
+import { HeroArrowDownIcon, HeroArrowUpIcon } from "../icons";
 import { cn } from "../utils/cn";
 
 import { getCellValue, renderCellContent } from "./cellContent";
@@ -406,9 +406,9 @@ export function DataTable<R = any>({
           const resizable = column.resizable !== false && !isLast;
           const align = column.headerAlign ?? column.align ?? "left";
           const SortIcon =
-            sorted === "desc" ? ArrowDownwardIcon : ArrowUpwardIcon;
+            sorted === "desc" ? HeroArrowDownIcon : HeroArrowUpIcon;
           const label = (
-            <span className={cn("min-w-0 flex-1 truncate", ALIGN[align])}>
+            <span className={cn("min-w-0 truncate", ALIGN[align])}>
               {column.headerName}
             </span>
           );
@@ -417,7 +417,8 @@ export function DataTable<R = any>({
               type="button"
               onClick={tableColumn?.getToggleSortingHandler()}
               className={cn(
-                "group flex w-full cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-inherit",
+                "group flex w-full cursor-pointer items-center gap-1 border-0 bg-transparent p-0 font-[inherit] text-inherit transition-colors hover:text-fg",
+                sorted && "text-fg",
                 "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
                 JUSTIFY[align],
               )}
@@ -426,7 +427,7 @@ export function DataTable<R = any>({
               <SortIcon
                 fontSize="inherit"
                 className={cn(
-                  "text-[1.125rem] transition-opacity",
+                  "shrink-0 text-base transition-opacity",
                   sorted
                     ? "opacity-100"
                     : "opacity-0 group-hover:opacity-50 group-focus-visible:opacity-50",
@@ -449,7 +450,7 @@ export function DataTable<R = any>({
                     ? "descending"
                     : undefined
               }
-              className="relative border-b border-divider px-2.5 text-[0.8125rem] leading-[1.2] font-medium text-fg-muted"
+              className="relative border-b border-divider px-2.5 leading-[1.2]"
             >
               {column.description ? (
                 <Tooltip title={column.description}>{content}</Tooltip>

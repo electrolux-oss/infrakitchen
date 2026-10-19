@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 
-import { Chip, Card, CardContent, CardHeader } from "../../../ui";
+import { Card, CardContent, CardHeader } from "../../../ui";
+import { Label } from "../../../ui/Label";
 import { cn } from "../../../utils/cn";
 
 /**
@@ -23,9 +24,9 @@ export interface BaseCardProps {
   actions?: ReactNode;
   /** Leading icon shown before the title. */
   icon?: ReactNode;
-  /** Optional status text; rendered as an uppercase chip after the title. */
+  /** Optional status text; rendered as an uppercase label after the title. */
   chip?: string;
-  /** Soft chip color; defaults to "info". */
+  /** Label tone; defaults to "info". */
   chipColor?:
     | "default"
     | "primary"
@@ -34,8 +35,6 @@ export interface BaseCardProps {
     | "info"
     | "success"
     | "warning";
-  /** Chip style: translucent soft pill (default) or solid filled pill (EntityCard-style). */
-  chipVariant?: "soft" | "solid";
   /** Class names merged onto the root Card. */
   className?: string;
 }
@@ -49,7 +48,6 @@ export const BaseCard = (props: BaseCardProps) => {
     icon,
     chip,
     chipColor = "info",
-    chipVariant = "soft",
     className,
   } = props;
 
@@ -66,13 +64,7 @@ export const BaseCard = (props: BaseCardProps) => {
             <div className="flex items-center gap-4">
               {icon}
               {name}
-              {chip && (
-                <Chip
-                  label={chip.toUpperCase()}
-                  appearance={chipVariant === "solid" ? "solid" : "soft"}
-                  color={chipColor}
-                />
-              )}
+              {chip && <Label tone={chipColor} label={chip.toUpperCase()} />}
             </div>
           }
           subheader={description ? description : undefined}

@@ -1,8 +1,8 @@
 import { clsx, type ClassValue } from "clsx";
 import { extendTailwindMerge } from "tailwind-merge";
 
-// Teach tailwind-merge the custom typography sizes from styles.css so that
-// `text-body2` is treated as a font size, not a text color.
+// The custom typography sizes and radius values from styles.css must be
+// registered so conflicting classes merge correctly.
 const twMerge = extendTailwindMerge({
   extend: {
     theme: {
@@ -19,6 +19,9 @@ const twMerge = extendTailwindMerge({
         "body2",
         "caption",
       ],
+    },
+    classGroups: {
+      rounded: [{ rounded: ["surface", "code"] }],
     },
   },
 });

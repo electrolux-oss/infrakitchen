@@ -8,13 +8,14 @@ import {
   getProviderValue,
 } from "../../common/components/fields/CommonField";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
+import { Label } from "../../common/components/labels";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { dashedAddButtonClass } from "../../common/utils/dashedAddButton";
-import { AddIcon } from "../../icons/material";
-import { Button, Chip } from "../../ui";
+import { HeroPlusCircleIcon } from "../../icons";
+import { Button } from "../../ui";
 import { DataTable, DataTableColumn } from "../../ui";
 import { GqlSecret } from "../graphql";
 import {
@@ -170,13 +171,13 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
         name={"Integration"}
         value={
           secret.integration ? (
-            <Entity entity={secret.integration} providerIconSize={24} />
+            <Entity entity={secret.integration} providerIconSize={18} />
           ) : null
         }
       />
       <CommonField
         name={"Secret Provider"}
-        value={getProviderValue(secret.secretProvider)}
+        value={getProviderValue(secret.secretProvider, 18)}
       />
       <CommonField name={"Secret Type"} value={secret.secretType} />
       {isCustom ? (
@@ -185,12 +186,7 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
           name={
             <div className="flex items-center gap-2">
               Secret List
-              <Chip
-                label={String(secretList.length)}
-                appearance="solid"
-                color="info"
-                compact
-              />
+              <Label label={String(secretList.length)} />
             </div>
           }
           value={
@@ -209,7 +205,7 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
                 >
                   {/* Dashed "Add" action shared with the other list editors. */}
                   <Button
-                    startIcon={<AddIcon />}
+                    startIcon={<HeroPlusCircleIcon />}
                     onClick={addSecret}
                     className={dashedAddButtonClass}
                   >

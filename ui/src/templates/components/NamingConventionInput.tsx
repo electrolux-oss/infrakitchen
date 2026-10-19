@@ -12,7 +12,7 @@ import {
   SourceOutputConfigTemplateResponse,
   SourceConfigResponse,
 } from "../../source_code_versions/types";
-import { Spinner, Chip, Tooltip, TextField } from "../../ui";
+import { Spinner, Label, Tooltip, TextField } from "../../ui";
 import { GqlTemplateShort } from "../graphql";
 
 interface NamingConventionInputProps {
@@ -164,11 +164,10 @@ export const NamingConventionInput = ({
                   title={config.description || config.type}
                   placement="top"
                 >
-                  <Chip
-                    className="font-mono text-[0.75rem]"
+                  <Label
+                    className="font-mono"
                     label={config.name}
-                    variant="outlined"
-                    color="primary"
+                    tone="primary"
                     onClick={() => handleInsertVariable(config.name)}
                   />
                 </Tooltip>
@@ -192,11 +191,10 @@ export const NamingConventionInput = ({
                       title={output.description || "parent output"}
                       placement="top"
                     >
-                      <Chip
-                        className="font-mono text-[0.75rem]"
+                      <Label
+                        className="font-mono"
                         label={output.name}
-                        variant="outlined"
-                        color="secondary"
+                        tone="secondary"
                         onClick={() => handleInsertVariable(output.name)}
                       />
                     </Tooltip>

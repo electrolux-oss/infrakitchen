@@ -4,16 +4,12 @@ import { EntityTableColumn } from "../../common/components/entity_table/EntityTa
 import {
   createdUpdatedColumns,
   labelsColumn,
-  userColumn,
 } from "../../common/components/entity_table/tableColumns";
 import { ColumnFilterSpec } from "../../common/components/filter_panel/FilterConfig";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
-import StatusChip from "../../common/StatusChip";
+import { StatusLabel } from "../../common/components/labels";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
-import {
-  CallSplitOutlinedIcon,
-  LocalOfferOutlinedIcon,
-} from "../../icons/material";
+import { HeroShareIcon, HeroTagIcon } from "../../icons";
 import { GqlIntegrationShort } from "../../integrations/graphql";
 import { GqlSecretShort } from "../../secrets/graphql";
 import { toolColumn } from "../../tools/components/toolColumn";
@@ -31,7 +27,6 @@ import { hasPendingChanges } from "../utils/pendingChanges";
 export const resourceDefaultColumnVisibilityModel: ColumnVisibilityModel = {
   template: true,
   created_at: false,
-  creator: false,
   storage: false,
   tool: true,
   workspace: false,
@@ -175,8 +170,8 @@ export const resourceColumns: EntityTableColumn[] = [
               .map((e) => {
                 const ref = e.sourceCodeVersion ?? e.sourceCodeBranch;
                 const RefIcon = e.sourceCodeVersion
-                  ? LocalOfferOutlinedIcon
-                  : CallSplitOutlinedIcon;
+                  ? HeroTagIcon
+                  : HeroShareIcon;
                 return {
                   label: ref || e.identifier,
                   value: e.id,
@@ -307,7 +302,9 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "state",
     fetchFields: ["state", "status", "tempState"],
     headerName: "State",
-    flex: 1,
+    // Wider share: the state reads like "PROVISIONED [DONE]" plus a
+    // "Needs review" pill, so it needs more room than a plain name.
+    flex: 1.5,
     mobile: "badge",
     filter: [
       {
@@ -345,7 +342,7 @@ export const resourceColumns: EntityTableColumn[] = [
     ],
     valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
     renderCell: (params: RenderCellParams) => (
-      <StatusChip
+      <StatusLabel
         status={String(params.row.status).toLowerCase()}
         state={String(params.row.state).toLowerCase()}
         needsReview={hasPendingChanges(params.row)}
@@ -353,12 +350,12 @@ export const resourceColumns: EntityTableColumn[] = [
     ),
   },
   ...createdUpdatedColumns({
+    withCreator: true,
     createdField: "created_at",
     updatedField: "updated_at",
     createdValue: (params: RenderCellParams) => params.row.createdAt,
     updatedValue: (params: RenderCellParams) => params.row.updatedAt,
   }),
-  userColumn(),
   {
     field: "storage",
     headerName: "Storage",

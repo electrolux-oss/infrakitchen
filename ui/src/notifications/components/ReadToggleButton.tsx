@@ -1,6 +1,6 @@
 import { MouseEvent } from "react";
 
-import { DoneIcon, MarkEmailUnreadOutlinedIcon } from "../../icons/material";
+import { HeroCheckIcon, HeroEnvelopeIcon } from "../../icons";
 import { IconButton, Tooltip } from "../../ui";
 
 interface ReadToggleButtonProps {
@@ -25,9 +25,9 @@ export const ReadToggleButton = ({
         }}
       >
         {isRead ? (
-          <MarkEmailUnreadOutlinedIcon fontSize="small" />
+          <HeroEnvelopeIcon fontSize="small" />
         ) : (
-          <DoneIcon fontSize="small" />
+          <HeroCheckIcon fontSize="small" />
         )}
       </IconButton>
     </Tooltip>
