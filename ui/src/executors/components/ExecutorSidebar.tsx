@@ -17,7 +17,7 @@ import {
 import { ScheduledApplyValue } from "../../common/components/fields/ScheduledApplyValue";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { EntityStatusChip } from "../../common/components/labels";
+import { StatusLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
@@ -101,7 +101,7 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
       <SidebarSection title="Status">
         <div className="col-span-full">
           <div className="flex items-center justify-between gap-2">
-            <EntityStatusChip status={executor.status} state={executor.state} />
+            <StatusLabel status={executor.status} state={executor.state} />
             <FavoriteButton
               componentId={String(executor.id)}
               componentType="executor"

@@ -14,7 +14,7 @@ import { MultiSelectEditor } from "../../common/components/editors/MultiSelectEd
 import { Entity } from "../../common/components/entities/Entity";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { EntityStatusChip } from "../../common/components/labels";
+import { StatusLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
@@ -135,7 +135,7 @@ export const ProjectSidebar = ({
       <SidebarSection title="Status">
         <div className="col-span-full">
           <div className="flex items-center justify-between gap-2">
-            <EntityStatusChip status={project.status} />
+            <StatusLabel status={project.status} />
             <SubscribeNotificationButton
               isSubscribed={isSubscribed}
               isLoading={loading}
