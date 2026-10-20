@@ -1,11 +1,8 @@
 import { useState } from "react";
 
-import { Icon } from "@iconify/react";
-import carbonUnlinkData from "@iconify-icons/carbon/unlink";
-
 import { useConfig } from "../../common";
 import { notifyError } from "../../common/hooks/useNotification";
-import { CheckIcon, CloseIcon } from "../../icons/material";
+import { HeroCheckIcon, HeroLinkSlashIcon, HeroXMarkIcon } from "../../icons";
 import { Button } from "../../ui";
 import { UNLINK_USER_ACCOUNT_MUTATION } from "../graphql";
 
@@ -60,7 +57,7 @@ export const UnlinkAccountButton = (props: UnlinkAccountButtonProps) => {
           <Button
             className="font-bold normal-case"
             variant="contained"
-            startIcon={<CheckIcon />}
+            startIcon={<HeroCheckIcon />}
             onClick={() => handleUnlinkAccount()}
             disabled={isLoading}
           >
@@ -69,7 +66,7 @@ export const UnlinkAccountButton = (props: UnlinkAccountButtonProps) => {
           <Button
             className="font-bold normal-case"
             color="error"
-            startIcon={<CloseIcon />}
+            startIcon={<HeroXMarkIcon />}
             onClick={handleCancelUnlink}
             disabled={isLoading}
           >
@@ -79,7 +76,7 @@ export const UnlinkAccountButton = (props: UnlinkAccountButtonProps) => {
       ) : (
         <Button
           onClick={handleInitiateUnlinkConfirmation}
-          startIcon={<Icon icon={carbonUnlinkData} ssr />}
+          startIcon={<HeroLinkSlashIcon />}
         >
           Unlink Account
         </Button>

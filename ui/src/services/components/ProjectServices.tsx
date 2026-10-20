@@ -7,7 +7,7 @@ import { EntityCard } from "../../common/components/cards/EntityCard";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
-import { AddIcon } from "../../icons/material";
+import { HeroPlusCircleIcon } from "../../icons";
 import { Alert, Spinner, Button } from "../../ui";
 import { GqlService, SERVICES_QUERY } from "../graphql";
 
@@ -80,7 +80,7 @@ export const ProjectServices = ({ projectId }: ProjectServicesProps) => {
             onClick={() =>
               navigate(`${linkPrefix}services/create?project_id=${projectId}`)
             }
-            startIcon={<AddIcon />}
+            startIcon={<HeroPlusCircleIcon />}
           >
             Create Service
           </Button>

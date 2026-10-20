@@ -1,10 +1,10 @@
 import React, { Dispatch } from "react";
 
 import { useConfig } from "../..";
-import { LaunchIcon } from "../../../icons/material";
+import { HeroArrowTopRightOnSquareIcon } from "../../../icons";
 import { Link, TreeItem, TreeView } from "../../../ui";
-import StatusChip from "../../StatusChip";
 import { Entity } from "../entities/Entity";
+import { StatusLabel } from "../labels";
 
 import { TreeResponse } from "./types";
 
@@ -56,7 +56,7 @@ const StyledTreeItem = ({
             noWrap
             linkClassName="min-w-0"
           />
-          <StatusChip
+          <StatusLabel
             status={status}
             state={state}
             compact
@@ -68,7 +68,7 @@ const StyledTreeItem = ({
             target="_blank"
             aria-label={`Open ${item.name} ${entity_name} in new tab`}
           >
-            <LaunchIcon className="text-[15px] text-fg-muted" />
+            <HeroArrowTopRightOnSquareIcon className="text-[15px] text-fg-muted" />
           </Link>
         </div>
       }

@@ -1,6 +1,6 @@
 import { MouseEvent } from "react";
 
-import { Chip } from "../../../ui";
+import { Label, type LabelTone } from "../../../ui/Label";
 
 export interface RevisionChipProps {
   /**
@@ -10,11 +10,7 @@ export interface RevisionChipProps {
   revision: number | string;
   /** Opens the revision's diff. Omit (or pass undefined) to render non-interactive. */
   onClick?: (event: MouseEvent<HTMLElement>) => void;
-  /**
-   * "solid" — filled grey badge for dense contexts like datagrid cells
-   * (audit log table). "outlined" — primary outline for the timeline header.
-   */
-  variant?: "solid" | "outlined";
+  tone?: LabelTone;
 }
 
 /**
@@ -24,20 +20,13 @@ export interface RevisionChipProps {
 export const RevisionChip = ({
   revision,
   onClick,
-  variant = "solid",
+  tone = "default",
 }: RevisionChipProps) => {
   const clickable = typeof onClick === "function";
   const label = typeof revision === "number" ? `v${revision}` : revision;
 
   return (
-    <Chip
-      label={label}
-      variant={variant === "outlined" ? "outlined" : "filled"}
-      color={variant === "outlined" ? "primary" : "default"}
-      appearance={variant === "outlined" ? "theme" : "solid"}
-      clickable={clickable}
-      onClick={onClick}
-    />
+    <Label label={label} tone={tone} clickable={clickable} onClick={onClick} />
   );
 };
 

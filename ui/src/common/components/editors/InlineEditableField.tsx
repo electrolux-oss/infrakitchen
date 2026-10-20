@@ -2,7 +2,7 @@ import { ReactNode, useState } from "react";
 
 import { createPortal } from "react-dom";
 
-import { CheckIcon, CloseIcon } from "../../../icons/material";
+import { HeroCheckIcon, HeroXMarkIcon } from "../../../icons";
 import { Spinner, IconButton, Tooltip } from "../../../ui";
 import { cn } from "../../../utils/cn";
 import { PlaceholderText } from "../fields/PlaceholderDescription";
@@ -53,7 +53,7 @@ export interface InlineEditableFieldProps<T> {
   lock?: InlineEditableFieldLock;
   /**
    * Element (typically a slot in the field label) to render the edit/lock
-   * affordance into. When provided the affordance is always visible there
+   * affordance into. When provided the affordance is faintly visible there
    * instead of appearing beside the value on hover; pass `null` until the
    * slot has mounted.
    */
@@ -141,7 +141,7 @@ export function InlineEditableField<T>({
                     onClick={save}
                     aria-label="Save change"
                   >
-                    <CheckIcon fontSize="small" />
+                    <HeroCheckIcon fontSize="small" />
                   </IconButton>
                 </span>
               </Tooltip>
@@ -151,7 +151,7 @@ export function InlineEditableField<T>({
                   onClick={cancel}
                   aria-label="Cancel edit"
                 >
-                  <CloseIcon fontSize="small" />
+                  <HeroXMarkIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             </>
@@ -162,7 +162,7 @@ export function InlineEditableField<T>({
   }
 
   // When a label slot is supplied the affordance is rendered there (next to
-  // the field label) and stays visible; otherwise it sits beside the value and
+  // the field label) and stays subtly visible; otherwise it sits beside the value and
   // is only revealed on hover/focus.
   const inLabel = affordanceContainer !== undefined;
   const showEdit = !lock || (canEdit && !lock.locked);
@@ -183,7 +183,11 @@ export function InlineEditableField<T>({
       )}
       {showEdit && (
         <EditAffordance
-          className="inline-edit-action"
+          className={cn(
+            "inline-edit-action",
+            inLabel &&
+              "group-focus-within/field:opacity-100 group-hover/field:opacity-100",
+          )}
           onClick={startEdit}
           ariaLabel={ariaLabel}
           disabled={!canEdit}

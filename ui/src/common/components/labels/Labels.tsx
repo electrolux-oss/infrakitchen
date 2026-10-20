@@ -1,10 +1,9 @@
 import { FC, useState } from "react";
 
 import { ClickAwayListener } from "../../../ui";
+import { Label } from "../../../ui/Label";
 import { cn } from "../../../utils/cn";
 import { PlaceholderText } from "../fields/PlaceholderDescription";
-
-import { Label } from "./Label";
 
 interface LabelsProps {
   labels: string[];

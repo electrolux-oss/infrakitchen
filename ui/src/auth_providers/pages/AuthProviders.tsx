@@ -13,7 +13,7 @@ import {
 import { getProviderValue } from "../../common/components/fields/CommonField";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import PageContainer from "../../common/PageContainer";
-import { AddIcon } from "../../icons/material";
+import { HeroPlusCircleIcon } from "../../icons";
 import { Switch, Button, Tooltip } from "../../ui";
 import { RenderCellParams } from "../../ui";
 import { AUTH_PROVIDER_FIELD_MAP } from "../graphql";
@@ -88,7 +88,7 @@ export const AuthProvidersPage = () => {
         >
           <Button
             onClick={() => navigate(`${linkPrefix}auth_providers/create`)}
-            startIcon={<AddIcon />}
+            startIcon={<HeroPlusCircleIcon />}
           >
             Create
           </Button>

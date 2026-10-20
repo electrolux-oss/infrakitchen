@@ -10,10 +10,10 @@ import {
   Divider,
   ListItemIcon,
   ListItemText,
-  LogoutRoundedIcon,
+  HeroArrowLeftOnRectangleIcon,
   Menu,
   MenuItem,
-  PersonRoundedIcon,
+  HeroUserIcon,
   UserAvatar,
 } from "@/index";
 
@@ -85,14 +85,14 @@ export default function UserSidebar() {
           onClick={() => navigate(`/users/${user.id}`)}
         >
           <ListItemIcon className="mr-3">
-            <PersonRoundedIcon fontSize="small" />
+            <HeroUserIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText primaryClassName="font-normal">My Profile</ListItemText>
         </MenuItem>
 
         <MenuItem className="my-0.5 py-1" onClick={logout}>
           <ListItemIcon className="mr-3">
-            <LogoutRoundedIcon fontSize="small" />
+            <HeroArrowLeftOnRectangleIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText primaryClassName="font-normal">Log Out</ListItemText>
         </MenuItem>

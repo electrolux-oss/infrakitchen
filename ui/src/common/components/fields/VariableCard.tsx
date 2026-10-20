@@ -1,9 +1,9 @@
 import React, { ReactNode } from "react";
 
-import { Chip } from "../../../ui";
 import { cn } from "../../../utils/cn";
 import { CodeBlock } from "../code/CodeBlock";
 import { InlineCode } from "../code/InlineCode";
+import { Label } from "../labels";
 
 import { PlaceholderDescription } from "./PlaceholderDescription";
 
@@ -43,13 +43,17 @@ export const VariableCard: React.FC<VariableCardProps> = ({
   >
     <div className="grid grid-cols-1 items-center md:grid-cols-[2fr_1fr]">
       <div className="min-w-0">
-        <span className="mr-2 text-body1 font-medium">{name}</span>{" "}
-        {required ? (
-          <Chip label="required" appearance="solid" color="error" />
-        ) : (
-          <Chip label="optional" appearance="solid" color="info" />
-        )}
-        {chips}
+        {/* Flex row so the qualifier labels center against the name line
+            (inline flow would offset them via baseline alignment). */}
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className="text-body1 font-medium">{name}</span>
+          {required ? (
+            <Label size="small" tone="error" label="required" />
+          ) : (
+            <Label size="small" tone="info" label="optional" />
+          )}
+          {chips}
+        </div>
         {type && (
           <div className="mt-2 flex items-start gap-2">
             <span className="text-caption text-fg-muted">Type:</span>

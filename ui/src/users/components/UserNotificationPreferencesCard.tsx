@@ -13,14 +13,11 @@ import {
   SlackLinkState,
   useSlackLink,
 } from "../../common/providers/slack/useSlackLink";
-import {
-  AddIcon,
-  CheckIcon,
-  CloseIcon,
-  DeleteOutlinedIcon,
-  EditOutlinedIcon,
-  WarningAmberIcon,
-} from "../../icons/material";
+import { HeroCheckIcon, HeroPencilSquareIcon } from "../../icons";
+import { HeroExclamationTriangleIcon } from "../../icons";
+import { HeroPlusCircleIcon } from "../../icons";
+import { HeroTrashIcon } from "../../icons";
+import { HeroXMarkIcon } from "../../icons";
 import {
   DELETE_NOTIFICATION_PREFERENCE_MUTATION,
   GqlNotificationPreference,
@@ -241,7 +238,7 @@ const NotificationPreferenceActions = ({
           disabled={isLoading}
           className={deleteIconButtonClass}
         >
-          <CheckIcon fontSize="small" />
+          <HeroCheckIcon fontSize="small" />
         </IconButton>
         <IconButton
           title="Cancel"
@@ -249,7 +246,7 @@ const NotificationPreferenceActions = ({
           onClick={() => setIsConfirming(false)}
           disabled={isLoading}
         >
-          <CloseIcon fontSize="small" />
+          <HeroXMarkIcon fontSize="small" />
         </IconButton>
       </div>
     );
@@ -262,7 +259,7 @@ const NotificationPreferenceActions = ({
         size="small"
         onClick={() => onEdit(preference)}
       >
-        <EditOutlinedIcon fontSize="small" />
+        <HeroPencilSquareIcon fontSize="small" />
       </IconButton>
       <IconButton
         title="Delete Preference"
@@ -270,7 +267,7 @@ const NotificationPreferenceActions = ({
         onClick={() => setIsConfirming(true)}
         className={deleteIconButtonClass}
       >
-        <DeleteOutlinedIcon fontSize="small" />
+        <HeroTrashIcon fontSize="small" />
       </IconButton>
     </div>
   );
@@ -325,7 +322,7 @@ export const UserNotificationPreferencesCard = (props: {
                 {channel}
                 {channel === "SLACK" && !slackLinked && (
                   <Tooltip title="Not delivered: Slack account not linked">
-                    <WarningAmberIcon
+                    <HeroExclamationTriangleIcon
                       className="ml-1 align-middle"
                       color="warning"
                       fontSize="inherit"
@@ -373,9 +370,8 @@ export const UserNotificationPreferencesCard = (props: {
         description="In-app notifications are always on. Add a preference to also receive an event type in Slack."
         actions={
           <Button
-            variant="contained"
             size="small"
-            startIcon={<AddIcon />}
+            startIcon={<HeroPlusCircleIcon />}
             onClick={handleOpenCreate}
           >
             Add Preference

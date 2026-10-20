@@ -3,11 +3,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router";
 
 import { useConfig } from "../../../common/context/ConfigContext";
-import {
-  NotificationsActiveIcon,
-  NotificationsOffIcon,
-  TuneIcon,
-} from "../../../icons/material";
+import { HeroBellAlertIcon, HeroBellSlashIcon } from "../../../icons";
+import { HeroAdjustmentsHorizontalIcon } from "../../../icons";
 import {
   Divider,
   Switch,
@@ -86,9 +83,9 @@ export const SubscribeNotificationButton = ({
           aria-label={isSubscribed ? "Unsubscribe" : "Subscribe"}
         >
           {isSubscribed ? (
-            <NotificationsActiveIcon fontSize="small" />
+            <HeroBellAlertIcon fontSize="small" />
           ) : (
-            <NotificationsOffIcon fontSize="small" />
+            <HeroBellSlashIcon fontSize="small" />
           )}
         </IconButton>
       </Tooltip>
@@ -109,9 +106,9 @@ export const SubscribeNotificationButton = ({
               )}
             >
               {action === "subscribe" ? (
-                <NotificationsOffIcon fontSize="small" />
+                <HeroBellSlashIcon fontSize="small" />
               ) : (
-                <NotificationsActiveIcon fontSize="small" />
+                <HeroBellAlertIcon fontSize="small" />
               )}
             </div>
             <div className="min-w-0">
@@ -141,7 +138,7 @@ export const SubscribeNotificationButton = ({
             {preferencesPath ? (
               <Button
                 size="small"
-                startIcon={<TuneIcon />}
+                startIcon={<HeroAdjustmentsHorizontalIcon />}
                 onClick={() => {
                   handleClose();
                   navigate(preferencesPath);

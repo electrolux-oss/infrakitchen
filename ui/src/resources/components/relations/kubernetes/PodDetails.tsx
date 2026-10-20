@@ -3,15 +3,14 @@ import React, { useState } from "react";
 import { CommonDialog, useConfig } from "../../../../common";
 import { getDateValue } from "../../../../common/components/fields/CommonField";
 import { notify, notifyError } from "../../../../common/hooks/useNotification";
+import { HeroCheckIcon } from "../../../../icons";
+import { HeroExclamationTriangleIcon } from "../../../../icons";
+import { HeroTrashIcon } from "../../../../icons";
 import {
-  CheckIcon,
-  CloseIcon,
-  DeleteOutlinedIcon,
-  KeyboardArrowDownIcon,
-  KeyboardArrowUpIcon,
-  RestartAltIcon,
-  WarningIcon,
-} from "../../../../icons/material";
+  HeroXMarkIcon,
+  HeroChevronDownIcon,
+  HeroArrowPathIcon,
+} from "../../../../icons";
 import {
   DELETE_KUBERNETES_POD_MUTATION,
   RESTART_KUBERNETES_DEPLOYMENT_MUTATION,
@@ -22,7 +21,7 @@ import {
   Spinner,
   Button,
   IconButton,
-  Chip,
+  Label,
   Table,
   TableBody,
   TableCell,
@@ -109,17 +108,20 @@ const PodRow = (props: {
             size="small"
             onClick={() => setOpen(!open)}
           >
-            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+            {open ? (
+              <HeroChevronDownIcon className="rotate-180" />
+            ) : (
+              <HeroChevronDownIcon />
+            )}
           </IconButton>
         </TableCell>
         <TableCell component="th" scope="row">
           <p className="m-0 text-body1 font-medium">{pod?.metadata.name}</p>
         </TableCell>
         <TableCell align="center">
-          <Chip
-            className="font-bold"
+          <Label
             label={pod?.status.phase || "Unknown"}
-            color={statusColor(pod?.status.phase)}
+            tone={statusColor(pod?.status.phase)}
           />
         </TableCell>
         <TableCell align="center">
@@ -145,7 +147,7 @@ const PodRow = (props: {
               <Button
                 className="font-bold normal-case"
                 variant="contained"
-                startIcon={<CheckIcon />}
+                startIcon={<HeroCheckIcon />}
                 onClick={() => handleKillPod(pod.metadata.name)}
                 disabled={isLoading}
               >
@@ -154,7 +156,7 @@ const PodRow = (props: {
               <Button
                 className="font-bold normal-case"
                 color="error"
-                startIcon={<CloseIcon />}
+                startIcon={<HeroXMarkIcon />}
                 onClick={handleCancelKill}
                 disabled={isLoading}
               >
@@ -166,7 +168,7 @@ const PodRow = (props: {
               className="min-w-25 font-bold normal-case"
               variant="contained"
               color="error"
-              startIcon={<DeleteOutlinedIcon />}
+              startIcon={<HeroTrashIcon />}
               onClick={handleInitiateKillConfirmation}
               disabled={isLoading}
             >
@@ -319,7 +321,7 @@ const RestartPodsDialog = (props: {
       maxWidth="xs"
       title={
         <div className="flex items-center gap-2">
-          <WarningIcon color="warning" />
+          <HeroExclamationTriangleIcon color="warning" />
           <span className="text-h6">Confirmation</span>
         </div>
       }
@@ -382,7 +384,7 @@ export const PodDetails = (props: PodDetailsProps) => {
             <Button
               className="min-w-25 font-bold normal-case"
               variant="contained"
-              startIcon={<RestartAltIcon />}
+              startIcon={<HeroArrowPathIcon />}
               onClick={() => setOpenRestartConfirmationDialog(true)}
             >
               Restart All

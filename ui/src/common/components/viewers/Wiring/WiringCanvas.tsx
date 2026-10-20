@@ -11,10 +11,10 @@ import "@xyflow/react/dist/style.css";
 import { useShallow } from "zustand/react/shallow";
 
 import {
-  FullscreenExitIcon,
-  FullscreenIcon,
-  InfoOutlinedIcon,
-} from "../../../../icons/material";
+  HeroArrowsPointingInIcon,
+  HeroArrowsPointingOutIcon,
+  HeroInformationCircleIcon,
+} from "../../../../icons";
 import { IconButton, Tooltip, useColorScheme } from "../../../../ui";
 import { cn } from "../../../../utils/cn";
 
@@ -187,7 +187,7 @@ function WiringCanvasInner({
               }
               arrow
             >
-              <InfoOutlinedIcon
+              <HeroInformationCircleIcon
                 className="cursor-help text-fg-muted"
                 fontSize="small"
               />
@@ -202,9 +202,9 @@ function WiringCanvasInner({
                 aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
               >
                 {isFullscreen ? (
-                  <FullscreenExitIcon fontSize="small" />
+                  <HeroArrowsPointingInIcon fontSize="small" />
                 ) : (
-                  <FullscreenIcon fontSize="small" />
+                  <HeroArrowsPointingOutIcon fontSize="small" />
                 )}
               </IconButton>
             </Tooltip>

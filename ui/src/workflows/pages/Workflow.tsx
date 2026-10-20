@@ -6,6 +6,7 @@ import {
   EntityProvider,
   useEntityProvider,
 } from "../../common/context/EntityContext";
+import { HeroArrowsRightLeftIcon } from "../../icons";
 import { TASK_QUEUE_STATUS_SELECTION } from "../../workers/graphql";
 import { WorkflowContent } from "../components/WorkflowContent";
 import { WORKFLOW_FIELDS } from "../graphql";
@@ -36,6 +37,7 @@ const WorkflowPageContent = () => {
     // Workflows have no name, so they are headed by their short id, as the
     // overview card was.
     <EntityContainer
+      titleIcon={<HeroArrowsRightLeftIcon />}
       title={entity ? `Workflow ${entity.id.slice(0, 8)}…` : "Workflow"}
       actions={<EntityRefreshButton />}
       showEditAction

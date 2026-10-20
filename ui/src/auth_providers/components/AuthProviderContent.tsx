@@ -1,5 +1,6 @@
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
   TabDefinition,
@@ -7,7 +8,7 @@ import {
 import { useEntityProvider } from "../../common/context/EntityContext";
 
 import { AuthProviderConfiguration } from "./AuthProviderConfiguration";
-import { AuthProviderOverview } from "./AuthProviderOverview";
+import { AuthProviderSidebar } from "./AuthProviderSidebar";
 
 export const AuthProviderContent = () => {
   const { entity } = useEntityProvider();
@@ -31,9 +32,10 @@ export const AuthProviderContent = () => {
   ];
 
   return (
-    <div className="flex w-full flex-col gap-4">
-      <AuthProviderOverview authProvider={entity} />
+    <EntitySidebarLayout
+      sidebar={<AuthProviderSidebar authProvider={entity} />}
+    >
       <TabbedContent tabs={tabs} />
-    </div>
+    </EntitySidebarLayout>
   );
 };

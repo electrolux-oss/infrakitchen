@@ -3,11 +3,11 @@ import { MouseEvent, ReactNode, useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 
 import {
-  ArrowDownwardIcon,
-  ArrowUpwardIcon,
-  RefreshIcon,
-  ViewColumnIcon,
-} from "../../../icons/material";
+  HeroArrowDownIcon,
+  HeroArrowPathIcon,
+  HeroArrowUpIcon,
+  HeroViewColumnsIcon,
+} from "../../../icons";
 import {
   ColumnVisibilityMenu,
   ColumnVisibilityModel,
@@ -212,9 +212,9 @@ export const EntityTable = ({
                   onClick={toggleMobileSortDirection}
                 >
                   {currentSort.sort === "asc" ? (
-                    <ArrowUpwardIcon fontSize="small" />
+                    <HeroArrowUpIcon fontSize="small" />
                   ) : (
-                    <ArrowDownwardIcon fontSize="small" />
+                    <HeroArrowDownIcon fontSize="small" />
                   )}
                 </IconButton>
               </Tooltip>
@@ -229,7 +229,7 @@ export const EntityTable = ({
             onClick={onRefresh}
             disabled={!onRefresh}
           >
-            <RefreshIcon fontSize="small" />
+            <HeroArrowPathIcon fontSize="small" />
           </IconButton>
         </Tooltip>
         {!isMobile && (
@@ -243,7 +243,7 @@ export const EntityTable = ({
                 aria-expanded={Boolean(columnMenuAnchor)}
                 onClick={(event) => setColumnMenuAnchor(event.currentTarget)}
               >
-                <ViewColumnIcon fontSize="small" />
+                <HeroViewColumnsIcon fontSize="small" />
               </IconButton>
             </span>
           </Tooltip>

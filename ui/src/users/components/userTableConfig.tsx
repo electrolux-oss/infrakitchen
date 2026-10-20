@@ -3,8 +3,8 @@ import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import { createdUpdatedColumns } from "../../common/components/entity_table/tableColumns";
 import { getProviderValue } from "../../common/components/fields/CommonField";
+import { Label } from "../../common/components/labels";
 import { PROVIDER_DISPLAY_NAMES } from "../../common/utils";
-import { Chip } from "../../ui";
 import { RenderCellParams } from "../../ui";
 
 const UserIdentifierCell = (params: RenderCellParams) => {
@@ -14,15 +14,7 @@ const UserIdentifierCell = (params: RenderCellParams) => {
   return (
     <div className="flex h-full items-center gap-1">
       <Entity entity={{ ...params.row, entityType: "user" }} />
-      {isCurrentUser ? (
-        <Chip
-          label="You"
-          variant="filled"
-          className="h-4.5 text-[0.625rem]"
-          appearance="solid"
-          color="info"
-        />
-      ) : null}
+      {isCurrentUser ? <Label size="small" tone="info" label="You" /> : null}
     </div>
   );
 };

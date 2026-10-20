@@ -1,25 +1,36 @@
-import { ReactNode } from "react";
+import { createContext, ReactNode, useContext } from "react";
 
-import { Card } from "../../../ui";
+import { Card, Label } from "../../../ui";
 
 export interface EntitySidebarLayoutProps {
-  /** Main column: tabs and the rest of the page content. */
+  /** Page content; must include a TabbedContent, which renders the sidebar. */
   children: ReactNode;
   sidebar: ReactNode;
+  /** Full-width notice above the tabs. */
+  banner?: ReactNode;
 }
 
+const EntitySidebarContext = createContext<ReactNode>(null);
+
+/** Context sidebar supplied by the surrounding EntitySidebarLayout, if any. */
+export const useEntitySidebar = () => useContext(EntitySidebarContext);
+
 /**
- * GitHub-style entity detail layout: content on the left, context sidebar on
- * the right; collapses to a single column (sidebar last) on small screens.
+ * Entity detail layout: the tab bar spans the full page width and
+ * TabbedContent places the context sidebar to the right of the active tab's
+ * content, below the tabs (single column on small screens, sidebar last).
  */
 export const EntitySidebarLayout = ({
   children,
   sidebar,
+  banner,
 }: EntitySidebarLayoutProps) => (
-  <div className="grid w-full grid-cols-[minmax(0,_1fr)] items-start gap-4 lg:grid-cols-[minmax(0,_1fr)_360px]">
-    <div className="flex min-w-0 flex-col gap-4">{children}</div>
-    {sidebar}
-  </div>
+  <EntitySidebarContext.Provider value={sidebar}>
+    <div className="flex w-full min-w-0 flex-col gap-4">
+      {banner}
+      {children}
+    </div>
+  </EntitySidebarContext.Provider>
 );
 
 export interface EntitySidebarProps {
@@ -54,13 +65,9 @@ export const SidebarSection = ({
       // Keep the title baseline steady whether or not an action is present.
       className="mb-3 flex min-h-8 items-center justify-between gap-2"
     >
-      <h3 className="m-0 flex items-center gap-2 text-[0.875rem] font-semibold">
+      <h3 className="m-0 flex items-center gap-2 text-[0.875rem] font-semibold text-fg-muted">
         {title}
-        {count !== undefined && (
-          <span className="rounded-full bg-hover px-1.5 text-[0.75rem] leading-[1.6] font-medium text-fg-muted">
-            {count}
-          </span>
-        )}
+        {count !== undefined && <Label label={count} />}
       </h3>
       {action}
     </div>

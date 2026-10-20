@@ -4,13 +4,14 @@ import { BaseCard } from "../../common/components/cards/BaseCard";
 import { EditAffordance } from "../../common/components/editors/EditAffordance";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import TagInput from "../../common/components/inputs/TagInput";
+import { Label } from "../../common/components/labels";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { dashedAddButtonClass } from "../../common/utils/dashedAddButton";
-import { AddIcon } from "../../icons/material";
-import { Switch, Button, Chip, Tooltip } from "../../ui";
+import { HeroPlusCircleIcon } from "../../icons";
+import { Switch, Button, Tooltip } from "../../ui";
 import { DataTable, DataTableColumn } from "../../ui";
 import {
   ResourceUpdateFieldInput,
@@ -159,7 +160,7 @@ export const DependencyConfiguration = ({
   const renderSectionHeader = (label: string, count: number) => (
     <div className="mb-2 flex items-center gap-2">
       <p className="m-0 text-body2 font-semibold">{label}</p>
-      <Chip label={String(count)} appearance="solid" color="info" compact />
+      <Label label={String(count)} />
     </div>
   );
 
@@ -256,7 +257,7 @@ export const DependencyConfiguration = ({
               >
                 {/* Dashed "Add" action shared with the other list editors. */}
                 <Button
-                  startIcon={<AddIcon />}
+                  startIcon={<HeroPlusCircleIcon />}
                   onClick={addEntry}
                   className={dashedAddButtonClass}
                 >

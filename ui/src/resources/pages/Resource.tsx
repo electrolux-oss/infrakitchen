@@ -5,11 +5,11 @@ import { EntityRefreshButton } from "../../common/components/buttons/EntityRefre
 import { ScheduleApplyButton } from "../../common/components/buttons/ScheduleApplyButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
+import { HeroCircleStackIcon } from "../../icons";
 import { Button, Tooltip } from "../../ui";
 import { TASK_QUEUE_STATUS_SELECTION } from "../../workers/graphql";
 import { CloneResourceButton } from "../components/CloneResourceButton";
 import { ResourceContent } from "../components/ResourceContent";
-import { ResourceReviewView } from "../components/ResourceReviewView";
 import { RESOURCE_DETAIL_FIELDS } from "../graphql";
 
 // Queue state is fetched with the entity in the same request
@@ -31,7 +31,7 @@ export const ResourcePage = () => {
       entityFields={PAGE_FIELDS}
     >
       <EntityContainer
-        banner={<ResourceReviewView />}
+        titleIcon={<HeroCircleStackIcon />}
         actions={
           <>
             <ScheduleApplyButton entityType="resource" />

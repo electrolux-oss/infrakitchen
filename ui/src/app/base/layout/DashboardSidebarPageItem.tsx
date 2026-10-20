@@ -10,7 +10,7 @@ import { MINI_DRAWER_WIDTH } from "@/constants";
 import {
   cn,
   Collapse,
-  ExpandMoreIcon,
+  HeroChevronDownIcon,
   Label,
   ListItemIcon,
   ListItemText,
@@ -98,7 +98,7 @@ export default function DashboardSidebarPageItem({
   let expandIconClass = "hidden";
   if (mini && fullyCollapsed) {
     expandIconClass =
-      "absolute top-[41.5%] right-0.5 size-[18px]! -translate-y-1/2 -rotate-90";
+      "absolute top-1/2 right-0 size-2.5! -translate-y-1/2 -rotate-90 opacity-60";
   } else if (!mini && fullyExpanded) {
     expandIconClass = cn(
       "ml-1 size-5! shrink-0 transition-transform duration-100 ease-[cubic-bezier(0.4,0,0.6,1)]",
@@ -157,13 +157,18 @@ export default function DashboardSidebarPageItem({
         </div>
       ) : null}
       {!mini ? (
-        <ListItemText className="z-1 whitespace-nowrap" primary={title} />
+        <ListItemText
+          className={cn("z-1 whitespace-nowrap", action && "flex-none")}
+          primary={title}
+        />
       ) : null}
       {label && !mini ? (
-        <Label className="ml-2 shrink-0" label={label} />
+        <Label className="ml-2 shrink-0" size="small" label={label} />
       ) : null}
       {action && !mini && fullyExpanded ? action : null}
-      {nestedNavigation ? <ExpandMoreIcon className={expandIconClass} /> : null}
+      {nestedNavigation ? (
+        <HeroChevronDownIcon className={expandIconClass} />
+      ) : null}
     </>
   );
 

@@ -3,15 +3,12 @@ import { EntityTableColumn } from "../../common/components/entity_table/EntityTa
 import {
   RELATIVE_TIME_COLUMN_WIDTH,
   createdUpdatedColumns,
-  userColumn,
 } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
-import StatusChip from "../../common/StatusChip";
+import { StatusLabel } from "../../common/components/labels";
 import { ColumnVisibilityModel, RenderCellParams } from "../../ui";
 
-export const taskDefaultColumnVisibilityModel: ColumnVisibilityModel = {
-  creator: false,
-};
+export const taskDefaultColumnVisibilityModel: ColumnVisibilityModel = {};
 
 export const taskColumns = (): EntityTableColumn[] => [
   {
@@ -48,10 +45,11 @@ export const taskColumns = (): EntityTableColumn[] => [
     headerName: "Status",
     flex: 1,
     renderCell: (params: RenderCellParams) => (
-      <StatusChip status={params.row.status} state={params.row.state} />
+      <StatusLabel status={params.row.status} state={params.row.state} />
     ),
   },
   ...createdUpdatedColumns({
+    withCreator: true,
     createdSortField: "created_at",
     updatedSortField: "updated_at",
   }),
@@ -66,5 +64,4 @@ export const taskColumns = (): EntityTableColumn[] => [
     renderCell: (params: RenderCellParams) =>
       params.value ? <RelativeTime date={params.value} compact /> : null,
   },
-  userColumn(),
 ];

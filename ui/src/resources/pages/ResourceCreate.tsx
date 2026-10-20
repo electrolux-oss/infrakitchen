@@ -28,7 +28,7 @@ import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { makeWriteAccessFilter } from "../../common/utils";
-import { LockOpenOutlinedIcon, LockOutlinedIcon } from "../../icons/material";
+import { HeroLockClosedIcon, HeroLockOpenIcon } from "../../icons";
 import { GqlTemplateShort } from "../../templates/graphql";
 import { ToolSelect } from "../../tools";
 import { IkEntity } from "../../types";
@@ -37,7 +37,6 @@ import {
   Alert,
   Button,
   IconButton,
-  Chip,
   TextField,
   InputAdornment,
   Card,
@@ -664,14 +663,8 @@ const ResourceCreatePageInner = () => {
                   )}
                 />
                 {hasDocs && (
-                  <Card className="relative mt-4 overflow-visible">
-                    <Chip
-                      className="absolute -top-2.5 left-4 z-1"
-                      label="Template Documentation"
-                      color="info"
-                      variant="filled"
-                    />
-                    <CardContent className="pt-0">
+                  <Card className="mt-4">
+                    <CardContent>
                       <MarkdownViewer
                         content={watchedTemplate?.documentation || ""}
                       />
@@ -712,9 +705,9 @@ const ResourceCreatePageInner = () => {
                               }
                             >
                               {namingConventionEditable ? (
-                                <LockOpenOutlinedIcon fontSize="small" />
+                                <HeroLockOpenIcon fontSize="small" />
                               ) : (
-                                <LockOutlinedIcon fontSize="small" />
+                                <HeroLockClosedIcon fontSize="small" />
                               )}
                             </IconButton>
                           )}
@@ -1239,7 +1232,7 @@ const ResourceCreatePageInner = () => {
                     <BaseCard
                       name="Input Variables"
                       chip={String(schema?.length || 0)}
-                      chipVariant="solid"
+                      chipColor="default"
                     >
                       <div className="col-span-full">
                         {fields.map((field, index) =>

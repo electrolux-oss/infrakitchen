@@ -7,12 +7,13 @@ import { EntityCard } from "../../common/components/cards/EntityCard";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
+import { StatusLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import StatusChip from "../../common/StatusChip";
 import { ENTITY_CARD_GRID_CLASSES } from "../../common/utils/entityCardGrid";
-import { AddIcon, InputIcon } from "../../icons/material";
+import { HeroPlusCircleIcon } from "../../icons";
+import { HeroArrowDownCircleIcon } from "../../icons";
 import { Alert, Spinner, Button, Link } from "../../ui";
 import { cn } from "../../utils/cn";
 import { ENTITY_STATUS } from "../../utils/constants";
@@ -82,14 +83,14 @@ export const TemplatesPage = () => {
       >
         <Button
           onClick={() => navigate(`${linkPrefix}templates/create`)}
-          startIcon={<AddIcon />}
+          startIcon={<HeroPlusCircleIcon />}
         >
           Create
         </Button>
         <Button
           className="ml-2"
           onClick={() => navigate(`${linkPrefix}templates/import`)}
-          startIcon={<InputIcon />}
+          startIcon={<HeroArrowDownCircleIcon />}
         >
           Import
         </Button>
@@ -102,7 +103,7 @@ export const TemplatesPage = () => {
       <>
         <div>
           <p className="m-0 block text-body2 text-fg-muted">Status</p>
-          <StatusChip status={template.status} compact />
+          <StatusLabel status={template.status} compact />
         </div>
         <div>
           <p className="m-0 block text-body2 text-fg-muted">Last Updated</p>{" "}

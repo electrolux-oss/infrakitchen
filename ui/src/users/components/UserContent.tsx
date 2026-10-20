@@ -1,5 +1,6 @@
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
   TabDefinition,
@@ -11,8 +12,8 @@ import { UserRolesCard } from "../../permissions/components/roles/UserRolesCard"
 import { UserConfiguration } from "./UserConfiguration";
 import { UserNotificationPreferencesCard } from "./UserNotificationPreferencesCard";
 import { UserNotificationSubscriptionsCard } from "./UserNotificationSubscriptionsCard";
-import { UserOverview } from "./UserOverview";
 import { UserPersonalAccessTokensCard } from "./UserPersonalAccessTokensCard";
+import { UserSidebar } from "./UserSidebar";
 
 export const UserContent = () => {
   const { entity } = useEntityProvider();
@@ -61,9 +62,8 @@ export const UserContent = () => {
   ];
 
   return (
-    <div className="flex w-full flex-col gap-4">
-      <UserOverview user={entity} />
+    <EntitySidebarLayout sidebar={<UserSidebar user={entity} />}>
       <TabbedContent tabs={tabs} />
-    </div>
+    </EntitySidebarLayout>
   );
 };

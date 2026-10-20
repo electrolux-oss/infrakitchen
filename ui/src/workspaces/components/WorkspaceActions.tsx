@@ -4,14 +4,14 @@ import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { SyncIcon } from "../../icons/material";
+import { HeroArrowPathRoundedSquareIcon } from "../../icons";
 import { Button, Tooltip } from "../../ui";
 import { GqlWorkspace, SYNC_WORKSPACE_METADATA_MUTATION } from "../graphql";
 
 /**
  * Page-header action buttons for the Workspace Details page, rendered
  * alongside the generic entity actions (Plan/Apply/etc.) in EntityContainer.
- * Currently only exposes "Sync" for GitHub workspaces, re-fetching repo
+ * Currently only exposes "Sync" for Git-hosting workspaces, re-fetching repo
  * metadata (default branch, description, URLs) immediately on click.
  */
 export const WorkspaceActions = () => {
@@ -45,7 +45,7 @@ export const WorkspaceActions = () => {
       <span>
         <Button
           onClick={handleSync}
-          startIcon={<SyncIcon />}
+          startIcon={<HeroArrowPathRoundedSquareIcon />}
           disabled={isSyncing || !canEdit}
         >
           {isSyncing ? "Syncing..." : "Sync"}

@@ -1,14 +1,12 @@
 import { useState } from "react";
 
-import { Icon } from "@iconify/react";
-import carbonLinkData from "@iconify-icons/carbon/link";
-
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import {
   CommonField,
   GetReferenceUrlValue,
 } from "../../common/components/fields/CommonField";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { HeroLinkIcon } from "../../icons";
 import { Button } from "../../ui";
 import { GqlUser, GqlUserShort } from "../graphql";
 
@@ -54,7 +52,7 @@ export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
               <Button
                 className="mt-4"
                 onClick={() => handleOpenSecondaryAccountsDialog()}
-                startIcon={<Icon icon={carbonLinkData} ssr />}
+                startIcon={<HeroLinkIcon />}
               >
                 Link Secondary Account
               </Button>

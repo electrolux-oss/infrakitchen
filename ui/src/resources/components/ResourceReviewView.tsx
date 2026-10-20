@@ -18,6 +18,7 @@ export const ResourceReviewView = () => {
       {hasCheckStateDifferencePermission && (
         <Alert
           severity="warning"
+          className="items-center py-1 [&>div]:py-0 [&>span]:py-0"
           action={
             <Button
               color="inherit"

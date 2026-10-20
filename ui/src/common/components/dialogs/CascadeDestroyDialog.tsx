@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 
-import { LaunchIcon, WarningAmberIcon } from "../../../icons/material";
+import {
+  HeroArrowTopRightOnSquareIcon,
+  HeroExclamationTriangleIcon,
+} from "../../../icons";
 import {
   GqlResourceTreeNode,
   RESOURCE_TREE_QUERY,
@@ -8,9 +11,9 @@ import {
 import { Alert, Spinner, Button, IconButton, Tooltip } from "../../../ui";
 import { cn } from "../../../utils/cn";
 import { useConfig } from "../../context";
-import StatusChip from "../../StatusChip";
 import { getStateColor, paletteBgClass } from "../../utils";
 import { ConfirmNameField } from "../fields/ConfirmNameField";
+import { StatusLabel } from "../labels";
 
 import { CommonDialog } from "./CommonDialog";
 
@@ -61,7 +64,7 @@ const ResourceRow = ({
           </span>
         )}
       </div>
-      <StatusChip status={resource.status} state={resource.state} compact />
+      <StatusLabel status={resource.status} state={resource.state} compact />
       <Tooltip title="Open in new tab" arrow>
         <IconButton
           className="shrink-0 text-fg-muted"
@@ -72,7 +75,7 @@ const ResourceRow = ({
           aria-label={`Open ${resource.name}`}
           onClick={(e) => e.stopPropagation()}
         >
-          <LaunchIcon className="text-[14px]" />
+          <HeroArrowTopRightOnSquareIcon className="text-[14px]" />
         </IconButton>
       </Tooltip>
     </div>
@@ -134,7 +137,7 @@ export const CascadeDestroyDialog = ({
       title="Confirmation"
       content={
         <div className="flex flex-col gap-4">
-          <Alert severity="error" icon={<WarningAmberIcon />}>
+          <Alert severity="error" icon={<HeroExclamationTriangleIcon />}>
             This will permanently destroy <strong>{entityName}</strong> and
             every resource that depends on it. This cannot be undone.
           </Alert>

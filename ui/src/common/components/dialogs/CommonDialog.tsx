@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 
-import { CloseIcon } from "../../../icons/material";
+import { HeroXMarkIcon } from "../../../icons";
 import {
   Button,
   IconButton,
@@ -54,7 +54,7 @@ export const CommonDialog: React.FC<CommonDialogProps> = ({
             size="small"
             aria-label="Close Dialog"
           >
-            <CloseIcon fontSize="small" />
+            <HeroXMarkIcon fontSize="small" />
           </IconButton>
         </div>
       </DialogTitle>

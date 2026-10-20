@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useConfig } from "../../../common";
 import { buildLogsQuery, GqlLog } from "../../../logs/graphql";
 import { LogEntity } from "../../../types";
-import { Card, CardContent } from "../../../ui";
 import { DataTable, DataTableColumn, SortModel } from "../../../ui";
 import { usePersistedPagination } from "../../hooks/usePersistedPagination";
 import { LogActionButtons } from "../../LogsComponent/LogActionButtons";
@@ -150,25 +149,21 @@ export const EntityLogs = ({
 
   return (
     <div>
-      <Card>
-        <CardContent>
-          <div className="w-full overflow-x-auto">
-            <DataTable
-              rows={logHeads}
-              columns={columns}
-              loading={loading}
-              getRowId={(row) => row.id}
-              className="md:min-h-[380px]"
-              mobileCards
-              sortModel={sortModel}
-              onSortModelChange={setSortModel}
-              paginationModel={paginationModel}
-              onPaginationModelChange={setPaginationModel}
-              pageSizeOptions={[10, 25, 50, 100]}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="w-full overflow-x-auto rounded-surface border border-divider bg-paper">
+        <DataTable
+          rows={logHeads}
+          columns={columns}
+          loading={loading}
+          getRowId={(row) => row.id}
+          className="md:min-h-[380px]"
+          mobileCards
+          sortModel={sortModel}
+          onSortModelChange={setSortModel}
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          pageSizeOptions={[10, 25, 50, 100]}
+        />
+      </div>
       {selectedLog && (
         <LogsDialog
           entityId={selectedLog.entityId}

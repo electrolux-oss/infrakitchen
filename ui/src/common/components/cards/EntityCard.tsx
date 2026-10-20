@@ -12,13 +12,13 @@ import { useNavigate } from "react-router";
 import {
   Divider,
   Button,
-  Chip,
   Tooltip,
   Card,
   CardContent,
   CardHeader,
   CardActions,
 } from "../../../ui";
+import { Label } from "../../../ui/Label";
 import { PermissionWrapper } from "../../wrappers";
 import { PlaceholderDescription } from "../fields/PlaceholderDescription";
 import { Labels } from "../labels/Labels";
@@ -157,14 +157,11 @@ export const EntityCard = ({
       role="button"
       tabIndex={0}
     >
-      {" "}
       {isRecentlyUpdated && (
-        <Chip
+        <Label
+          tone="success"
           label="Updated"
-          variant="filled"
-          className="absolute -top-2.5 left-4 z-1"
-          appearance="solid"
-          color="success"
+          className="absolute -top-3 left-4 z-1"
         />
       )}
       <CardHeader
@@ -201,15 +198,7 @@ export const EntityCard = ({
             onClick={(e: ReactMouseEvent) => e.stopPropagation()}
           >
             {" "}
-            {chip && (
-              <Chip
-                label={chip.toUpperCase()}
-                variant="filled"
-                className="h-4.5 text-[0.625rem]"
-                appearance="solid"
-                color={chipColor}
-              />
-            )}
+            {chip && <Label tone={chipColor} label={chip.toUpperCase()} />}
             {headerAction}
           </div>
         }

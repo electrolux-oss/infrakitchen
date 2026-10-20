@@ -1,15 +1,12 @@
 import { ReactNode, useLayoutEffect, useRef, useState } from "react";
 
+import { HeroExclamationTriangleIcon } from "../../../icons";
+import { HeroShareIcon, HeroTagIcon } from "../../../icons";
 import { ProviderIcon } from "../../../icons/Icons";
-import {
-  CallSplitOutlinedIcon,
-  LocalOfferOutlinedIcon,
-  WarningAmberIcon,
-} from "../../../icons/material";
 import { Tooltip } from "../../../ui";
+import { Label } from "../../../ui/Label";
 import { cn } from "../../../utils/cn";
 import VersionLifecycleStateChip from "../../VersionLifecycleStateChip";
-import { Label } from "../labels/Label";
 
 import { CodeRepository } from "./CodeRepository";
 import { EntityLink } from "./EntityLink";
@@ -177,8 +174,8 @@ export const Entity = ({
     const SourceCodeRefIcon =
       entityType === "source_code_version"
         ? entity.sourceCodeVersion
-          ? LocalOfferOutlinedIcon
-          : CallSplitOutlinedIcon
+          ? HeroTagIcon
+          : HeroShareIcon
         : null;
     const entityName = disableLink ? (
       <span className={cn(noWrap && "min-w-0 truncate", linkClassName)}>
@@ -219,7 +216,7 @@ export const Entity = ({
       lifecycleVariant === "dot" &&
       hasBreakingChanges && (
         <Tooltip title={entity.breakingChanges}>
-          <WarningAmberIcon color="warning" fontSize="small" />
+          <HeroExclamationTriangleIcon color="warning" fontSize="small" />
         </Tooltip>
       );
 
@@ -260,7 +257,7 @@ export const Entity = ({
   }
   const label =
     showLabel && tagLabel ? (
-      <Label className="Entity-typeLabel" label={tagLabel} />
+      <Label className="Entity-typeLabel" size="small" label={tagLabel} />
     ) : null;
   const contentRow = "flex min-w-0 items-center gap-1.5";
 

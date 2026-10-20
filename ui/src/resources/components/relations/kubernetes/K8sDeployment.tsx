@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import { useConfig, GradientCircularProgress } from "../../../../common";
 import { notifyError } from "../../../../common/hooks/useNotification";
-import { ExpandMoreIcon } from "../../../../icons/material";
+import { HeroChevronDownIcon } from "../../../../icons";
 import { KUBERNETES_DEPLOYMENTS_QUERY } from "../../../../providers/kubernetes/graphql";
 import {
   Alert,
@@ -86,7 +86,7 @@ export const DeploymentsDetails = (props: DeploymentsDetailsProps) => {
   return (
     <>
       <Accordion expanded={expanded} onChange={handleToggleExpand}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <AccordionSummary expandIcon={<HeroChevronDownIcon />}>
           <p className="m-0 text-body1 font-bold">Namespace: {namespace}</p>
         </AccordionSummary>
         <AccordionDetails>

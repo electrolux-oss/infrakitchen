@@ -9,20 +9,17 @@ import {
 
 import Ansi from "ansi-to-react";
 
+import { HeroCheckCircleIcon } from "../../icons";
+import { HeroClockIcon, HeroExclamationCircleIcon } from "../../icons";
+import { HeroChevronRightIcon } from "../../icons";
 import type { IconProps } from "../../icons/createIcon";
-import {
-  ArrowForwardIosSharpIcon,
-  CheckCircleOutlinedIcon,
-  ErrorOutlinedIcon,
-  PendingOutlinedIcon,
-} from "../../icons/material";
 import { GqlLog, buildLogsQuery } from "../../logs/graphql";
 import { LogEntity } from "../../types";
 import {
   Alert,
   AlertTitle,
   Button,
-  Chip,
+  Label,
   Accordion,
   AccordionDetails,
   AccordionSummary,
@@ -126,11 +123,11 @@ const executionStatusIcons: Record<
   ExecutionStatus,
   { color: "error" | "info" | "success"; icon: ComponentType<IconProps> }
 > = {
-  [ExecutionStatus.ERROR]: { color: "error", icon: ErrorOutlinedIcon },
-  [ExecutionStatus.IN_PROGRESS]: { color: "info", icon: PendingOutlinedIcon },
+  [ExecutionStatus.ERROR]: { color: "error", icon: HeroExclamationCircleIcon },
+  [ExecutionStatus.IN_PROGRESS]: { color: "info", icon: HeroClockIcon },
   [ExecutionStatus.COMPLETE]: {
     color: "success",
-    icon: CheckCircleOutlinedIcon,
+    icon: HeroCheckCircleIcon,
   },
 };
 
@@ -565,11 +562,10 @@ export const SummaryView = (props: {
                   ).length;
                   if (count === 0) return null;
                   return (
-                    <Chip
+                    <Label
                       key={action}
                       label={`${count} ${action.charAt(0) + action.slice(1).toLowerCase()}`}
-                      color={getActionColor(action)}
-                      variant="outlined"
+                      tone={getActionColor(action)}
                     />
                   );
                 })}
@@ -620,16 +616,15 @@ export const SummaryView = (props: {
                   contentClassName="my-0 ml-2"
                   className="min-h-0 py-1 hover:bg-hover"
                   expandIcon={
-                    <ArrowForwardIosSharpIcon className="text-[0.9rem]" />
+                    <HeroChevronRightIcon className="text-[0.9rem]" />
                   }
                 >
                   <div className="flex w-full items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <Chip
+                      <Label
                         className="min-w-25 font-semibold"
                         label={change.action}
-                        color={getActionColor(change.action)}
-                        variant="outlined"
+                        tone={getActionColor(change.action)}
                       />
                       <p className="m-0 font-mono text-[0.85rem] font-medium">
                         {change.resourceType}.{change.resourceName}
@@ -643,7 +638,12 @@ export const SummaryView = (props: {
                     )}
                   </div>
                 </AccordionSummary>
-                <AccordionDetails className="bg-hover p-3 font-mono text-[0.8rem]">
+                <AccordionDetails
+                  className={cn(
+                    "font-mono text-[0.8rem]",
+                    expanded === change.id && "bg-hover p-3",
+                  )}
+                >
                   <PlanDiff lines={change.rawLines} />
                   {change.errorLines && change.errorLines.length > 0 && (
                     <div className="overflow-x-auto border-t-2 border-error p-3 font-mono text-[0.8rem]">

@@ -10,23 +10,21 @@ import {
   CommonField,
   getProviderValue,
 } from "../../common/components/fields/CommonField";
+import { StatusLabel } from "../../common/components/labels";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
-import StatusChip from "../../common/StatusChip";
-import { Chip } from "../../ui";
 import { GqlIntegration } from "../graphql";
 import {
   IntegrationUpdateFieldInput,
   UPDATE_INTEGRATION_MUTATION,
 } from "../graphql/mutations";
-import { integrationTypeChipColor } from "../types";
 
 export interface IntegrationSidebarProps {
   integration: GqlIntegration;
 }
 
 /**
- * GitHub-style right sidebar for the integration detail page: groups the
+ * Right context sidebar for the integration detail page: groups the
  * integration's description, status and history so the main column can focus
  * on its configuration and the entities that use it.
  */
@@ -64,18 +62,11 @@ export const IntegrationSidebar = ({
 
       <SidebarSection title="Status">
         <div className="col-span-full">
-          <div className="flex items-center gap-2">
-            <StatusChip status={integration.status} />
-            <Chip
-              label={integration.integrationType.toUpperCase()}
-              appearance="solid"
-              color={integrationTypeChipColor(integration.integrationType)}
-            />
-          </div>
+          <StatusLabel status={integration.status} />
         </div>
         <CommonField
           name="Provider"
-          value={getProviderValue(integration.integrationProvider)}
+          value={getProviderValue(integration.integrationProvider, 18)}
           span="full"
         />
       </SidebarSection>

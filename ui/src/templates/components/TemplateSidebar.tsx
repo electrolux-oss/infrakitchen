@@ -16,13 +16,12 @@ import { StringTagEditor } from "../../common/components/editors/StringTagEditor
 import { GetReferenceUrlValue } from "../../common/components/fields/CommonField";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
+import { StatusLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
-import StatusChip from "../../common/StatusChip";
 import { getProviderDisplayName, sameStringSet } from "../../common/utils";
 import { IkEntity } from "../../types";
-import { Chip } from "../../ui";
 import { INTEGRATION_PROVIDER_OPTIONS } from "../constants";
 import { GqlTemplate } from "../graphql";
 import {
@@ -39,7 +38,7 @@ export interface TemplateSidebarProps {
 }
 
 /**
- * GitHub-style right sidebar for the template detail page: groups the
+ * Right context sidebar for the template detail page: groups the
  * template's description, status, relations, configuration and history so the
  * main column can focus on its documentation, resources and versions.
  */
@@ -90,10 +89,7 @@ export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
       <SidebarSection title="Status">
         <div className="col-span-full">
           <div className="flex items-center gap-2">
-            <StatusChip status={template.status} />
-            {template.abstract && (
-              <Chip label="ABSTRACT" appearance="solid" color="info" />
-            )}
+            <StatusLabel status={template.status} />
           </div>
         </div>
       </SidebarSection>

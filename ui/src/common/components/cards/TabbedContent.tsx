@@ -2,9 +2,12 @@ import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { useLocation, useNavigate, useParams } from "react-router";
 
-import { ArrowDropDownIcon } from "../../../icons/material";
-import { Button, Chip, Menu, MenuItem, Tab, Tabs } from "../../../ui";
+import { HeroChevronDownIcon } from "../../../icons";
+import { Menu, MenuItem, Tab, Tabs } from "../../../ui";
 import { usePermissionProvider } from "../../context";
+import { Label } from "../labels";
+
+import { useEntitySidebar } from "./EntitySidebar";
 
 export interface TabDefinition {
   label: string;
@@ -14,7 +17,7 @@ export interface TabDefinition {
   permissionAction?: "read" | "write" | "admin";
 }
 
-// Tab label with an info-tinted count chip, e.g. "Resources" + [12].
+// Tab label with an info-tinted count pill, e.g. "Resources" [0].
 export const TabCountLabel = ({
   label,
   count,
@@ -24,7 +27,7 @@ export const TabCountLabel = ({
 }) => (
   <div className="flex items-center gap-1.5">
     {label}
-    <Chip label={String(count)} appearance="solid" color="info" />
+    <Label label={String(count)} />
   </div>
 );
 
@@ -35,6 +38,9 @@ interface TabbedContentProps {
   onChange?: (label: string) => void;
 }
 
+const moreButtonClass =
+  "ml-6 inline-flex shrink-0 cursor-pointer items-center gap-1 border-0 bg-transparent p-0 font-sans text-body2 font-medium whitespace-nowrap text-fg-muted hover:text-fg";
+
 export const TabbedContent = ({
   tabs,
   defaultTab,
@@ -42,6 +48,7 @@ export const TabbedContent = ({
   onChange,
 }: TabbedContentProps) => {
   const { permissions } = usePermissionProvider();
+  const sidebar = useEntitySidebar();
   const { tab: activeTabFromPath } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -106,7 +113,7 @@ export const TabbedContent = ({
     const recompute = () => {
       const widths = Array.from(
         measure.querySelectorAll<HTMLElement>("[data-measure-tab]"),
-      ).map((el) => el.offsetWidth);
+      ).map((el) => el.offsetWidth + 24); // + gap-6 between tabs
       const moreWidth =
         measure.querySelector<HTMLElement>("[data-measure-more]")
           ?.offsetWidth ?? 0;
@@ -179,7 +186,7 @@ export const TabbedContent = ({
   return (
     <div className="flex flex-col gap-4">
       <div
-        className="relative mb-3 flex min-w-0 items-center border-b border-divider"
+        className="relative flex min-w-0 items-center border-b border-divider"
         ref={tabBarRef}
       >
         <Tabs
@@ -193,18 +200,17 @@ export const TabbedContent = ({
         </Tabs>
         {overflowTabs.length > 0 && (
           <>
-            <Button
-              color="inherit"
+            <button
+              type="button"
+              className={moreButtonClass}
               onClick={(e) => setMoreAnchor(e.currentTarget)}
-              endIcon={
-                <ArrowDropDownIcon className="shrink-0 text-fg-muted normal-case" />
-              }
               aria-haspopup="menu"
               aria-expanded={Boolean(moreAnchor)}
               aria-label={`More tabs (${overflowTabs.length})`}
             >
               More
-            </Button>
+              <HeroChevronDownIcon className="size-4 shrink-0" />
+            </button>
             <Menu
               anchorEl={moreAnchor}
               open={Boolean(moreAnchor)}
@@ -245,16 +251,25 @@ export const TabbedContent = ({
               />
             ))}
           </Tabs>
-          <Button
+          <button
+            type="button"
             data-measure-more
             tabIndex={-1}
-            endIcon={<ArrowDropDownIcon className="shrink-0 normal-case" />}
+            className={moreButtonClass}
           >
             More
-          </Button>
+            <HeroChevronDownIcon className="size-4 shrink-0" />
+          </button>
         </div>
       </div>
-      {activeTab.content}
+      {sidebar ? (
+        <div className="grid grid-cols-[minmax(0,_1fr)] items-start gap-4 lg:grid-cols-[minmax(0,_1fr)_360px]">
+          <div className="flex min-w-0 flex-col gap-4">{activeTab.content}</div>
+          {sidebar}
+        </div>
+      ) : (
+        activeTab.content
+      )}
     </div>
   );
 };

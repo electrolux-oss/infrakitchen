@@ -5,7 +5,7 @@ import {
   userColumn,
 } from "../../common/components/entity_table/tableColumns";
 import { getDateValue } from "../../common/components/fields/CommonField";
-import StatusChip from "../../common/StatusChip";
+import { StatusLabel } from "../../common/components/labels";
 import { RenderCellParams } from "../../ui";
 import { ENTITY_STATUS } from "../../utils/constants";
 
@@ -51,7 +51,7 @@ export const workflowColumns: EntityTableColumn[] = [
       ],
     },
     renderCell: (params: RenderCellParams) => (
-      <StatusChip status={String(params.row.status).toLowerCase()} />
+      <StatusLabel status={String(params.row.status).toLowerCase()} />
     ),
   },
   {

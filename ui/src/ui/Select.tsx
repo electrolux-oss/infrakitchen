@@ -14,7 +14,7 @@ import {
   useState,
 } from "react";
 
-import { ArrowDropDownIcon } from "../icons/material";
+import { HeroChevronDownIcon } from "../icons";
 import { cn } from "../utils/cn";
 
 import { inputBoxClasses, InputLabel, useFormControl } from "./FormControl";
@@ -214,10 +214,11 @@ function SelectInner<T>(
         onKeyDown={onKeyDown}
         onBlur={onBlur}
         className={cn(
-          "relative cursor-pointer pr-8 outline-none select-none",
+          "relative cursor-pointer outline-none select-none",
           standard
             ? "flex min-h-8 items-center bg-transparent text-body2"
             : inputBoxClasses({ disabled: isDisabled, size: fieldSize }),
+          "pr-8",
           standard && "focus-visible:underline",
           !standard &&
             "focus-visible:border-grey-800 focus-visible:outline-2 focus-visible:outline-grey-900/15 aria-expanded:border-grey-800 aria-expanded:outline-2 aria-expanded:outline-grey-900/15",
@@ -233,9 +234,9 @@ function SelectInner<T>(
             </span>
           )}
         </span>
-        <ArrowDropDownIcon
+        <HeroChevronDownIcon
           className={cn(
-            "pointer-events-none absolute right-1.5 text-fg-muted transition-transform",
+            "pointer-events-none absolute right-2 size-4 text-fg-muted transition-transform",
             open && "rotate-180",
           )}
         />

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { PermissionWrapper, useConfig } from "../../common";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
-import { AddIcon } from "../../icons/material";
+import { HeroPlusCircleIcon } from "../../icons";
 import { Button } from "../../ui";
 import {
   userColumns,
@@ -27,7 +27,7 @@ export const UsersPage = () => {
         >
           <Button
             onClick={() => navigate(`${linkPrefix}users/create`)}
-            startIcon={<AddIcon />}
+            startIcon={<HeroPlusCircleIcon />}
           >
             Create Service Account User
           </Button>

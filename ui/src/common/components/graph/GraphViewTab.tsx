@@ -12,7 +12,10 @@ import {
 
 import "@xyflow/react/dist/style.css";
 
-import { CloseFullscreenIcon, FullscreenIcon } from "../../../icons/material";
+import {
+  HeroArrowsPointingInIcon,
+  HeroArrowsPointingOutIcon,
+} from "../../../icons";
 import {
   IconButton,
   Tooltip,
@@ -228,9 +231,9 @@ export const EntityGraphViewTab = ({
           onClick={() => setFullscreen((current) => !current)}
         >
           {fullscreen ? (
-            <CloseFullscreenIcon fontSize="small" />
+            <HeroArrowsPointingInIcon fontSize="small" />
           ) : (
-            <FullscreenIcon fontSize="small" />
+            <HeroArrowsPointingOutIcon fontSize="small" />
           )}
         </IconButton>
       </Tooltip>

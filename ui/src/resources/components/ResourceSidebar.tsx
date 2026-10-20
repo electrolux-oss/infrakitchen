@@ -23,15 +23,16 @@ import {
 } from "../../common/components/fields/PlaceholderDescription";
 import { ScheduledApplyValue } from "../../common/components/fields/ScheduledApplyValue";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
+import { StatusLabel } from "../../common/components/labels";
 import { Labels } from "../../common/components/labels/Labels";
 import { useConfig } from "../../common/context";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { usePendingScheduledAction } from "../../common/hooks/usePendingScheduledAction";
-import StatusChip from "../../common/StatusChip";
 import { makeWriteAccessFilter } from "../../common/utils";
 import { ProviderIcon } from "../../icons/Icons";
 import { ToolSelect, toolLabel } from "../../tools";
 import { IkEntity } from "../../types";
+import { Label } from "../../ui";
 import { GqlResource } from "../graphql";
 import { useResourceFieldEditor } from "../hooks/useResourceFieldEditor";
 import { useResourceNotificationDialog } from "../hooks/useResourceNotificationDialog";
@@ -64,7 +65,7 @@ const RelatedResources = ({
   ) : null;
 
 /**
- * GitHub-style right sidebar for the resource detail page: groups the context a
+ * Right context sidebar for the resource detail page: groups the context a
  * user scans for first — ownership, template, infrastructure bindings,
  * relations and history — so the main column can focus on the resource itself.
  */
@@ -159,7 +160,7 @@ export const ResourceSidebar = ({
 
       <SidebarSection title="Status">
         <div className="col-span-full">
-          <StatusChip status={resource.status} state={resource.state} />
+          <StatusLabel status={resource.status} state={resource.state} />
         </div>
         {pendingScheduledAction && (
           <CommonField
@@ -295,24 +296,39 @@ export const ResourceSidebar = ({
         <ResourceInfrastructureSection resource={resource} />
       )}
 
-      <SidebarSection title="Parents" count={parents.length}>
-        <div className="col-span-full">
-          {parents.length ? (
-            <RelatedResources resources={parents} />
-          ) : (
-            <PlaceholderText text="No parent resources" />
-          )}
-        </div>
-      </SidebarSection>
-
-      <SidebarSection title="Children" count={children.length}>
-        <div className="col-span-full">
-          {children.length ? (
-            <RelatedResources resources={children} />
-          ) : (
-            <PlaceholderText text="No child resources" />
-          )}
-        </div>
+      <SidebarSection title="Relations">
+        <CommonField
+          name={
+            <span className="inline-flex items-center gap-1.5">
+              Parents
+              <Label size="small" label={parents.length} />
+            </span>
+          }
+          value={
+            parents.length ? (
+              <RelatedResources resources={parents} />
+            ) : (
+              <PlaceholderText text="No parent resources" />
+            )
+          }
+          span="full"
+        />
+        <CommonField
+          name={
+            <span className="inline-flex items-center gap-1.5">
+              Children
+              <Label size="small" label={children.length} />
+            </span>
+          }
+          value={
+            children.length ? (
+              <RelatedResources resources={children} />
+            ) : (
+              <PlaceholderText text="No child resources" />
+            )
+          }
+          span="full"
+        />
       </SidebarSection>
 
       <SidebarDetailsSection entity={resource} />

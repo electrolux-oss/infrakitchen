@@ -1,4 +1,4 @@
-import { EditOutlinedIcon } from "../../../icons/material";
+import { HeroPencilSquareIcon } from "../../../icons";
 import { IconButton, Tooltip } from "../../../ui";
 import { cn } from "../../../utils/cn";
 
@@ -21,7 +21,7 @@ interface EditAffordanceProps {
 
 /**
  * Ghost pencil button used as the click-to-edit affordance for fields and
- * sections. Always visible by default; a subtle icon that fills on hover.
+ * sections. Muted by default, emphasized on hover or keyboard focus.
  */
 export const EditAffordance = ({
   className,
@@ -36,8 +36,8 @@ export const EditAffordance = ({
     <IconButton
       className={cn(
         "[transition:opacity_0.15s_ease-in-out,_background-color_0.15s_ease-in-out,_border-color_0.15s_ease-in-out]",
-        "size-5 shrink-0 border border-transparent bg-transparent p-0 hover:border-divider hover:bg-hover focus-visible:opacity-100",
-        revealOnHover ? "opacity-0" : "opacity-100",
+        "size-5 shrink-0 border border-transparent bg-transparent p-0 hover:border-divider hover:bg-hover hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100",
+        revealOnHover ? "opacity-0" : "opacity-40",
         className,
       )}
       size="small"
@@ -45,7 +45,7 @@ export const EditAffordance = ({
       disabled={disabled}
       aria-label={ariaLabel}
     >
-      <EditOutlinedIcon className="text-[16px]" />
+      <HeroPencilSquareIcon className="text-[16px]" />
     </IconButton>
   );
 

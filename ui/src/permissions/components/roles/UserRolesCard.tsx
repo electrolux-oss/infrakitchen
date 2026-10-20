@@ -12,7 +12,7 @@ import {
   userColumn,
 } from "../../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../../common/components/fields/RelativeTime";
-import { AdminPanelSettingsIcon } from "../../../icons/material";
+import { HeroUserGroupIcon } from "../../../icons";
 import { Button } from "../../../ui";
 import { RenderCellParams } from "../../../ui";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
@@ -99,7 +99,7 @@ export const UserRolesCard = (props: { userId: string }) => {
           <Button
             size="small"
             onClick={() => handleOpenDialog()}
-            startIcon={<AdminPanelSettingsIcon />}
+            startIcon={<HeroUserGroupIcon />}
           >
             Assign Role
           </Button>

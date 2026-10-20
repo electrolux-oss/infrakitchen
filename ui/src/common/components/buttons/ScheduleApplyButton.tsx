@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { RepeatIcon, ScheduleIcon } from "../../../icons/material";
+import { HeroArrowPathIcon, HeroClockIcon } from "../../../icons";
 import { Button, Tooltip } from "../../../ui";
 import { cn } from "../../../utils/cn";
 import { useEntityProvider } from "../../context/EntityContext";
@@ -40,9 +40,9 @@ export const ScheduleApplyButton = ({
       color="inherit"
       startIcon={
         cron ? (
-          <RepeatIcon />
+          <HeroArrowPathIcon />
         ) : (
-          <ScheduleIcon
+          <HeroClockIcon
             className={cn(
               pendingScheduledAction &&
                 "border-warning/45 bg-warning/12 text-warning hover:border-warning hover:bg-warning/20",

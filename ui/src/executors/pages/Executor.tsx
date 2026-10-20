@@ -5,6 +5,7 @@ import { EntityRefreshButton } from "../../common/components/buttons/EntityRefre
 import { ScheduleApplyButton } from "../../common/components/buttons/ScheduleApplyButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
+import { HeroCpuChipIcon } from "../../icons";
 import { TASK_QUEUE_STATUS_SELECTION } from "../../workers/graphql";
 import { CloneExecutorButton } from "../components/CloneExecutorButton";
 import { ExecutorContent } from "../components/ExecutorContent";
@@ -23,6 +24,7 @@ export const ExecutorPage = () => {
       entityFields={PAGE_FIELDS}
     >
       <EntityContainer
+        titleIcon={<HeroCpuChipIcon />}
         actions={
           <>
             <ScheduleApplyButton entityType="executor" />

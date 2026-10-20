@@ -1,7 +1,4 @@
-import {
-  LockOpenOutlinedIcon,
-  LockOutlinedIcon,
-} from "../../../icons/material";
+import { HeroLockClosedIcon, HeroLockOpenIcon } from "../../../icons";
 import { IconButton, Tooltip } from "../../../ui";
 
 interface LockAffordanceProps {
@@ -33,9 +30,9 @@ export const LockAffordance = ({
       aria-label={description ? `${title}. ${description}` : title}
     >
       {locked ? (
-        <LockOutlinedIcon className="text-[16px]" />
+        <HeroLockClosedIcon className="text-[16px]" />
       ) : (
-        <LockOpenOutlinedIcon className="text-[16px]" />
+        <HeroLockOpenIcon className="text-[16px]" />
       )}
     </IconButton>
   );

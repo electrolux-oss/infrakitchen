@@ -14,9 +14,10 @@ import {
 } from "../../../common/components/entity_table/tableColumns";
 import { capitalizeFirstLetter } from "../../../common/components/fields/CommonField";
 import { RelativeTime } from "../../../common/components/fields/RelativeTime";
+import { Label } from "../../../common/components/labels";
 import { useConfig } from "../../../common/context";
-import { AdminPanelSettingsIcon, PersonAddIcon } from "../../../icons/material";
-import { Button, Chip } from "../../../ui";
+import { HeroUserGroupIcon, HeroUserPlusIcon } from "../../../icons";
+import { Button } from "../../../ui";
 import { RenderCellParams } from "../../../ui";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
@@ -111,10 +112,9 @@ export const EntityPoliciesBase = ({
                 const projectPoliciesPath = `${linkPrefix}projects/${inheritedProjectId}/policies`;
 
                 return isInherited ? (
-                  <Chip
+                  <Label
                     label="Inherited from Project"
-                    color="info"
-                    variant="outlined"
+                    tone="info"
                     component="a"
                     href={projectPoliciesPath}
                     clickable
@@ -128,7 +128,7 @@ export const EntityPoliciesBase = ({
                     }}
                   />
                 ) : (
-                  <Chip label="Direct" variant="outlined" />
+                  <Label label="Direct" />
                 );
               },
             },
@@ -187,14 +187,14 @@ export const EntityPoliciesBase = ({
           <Button
             size="small"
             onClick={() => setIsDialogOpen(true)}
-            startIcon={<AdminPanelSettingsIcon />}
+            startIcon={<HeroUserGroupIcon />}
           >
             Add Role
           </Button>
           <Button
             size="small"
             onClick={() => setIsUserDialogOpen(true)}
-            startIcon={<PersonAddIcon />}
+            startIcon={<HeroUserPlusIcon />}
           >
             Add User
           </Button>

@@ -9,7 +9,7 @@ import {
 import { useEventProvider, usePermissionProvider } from "../../common/context";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import { AddIcon } from "../../icons/material";
+import { HeroPlusCircleIcon } from "../../icons";
 import { Button } from "../../ui";
 import {
   ToolDownloadDialog,
@@ -221,7 +221,7 @@ export const ToolsPage = () => {
             </Button>
           )}
           <Button
-            startIcon={<AddIcon />}
+            startIcon={<HeroPlusCircleIcon />}
             onClick={() => setDownloadDialogOpen(true)}
           >
             Add tool

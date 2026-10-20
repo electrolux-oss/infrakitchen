@@ -7,9 +7,9 @@ import React, {
 } from "react";
 
 import { Autocomplete, AutocompleteInputChangeReason } from "../../../ui";
+import { Label } from "../../../ui/Label";
 import VersionLifecycleStateChip from "../../VersionLifecycleStateChip";
 import { ReferenceLoader, ReferenceOption } from "../filter_panel/FilterConfig";
-import { Label } from "../labels/Label";
 
 interface ReferenceAutocompleteProps {
   loadOptions: ReferenceLoader;

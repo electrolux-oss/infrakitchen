@@ -6,7 +6,8 @@ import React, {
   useState,
 } from "react";
 
-import { AddIcon, DeleteOutlinedIcon } from "../../../icons/material";
+import { HeroPlusCircleIcon } from "../../../icons";
+import { HeroTrashIcon } from "../../../icons";
 import {
   Button,
   IconButton,
@@ -412,7 +413,7 @@ const ClauseRow = ({
             onClick={() => onRemove(clause.id)}
             className={deleteIconButtonClass}
           >
-            <DeleteOutlinedIcon fontSize="small" />
+            <HeroTrashIcon fontSize="small" />
           </IconButton>
         </span>
       </Tooltip>
@@ -655,7 +656,7 @@ export const AdvancedFilter = ({
           <span className="self-start">
             <Button
               className={dashedAddButtonClass}
-              startIcon={<AddIcon />}
+              startIcon={<HeroPlusCircleIcon />}
               onClick={handleAdd}
               disabled={!canAddMore}
             >

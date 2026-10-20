@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { MarkdownViewer } from "../../common/components/viewers/MarkdownViewer";
-import { InfoOutlinedIcon } from "../../icons/material";
+import { HeroInformationCircleIcon } from "../../icons";
 import { Popover } from "../../ui";
 import { GqlSourceCodeCommit } from "../graphql";
 
@@ -39,7 +39,7 @@ export const SourceCodeCommitMessage = ({
               }
             }}
           >
-            <InfoOutlinedIcon
+            <HeroInformationCircleIcon
               className="block text-[15px] text-action-active"
               fontSize="small"
             />

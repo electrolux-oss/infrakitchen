@@ -1,6 +1,6 @@
 import { MouseEvent } from "react";
 
-import { ChevronLeftIcon, ChevronRightIcon } from "../icons/material";
+import { HeroChevronLeftIcon, HeroChevronRightIcon } from "../icons";
 import { cn } from "../utils/cn";
 
 import { BUTTON_BASE } from "./Button";
@@ -54,7 +54,7 @@ export function Pagination({
         disabled={page <= 1}
         onClick={(event) => onChange?.(event, page - 1)}
       >
-        <ChevronLeftIcon fontSize="small" />
+        <HeroChevronLeftIcon fontSize="small" />
       </button>
       {pageItems(count, page, siblingCount).map((item, index) =>
         item === "gap" ? (
@@ -87,7 +87,7 @@ export function Pagination({
         disabled={page >= count}
         onClick={(event) => onChange?.(event, page + 1)}
       >
-        <ChevronRightIcon fontSize="small" />
+        <HeroChevronRightIcon fontSize="small" />
       </button>
     </nav>
   );
@@ -160,7 +160,7 @@ export function TablePagination({
           disabled={page === 0}
           onClick={(event) => onPageChange(event, page - 1)}
         >
-          <ChevronLeftIcon fontSize="small" />
+          <HeroChevronLeftIcon fontSize="small" />
         </button>
         <button
           type="button"
@@ -169,7 +169,7 @@ export function TablePagination({
           disabled={page >= lastPage}
           onClick={(event) => onPageChange(event, page + 1)}
         >
-          <ChevronRightIcon fontSize="small" />
+          <HeroChevronRightIcon fontSize="small" />
         </button>
       </div>
     </div>

@@ -6,6 +6,7 @@ import {
   EntityProvider,
   useEntityProvider,
 } from "../../common/context/EntityContext";
+import { HeroRectangleStackIcon } from "../../icons";
 import { ServiceContent } from "../components/ServiceContent";
 import { SERVICE_DETAIL_FIELDS } from "../graphql";
 
@@ -29,6 +30,7 @@ const ServicePageContent = () => {
   return (
     // Services are headed by their display name, as the overview card was.
     <EntityContainer
+      titleIcon={<HeroRectangleStackIcon />}
       title={entity?.displayName || undefined}
       actions={<EntityRefreshButton />}
     >

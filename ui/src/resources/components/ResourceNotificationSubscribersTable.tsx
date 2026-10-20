@@ -6,9 +6,9 @@ import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { Label } from "../../common/components/labels";
 import { useConfig } from "../../common/context";
 import { NOTIFICATION_SUBSCRIPTION_FIELD_MAP } from "../../notifications";
-import { Chip } from "../../ui";
 import { RenderCellParams } from "../../ui";
 
 interface ResourceNotificationSubscribersTableProps {
@@ -61,10 +61,9 @@ export const ResourceNotificationSubscribersTable = ({
                 const projectNotificationsPath = `${linkPrefix}projects/${projectId}/notifications`;
 
                 return isInherited ? (
-                  <Chip
+                  <Label
                     label="Inherited from Project"
-                    color="info"
-                    variant="outlined"
+                    tone="info"
                     component="a"
                     href={projectNotificationsPath}
                     clickable
@@ -78,7 +77,7 @@ export const ResourceNotificationSubscribersTable = ({
                     }}
                   />
                 ) : (
-                  <Chip label="Direct" variant="outlined" />
+                  <Label label="Direct" />
                 );
               },
             },

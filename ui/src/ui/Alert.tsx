@@ -1,11 +1,12 @@
 import { ReactNode } from "react";
 
+import { HeroCheckCircleIcon } from "../icons";
 import {
-  CheckCircleOutlinedIcon,
-  ErrorOutlineIcon,
-  InfoOutlinedIcon,
-  ReportProblemOutlinedIcon,
-} from "../icons/material";
+  HeroExclamationCircleIcon,
+  HeroExclamationTriangleIcon,
+  HeroInformationCircleIcon,
+} from "../icons";
+import {} from "../icons";
 import { cn } from "../utils/cn";
 
 export type AlertSeverity = "success" | "info" | "warning" | "error";
@@ -26,10 +27,10 @@ export interface AlertProps {
 }
 
 const DEFAULT_ICONS: Record<AlertSeverity, ReactNode> = {
-  success: <CheckCircleOutlinedIcon fontSize="inherit" />,
-  info: <InfoOutlinedIcon fontSize="inherit" />,
-  warning: <ReportProblemOutlinedIcon fontSize="inherit" />,
-  error: <ErrorOutlineIcon fontSize="inherit" />,
+  success: <HeroCheckCircleIcon fontSize="inherit" />,
+  info: <HeroInformationCircleIcon fontSize="inherit" />,
+  warning: <HeroExclamationTriangleIcon fontSize="inherit" />,
+  error: <HeroExclamationCircleIcon fontSize="inherit" />,
 };
 
 // Full class names per tone so Tailwind can find them in the source.

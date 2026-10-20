@@ -15,12 +15,12 @@ import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterProvider } from "../../common/components/filter_panel/FilterContext";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
+import { StatusLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useLocalStorage } from "../../common/context/UIStateContext";
 import { buildGraphqlFields } from "../../common/graphql/buildGraphqlFields";
 import { notifyError } from "../../common/hooks/useNotification";
 import { usePersistedPagination } from "../../common/hooks/usePersistedPagination";
-import StatusChip from "../../common/StatusChip";
 import { executorColumns as filterableExecutorColumns } from "../../executors/components/executorTableConfig";
 import { EXECUTOR_FIELD_MAP } from "../../executors/graphql";
 import { resourceColumns as filterableResourceColumns } from "../../resources/components/resourceTableConfig";
@@ -36,10 +36,12 @@ import { BatchOperationCreate } from "../types";
 const selectionStateColumn: EntityTableColumn = {
   field: "state",
   headerName: "State",
-  flex: 1,
+  // Wider share: the state reads like "PROVISIONED [DONE]" plus a
+  // "Needs review" pill, so it needs more room than a plain name.
+  flex: 1.5,
   valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
   renderCell: (params: RenderCellParams) => (
-    <StatusChip
+    <StatusLabel
       status={String(params.row.status).toLowerCase()}
       state={String(params.row.state).toLowerCase()}
       needsReview={hasPendingChanges(params.row)}

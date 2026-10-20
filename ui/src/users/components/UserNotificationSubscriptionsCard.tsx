@@ -11,7 +11,7 @@ import {
 import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { notifyError } from "../../common/hooks/useNotification";
-import { DeleteOutlinedIcon } from "../../icons/material";
+import { HeroTrashIcon } from "../../icons";
 import {
   DELETE_SUBSCRIPTION_MUTATION,
   NOTIFICATION_SUBSCRIPTION_FIELD_MAP,
@@ -49,7 +49,7 @@ const DeleteSubscriptionButton = ({
       size="small"
       className={deleteIconButtonClass}
     >
-      <DeleteOutlinedIcon fontSize="small" />
+      <HeroTrashIcon fontSize="small" />
     </IconButton>
   );
 };

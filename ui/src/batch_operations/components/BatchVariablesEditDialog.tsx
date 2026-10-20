@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { Label } from "../../common/components/labels";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { UPDATE_RESOURCE_MUTATION } from "../../resources/graphql";
 import { VariableInput } from "../../resources/types";
 import {
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -485,11 +485,7 @@ export const BatchVariablesEditDialog = ({
                       <div className="flex items-center gap-2">
                         <span>{resource.name}</span>
                         {resource.hasPendingChanges && (
-                          <Chip
-                            size="small"
-                            color="warning"
-                            label="Pending changes"
-                          />
+                          <Label tone="warning" label="Pending changes" />
                         )}
                       </div>
                     </TableCell>

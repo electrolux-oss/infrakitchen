@@ -3,11 +3,11 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import Ansi from "ansi-to-react";
 
 import {
-  CloseFullscreenIcon,
-  FitScreenIcon,
-  FullscreenIcon,
-  TerminalIcon,
-} from "../../icons/material";
+  HeroArrowsPointingInIcon,
+  HeroArrowsPointingOutIcon,
+  HeroCommandLineIcon,
+  HeroViewfinderCircleIcon,
+} from "../../icons";
 import { IconButton, Tooltip } from "../../ui";
 import { cn } from "../../utils/cn";
 import { useLocalStorage } from "../context";
@@ -229,7 +229,7 @@ export const LogLiveTail = () => {
               isReceivingLogs ? "Log Stream — receiving logs" : "Log Stream"
             }
           >
-            <TerminalIcon
+            <HeroCommandLineIcon
               fontSize="small"
               className={cn(
                 "[transition:color_0.3s]",
@@ -242,7 +242,7 @@ export const LogLiveTail = () => {
         <>
           <div className="flex cursor-default items-center justify-between border-b border-divider px-3 py-1.5">
             <div className="flex min-w-0 items-center gap-2">
-              <TerminalIcon className="text-fg-muted" fontSize="small" />
+              <HeroCommandLineIcon className="text-fg-muted" fontSize="small" />
               <p className="m-0 overflow-hidden text-body2 font-semibold text-ellipsis whitespace-nowrap">
                 Log Stream
               </p>
@@ -257,7 +257,7 @@ export const LogLiveTail = () => {
                   size="small"
                   onClick={() => applyPresetSize(0.6)}
                 >
-                  <FitScreenIcon fontSize="small" />
+                  <HeroViewfinderCircleIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
               <Tooltip title="Large size">
@@ -266,7 +266,7 @@ export const LogLiveTail = () => {
                   size="small"
                   onClick={() => applyPresetSize(0.85)}
                 >
-                  <FullscreenIcon fontSize="small" />
+                  <HeroArrowsPointingOutIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
               <Tooltip title="Minimize">
@@ -276,7 +276,7 @@ export const LogLiveTail = () => {
                   aria-label="Minimize"
                   onClick={() => setIsMinimized(true)}
                 >
-                  <CloseFullscreenIcon fontSize="small" />
+                  <HeroArrowsPointingInIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             </div>

@@ -12,10 +12,10 @@ import {
 } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
-import { Label } from "../../common/components/labels/Label";
-import { InfoOutlinedIcon } from "../../icons/material";
+import { HeroInformationCircleIcon } from "../../icons";
 import { Tooltip } from "../../ui";
 import { RenderCellParams } from "../../ui";
+import { Label } from "../../ui/Label";
 import { GqlAuditLog } from "../graphql";
 import { getAuditLogEntity } from "../utils/auditLogEntity";
 
@@ -51,7 +51,7 @@ const userTimeColumn = (): EntityTableColumn => ({
   renderCell: (params: RenderCellParams<GqlAuditLog>) => {
     const user = params.row.creator;
     return (
-      <div className="flex min-w-0 items-center gap-1.5">
+      <div className="flex min-w-0 items-center justify-end gap-1.5">
         <RelativeTime date={params.row.createdAt} compact />
         {user?.id ? (
           <UserAvatar id={user.id} identifier={user.identifier} />
@@ -119,7 +119,7 @@ export const auditLogColumns: EntityTableColumn[] = [
           <span className="font-mono text-caption break-all text-fg-muted">
             {params.row.entityId}
           </span>
-          <Label label={humanizeEntityType(params.row.model)} />
+          <Label size="small" label={humanizeEntityType(params.row.model)} />
         </div>
       ) : null;
       // Only chip the 1st row when it adds the nested template's name;
@@ -184,7 +184,7 @@ export const auditLogColumns: EntityTableColumn[] = [
       return (
         <div className="flex min-w-0 items-center gap-1.5">
           {params.value}
-          {isTokenAuth && <Label label="PAT" tone="info" />}
+          {isTokenAuth && <Label size="small" label="PAT" tone="info" />}
           {infoEntries.length > 0 && (
             <Tooltip
               title={
@@ -208,7 +208,7 @@ export const auditLogColumns: EntityTableColumn[] = [
                 className="inline-flex shrink-0 cursor-default items-center text-action-active"
                 aria-label="Show event metadata"
               >
-                <InfoOutlinedIcon fontSize="small" />
+                <HeroInformationCircleIcon fontSize="small" />
               </span>
             </Tooltip>
           )}

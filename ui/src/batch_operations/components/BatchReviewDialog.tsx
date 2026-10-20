@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { DiffEditor } from "../../common/components/activity/DiffEditor";
+import { StatusLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context/ConfigContext";
 import { buildEntityActionMutation } from "../../common/graphql/entityActionMutation";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import StatusChip from "../../common/StatusChip";
 import { VariableInput } from "../../resources/types";
 import { hasPendingChanges } from "../../resources/utils/pendingChanges";
 import {
@@ -315,7 +315,7 @@ export const BatchReviewDialog = ({
                       <span className="text-body2 font-medium">
                         {resource.name}
                       </span>
-                      <StatusChip
+                      <StatusLabel
                         status={String(resource.status).toLowerCase()}
                         state={String(resource.state).toLowerCase()}
                         compact

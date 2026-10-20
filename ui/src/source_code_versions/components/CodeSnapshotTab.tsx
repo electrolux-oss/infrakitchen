@@ -1,13 +1,16 @@
 import { FC, useMemo, useState } from "react";
 
+import { json } from "@codemirror/lang-json";
 import CodeMirror from "@uiw/react-codemirror";
 
 import { HclCodeViewer } from "../../common/components/viewers/HclCodeViewer";
 import {
-  DescriptionOutlinedIcon,
-  FolderOutlinedIcon,
-} from "../../icons/material";
-import { Chip, TreeItem, TreeView, useColorScheme } from "../../ui";
+  HeroDocumentTextIcon,
+  HeroFolderIcon,
+  HeroFolderOpenIcon,
+} from "../../icons";
+import { TreeItem, TreeView, useColorScheme } from "../../ui";
+import { Label } from "../../ui/Label";
 
 interface CodeSnapshotTabProps {
   codeSnapshot: string | null | undefined;
@@ -119,26 +122,29 @@ function renderTreeItems(nodes: TreeNode[]) {
       <TreeItem
         key={node.path}
         itemId={node.path}
-        label={
+        label={({ expanded }) => (
           <div className="flex w-full items-center gap-1.5 py-0.5 pr-2">
             {isFolder ? (
-              <FolderOutlinedIcon fontSize="small" color="action" />
+              expanded ? (
+                <HeroFolderOpenIcon className="size-4" color="action" />
+              ) : (
+                <HeroFolderIcon className="size-4" color="action" />
+              )
             ) : (
-              <DescriptionOutlinedIcon fontSize="small" color="action" />
+              <HeroDocumentTextIcon className="size-4" color="action" />
             )}
             <p className="m-0 font-mono text-[13px] font-normal">
               {isFolder ? node.name : node.name.replace(/@[^/]+$/, "")}
             </p>
             {!isFolder && node.file?.ref && (
-              <Chip
-                className="ml-auto h-4.5 font-mono text-[11px]"
+              <Label
+                size="small"
+                className="ml-auto"
                 label={displayRef(node.file.ref)}
-                variant="outlined"
-                labelClassName="px-1.5"
               />
             )}
           </div>
-        }
+        )}
       >
         {isFolder ? renderTreeItems(node.children) : null}
       </TreeItem>
@@ -147,14 +153,17 @@ function renderTreeItems(nodes: TreeNode[]) {
 }
 
 function renderFileViewer(file: ParsedFile, colorMode: "light" | "dark") {
-  if (file.filename.endsWith(".tf")) {
+  const filename = file.filename.replace(/@[^/]+$/, "");
+  if (filename.endsWith(".tf") || filename.endsWith(".hcl")) {
     return <HclCodeViewer value={file.content} />;
   }
 
   return (
     <CodeMirror
       value={file.content}
+      style={{ fontSize: "0.75rem" }}
       theme={colorMode}
+      extensions={filename.endsWith(".json") ? [json()] : []}
       readOnly
       editable={false}
       basicSetup={{ foldGutter: true, lineNumbers: true }}
@@ -215,15 +224,11 @@ export const CodeSnapshotTab: FC<CodeSnapshotTabProps> = ({
         {selectedFile ? (
           <>
             <div className="flex items-center gap-2 border-b border-divider bg-canvas px-3 py-2">
-              <h6 className="m-0 font-mono text-subtitle2 text-grey-500">
+              <h6 className="m-0 font-mono text-caption font-normal text-grey-500">
                 {selectedFile.filename.replace(/@[^/]+$/, "")}
               </h6>
               {selectedFile.ref && (
-                <Chip
-                  className="font-mono"
-                  label={displayRef(selectedFile.ref)}
-                  variant="outlined"
-                />
+                <Label size="small" label={displayRef(selectedFile.ref)} />
               )}
             </div>
             <div className="flex-1 overflow-auto">

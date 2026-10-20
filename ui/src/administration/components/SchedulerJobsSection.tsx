@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useConfig } from "../../common";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { DeleteIcon } from "../../icons/material";
+import { HeroTrashIcon } from "../../icons";
 import {
   Divider,
   Button,
@@ -274,7 +274,7 @@ export const SchedulerJobsSection = () => {
                           </Button>
                           <Button
                             color="error"
-                            startIcon={<DeleteIcon />}
+                            startIcon={<HeroTrashIcon />}
                             onClick={() => setDeleteDialogJobId(job.id)}
                           >
                             Delete

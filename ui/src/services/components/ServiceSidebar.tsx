@@ -64,7 +64,7 @@ export interface ServiceSidebarProps {
 }
 
 /**
- * GitHub-style right sidebar for the service detail page: groups the
+ * Right context sidebar for the service detail page: groups the
  * service's description, relations and history so the main column can focus
  * on its policies, notifications and activity.
  */

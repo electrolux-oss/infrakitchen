@@ -6,7 +6,7 @@ import { deleteIconButtonClass } from "../../common/components/buttons/deleteIco
 import { Entity } from "../../common/components/entities/Entity";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
-import { DeleteOutlinedIcon, DragIndicatorIcon } from "../../icons/material";
+import { HeroBars3Icon, HeroTrashIcon } from "../../icons";
 import {
   Spinner,
   Switch,
@@ -412,7 +412,7 @@ export const TemplateVersionReorderDialog = ({
                       }
                       onDragEnd={handleDragEnd}
                     >
-                      <DragIndicatorIcon className="pointer-events-none text-fg-muted" />
+                      <HeroBars3Icon className="pointer-events-none text-fg-muted" />
                     </span>
                     <ListItemText
                       className="my-0"
@@ -501,7 +501,7 @@ export const TemplateVersionReorderDialog = ({
                             {deletingId === item.id ? (
                               <Spinner size={16} color="inherit" />
                             ) : (
-                              <DeleteOutlinedIcon fontSize="small" />
+                              <HeroTrashIcon fontSize="small" />
                             )}
                           </IconButton>
                         </span>

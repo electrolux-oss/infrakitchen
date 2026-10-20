@@ -1,9 +1,11 @@
 import { forwardRef } from "react";
 
 import { deleteIconButtonClass } from "../../common/components/buttons/deleteIconButtonClass";
+import { Label } from "../../common/components/labels";
 import { dashedAddButtonClass } from "../../common/utils/dashedAddButton";
-import { AddIcon, DeleteOutlinedIcon } from "../../icons/material";
-import { Button, IconButton, Chip, Tooltip, TextField } from "../../ui";
+import { HeroPlusCircleIcon } from "../../icons";
+import { HeroTrashIcon } from "../../icons";
+import { Button, IconButton, Tooltip, TextField } from "../../ui";
 import { cn } from "../../utils/cn";
 import { CustomSecret } from "../types";
 
@@ -49,12 +51,7 @@ const CustomSecretInput = forwardRef<any, CustomSecretInputProps>(
           /* Section header: label, entry count */
           <div className="mb-2 flex items-center gap-2">
             <p className="m-0 text-body2 font-semibold">{label}</p>
-            <Chip
-              label={String(currentValue.length)}
-              appearance="solid"
-              color="info"
-              compact
-            />
+            <Label label={String(currentValue.length)} />
           </div>
         )}
 
@@ -103,7 +100,7 @@ const CustomSecretInput = forwardRef<any, CustomSecretInputProps>(
                 onClick={() => handleRemove(index)}
                 aria-label="Remove"
               >
-                <DeleteOutlinedIcon fontSize="small" />
+                <HeroTrashIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           </div>
@@ -112,7 +109,7 @@ const CustomSecretInput = forwardRef<any, CustomSecretInputProps>(
           /* Add action sits under the rows, matching the other list editors. */
           <div className="mt-2">
             <Button
-              startIcon={<AddIcon />}
+              startIcon={<HeroPlusCircleIcon />}
               onClick={handleAdd}
               className={dashedAddButtonClass}
             >

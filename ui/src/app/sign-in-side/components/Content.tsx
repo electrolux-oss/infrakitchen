@@ -1,32 +1,32 @@
 import { InfrakitchenLogo } from "@/index";
 import {
-  AutoFixHighRoundedIcon,
-  ConstructionRoundedIcon,
-  SettingsSuggestRoundedIcon,
-  ThumbUpAltRoundedIcon,
+  HeroCheckBadgeIcon,
+  HeroCog6ToothIcon,
+  HeroSparklesIcon,
+  HeroWrenchScrewdriverIcon,
 } from "@/index";
 
 const items = [
   {
-    icon: <SettingsSuggestRoundedIcon className="text-fg-muted" />,
+    icon: <HeroCog6ToothIcon className="text-fg-muted" />,
     title: "Adaptable performance",
     description:
       "Our product effortlessly adjusts to your needs, boosting efficiency and simplifying your tasks.",
   },
   {
-    icon: <ConstructionRoundedIcon className="text-fg-muted" />,
+    icon: <HeroWrenchScrewdriverIcon className="text-fg-muted" />,
     title: "Built to last",
     description:
       "Experience unmatched durability that goes above and beyond with lasting investment.",
   },
   {
-    icon: <ThumbUpAltRoundedIcon className="text-fg-muted" />,
+    icon: <HeroCheckBadgeIcon className="text-fg-muted" />,
     title: "Great user experience",
     description:
       "Integrate our product into your routine with an intuitive and easy-to-use interface.",
   },
   {
-    icon: <AutoFixHighRoundedIcon className="text-fg-muted" />,
+    icon: <HeroSparklesIcon className="text-fg-muted" />,
     title: "Innovative functionality",
     description:
       "Stay ahead with features that set new standards, addressing your evolving needs better than the rest.",

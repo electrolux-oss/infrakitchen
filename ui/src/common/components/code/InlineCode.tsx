@@ -1,6 +1,6 @@
 import { FC, ReactNode, useCallback, useEffect, useRef, useState } from "react";
 
-import { CheckIcon, ContentCopyIcon } from "../../../icons/material";
+import { HeroCheckIcon, HeroDocumentDuplicateIcon } from "../../../icons";
 import { Tooltip } from "../../../ui";
 import { cn } from "../../../utils/cn";
 import { notifyError } from "../../hooks/useNotification";
@@ -56,7 +56,7 @@ export const InlineCode: FC<InlineCodeProps> = ({
             aria-label={copied ? "Copied to clipboard" : "Copy to clipboard"}
             onClick={handleCopy}
           >
-            {copied ? <CheckIcon /> : <ContentCopyIcon />}
+            {copied ? <HeroCheckIcon /> : <HeroDocumentDuplicateIcon />}
           </button>
         </Tooltip>
       )}

@@ -1,3 +1,3 @@
 export * from "./InfrakitchenLogo";
-export * from "./material";
+export * from "./heroicons";
 export { createIcon } from "./createIcon";

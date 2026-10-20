@@ -1,11 +1,8 @@
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
-import {
-  createdUpdatedColumns,
-  userColumn,
-} from "../../common/components/entity_table/tableColumns";
-import StatusChip from "../../common/StatusChip";
-import { Chip } from "../../ui";
+import { createdUpdatedColumns } from "../../common/components/entity_table/tableColumns";
+import { Label } from "../../common/components/labels";
+import { StatusLabel } from "../../common/components/labels";
 import { RenderCellParams } from "../../ui";
 
 export const blueprintColumns: EntityTableColumn[] = [
@@ -39,15 +36,9 @@ export const blueprintColumns: EntityTableColumn[] = [
       return (
         <div className="flex flex-wrap gap-1">
           {templates.slice(0, 3).map((t: any) => (
-            <Chip key={t.id} label={t.name} appearance="solid" compact />
+            <Label key={t.id} label={t.name} />
           ))}
-          {templates.length > 3 && (
-            <Chip
-              label={`+${templates.length - 3}`}
-              appearance="solid"
-              compact
-            />
-          )}
+          {templates.length > 3 && <Label label={`+${templates.length - 3}`} />}
         </div>
       );
     },
@@ -67,9 +58,8 @@ export const blueprintColumns: EntityTableColumn[] = [
       ],
     },
     renderCell: (params: RenderCellParams) => (
-      <StatusChip status={String(params.row.status).toLowerCase()} />
+      <StatusLabel status={String(params.row.status).toLowerCase()} />
     ),
   },
-  ...createdUpdatedColumns(),
-  userColumn(),
+  ...createdUpdatedColumns({ withCreator: true }),
 ];

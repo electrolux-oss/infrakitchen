@@ -6,17 +6,17 @@ import { BaseCard } from "../../common/components/cards/BaseCard";
 import { InlineCode } from "../../common/components/code/InlineCode";
 import { CommonDialog } from "../../common/components/dialogs/CommonDialog";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
-import { Label } from "../../common/components/labels/Label";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { copyToClipboard } from "../../common/utils/clipboard";
 import {
-  AddIcon,
-  CheckIcon,
-  CloseIcon,
-  ContentCopyIcon,
-  DeleteOutlinedIcon,
-  VerifiedUserIcon,
-} from "../../icons/material";
+  HeroArrowPathIcon,
+  HeroCheckIcon,
+  HeroDocumentDuplicateIcon,
+  HeroShieldCheckIcon,
+  HeroXMarkIcon,
+} from "../../icons";
+import { HeroPlusCircleIcon } from "../../icons";
+import { HeroTrashIcon } from "../../icons";
 import {
   Alert,
   Checkbox,
@@ -26,6 +26,7 @@ import {
   Tooltip,
   TextField,
 } from "../../ui";
+import { Label } from "../../ui/Label";
 import { GqlUser } from "../graphql";
 import {
   CREATE_PERSONAL_ACCESS_TOKEN_MUTATION,
@@ -299,7 +300,7 @@ const TokenValueDialog = ({
         <div className="flex flex-col gap-5 pt-2">
           <div className="flex flex-row items-start gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-success-light text-success-contrast">
-              <VerifiedUserIcon fontSize="small" />
+              <HeroShieldCheckIcon fontSize="small" />
             </div>
             <div className="min-w-0">
               <h6 className="m-0 text-h6">Store this token securely</h6>
@@ -330,7 +331,7 @@ const TokenValueDialog = ({
                   edge="end"
                   aria-label="Copy token"
                 >
-                  <ContentCopyIcon fontSize="small" />
+                  <HeroDocumentDuplicateIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             </div>
@@ -375,7 +376,7 @@ const DeleteTokenButton = ({
         disabled={isLoading}
         className={deleteIconButtonClass}
       >
-        <DeleteOutlinedIcon fontSize="small" />
+        <HeroTrashIcon fontSize="small" />
       </IconButton>
     );
   }
@@ -390,7 +391,7 @@ const DeleteTokenButton = ({
         disabled={isLoading}
         onClick={() => onDelete(token.id)}
       >
-        <CheckIcon fontSize="small" />
+        <HeroCheckIcon fontSize="small" />
       </IconButton>
       <IconButton
         title="Cancel"
@@ -400,7 +401,7 @@ const DeleteTokenButton = ({
         onClick={() => setIsConfirming(false)}
         className={deleteIconButtonClass}
       >
-        <CloseIcon fontSize="small" />
+        <HeroXMarkIcon fontSize="small" />
       </IconButton>
     </div>
   );
@@ -485,18 +486,24 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
         name="Personal Access Tokens"
         description="Create and delete tokens for CLI and API access on your account."
         actions={
-          <div className="flex flex-row gap-2">
-            <Button size="small" onClick={loadTokens} disabled={isLoading}>
-              Refresh
-            </Button>
+          <div className="flex flex-row items-center gap-2">
             <Button
               size="small"
-              variant="contained"
-              startIcon={<AddIcon />}
+              startIcon={<HeroPlusCircleIcon />}
               onClick={() => setDialogOpen(true)}
             >
               Create Token
             </Button>
+            <Tooltip title="Refresh">
+              <IconButton
+                size="small"
+                aria-label="Refresh"
+                onClick={loadTokens}
+                disabled={isLoading}
+              >
+                <HeroArrowPathIcon />
+              </IconButton>
+            </Tooltip>
           </div>
         }
       >

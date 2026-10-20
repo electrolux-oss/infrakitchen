@@ -1,7 +1,7 @@
 import React from "react";
 
 import { IconProps } from "../icons/Icons";
-import type { ChipColor } from "../ui";
+import type { LabelTone } from "../ui";
 
 export interface IntegrationCreate {
   id: string;
@@ -34,7 +34,7 @@ export enum ConnectionType {
  * info (blue), notification is warning (orange), and everything else (git)
  * falls back to secondary.
  */
-export const integrationTypeChipColor = (integrationType: string): ChipColor =>
+export const integrationTypeChipColor = (integrationType: string): LabelTone =>
   integrationType === IntegrationType.CLOUD
     ? "info"
     : integrationType === IntegrationType.NOTIFICATION

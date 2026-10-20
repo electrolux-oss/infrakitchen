@@ -1,4 +1,5 @@
-import { Entity, EntityRecord } from "../entities/Entity";
+import { EntityRecord } from "../entities/Entity";
+import { UserAvatar } from "../entities/UserAvatar";
 import { CommonField } from "../fields/CommonField";
 import { RelativeTime } from "../fields/RelativeTime";
 
@@ -33,7 +34,10 @@ export const SidebarDetailsSection = ({
         name={creatorLabel}
         value={
           entity.creator ? (
-            <Entity entity={{ ...entity.creator, entityType: "user" }} />
+            <UserAvatar
+              id={entity.creator.id}
+              identifier={entity.creator.identifier ?? entity.creator.name}
+            />
           ) : null
         }
         span="full"

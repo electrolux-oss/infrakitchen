@@ -29,6 +29,25 @@ export default function DiffViewerPane({
     const parent = parentRef.current;
     if (!parent) return;
 
+    const dark = resolvedMode === "dark";
+    const diffTheme = EditorView.theme({
+      "&.cm-merge-a .cm-changedLine, .cm-deletedChunk": {
+        backgroundColor: dark ? "#f8717114" : "#ef44440d",
+      },
+      "&.cm-merge-b .cm-changedLine, .cm-inlineChangedLine": {
+        backgroundColor: dark ? "#4ade8014" : "#22c55e0d",
+      },
+      "&.cm-merge-a .cm-changedText, .cm-deletedChunk .cm-deletedText, &.cm-merge-b .cm-deletedText":
+        {
+          background: dark ? "#f8717133" : "#ef444426",
+          textDecoration: "none",
+        },
+      "&.cm-merge-b .cm-changedText": {
+        background: dark ? "#4ade8033" : "#22c55e26",
+        textDecoration: "none",
+      },
+    });
+
     const extensions = [
       ...getDefaultExtensions({
         theme: resolvedMode,
@@ -43,6 +62,7 @@ export default function DiffViewerPane({
       }),
       json(),
       fontTheme,
+      diffTheme,
     ];
     const collapse = showDiffOnly ? collapseUnchanged : undefined;
 

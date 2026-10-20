@@ -4,11 +4,9 @@ import { Entity } from "../../common/components/entities/Entity";
 import { GetReferenceUrlValue } from "../../common/components/fields/CommonField";
 import { Duration } from "../../common/components/fields/Duration";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
-import { AbstractChip } from "../../common/components/labels/AbstractChip";
-import StatusChip from "../../common/StatusChip";
-import { ExpandMoreIcon } from "../../icons/material";
+import { Label, StatusLabel } from "../../common/components/labels";
+import { HeroChevronDownIcon } from "../../icons";
 import {
-  Chip,
   Accordion,
   AccordionDetails,
   AccordionSummary,
@@ -52,11 +50,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
         {/* Step header */}
         <div className="flex items-center justify-between border-b border-divider bg-canvas px-4 py-3">
           <div className="flex items-center gap-4">
-            <Chip
-              className="min-w-7 font-bold"
-              label={step.position + 1}
-              color="primary"
-            />
+            <Label size="large" tone="primary" label={step.position + 1} />
             {templateName ? (
               <Entity entity={step.template} />
             ) : (
@@ -64,8 +58,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                 {step.template?.id.slice(0, 8)}…
               </h6>
             )}
-            {step.template?.abstract && <AbstractChip />}
-            <StatusChip status={step.status} />
+            <StatusLabel status={step.status} />
           </div>
           <div className="flex items-center gap-4">
             {step.startedAt && (
@@ -141,7 +134,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                 </span>
                 <div className="mt-1 flex flex-wrap gap-2">
                   {step.parentResourceIds.map((res) => (
-                    <Chip
+                    <Label
                       key={res.id}
                       label={
                         <GetReferenceUrlValue
@@ -150,8 +143,6 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                           identifier={res.name ?? res.id.slice(0, 8) + "…"}
                         />
                       }
-                      size="small"
-                      variant="outlined"
                     />
                   ))}
                 </div>
@@ -176,7 +167,9 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                             resource.template?.id ??
                             "External"}
                         </span>
-                        {resource.template?.abstract && <AbstractChip />}
+                        {resource.template?.abstract && (
+                          <Label tone="info" label="ABSTRACT" />
+                        )}
                       </div>
                       <GetReferenceUrlValue
                         id={resource.id}
@@ -193,17 +186,13 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
 
             {/* integrations */}
             {step.integrationIds && step.integrationIds.length > 0 && (
-              <div className="mt-3">
-                <span className="text-caption font-semibold text-fg-muted">
-                  Integrations
-                </span>
+              <div>
+                <span className="text-caption text-fg-muted">Integrations</span>
                 <div className="mt-1 flex flex-wrap gap-2">
                   {step.integrationIds.map((integration) => (
-                    <Chip
+                    <Label
                       key={integration.id}
                       label={<Entity entity={integration} />}
-                      size="small"
-                      variant="outlined"
                     />
                   ))}
                 </div>
@@ -227,7 +216,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                 setExpandedVars((prev) => (prev === step.id ? null : step.id))
               }
             >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <AccordionSummary expandIcon={<HeroChevronDownIcon />}>
                 <span className="text-caption font-semibold">
                   Resolved Variables (
                   {Object.keys(step.resolvedVariables || {}).length})

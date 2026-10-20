@@ -13,7 +13,7 @@ import {
   IconButton,
   Tooltip,
 } from "@/index";
-import { MenuIcon, MenuOpenIcon } from "@/index";
+import { HeroBars3Icon, HeroBars3BottomLeftIcon } from "@/index";
 
 export interface DashboardHeaderProps {
   logo?: React.ReactNode;
@@ -55,12 +55,12 @@ export default function DashboardHeader({
         >
           <div>
             <IconButton
-              className="border-0 bg-transparent hover:bg-transparent"
+              className="border-0 bg-transparent hover:bg-transparent [&_svg]:size-4.5"
               size="small"
               aria-label={`${isExpanded ? collapseMenuActionText : expandMenuActionText} navigation menu`}
               onClick={handleMenuOpen}
             >
-              {isExpanded ? <MenuOpenIcon /> : <MenuIcon />}
+              {isExpanded ? <HeroBars3BottomLeftIcon /> : <HeroBars3Icon />}
             </IconButton>
           </div>
         </Tooltip>
@@ -98,8 +98,9 @@ export default function DashboardHeader({
               {serverInfo ? (
                 <Label
                   component="button"
+                  size="small"
                   onClick={handleServerInfoOpen}
-                  className="ml-4 hidden self-end hover:bg-selected focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary sm:inline-flex dark:hover:bg-selected"
+                  className="ml-4 hidden self-end hover:bg-selected focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary sm:inline-flex"
                   label={
                     <span className="font-mono">{`v${String(
                       serverInfo.version,

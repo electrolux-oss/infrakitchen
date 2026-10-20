@@ -6,9 +6,9 @@ import { SidebarDetailsSection } from "../../common/components/cards/SidebarDeta
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableNameField } from "../../common/components/editors/EditableNameField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
+import { StatusLabel } from "../../common/components/labels";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
-import StatusChip from "../../common/StatusChip";
 import {
   GqlWorkspace,
   UPDATE_WORKSPACE_MUTATION,
@@ -20,7 +20,7 @@ export interface WorkspaceSidebarProps {
 }
 
 /**
- * GitHub-style right sidebar for the workspace detail page: groups the
+ * Right context sidebar for the workspace detail page: groups the
  * workspace's description, status and history so the main column can focus on
  * its configuration and the entities that use it.
  */
@@ -56,7 +56,7 @@ export const WorkspaceSidebar = ({ workspace }: WorkspaceSidebarProps) => {
 
       <SidebarSection title="Status">
         <div className="col-span-full">
-          <StatusChip status={workspace.status} />
+          <StatusLabel status={workspace.status} />
         </div>
       </SidebarSection>
 

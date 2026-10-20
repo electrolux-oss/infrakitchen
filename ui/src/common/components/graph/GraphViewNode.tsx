@@ -1,10 +1,10 @@
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 
 import { useConfig } from "../..";
-import { LaunchIcon } from "../../../icons/material";
+import { HeroArrowTopRightOnSquareIcon } from "../../../icons";
 import { Link, useColorScheme } from "../../../ui";
-import StatusChip from "../../StatusChip";
 import { Entity } from "../entities/Entity";
+import { StatusLabel } from "../labels";
 import { TreeResponse } from "../tree/types";
 
 export interface GraphNodeData extends Record<string, unknown> {
@@ -76,7 +76,7 @@ export function GraphViewNode({ data }: NodeProps<GraphNode>) {
         />
       </div>
       <div className="mt-0.5 ml-auto flex shrink-0 items-center gap-2">
-        <StatusChip
+        <StatusLabel
           status={status}
           state={state}
           compact
@@ -88,7 +88,7 @@ export function GraphViewNode({ data }: NodeProps<GraphNode>) {
           className="nodrag inline-flex"
           aria-label={`Open ${item.name} ${entity_name} in new tab`}
         >
-          <LaunchIcon className="text-[15px] text-fg-muted" />
+          <HeroArrowTopRightOnSquareIcon className="text-[15px] text-fg-muted" />
         </Link>
       </div>
       <Handle

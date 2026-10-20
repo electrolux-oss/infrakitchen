@@ -8,9 +8,9 @@ import { SidebarDetailsSection } from "../../common/components/cards/SidebarDeta
 import { CommonField } from "../../common/components/fields/CommonField";
 import { Duration } from "../../common/components/fields/Duration";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { Label } from "../../common/components/labels";
+import { StatusLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context/ConfigContext";
-import StatusChip from "../../common/StatusChip";
-import { Chip } from "../../ui";
 import { GqlWorkflow } from "../graphql";
 
 export interface WorkflowSidebarProps {
@@ -18,7 +18,7 @@ export interface WorkflowSidebarProps {
 }
 
 /**
- * GitHub-style right sidebar for the workflow detail page: groups the
+ * Right context sidebar for the workflow detail page: groups the
  * workflow's status, timing, templates and history so the main column can
  * focus on its steps, variables and logs.
  */
@@ -39,22 +39,15 @@ export const WorkflowSidebar = ({ workflow }: WorkflowSidebarProps) => {
       <SidebarSection title="Status">
         <div className="col-span-full">
           <div className="flex items-center gap-2">
-            <StatusChip status={workflow.status} />
-            <Chip label={workflow.action.toUpperCase()} variant="outlined" />
+            <StatusLabel status={workflow.status} />
+            <Label label={workflow.action.toUpperCase()} />
           </div>
         </div>
         {workflow.errorMessage && (
           <CommonField
             name="Error"
             value={
-              <Chip
-                className="h-auto whitespace-normal"
-                labelClassName="py-1"
-                label={workflow.errorMessage}
-                color="error"
-                size="small"
-                variant="outlined"
-              />
+              <Label size="small" tone="error" label={workflow.errorMessage} />
             }
             span="full"
           />
@@ -97,10 +90,9 @@ export const WorkflowSidebar = ({ workflow }: WorkflowSidebarProps) => {
           <div className="col-span-full">
             <div className="flex flex-wrap gap-2">
               {templates.map((t) => (
-                <Chip
+                <Label
                   key={t.id}
                   label={t.name}
-                  variant="outlined"
                   onClick={() => navigate(`${linkPrefix}templates/${t.id}`)}
                 />
               ))}

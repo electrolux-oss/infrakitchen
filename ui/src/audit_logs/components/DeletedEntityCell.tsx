@@ -1,5 +1,5 @@
 import { humanizeEntityType } from "../../common/components/entities/Entity";
-import { Label } from "../../common/components/labels/Label";
+import { Label } from "../../ui/Label";
 import type { UnresolvedEntityReason } from "../utils/auditLogEntity";
 
 const RESOLUTION_LABELS: Record<UnresolvedEntityReason, string> = {
@@ -47,7 +47,7 @@ export const DeletedEntityCell = ({
         <span className="font-mono text-caption break-all text-fg-muted">
           {entityId}
         </span>
-        <Label label={humanizeEntityType(entityType)} />
+        <Label size="small" label={humanizeEntityType(entityType)} />
       </div>
     )}
   </div>

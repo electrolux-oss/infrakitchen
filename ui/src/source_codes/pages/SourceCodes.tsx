@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { PermissionWrapper, useConfig } from "../../common";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
-import { InputIcon } from "../../icons/material";
+import { HeroArrowDownCircleIcon } from "../../icons";
 import { Button } from "../../ui";
 import {
   sourceCodeColumns,
@@ -22,7 +22,7 @@ export const SourceCodesPage = () => {
     >
       <Button
         onClick={() => navigate(`${linkPrefix}source_codes/create`)}
-        startIcon={<InputIcon />}
+        startIcon={<HeroArrowDownCircleIcon />}
       >
         Import
       </Button>

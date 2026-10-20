@@ -4,36 +4,37 @@ import { FormProvider, useForm } from "react-hook-form";
 
 import { buildAuditLogsQuery, GqlAuditLog } from "../../audit_logs/graphql";
 import { useConfig } from "../../common";
+import { deleteIconButtonClass } from "../../common/components/buttons/deleteIconButtonClass";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { Entity } from "../../common/components/entities/Entity";
 import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { Label, type LabelTone } from "../../common/components/labels";
+import { StatusLabel } from "../../common/components/labels";
 import { useLocalStorage } from "../../common/context/UIStateContext";
 import { buildGraphqlFields } from "../../common/graphql/buildGraphqlFields";
 import { buildEntityActionMutation } from "../../common/graphql/entityActionMutation";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { LogActionButtons } from "../../common/LogsComponent/LogActionButtons";
 import { Logs } from "../../common/LogsComponent/Logs";
-import StatusChip from "../../common/StatusChip";
 import { EXECUTOR_FIELD_MAP } from "../../executors/graphql";
-import {
-  AddIcon,
-  DeleteIcon,
-  EditIcon,
-  RefreshIcon,
-} from "../../icons/material";
+import { HeroPlusCircleIcon } from "../../icons";
+import { HeroTrashIcon } from "../../icons";
+import { HeroArrowPathIcon } from "../../icons";
+import { HeroPencilSquareIcon } from "../../icons";
 import { RESOURCE_FIELD_MAP } from "../../resources/graphql";
 import { hasPendingChanges } from "../../resources/utils/pendingChanges";
 import {
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   ListItemText,
   List,
   ListItem,
+  Tooltip,
 } from "../../ui";
 import {
   DataTable,
@@ -397,10 +398,12 @@ export const BatchOperationEntities = ({
       {
         field: "state",
         headerName: "State",
-        flex: 1,
+        // Wider than the Name column: the state reads like
+        // "PROVISIONED [DONE]" plus a "Needs review" pill.
+        flex: 1.5,
         valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
         renderCell: (params: RenderCellParams) => (
-          <StatusChip
+          <StatusLabel
             status={String(params.row.status).toLowerCase()}
             state={String(params.row.state).toLowerCase()}
             needsReview={hasPendingChanges(params.row)}
@@ -439,17 +442,19 @@ export const BatchOperationEntities = ({
       {
         field: "actions",
         headerName: "Actions",
-        width: 140,
+        width: 90,
         sortable: false,
         filterable: false,
         renderCell: (params: RenderCellParams) => (
-          <Button
-            color="error"
-            startIcon={<DeleteIcon />}
-            onClick={() => handleRemoveEntity(params.row.id)}
-          >
-            Delete
-          </Button>
+          <Tooltip title="Remove from batch">
+            <IconButton
+              size="small"
+              onClick={() => handleRemoveEntity(params.row.id)}
+              className={deleteIconButtonClass}
+            >
+              <HeroTrashIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         ),
       },
     ];
@@ -515,7 +520,7 @@ export const BatchOperationEntities = ({
       actions={
         <>
           <Button
-            startIcon={<AddIcon />}
+            startIcon={<HeroPlusCircleIcon />}
             onClick={handleOpenAddDialog}
             variant="outlined"
             size="small"
@@ -524,7 +529,7 @@ export const BatchOperationEntities = ({
           </Button>
           {batchOperation?.entityType === "resource" && (
             <Button
-              startIcon={<EditIcon />}
+              startIcon={<HeroPencilSquareIcon />}
               onClick={() => setVariablesDialogOpen(true)}
               variant="outlined"
               size="small"
@@ -535,7 +540,7 @@ export const BatchOperationEntities = ({
           )}
           {batchOperation?.entityType === "resource" && (
             <Button
-              startIcon={<EditIcon />}
+              startIcon={<HeroPencilSquareIcon />}
               onClick={() => setVersionDialogOpen(true)}
               variant="outlined"
               size="small"
@@ -569,7 +574,7 @@ export const BatchOperationEntities = ({
             Execute
           </Button>
           <Button
-            startIcon={<RefreshIcon />}
+            startIcon={<HeroArrowPathIcon />}
             onClick={handleRefresh}
             variant="outlined"
             size="small"
@@ -686,7 +691,7 @@ export const BatchOperationEntities = ({
                 const result = actionResults[key];
                 const entity = entities.find((item) => String(item.id) === key);
                 const status = result ? result.status : "pending";
-                const statusColor =
+                const statusTone: LabelTone =
                   status === "success"
                     ? "success"
                     : status === "error"
@@ -700,11 +705,7 @@ export const BatchOperationEntities = ({
                       secondary={result?.message}
                     />
                     <div className="flex flex-row items-center gap-2">
-                      <Chip
-                        label={status}
-                        color={statusColor}
-                        variant={status === "pending" ? "outlined" : "filled"}
-                      />
+                      <Label tone={statusTone} label={status} />
                     </div>
                   </ListItem>
                 );

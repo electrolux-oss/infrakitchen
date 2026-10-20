@@ -4,9 +4,10 @@ import {
   relativeTimeColumn,
   userColumn,
 } from "../../common/components/entity_table/tableColumns";
-import StatusChip from "../../common/StatusChip";
-import { DeleteIcon } from "../../icons/material";
-import { Button, Chip } from "../../ui";
+import { Label } from "../../common/components/labels";
+import { StatusLabel } from "../../common/components/labels";
+import { HeroTrashIcon } from "../../icons";
+import { Button } from "../../ui";
 import { RenderCellParams } from "../../ui";
 import {
   Tool,
@@ -98,10 +99,8 @@ export const toolColumns = (actions: ToolRowActions): EntityTableColumn[] => [
     },
     renderCell: (params: RenderCellParams) => (
       <div className="flex h-full flex-row items-center gap-1">
-        <StatusChip status={toolStatus(params.row as Tool)} />
-        {params.row.isDefault && (
-          <Chip size="small" label="default" color="primary" />
-        )}
+        <StatusLabel status={toolStatus(params.row as Tool)} />
+        {params.row.isDefault && <Label tone="primary" label="default" />}
       </div>
     ),
   },
@@ -178,7 +177,7 @@ export const toolColumns = (actions: ToolRowActions): EntityTableColumn[] => [
             <Button
               size="small"
               color="error"
-              startIcon={<DeleteIcon />}
+              startIcon={<HeroTrashIcon />}
               onClick={() => actions.onDelete(tool)}
             >
               Delete

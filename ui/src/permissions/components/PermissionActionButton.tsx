@@ -3,12 +3,9 @@ import { useState } from "react";
 import { useConfig } from "../../common";
 import { deleteIconButtonClass } from "../../common/components/buttons/deleteIconButtonClass";
 import { notifyError } from "../../common/hooks/useNotification";
-import {
-  CheckIcon,
-  CloseIcon,
-  DeleteForeverIcon,
-  DeleteOutlinedIcon,
-} from "../../icons/material";
+import { HeroCheckIcon } from "../../icons";
+import { HeroTrashIcon } from "../../icons";
+import { HeroXMarkIcon } from "../../icons";
 import {
   Spinner,
   Button,
@@ -109,7 +106,7 @@ export const DeletePermissionButton = (
         size="small"
         className={deleteIconButtonClass}
       >
-        <DeleteOutlinedIcon fontSize="small" />
+        <HeroTrashIcon fontSize="small" />
       </IconButton>
 
       <Dialog
@@ -138,7 +135,7 @@ export const DeletePermissionButton = (
               className="font-bold normal-case"
               color="inherit"
               onClick={handleCloseDialog}
-              startIcon={<CloseIcon />}
+              startIcon={<HeroXMarkIcon />}
               disabled={isLoading}
             >
               Cancel
@@ -152,7 +149,7 @@ export const DeletePermissionButton = (
                 isLoading ? (
                   <Spinner size={20} color="inherit" />
                 ) : (
-                  <CheckIcon />
+                  <HeroCheckIcon />
                 )
               }
               disabled={isLoading}
@@ -169,7 +166,7 @@ export const DeletePermissionButton = (
                   isLoading ? (
                     <Spinner size={20} color="inherit" />
                   ) : (
-                    <DeleteForeverIcon />
+                    <HeroTrashIcon />
                   )
                 }
                 disabled={isLoading}

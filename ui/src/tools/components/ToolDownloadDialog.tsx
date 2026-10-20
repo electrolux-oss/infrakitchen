@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import { useConfig } from "../../common";
 import { CommonDialog } from "../../common/components/dialogs";
 import { notifyError } from "../../common/hooks/useNotification";
+import { HeroArrowDownTrayIcon } from "../../icons";
 import { ProviderIcon } from "../../icons/Icons";
-import { DownloadIcon } from "../../icons/material";
 import {
   Checkbox,
   FormControlLabel,
@@ -185,7 +185,7 @@ export const ToolDownloadDialog = ({
       actions={
         <Button
           variant="contained"
-          startIcon={<DownloadIcon />}
+          startIcon={<HeroArrowDownTrayIcon />}
           onClick={handleDownload}
           disabled={!version || downloading}
         >

@@ -1,10 +1,12 @@
-import { WarningAmberIcon } from "../icons/material";
-import { Chip, Tooltip, type ChipColor } from "../ui";
+import { HeroExclamationTriangleIcon } from "../icons";
+import { Tooltip } from "../ui";
 import { cn } from "../utils/cn";
 import { VERSION_LIFECYCLE_STATE } from "../utils/constants";
 
+import { Label, type LabelTone } from "./components/labels";
+
 const VERSION_LIFECYCLE_STATE_COLORS: Partial<
-  Record<VERSION_LIFECYCLE_STATE, ChipColor>
+  Record<VERSION_LIFECYCLE_STATE, LabelTone>
 > = {
   [VERSION_LIFECYCLE_STATE.ACTIVE]: "success",
   [VERSION_LIFECYCLE_STATE.PREVIEW]: "info",
@@ -12,7 +14,7 @@ const VERSION_LIFECYCLE_STATE_COLORS: Partial<
   [VERSION_LIFECYCLE_STATE.ARCHIVED]: "error",
 };
 
-const DOT_COLORS: Record<ChipColor, string> = {
+const DOT_COLORS: Record<LabelTone, string> = {
   default: "bg-grey-400",
   primary: "bg-primary",
   secondary: "bg-secondary",
@@ -24,7 +26,7 @@ const DOT_COLORS: Record<ChipColor, string> = {
 
 export const getVersionLifecycleStateColor = (
   lifecycleStateValue: string | undefined,
-): ChipColor => {
+): LabelTone => {
   const lifecycleState = lifecycleStateValue?.toLocaleLowerCase() as
     VERSION_LIFECYCLE_STATE | undefined;
 
@@ -35,7 +37,6 @@ export const getVersionLifecycleStateColor = (
 
 interface VersionLifecycleStateChipProps {
   lifecycleState: VERSION_LIFECYCLE_STATE | string;
-  className?: string;
   breakingChanges?: string;
   /**
    * `chip` is the full labelled pill; `dot` is a small colored dot with the
@@ -51,7 +52,6 @@ interface VersionLifecycleStateChipProps {
 
 const VersionLifecycleStateChip = ({
   lifecycleState,
-  className,
   breakingChanges,
   variant = "chip",
   hideBreakingChangesWarning = false,
@@ -74,16 +74,12 @@ const VersionLifecycleStateChip = ({
         >
           <span
             aria-label={normalizedState}
-            className={cn(
-              "size-2.5 shrink-0 rounded-full",
-              DOT_COLORS[color],
-              className,
-            )}
+            className={cn("size-2.5 shrink-0 rounded-full", DOT_COLORS[color])}
           />
         </Tooltip>
         {hasBreakingChanges ? (
           <Tooltip title={breakingChanges}>
-            <WarningAmberIcon color="warning" fontSize="small" />
+            <HeroExclamationTriangleIcon color="warning" fontSize="small" />
           </Tooltip>
         ) : null}
       </div>
@@ -92,15 +88,10 @@ const VersionLifecycleStateChip = ({
 
   return (
     <div className="inline-flex items-center gap-1.5">
-      <Chip
-        label={normalizedState}
-        appearance="solid"
-        color={color}
-        className={cn("font-medium uppercase", className)}
-      />
+      <Label tone={color} case="uppercase" label={normalizedState} />
       {hasBreakingChanges ? (
         <Tooltip title={breakingChanges}>
-          <WarningAmberIcon color="warning" fontSize="small" />
+          <HeroExclamationTriangleIcon color="warning" fontSize="small" />
         </Tooltip>
       ) : null}
     </div>

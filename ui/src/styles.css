@@ -155,7 +155,7 @@
 }
 
 /* Semantic tint ramps (green, accent as blue, orange, red, purple) for soft
-   status surfaces such as Alert and Chip. */
+   status surfaces such as Alert and Label. */
 @theme {
   --color-tint-green-50: hsl(120, 80%, 98%);
   --color-tint-green-100: hsl(120, 75%, 94%);
@@ -374,6 +374,13 @@
   code {
     font-family: var(--font-mono);
   }
+
+  /* Shared table header style; table components must not override it. */
+  th {
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: var(--ik-fg-muted);
+  }
 }
 
 /* daisyUI theme variables; the palette entries follow the --ik-* scheme. */
@@ -414,6 +421,16 @@
     --color-base-300: var(--ik-grey-800);
     --color-neutral: var(--ik-grey-200);
     --color-neutral-content: var(--ik-grey-900);
+  }
+}
+
+/* CodeMirror hardcodes a plain `monospace` stack on its scroller through
+   unlayered runtime styles, which beat anything inside a cascade layer unless
+   the rule is !important. Point it back at the theme's mono stack so every
+   editor (including diff/merge views) shows the bundled Geist Mono. */
+@layer base {
+  .cm-editor .cm-scroller {
+    font-family: var(--font-mono) !important;
   }
 }
 

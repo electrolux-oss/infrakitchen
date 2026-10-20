@@ -39,7 +39,7 @@ export const IntegrationConfiguration = ({
         name={"Integration Provider"}
         value={
           <div className="h-auto">
-            {getProviderValue(integration.integrationProvider)}
+            {getProviderValue(integration.integrationProvider, 18)}
           </div>
         }
       />

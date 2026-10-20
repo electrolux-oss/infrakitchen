@@ -2,21 +2,21 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import { Icon } from "@iconify/react";
-import octiconCloud24Data from "@iconify-icons/octicon/cloud-24";
-import octiconGitBranch24Data from "@iconify-icons/octicon/git-branch-24";
-import octiconReportData from "@iconify-icons/octicon/report";
-
 import { FilterProvider, PermissionWrapper } from "../../common";
 import { EntityCard } from "../../common/components/cards/EntityCard";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
+import { StatusLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import StatusChip from "../../common/StatusChip";
 import { ENTITY_CARD_GRID_CLASSES } from "../../common/utils/entityCardGrid";
+import {
+  HeroBellIcon,
+  HeroCloudIcon,
+  HeroCodeBracketSquareIcon,
+} from "../../icons";
 import {
   Alert,
   Spinner,
@@ -118,7 +118,7 @@ const IntegrationsPage = () => {
     <>
       <div>
         <p className="m-0 block text-body2 text-fg-muted">Status</p>
-        <StatusChip status={integration.status} compact />
+        <StatusLabel status={integration.status} compact />
       </div>
       <div>
         <p className="m-0 block text-body2 text-fg-muted">Last Updated</p>{" "}
@@ -139,7 +139,7 @@ const IntegrationsPage = () => {
     >
       <div className="flex gap-2">
         <Button
-          startIcon={<Icon icon={octiconGitBranch24Data} ssr />}
+          startIcon={<HeroCodeBracketSquareIcon />}
           onClick={(e) => {
             setSubmenuAnchor(e.currentTarget);
             setActiveCategory(String(IntegrationType.GIT));
@@ -148,7 +148,7 @@ const IntegrationsPage = () => {
           Connect Git
         </Button>
         <Button
-          startIcon={<Icon icon={octiconCloud24Data} ssr />}
+          startIcon={<HeroCloudIcon />}
           onClick={(e) => {
             setSubmenuAnchor(e.currentTarget);
             setActiveCategory(String(IntegrationType.CLOUD));
@@ -157,7 +157,7 @@ const IntegrationsPage = () => {
           Connect Cloud
         </Button>
         <Button
-          startIcon={<Icon icon={octiconReportData} ssr />}
+          startIcon={<HeroBellIcon />}
           onClick={(e) => {
             setSubmenuAnchor(e.currentTarget);
             setActiveCategory(String(IntegrationType.NOTIFICATION));
@@ -170,6 +170,8 @@ const IntegrationsPage = () => {
         anchorEl={submenuAnchor}
         open={Boolean(submenuAnchor)}
         onClose={closeAllMenus}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
       >
         {providerGroups
           .find((c) => String(c.value) === activeCategory)
@@ -184,7 +186,7 @@ const IntegrationsPage = () => {
                 }}
               >
                 {provider && (
-                  <ListItemIcon>
+                  <ListItemIcon className="text-fg">
                     <provider.icon width="20" height="20" />
                   </ListItemIcon>
                 )}

@@ -5,7 +5,7 @@ import { PlaceholderText } from "../../common/components/fields/PlaceholderDescr
 import { useConfig } from "../../common/context";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { EditOutlinedIcon } from "../../icons/material";
+import { HeroPencilSquareIcon } from "../../icons";
 import { GqlSourceCode, SOURCE_CODE_QUERY } from "../../source_codes/graphql";
 import { RefFolders } from "../../source_codes/types";
 import {
@@ -193,7 +193,7 @@ export const SourceCodeConfigEditor = ({
                 onClick={openDialog}
                 aria-label="Edit source code configuration"
               >
-                <EditOutlinedIcon fontSize="small" />
+                <HeroPencilSquareIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           ) : null}

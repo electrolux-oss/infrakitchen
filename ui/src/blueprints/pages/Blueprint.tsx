@@ -4,7 +4,7 @@ import { EntityRefreshButton } from "../../common/components/buttons/EntityRefre
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { useConfig } from "../../common/context/ConfigContext";
 import { EntityProvider } from "../../common/context/EntityContext";
-import { PlayArrowIcon } from "../../icons/material";
+import { HeroPlayCircleIcon, HeroRectangleGroupIcon } from "../../icons";
 import { Button } from "../../ui";
 import { BlueprintContent } from "../components/BlueprintContent";
 import { BLUEPRINT_FIELDS } from "../graphql";
@@ -21,12 +21,12 @@ export const BlueprintPage = () => {
       entityFields={BLUEPRINT_FIELDS}
     >
       <EntityContainer
+        titleIcon={<HeroRectangleGroupIcon />}
         actions={
           <>
             <Button
               size="small"
-              variant="contained"
-              startIcon={<PlayArrowIcon />}
+              startIcon={<HeroPlayCircleIcon />}
               onClick={() =>
                 navigate(`${linkPrefix}blueprints/${blueprint_id}/use`)
               }

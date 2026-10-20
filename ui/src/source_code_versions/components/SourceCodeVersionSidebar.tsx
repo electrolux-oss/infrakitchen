@@ -14,15 +14,11 @@ import {
   CommonField,
   GetReferenceUrlValue,
 } from "../../common/components/fields/CommonField";
+import { StatusLabel } from "../../common/components/labels";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
-import StatusChip from "../../common/StatusChip";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
-import {
-  CallSplitOutlinedIcon,
-  FolderOutlinedIcon,
-  LocalOfferOutlinedIcon,
-} from "../../icons/material";
+import { HeroFolderIcon, HeroShareIcon, HeroTagIcon } from "../../icons";
 import { MenuItem, TextField } from "../../ui";
 import { VERSION_LIFECYCLE_STATE } from "../../utils/constants";
 import { GqlSourceCodeVersion } from "../graphql";
@@ -45,7 +41,7 @@ const codeValue = (icon: ReactNode, value?: string | null) =>
   ) : null;
 
 /**
- * GitHub-style right sidebar for the template version detail page: groups the
+ * Right context sidebar for the template version detail page: groups the
  * version's description, lifecycle, template, code source and history so the
  * main column can focus on inputs, outputs and code.
  */
@@ -80,7 +76,7 @@ export const SourceCodeVersionSidebar = ({
 
       <SidebarSection title="Status">
         <div className="col-span-full">
-          <StatusChip status={source_code_version.status} />
+          <StatusLabel status={source_code_version.status} />
         </div>
         <CommonEditableField<string>
           name="Lifecycle State"
@@ -172,7 +168,11 @@ export const SourceCodeVersionSidebar = ({
         <CommonField
           name="Directory"
           value={codeValue(
-            <FolderOutlinedIcon fontSize="small" color="action" />,
+            <HeroFolderIcon
+              fontSize="small"
+              color="action"
+              className="text-base"
+            />,
             source_code_version.sourceCodeFolder,
           )}
           span="full"
@@ -180,7 +180,11 @@ export const SourceCodeVersionSidebar = ({
         <CommonField
           name="Branch"
           value={codeValue(
-            <CallSplitOutlinedIcon fontSize="small" color="action" />,
+            <HeroShareIcon
+              fontSize="small"
+              color="action"
+              className="text-base"
+            />,
             source_code_version.sourceCodeBranch,
           )}
           span="half"
@@ -188,7 +192,11 @@ export const SourceCodeVersionSidebar = ({
         <CommonField
           name="Tag"
           value={codeValue(
-            <LocalOfferOutlinedIcon fontSize="small" color="action" />,
+            <HeroTagIcon
+              fontSize="small"
+              color="action"
+              className="text-base"
+            />,
             source_code_version.sourceCodeVersion,
           )}
           span="half"

@@ -1,6 +1,6 @@
 import PageContainer from "../../common/PageContainer";
 import { GoldenStateWidget } from "../../golden_state/GoldenStateWidget";
-import { RefreshIcon } from "../../icons/material";
+import { HeroArrowPathIcon } from "../../icons";
 import { Spinner, IconButton, Tooltip } from "../../ui";
 import { GettingStartedContent } from "../components/GettingStarted";
 import { MyFavoritesWidget } from "../components/MyFavoritesWidget";
@@ -52,7 +52,7 @@ export const DashboardPage = () => {
             {refreshing ? (
               <Spinner size={16} />
             ) : (
-              <RefreshIcon fontSize="small" />
+              <HeroArrowPathIcon fontSize="small" />
             )}
           </IconButton>
         </Tooltip>

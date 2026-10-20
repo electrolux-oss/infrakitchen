@@ -1,6 +1,6 @@
 import { useEntityProvider } from "../../../common";
 import PageContainer from "../../../common/PageContainer";
-import { RefreshIcon } from "../../../icons/material";
+import { HeroArrowPathIcon } from "../../../icons";
 import { Alert, IconButton } from "../../../ui";
 
 import { KubernetesRelations } from "./kubernetes/KubernetesRelations";
@@ -25,7 +25,7 @@ export const RelationsComponent = () => {
             onClick={() => handleRefresh()}
             aria-label="refresh"
           >
-            <RefreshIcon />
+            <HeroArrowPathIcon />
           </IconButton>
         </>
       }

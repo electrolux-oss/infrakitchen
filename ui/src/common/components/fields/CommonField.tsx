@@ -75,8 +75,7 @@ export const GetReferenceUrlValue: FC<GetReferenceUrlValueProps> = ({
 
 export const getProviderValue = (provider: string, iconSize: number = 24) => {
   return (
-    // Force both Iconify and Material icon SVGs to the requested size —
-    // Material icons are sized in CSS (1em) and ignore width/height.
+    // Keep brand and fallback SVGs at the same requested size.
     <div
       className="flex items-center justify-start gap-2 [&_svg]:size-[var(--icon-size)]"
       style={{ "--icon-size": `${iconSize}px` } as React.CSSProperties}
@@ -141,7 +140,9 @@ export const CommonField = ({
     typeof value === "string" || typeof value === "number";
 
   return (
-    <div className={cn("min-w-0", span === "full" && "col-span-full")}>
+    <div
+      className={cn("group/field min-w-0", span === "full" && "col-span-full")}
+    >
       <div
         // Muted label style shared with the datagrid headers: medium weight,
         // small size, secondary color — the value is the visual anchor.
