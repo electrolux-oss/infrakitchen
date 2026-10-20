@@ -34,7 +34,8 @@ export interface WiringCanvasProps {
   onExternalTemplateRemove: (templateId: string) => void;
   missingParentTemplates: WiringCanvasExternalTemplate[];
   constants: WiringCanvasConstantBlock[];
-  onConstantAdd: (type: ConstantType) => void;
+  /** `id` is set when the canvas needs it up front, e.g. to place a dropped constant. */
+  onConstantAdd: (type: ConstantType, id?: string) => void;
   onConstantRemove: (constantId: string) => void;
   onConstantUpdate: (constantId: string, name: string) => void;
   onConstantDefaultValueUpdate: (

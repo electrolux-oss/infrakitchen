@@ -156,6 +156,7 @@ class ResourceCRUD:
             WITH RECURSIVE tree_view AS (
                 SELECT
                     c.id,
+                    c.template_id,
                     NULL::uuid AS parent_id,
                     c.name,
                     c.status,
@@ -171,6 +172,7 @@ class ResourceCRUD:
 
                 SELECT
                     child.id,
+                    child.template_id,
                     cl.parent_id,
                     child.name,
                     child.status,
@@ -187,6 +189,7 @@ class ResourceCRUD:
 
             SELECT
                 id,
+                template_id,
                 parent_id,
                 name,
                 status,

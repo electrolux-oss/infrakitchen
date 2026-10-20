@@ -22,7 +22,7 @@ interface BlueprintFormFieldsProps {
   onExternalTemplateAdd: (template: ExternalTemplate) => void;
   onExternalTemplateRemove: (templateId: string) => void;
   constants: ConstantBlock[];
-  onConstantAdd: (type: ConstantType) => void;
+  onConstantAdd: (type: ConstantType, id?: string) => void;
   onConstantRemove: (constantId: string) => void;
   onConstantUpdate: (constantId: string, name: string) => void;
   onConstantDefaultValueUpdate: (

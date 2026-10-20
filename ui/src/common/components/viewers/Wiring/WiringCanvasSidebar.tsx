@@ -14,7 +14,6 @@ import {
 } from "../../../../templates/graphql";
 import {
   Divider,
-  Button,
   Tooltip,
   InputAdornment,
   ListItemText,
@@ -34,6 +33,7 @@ import {
 
 export const DRAG_TYPE = "application/ik-template";
 export const DRAG_TYPE_EXTERNAL = "application/ik-external-template";
+export const DRAG_TYPE_CONSTANT = "application/ik-constant";
 
 /**
  * Compact styling for the draggable palette entries.
@@ -41,13 +41,18 @@ export const DRAG_TYPE_EXTERNAL = "application/ik-external-template";
 const PALETTE_ITEM_CLASS =
   "mb-1 min-h-0 shrink-0 cursor-grab gap-1 rounded-surface border border-dashed border-divider bg-hover px-2 py-0.5 hover:bg-selected active:cursor-grabbing";
 
+const CONSTANT_ITEMS = [
+  { type: "string", label: "String", Icon: HeroLanguageIcon },
+  { type: "number", label: "Number", Icon: HeroHashtagIcon },
+] as const;
+
 interface WiringCanvasSidebarProps {
   selectedIds: Set<string>;
   onAdd: (template: GenericTemplate) => void;
   missingParentTemplates: WiringCanvasExternalTemplate[];
   externalTemplateIds: Set<string>;
   onExternalTemplateAdd: (template: WiringCanvasExternalTemplate) => void;
-  onConstantAdd: (type: ConstantType) => void;
+  onConstantAdd: (type: ConstantType, id?: string) => void;
 }
 
 export function WiringCanvasSidebar({
@@ -115,6 +120,11 @@ export function WiringCanvasSidebar({
         abstract: template.abstract,
       }),
     );
+    e.dataTransfer.effectAllowed = "copy";
+  };
+
+  const handleConstantDragStart = (e: React.DragEvent, type: ConstantType) => {
+    e.dataTransfer.setData(DRAG_TYPE_CONSTANT, type);
     e.dataTransfer.effectAllowed = "copy";
   };
 
@@ -227,25 +237,26 @@ export function WiringCanvasSidebar({
           Constants
         </span>
         <span className="text-caption text-fg-muted">
-          Fixed values wired to inputs.
+          Fixed values wired to inputs. Click or drag to the canvas.
         </span>
         <div className="mt-2 flex gap-1">
-          <Button
-            className="flex-1"
-            color="secondary"
-            startIcon={<HeroLanguageIcon />}
-            onClick={() => onConstantAdd("string")}
-          >
-            String
-          </Button>
-          <Button
-            className="flex-1"
-            color="secondary"
-            startIcon={<HeroHashtagIcon />}
-            onClick={() => onConstantAdd("number")}
-          >
-            Number
-          </Button>
+          {CONSTANT_ITEMS.map(({ type, label, Icon }) => (
+            // A div, not a <button>: Firefox does not start drags from buttons
+            <ListItemButton
+              key={type}
+              draggable
+              onDragStart={(e) => handleConstantDragStart(e, type)}
+              onClick={() => onConstantAdd(type)}
+              aria-label={`Add ${label.toLowerCase()} constant`}
+              className={cn(
+                PALETTE_ITEM_CLASS,
+                "mb-0 flex-1 justify-center border-secondary py-1 text-secondary",
+              )}
+            >
+              <Icon className="text-[16px]" />
+              <span className="text-body2">{label}</span>
+            </ListItemButton>
+          ))}
         </div>
       </div>
     </div>

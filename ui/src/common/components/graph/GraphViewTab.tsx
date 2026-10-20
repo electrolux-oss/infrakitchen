@@ -204,7 +204,6 @@ export const EntityGraphViewTab = ({
           nodesDraggable
           nodesConnectable={false}
           elementsSelectable={false}
-          proOptions={{ hideAttribution: true }}
           colorMode={mode === "dark" ? "dark" : "light"}
         >
           <Background gap={20} />

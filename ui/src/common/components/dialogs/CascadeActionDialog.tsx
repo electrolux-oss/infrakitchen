@@ -28,7 +28,7 @@ import { StatusLabel } from "../labels";
 
 import { CommonDialog } from "./CommonDialog";
 
-export type CascadeMode = "destroy" | "plan" | "apply";
+export type CascadeMode = "destroy" | "plan" | "apply" | "blueprint";
 
 const MODE_TEXT: Record<
   CascadeMode,
@@ -41,7 +41,15 @@ const MODE_TEXT: Record<
   },
   plan: { verb: "planned", button: "Cascade Plan", busy: "Creating…" },
   apply: { verb: "applied", button: "Cascade Apply", busy: "Creating…" },
+  blueprint: {
+    verb: "included",
+    button: "Create Blueprint",
+    busy: "Opening…",
+  },
 };
+
+/** Modes that ask the server which resources will run. */
+const PREVIEW_MODES: CascadeMode[] = ["plan", "apply"];
 
 interface CascadeActionDialogProps {
   mode: CascadeMode;
@@ -49,8 +57,11 @@ interface CascadeActionDialogProps {
   onClose: () => void;
   entityId: string;
   entityName: string;
-  /** Receives the resources the user deselected (always empty for destroy). */
-  onConfirm: (excludeIds: string[]) => void;
+  /**
+   * Receives the resources the user deselected (always empty for destroy) and
+   * the templates of the selected resources, parents first.
+   */
+  onConfirm: (excludeIds: string[], templateIds: string[]) => void;
   loading: boolean;
 }
 
@@ -58,6 +69,18 @@ const DESELECTED = "deselected";
 
 function flattenTree(node: GqlResourceTreeNode): GqlResourceTreeNode[] {
   return [node, ...(node.children ?? []).flatMap(flattenTree)];
+}
+
+/** Unique templates of the selected resources, in tree (parent-first) order. */
+function selectedTemplateIds(
+  tree: GqlResourceTreeNode | null,
+  excluded: Set<string>,
+): string[] {
+  if (!tree) return [];
+  const ids = flattenTree(tree)
+    .filter((node) => !excluded.has(node.id))
+    .map((node) => node.templateId);
+  return [...new Set(ids)];
 }
 
 function errorMessage(error: unknown): string {
@@ -213,7 +236,7 @@ export const CascadeActionDialog = ({
   }, [open, entityId, ikApi]);
 
   useEffect(() => {
-    if (!open || mode === "destroy") return;
+    if (!open || !PREVIEW_MODES.includes(mode)) return;
     let stale = false;
     setPreviewLoading(true);
     ikApi
@@ -262,15 +285,32 @@ export const CascadeActionDialog = ({
     skipped,
     onToggle: mode === "destroy" ? undefined : toggle,
   };
+  const templateIds = selectedTemplateIds(tree, excluded);
+  const selectedCount = tree
+    ? new Set(
+        flattenTree(tree)
+          .map((node) => node.id)
+          .filter((id) => !excluded.has(id)),
+      ).size
+    : 0;
   const count =
     mode === "destroy"
       ? (tree ? flattenTree(tree) : []).length
-      : (preview ?? []).filter((node) => node.included).length;
+      : mode === "blueprint"
+        ? templateIds.length
+        : (preview ?? []).filter((node) => node.included).length;
 
   const canConfirm =
     mode === "destroy"
       ? confirmValue === entityName
-      : !treeLoading && !previewLoading && !previewError && count > 0;
+      : mode === "blueprint"
+        ? !treeLoading && count > 0
+        : !treeLoading && !previewLoading && !previewError && count > 0;
+
+  const heading =
+    mode === "blueprint"
+      ? `${count} template${count === 1 ? "" : "s"} from ${selectedCount} resource${selectedCount === 1 ? "" : "s"} will be ${text.verb}`
+      : `${count} resource${count === 1 ? "" : "s"} will be ${text.verb}`;
 
   return (
     <CommonDialog
@@ -303,13 +343,20 @@ export const CascadeActionDialog = ({
             </Alert>
           )}
 
+          {mode === "blueprint" && (
+            <Alert severity="info" icon={<HeroInformationCircleIcon />}>
+              Creates a blueprint from the templates of{" "}
+              <strong>{entityName}</strong> and the resources that depend on it.
+              Resources sharing a template add it once. Untick resources to
+              leave their templates out.
+            </Alert>
+          )}
+
           {previewError && <Alert severity="error">{previewError}</Alert>}
 
           <div className="flex min-h-0 flex-1 flex-col">
             <h6 className="m-0 mb-1 text-subtitle2 text-grey-500">
-              {treeLoading
-                ? "Loading affected resources…"
-                : `${count} resource${count === 1 ? "" : "s"} will be ${text.verb}`}
+              {treeLoading ? "Loading affected resources…" : heading}
             </h6>
 
             {/* Capped until the user resizes the dialog (inline height), then fills it */}
@@ -343,9 +390,11 @@ export const CascadeActionDialog = ({
       actions={
         <Button
           variant="contained"
-          color={mode === "plan" ? "primary" : "error"}
+          color={mode === "plan" || mode === "blueprint" ? "primary" : "error"}
           disabled={loading || !canConfirm}
-          onClick={() => onConfirm(mode === "destroy" ? [] : excludeIds)}
+          onClick={() =>
+            onConfirm(mode === "destroy" ? [] : excludeIds, templateIds)
+          }
         >
           {loading ? text.busy : text.button}
         </Button>

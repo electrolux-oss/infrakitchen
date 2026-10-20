@@ -1073,6 +1073,7 @@ class ResourceService:
             ancestors = ancestors | {node_id}
             return ResourceTreeResponse(
                 id=raw_node["id"],
+                template_id=raw_node["template_id"],
                 node_id=uuid4(),
                 name=raw_node["name"],
                 state=raw_node["state"],

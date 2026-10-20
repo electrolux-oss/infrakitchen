@@ -460,10 +460,12 @@ Cascade actions run on a resource **and every resource that depends on it**. Ins
 | Action | Where | Order | On failure |
 |--------|-------|-------|------------|
 | Cascade Destroy | **Settings** tab → **Danger Zone** | Children first (deepest level first) | Workflow stops |
-| Cascade Plan | **Cascade** menu on the resource page | Parents first | Continues with the next levels; ends in `error` |
-| Cascade Apply | **Cascade** menu on the resource page | Parents first | Workflow stops at the failed level |
+| Cascade Plan | **More** menu on the resource page | Parents first | Continues with the next levels; ends in `error` |
+| Cascade Apply | **More** menu on the resource page | Parents first | Workflow stops at the failed level |
 
 Steps at the same level run in parallel; the next level starts when all of them have finished.
+
+The **More** menu also has **Create Blueprint**, which uses the same tree selection to open a new [blueprint](/concepts/blueprint#creating-a-blueprint-from-existing-resources) with the templates of the selected resources. It does not run anything.
 
 ### Running a Cascade Workflow
 

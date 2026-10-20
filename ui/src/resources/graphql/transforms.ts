@@ -87,6 +87,7 @@ export interface GqlResourceTempState {
 
 export interface GqlResourceTreeNode {
   id: string;
+  templateId: string;
   name: string;
   state: string;
   status: string;

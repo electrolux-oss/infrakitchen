@@ -14,6 +14,7 @@ import {
   HeroArrowsPointingInIcon,
   HeroArrowsPointingOutIcon,
   HeroInformationCircleIcon,
+  HeroSquares2X2Icon,
 } from "../../../../icons";
 import { IconButton, Tooltip, useColorScheme } from "../../../../ui";
 import { cn } from "../../../../utils/cn";
@@ -79,6 +80,7 @@ function WiringCanvasInner({
     onEdgesDelete,
     handleDragOver,
     handleDrop,
+    autoArrange,
     selectedIds,
     externalTemplateIds,
   } = useWiringCanvasGraph(
@@ -93,6 +95,7 @@ function WiringCanvasInner({
       onExternalTemplateAdd,
       onExternalTemplateRemove,
       constants,
+      onConstantAdd,
       onConstantRemove,
       onConstantUpdate,
       onConstantDefaultValueUpdate,
@@ -162,7 +165,6 @@ function WiringCanvasInner({
             stroke: accent,
             strokeWidth: 2,
           }}
-          proOptions={{ hideAttribution: true }}
           colorMode={mode === "dark" ? "dark" : "light"}
         >
           <Background gap={20} />
@@ -191,6 +193,15 @@ function WiringCanvasInner({
                 className="cursor-help text-fg-muted"
                 fontSize="small"
               />
+            </Tooltip>
+            <Tooltip title="Auto arrange" arrow>
+              <IconButton
+                size="small"
+                onClick={autoArrange}
+                aria-label="Auto arrange nodes"
+              >
+                <HeroSquares2X2Icon fontSize="small" />
+              </IconButton>
             </Tooltip>
             <Tooltip
               title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}

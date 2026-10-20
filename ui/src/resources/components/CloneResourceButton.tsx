@@ -1,11 +1,18 @@
 import { useNavigate } from "react-router";
 
-import { PermissionWrapper, useConfig } from "../../common";
+import { useConfig } from "../../common";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { Button, Tooltip } from "../../ui";
+import { HeroDocumentDuplicateIcon } from "../../icons";
+import { ListItemIcon, ListItemText, MenuItem } from "../../ui";
 import { GqlResource } from "../graphql";
 
-export const CloneResourceButton = () => {
+interface CloneResourceButtonProps {
+  /** Called before navigating, e.g. to close the parent menu */
+  onSelect?: () => void;
+}
+
+/** "Clone" item for the resource More menu: opens the create page prefilled with this resource. */
+export const CloneResourceButton = ({ onSelect }: CloneResourceButtonProps) => {
   const { entity } = useEntityProvider();
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
@@ -13,21 +20,18 @@ export const CloneResourceButton = () => {
   if (!entity) return null;
 
   return (
-    <PermissionWrapper
-      requiredPermission="api:resource"
-      permissionAction="write"
+    <MenuItem
+      onClick={() => {
+        onSelect?.();
+        navigate(`${linkPrefix}resources/create`, {
+          state: { clone: entity as GqlResource },
+        });
+      }}
     >
-      <Tooltip title="Create a new resource prefilled with these values">
-        <Button
-          onClick={() =>
-            navigate(`${linkPrefix}resources/create`, {
-              state: { clone: entity as GqlResource },
-            })
-          }
-        >
-          Clone
-        </Button>
-      </Tooltip>
-    </PermissionWrapper>
+      <ListItemIcon>
+        <HeroDocumentDuplicateIcon />
+      </ListItemIcon>
+      <ListItemText>Clone</ListItemText>
+    </MenuItem>
   );
 };

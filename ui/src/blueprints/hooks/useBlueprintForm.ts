@@ -3,9 +3,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useConfig } from "../../common";
 import { WiringRule } from "../../common/components/viewers/Wiring/types";
 import { TemplatePorts } from "../../common/components/viewers/Wiring/WiringCanvas.types";
+import { notifyError } from "../../common/hooks/useNotification";
 import { TEMPLATE_PORTS_QUERY } from "../../source_code_versions/graphql";
 import { GqlTemplate, GqlTemplateShort } from "../../templates/graphql";
 import { IkEntity } from "../../types";
+import { randomUUID } from "../../utils/uuid";
 import { ConstantBlock, ConstantType, ExternalTemplate } from "../types";
 
 export interface MissingParentInfo {
@@ -78,6 +80,22 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
     [],
   );
 
+  // Store ports and parents from a TEMPLATE_PORTS_QUERY response
+  const applyPortsResponse = useCallback((resp: BatchTemplatePortsResponse) => {
+    const newPorts: Record<string, TemplatePorts> = {};
+    const newParents: Record<string, GqlTemplateShort[]> = {};
+    for (const item of resp.templatePorts) {
+      newPorts[item.template.id] = {
+        inputs: item.configs.map((c) => c.name),
+        outputs: item.outputs.map((o) => o.name),
+        configs: item.requiredConfigs ?? [],
+      };
+      newParents[item.template.id] = item.template.parents || [];
+    }
+    setTemplatePorts((prev) => ({ ...prev, ...newPorts }));
+    setTemplateParents((prev) => ({ ...prev, ...newParents }));
+  }, []);
+
   // ── Batch fetch ports, parents, and references for multiple templates ──
   const fetchBatchPorts = useCallback(
     async (
@@ -101,23 +119,7 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
           templateIds: allIds,
         })) as BatchTemplatePortsResponse;
 
-        // Update ports
-        const newPorts: Record<string, TemplatePorts> = {};
-        for (const item of resp.templatePorts) {
-          newPorts[item.template.id] = {
-            inputs: item.configs.map((c) => c.name),
-            outputs: item.outputs.map((o) => o.name),
-            configs: item.requiredConfigs ?? [],
-          };
-        }
-        setTemplatePorts((prev) => ({ ...prev, ...newPorts }));
-
-        // Update parents
-        const newParents: Record<string, GqlTemplateShort[]> = {};
-        for (const item of resp.templatePorts) {
-          newParents[item.template.id] = item.template.parents || [];
-        }
-        setTemplateParents((prev) => ({ ...prev, ...newParents }));
+        applyPortsResponse(resp);
 
         // Auto-wire from references (unless skipAutoWire)
         if (!opts?.skipAutoWire) {
@@ -182,7 +184,7 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
         setTemplatePorts((prev) => ({ ...prev, ...emptyPorts }));
       }
     },
-    [ikApi, setValue, watch],
+    [ikApi, setValue, watch, applyPortsResponse],
   );
 
   const refreshAutoWiring = useCallback(
@@ -284,8 +286,7 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
   );
 
   const handleConstantAdd = useCallback(
-    (type: ConstantType) => {
-      const id = crypto.randomUUID();
+    (type: ConstantType, id: string = randomUUID()) => {
       const name = `constant_${constants.length + 1}`;
       setConstants((prev) => [...prev, { id, name, type }]);
     },
@@ -413,6 +414,65 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateParents]);
 
+  // Fill the form with these templates (e.g. from a resource tree selection).
+  // Parents that are not in the list are pinned as external templates, then
+  // wiring is generated from template references as when adding by hand.
+  const prefillTemplates = useCallback(
+    async (templateIds: string[]) => {
+      if (templateIds.length === 0) return;
+      let resp: BatchTemplatePortsResponse;
+      try {
+        resp = (await ikApi.graphqlRequest(TEMPLATE_PORTS_QUERY, {
+          templateIds,
+        })) as BatchTemplatePortsResponse;
+      } catch (error) {
+        notifyError(error);
+        return;
+      }
+      applyPortsResponse(resp);
+
+      const byId = new Map(
+        resp.templatePorts.map((item) => [item.template.id, item.template]),
+      );
+      const selected: GqlTemplateShort[] = templateIds.flatMap((id) => {
+        const template = byId.get(id);
+        return template
+          ? [
+              {
+                id: template.id,
+                name: template.name,
+                abstract: template.abstract,
+                cloudResourceTypes: null,
+                entityName: "template",
+              },
+            ]
+          : [];
+      });
+      const selectedIds = new Set(selected.map((t) => t.id));
+      const externals = new Map<string, ExternalTemplate>();
+      for (const id of selectedIds) {
+        for (const parent of byId.get(id)?.parents ?? []) {
+          if (!selectedIds.has(parent.id) && !externals.has(parent.id)) {
+            externals.set(parent.id, {
+              id: parent.id,
+              name: parent.name,
+              abstract: parent.abstract,
+            });
+          }
+        }
+      }
+
+      setSelectedTemplates(selected);
+      setValue(
+        "templateIds",
+        selected.map((t) => t.id),
+      );
+      setExternalTemplates([...externals.values()]);
+      refreshAutoWiring(selected, [...externals.values()]);
+    },
+    [ikApi, applyPortsResponse, setValue, refreshAutoWiring],
+  );
+
   // Add a single template (from canvas sidebar / drop)
   const handleTemplateAdd = useCallback(
     (template: GqlTemplateShort) => {
@@ -465,6 +525,7 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
     missingParents,
     missingParentTemplates,
     fetchBatchPorts,
+    prefillTemplates,
     handleTemplateAdd,
     handleTemplateIdsChange,
     handleTemplateRemove,

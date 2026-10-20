@@ -23,11 +23,17 @@ export type WiringCanvasState = {
   nodes: DiagramNode[];
   edges: Edge[];
   dropPositions: Record<string, { x: number; y: number }>;
+  /**
+   * Lay nodes out by dependency on every change. Turned off once the user
+   * places nodes or edits wiring by hand, so nothing moves under them.
+   */
+  autoLayout: boolean;
   onNodesChange: OnNodesChange<DiagramNode>;
   onEdgesChange: OnEdgesChange;
   setNodes: (nodes: DiagramNode[]) => void;
   setEdges: (edges: Edge[]) => void;
   setDropPosition: (id: string, pos: { x: number; y: number }) => void;
+  setAutoLayout: (autoLayout: boolean) => void;
 };
 
 // Factory: one store per WiringCanvas instance
@@ -36,8 +42,15 @@ export const createWiringCanvasStore = () =>
     nodes: [],
     edges: [],
     dropPositions: {},
+    autoLayout: true,
     onNodesChange: (changes) => {
-      set({ nodes: applyNodeChanges(changes, get().nodes) });
+      const dragged = changes.some(
+        (change) => change.type === "position" && change.dragging,
+      );
+      set({
+        nodes: applyNodeChanges(changes, get().nodes),
+        ...(dragged && { autoLayout: false }),
+      });
     },
     onEdgesChange: (changes) => {
       set({ edges: applyEdgeChanges(changes, get().edges) });
@@ -45,7 +58,13 @@ export const createWiringCanvasStore = () =>
     setNodes: (nodes) => set({ nodes }),
     setEdges: (edges) => set({ edges }),
     setDropPosition: (id, pos) =>
-      set((s) => ({ dropPositions: { ...s.dropPositions, [id]: pos } })),
+      set((s) => ({
+        dropPositions: { ...s.dropPositions, [id]: pos },
+        autoLayout: false,
+      })),
+    // Turning it on drops pending drop positions so the layout covers every node
+    setAutoLayout: (autoLayout) =>
+      set(autoLayout ? { autoLayout, dropPositions: {} } : { autoLayout }),
   }));
 
 export type WiringCanvasStore = ReturnType<typeof createWiringCanvasStore>;
