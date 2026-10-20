@@ -7,11 +7,15 @@ from strawberry.experimental import pydantic as strawberry_pydantic
 from strawberry.scalars import JSON
 from strawberry.types import Info
 
-from application.resources.dependencies import get_cascade_destroy_service, get_resource_service
+from application.resources.dependencies import (
+    get_cascade_destroy_service,
+    get_cascade_run_service,
+    get_resource_service,
+)
 from application.resources.schema import ResourceCreate, ResourceUpdate
 from application.workflows.model import Workflow
 from core.base_models import PatchBodyModel
-from core.constants.model import ModelActions
+from core.constants.model import ModelActions, WorkflowAction
 from core.errors import AccessDenied
 from core.users.functions import user_has_access_to_entity, user_is_super_admin
 from graphql_api.helpers import IsAuthenticated
@@ -97,6 +101,30 @@ class ResourcePolicyCreateInput:
     inherits_children: bool = False
 
 
+async def _create_cascade_run_workflow(
+    info: Info,
+    resource_id: uuid.UUID,
+    action: WorkflowAction,
+    required_action: ModelActions,
+    exclude_ids: list[uuid.UUID],
+) -> Workflow:
+    session = info.context["session"]
+    requester = info.context["request"].state.user
+
+    if required_action not in await get_resource_service(session).get_actions(
+        resource_id=resource_id, requester=requester
+    ):
+        raise AccessDenied(f"Access denied for action {required_action.value}")
+
+    workflow = await get_cascade_run_service(session=session).create_workflow(
+        resource_id=resource_id, action=action, requester=requester, exclude_ids=exclude_ids
+    )
+    workflow_orm = await session.get(Workflow, workflow.id)
+    if workflow_orm is None:
+        raise ValueError(f"Cascade {action} workflow was not persisted")
+    return workflow_orm
+
+
 @strawberry.type
 class ResourceMutation:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
@@ -179,6 +207,22 @@ class ResourceMutation:
             raise ValueError("Cascade destroy workflow was not persisted")
 
         return workflow_orm
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def cascade_dryrun_resource(
+        self, info: Info, id: uuid.UUID, exclude_ids: list[uuid.UUID] | None = None
+    ) -> WorkflowType:
+        return await _create_cascade_run_workflow(
+            info, id, WorkflowAction.PLAN, ModelActions.CASCADE_DRYRUN, exclude_ids or []
+        )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def cascade_execute_resource(
+        self, info: Info, id: uuid.UUID, exclude_ids: list[uuid.UUID] | None = None
+    ) -> WorkflowType:
+        return await _create_cascade_run_workflow(
+            info, id, WorkflowAction.APPLY, ModelActions.CASCADE_EXECUTE, exclude_ids or []
+        )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def create_resource_policy(self, info: Info, input: EntityPolicyCreateInput) -> list[PermissionType]:

@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 from uuid import UUID
 
 from application.workflows.schema import WorkflowCreate, WorkflowResponse, WorkflowStepCreate
@@ -13,6 +14,21 @@ from core.utils.event_sender import EventSender
 from .crud import ResourceCRUD
 
 logger = logging.getLogger(__name__)
+
+
+def collect_tree_depths(rows: list[dict[str, Any]]) -> dict[UUID, tuple[UUID, int]]:
+    """
+    Map each resource of a get_tree_to_children() result to (template_id, depth).
+
+    A resource reachable by several paths (diamond) keeps its deepest level, so
+    it always sits below every one of its ancestors in the tree.
+    """
+    depths: dict[UUID, tuple[UUID, int]] = {}
+    for row in rows:
+        rid = row["id"]
+        if rid not in depths or row["level"] > depths[rid][1]:
+            depths[rid] = (row["template_id"], row["level"])
+    return depths
 
 
 class CascadeDestroyService:
@@ -100,19 +116,10 @@ class CascadeDestroyService:
         if not rows:
             return []
 
-        # Deduplicate: keep the maximum depth reached for each node.
-        max_depth: dict[UUID, int] = {}
-        template_ids: dict[UUID, UUID] = {}
-        for row in rows:
-            rid = row["id"]
-            depth = row["level"]
-            if rid not in max_depth or depth > max_depth[rid]:
-                max_depth[rid] = depth
-                template_ids[rid] = row["template_id"]
-
-        global_max = max(max_depth.values())
+        depths = collect_tree_depths(rows)
+        global_max = max(depth for _, depth in depths.values())
         # position = global_max - node_depth  (leaves → 0, root → global_max)
-        result = [(rid, template_ids[rid], global_max - depth) for rid, depth in max_depth.items()]
+        result = [(rid, template_id, global_max - depth) for rid, (template_id, depth) in depths.items()]
         result.sort(key=lambda t: t[2])
         return result
 

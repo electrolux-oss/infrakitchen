@@ -26,6 +26,8 @@ export interface DialogProps {
   /** Stretch to maxWidth instead of fitting the content. */
   fullWidth?: boolean;
   fullScreen?: boolean;
+  /** Let the user drag the bottom-right corner to resize; opens at maxWidth, which no longer caps it once resized. */
+  resizable?: boolean;
   className?: string;
   "aria-labelledby"?: string;
   "aria-describedby"?: string;
@@ -56,6 +58,7 @@ export function Dialog({
   maxWidth = "sm",
   fullWidth = false,
   fullScreen = false,
+  resizable = false,
   className,
   children,
   ...aria
@@ -149,6 +152,8 @@ export function Dialog({
                   "m-8 max-h-[calc(100%-64px)] rounded-[12px] border border-divider shadow-[0_24px_64px_rgba(0,0,0,0.14)] dark:shadow-[0_24px_64px_rgba(0,0,0,0.55)]",
                   maxWidth ? MAX_WIDTH[maxWidth] : "max-w-[calc(100%-64px)]",
                   fullWidth ? "w-[calc(100%-64px)]" : "w-auto",
+                  resizable &&
+                    "resize overflow-auto [&[style*='width']]:max-w-[calc(100%-64px)]",
                 ),
             className,
           )}

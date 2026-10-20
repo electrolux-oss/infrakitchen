@@ -56,6 +56,8 @@ const ACTION_LABELS: Record<string, string> = {
   enable: "Enabled",
   download: "Downloaded",
   cascade_destroy: "Cascade destroyed",
+  cascade_dryrun: "Cascade planned",
+  cascade_execute: "Cascade applied",
 };
 
 function humanizeAction(action?: string): string {

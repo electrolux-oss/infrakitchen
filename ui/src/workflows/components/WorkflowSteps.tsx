@@ -1,10 +1,10 @@
-import { GqlWorkflowStep } from "../graphql";
+import { GqlWorkflowAction, GqlWorkflowStep } from "../graphql";
 
 import { WorkflowStep } from "./WorkflowStep";
 
 interface WorkflowStepsProps {
   steps: GqlWorkflowStep[];
-  workflowAction?: "create" | "destroy";
+  workflowAction?: GqlWorkflowAction;
 }
 
 export const WorkflowSteps = ({

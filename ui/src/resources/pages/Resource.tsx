@@ -8,6 +8,7 @@ import { EntityProvider } from "../../common/context/EntityContext";
 import { HeroCircleStackIcon } from "../../icons";
 import { Button, Tooltip } from "../../ui";
 import { TASK_QUEUE_STATUS_SELECTION } from "../../workers/graphql";
+import { CascadeRunMenu } from "../components/CascadeRunMenu";
 import { CloneResourceButton } from "../components/CloneResourceButton";
 import { ResourceContent } from "../components/ResourceContent";
 import { RESOURCE_DETAIL_FIELDS } from "../graphql";
@@ -44,6 +45,7 @@ export const ResourcePage = () => {
               </Tooltip>
             </PermissionWrapper>
             <CloneResourceButton />
+            <CascadeRunMenu />
             <EntityRefreshButton />
           </>
         }

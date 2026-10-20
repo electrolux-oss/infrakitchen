@@ -36,6 +36,8 @@ export enum ENTITY_ACTION {
   ENABLE = "enable",
   HAS_TEMPORARY_STATE = "has_temporary_state",
   CASCADE_DESTROY = "cascade_destroy",
+  CASCADE_DRYRUN = "cascade_dryrun",
+  CASCADE_EXECUTE = "cascade_execute",
 }
 
 export enum INTEGRATION_STATUS {

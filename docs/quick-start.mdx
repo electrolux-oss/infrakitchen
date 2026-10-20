@@ -350,7 +350,7 @@ Save, click <kbd>Plan</kbd> to preview the changes, then click <kbd>Review</kbd>
 
 ### 5. Clean Up
 
-Go to the **demo-account** resource's **Settings** tab, and in the **Danger Zone**, click <kbd>Cascade Destroy</kbd>, type the resource's name to confirm, and click <kbd>Cascade Destroy</kbd> again — InfraKitchen creates a destroy workflow covering the account resource and the VPC beneath it, and opens it. Click <kbd>Apply</kbd> to run the workflow: both resources are destroyed in the right order (children first).
+Go to the **demo-account** resource's **Settings** tab, and in the **Danger Zone**, click <kbd>Cascade Destroy</kbd>, type the resource's name to confirm, and click <kbd>Cascade Destroy</kbd> again — InfraKitchen creates a destroy workflow covering the account resource and the VPC beneath it, and opens it. Click <kbd>Apply</kbd> to run the workflow: both resources are destroyed in the right order (children first). See [Cascade Actions](/concepts/resource-workflows#cascade-actions) for details.
 
 Exit the Nix shell with <kbd>Ctrl</kbd>+<kbd>D</kbd>, or stop InfraKitchen with `podman compose down`.
 

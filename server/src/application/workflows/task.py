@@ -1,3 +1,4 @@
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 import logging
 from typing import Any
@@ -38,6 +39,7 @@ class WorkflowTask:
         event_sender: EventSender,
         action: ModelActions,
         step_id: str | None = None,
+        step_status: str | None = None,
     ) -> None:
         self.session: AsyncSession = session
         self.workflow_service: WorkflowService = workflow_service
@@ -51,6 +53,8 @@ class WorkflowTask:
         self.user: UserDTO = user
         self.action: ModelActions = action
         self.step_id: str | None = step_id
+        # Result reported by a resource task that leaves the resource status untouched (dry run)
+        self.step_status: str | None = step_status
 
     # workflow states
     async def start_pipeline(self):
@@ -58,10 +62,15 @@ class WorkflowTask:
         self.resource_service.audit_log_handler.trace_id = str(self.workflow_pydantic.id)
         match self.action:
             case ModelActions.EXECUTE:
-                if self.workflow_instance.action == WorkflowAction.DESTROY:
-                    await self.destroy_entity()
-                else:
-                    await self.execute_entity()
+                match self.workflow_instance.action:
+                    case WorkflowAction.DESTROY:
+                        await self.destroy_entity()
+                    case WorkflowAction.PLAN:
+                        await self.run_resource_steps(self.manage_plan_step, continue_on_error=True, rerunnable=True)
+                    case WorkflowAction.APPLY:
+                        await self.run_resource_steps(self.manage_apply_step, rerunnable=True)
+                    case _:
+                        await self.execute_entity()
             case _:
                 raise CannotProceed(f"Unknown action: {self.action}")
 
@@ -446,10 +455,42 @@ class WorkflowTask:
         await self.change_entity_status(new_status=ModelStatus.ERROR)
 
     async def destroy_entity(self):
-        self.logger.info(f"Destroying workflow {self.workflow_pydantic.id}")
+        await self.run_resource_steps(self.manage_destroy_step)
+
+    async def run_resource_steps(
+        self,
+        handler: Callable[[WorkflowStep], Awaitable[None]],
+        continue_on_error: bool = False,
+        rerunnable: bool = False,
+    ):
+        """
+        Drive a workflow whose steps act on existing resources (destroy, plan, apply).
+
+        Steps run level by level in position order. With continue_on_error a
+        failed step does not stop the next levels; the workflow ends in ERROR
+        once every step has finished. A rerunnable workflow that is DONE runs
+        every step again when the user starts it.
+        """
+        self.logger.info(f"Running {self.workflow_instance.action} workflow {self.workflow_pydantic.id}")
+
+        if rerunnable and not self.step_id and self.workflow_instance.status == ModelStatus.DONE:
+            for step in self.workflow_instance.steps:
+                step.status = ModelStatus.PENDING
+                step.error_message = None
+                step.started_at = None
+                step.completed_at = None
+            self.workflow_instance.status = ModelStatus.PENDING
+            self.workflow_instance.completed_at = None
 
         if self.workflow_instance.status == ModelStatus.PENDING:
             self.workflow_instance.started_at = datetime.now(UTC)
+
+        if continue_on_error and not self.step_id and self.workflow_instance.status == ModelStatus.ERROR:
+            # A re-run of a finished workflow retries the steps that failed last time
+            for step in self.workflow_instance.steps:
+                if step.status == ModelStatus.ERROR:
+                    step.status = ModelStatus.PENDING
+                    step.error_message = None
 
         await self.change_entity_status(new_status=ModelStatus.IN_PROGRESS)
 
@@ -458,60 +499,72 @@ class WorkflowTask:
             if target_step and target_step.status == ModelStatus.PENDING:
                 target_step.started_at = datetime.now(UTC)
 
-            if target_step and target_step.status != ModelStatus.DONE:
-                self.logger.info(f"Processing targeted destroy step {self.step_id}")
+            finished = self._finished_statuses(continue_on_error)
+            if target_step and target_step.status not in finished:
+                self.logger.info(f"Processing targeted step {self.step_id}")
                 try:
-                    await self.manage_destroy_step(target_step)
+                    await handler(target_step)
                 except Exception as exc:
                     await self.change_step_status(
                         target_step,
                         new_status=ModelStatus.ERROR,
                         error_message=str(exc),
                     )
+
+                if target_step.status == ModelStatus.ERROR and not continue_on_error:
                     await self.change_entity_status(new_status=ModelStatus.ERROR)
                     return
 
-                if target_step.status == ModelStatus.DONE:
-                    await self._launch_ready_destroy_steps()
+                if target_step.status in finished:
+                    await self._launch_ready_level(handler, continue_on_error)
                 return
 
-        await self._launch_ready_destroy_steps()
+        await self._launch_ready_level(handler, continue_on_error)
 
-    async def _launch_ready_destroy_steps(self):
-        """Find and launch all destroy steps at the current lowest pending position."""
+    @staticmethod
+    def _finished_statuses(continue_on_error: bool) -> tuple[str, ...]:
+        if continue_on_error:
+            return (ModelStatus.DONE, ModelStatus.ERROR)
+        return (ModelStatus.DONE,)
+
+    async def _launch_ready_level(
+        self,
+        handler: Callable[[WorkflowStep], Awaitable[None]],
+        continue_on_error: bool,
+    ):
+        """Find and launch all steps at the current lowest unfinished position."""
+        finished = self._finished_statuses(continue_on_error)
         steps = self.workflow_instance.steps
 
         current_position: int | None = None
         for step in steps:
-            if step.status != ModelStatus.DONE:
+            if step.status not in finished:
                 current_position = step.position
                 break
 
         if current_position is None:
-            self.logger.info("All destroy workflow steps completed")
+            failed = any(s.status == ModelStatus.ERROR for s in steps)
+            self.logger.info(f"All workflow steps finished{' with errors' if failed else ''}")
             self.workflow_instance.completed_at = datetime.now(UTC)
-            await self.change_entity_status(new_status=ModelStatus.DONE)
+            await self.change_entity_status(new_status=ModelStatus.ERROR if failed else ModelStatus.DONE)
             return
 
         for step in steps:
-            if step.position < current_position and step.status != ModelStatus.DONE:
-                self.logger.warning(f"Destroy step {step.id} at position {step.position} is not done, cannot proceed")
+            if step.position < current_position and step.status not in finished:
+                self.logger.warning(f"Step {step.id} at position {step.position} is not finished, cannot proceed")
                 return
 
         current_steps = [s for s in steps if s.position == current_position]
 
-        if all(s.status == ModelStatus.IN_PROGRESS for s in current_steps):
-            return
-
         has_error = False
         for step in current_steps:
-            if step.status == ModelStatus.DONE:
-                continue
-            if step.status == ModelStatus.IN_PROGRESS:
+            if step.status in finished or step.status == ModelStatus.IN_PROGRESS:
                 continue
 
+            if step.status == ModelStatus.PENDING:
+                step.started_at = datetime.now(UTC)
             try:
-                await self.manage_destroy_step(step)
+                await handler(step)
             except Exception as exc:
                 await self.session.rollback()
                 has_error = True
@@ -521,13 +574,122 @@ class WorkflowTask:
                     error_message=str(exc),
                 )
 
-        if has_error:
+        if has_error and not continue_on_error:
             await self.change_entity_status(new_status=ModelStatus.ERROR)
             return
 
-        all_current_done = all(s.status == ModelStatus.DONE for s in current_steps)
-        if all_current_done:
-            await self._launch_ready_destroy_steps()
+        if all(s.status in finished for s in current_steps):
+            await self._launch_ready_level(handler, continue_on_error)
+
+    async def manage_plan_step(self, step: WorkflowStep):
+        """
+        Drive a single plan step.
+
+          PENDING     → issue DRYRUN with trace_id → IN_PROGRESS
+          IN_PROGRESS → the dry run reports its result in step_status → DONE / ERROR
+
+        A dry run never changes the resource status, so the result can only come
+        from the callback.
+        """
+        if step.resource_id is None:
+            raise CannotProceed(f"Plan step {step.id} has no resource_id")
+
+        if step.status == ModelStatus.PENDING:
+            resource = await self.resource_service.get_by_id(step.resource_id)
+            if not resource:
+                raise CannotProceed(f"Resource {step.resource_id} not found for plan step {step.id}")
+
+            if resource.abstract:
+                step.completed_at = datetime.now(UTC)
+                await self.change_step_status(step, new_status=ModelStatus.DONE)
+                return
+
+            await self.resource_service.patch_action(
+                step.resource_id,
+                PatchBodyModel(action=ModelActions.DRYRUN),
+                requester=self.user,
+                trace_id=str(self.workflow_pydantic.id),
+            )
+            # Commits the resource's audit log along with the step
+            await self.change_step_status(step, new_status=ModelStatus.IN_PROGRESS)
+            return
+
+        if self.step_status == ModelStatus.DONE:
+            step.completed_at = datetime.now(UTC)
+            await self.change_step_status(step, new_status=ModelStatus.DONE)
+        elif self.step_status == ModelStatus.ERROR:
+            await self.change_step_status(
+                step, new_status=ModelStatus.ERROR, error_message="Plan failed, see the workflow logs"
+            )
+        else:
+            # Only a lost worker reports back without a result
+            await self.change_step_status(step, new_status=ModelStatus.ERROR, error_message="Plan did not finish")
+
+    async def manage_apply_step(self, step: WorkflowStep):
+        """
+        Drive a single apply step. Approvals are never given here: a resource
+        that needs one fails the step, and the user re-runs the workflow after
+        approving it.
+
+          PENDING / ERROR → issue EXECUTE with trace_id → IN_PROGRESS
+          IN_PROGRESS     → resource DONE → DONE, resource ERROR → ERROR
+        """
+        if step.resource_id is None:
+            raise CannotProceed(f"Apply step {step.id} has no resource_id")
+
+        resource = await self.resource_service.get_by_id(step.resource_id)
+        if not resource:
+            raise CannotProceed(f"Resource {step.resource_id} not found for apply step {step.id}")
+
+        if step.status == ModelStatus.ERROR and self.step_id:
+            # Late callback for a failed step, e.g. a retried run that finished after all.
+            # Failed applies are only re-run when the user runs the workflow again.
+            if resource.status == ModelStatus.DONE:
+                step.completed_at = datetime.now(UTC)
+                await self.change_step_status(step, new_status=ModelStatus.DONE)
+            return
+
+        if step.status in (ModelStatus.PENDING, ModelStatus.ERROR):
+            if resource.abstract:
+                step.completed_at = datetime.now(UTC)
+                await self.change_step_status(step, new_status=ModelStatus.DONE)
+                return
+
+            self._ensure_can_apply(resource)
+            await self.resource_service.patch_action(
+                step.resource_id,
+                PatchBodyModel(action=ModelActions.EXECUTE),
+                requester=self.user,
+                trace_id=str(self.workflow_pydantic.id),
+            )
+            # Commits the resource's audit log along with the step
+            await self.change_step_status(step, new_status=ModelStatus.IN_PROGRESS)
+            return
+
+        # Callback from the resource task: apply only queues it, so the status
+        # seen here is the result of the run
+        if self.step_status == ModelStatus.ERROR:
+            raise CannotProceed(f"Apply failed for resource {resource.name}")
+        if resource.status == ModelStatus.DONE:
+            step.completed_at = datetime.now(UTC)
+            await self.change_step_status(step, new_status=ModelStatus.DONE)
+        elif resource.status == ModelStatus.ERROR:
+            raise CannotProceed(f"Apply failed for resource {resource.name}")
+        elif resource.status in (ModelStatus.QUEUED, ModelStatus.IN_PROGRESS):
+            self.logger.debug(f"Apply step {step.id} resource {step.resource_id} still running, waiting for callback")
+        else:
+            raise CannotProceed(f"Resource {resource.name} has unexpected status {resource.status} after apply")
+
+    @staticmethod
+    def _ensure_can_apply(resource: Any) -> None:
+        if resource.status == ModelStatus.APPROVAL_PENDING:
+            raise CannotProceed(f"Resource {resource.name} is waiting for approval, approve it and run again")
+        if resource.status == ModelStatus.REJECTED:
+            raise CannotProceed(f"Resource {resource.name} changes were rejected")
+        if resource.status in (ModelStatus.QUEUED, ModelStatus.IN_PROGRESS):
+            raise CannotProceed(f"Resource {resource.name} is already running")
+        if resource.state not in (ModelState.PROVISION, ModelState.PROVISIONED):
+            raise CannotProceed(f"Resource {resource.name} cannot be applied in state {resource.state}")
 
     async def manage_destroy_step(self, step: WorkflowStep):
         """

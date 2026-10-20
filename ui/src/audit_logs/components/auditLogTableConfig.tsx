@@ -66,6 +66,8 @@ const userTimeColumn = (): EntityTableColumn => ({
 const AUDIT_LOG_ACTION_OPTIONS = [
   "approve",
   "cascade_destroy",
+  "cascade_dryrun",
+  "cascade_execute",
   "create",
   "delete",
   "destroy",

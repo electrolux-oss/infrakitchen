@@ -95,6 +95,14 @@ export interface GqlResourceTreeNode {
   children: GqlResourceTreeNode[];
 }
 
+export interface GqlResourceCascadeNode {
+  resourceId: string;
+  name: string;
+  depth: number;
+  included: boolean;
+  reason: string | null;
+}
+
 export interface GqlScheduledResourceAction {
   id: string;
   entityId: string;

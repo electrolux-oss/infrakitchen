@@ -405,6 +405,28 @@ class TestNotifications:
             )
         )
 
+    async def test_exit_without_save_notifies_parent_workflow(self, task_worker, mock_task_controller, monkeypatch):
+        monkeypatch.setattr(tw_mod, "publish_notification_event", AsyncMock())
+        mock_task_controller._notify_workflow_callback = AsyncMock()
+
+        with pytest.raises(tw_mod.TaskFailure):
+            await task_worker.handle_exit_without_state_exception(
+                ExitWithoutSave("wrong state"), mock_task_controller, action="execute"
+            )
+
+        mock_task_controller._notify_workflow_callback.assert_awaited_once_with(step_status="error")
+
+    async def test_failed_dry_run_does_not_notify_twice(self, task_worker, mock_task_controller, monkeypatch):
+        monkeypatch.setattr(tw_mod, "publish_notification_event", AsyncMock())
+        mock_task_controller._notify_workflow_callback = AsyncMock()
+
+        with pytest.raises(tw_mod.TaskFailure):
+            await task_worker.handle_exit_without_state_exception(
+                ExitWithoutSave("plan failed"), mock_task_controller, action="dryrun"
+            )
+
+        mock_task_controller._notify_workflow_callback.assert_not_awaited()
+
     async def test_unexpected_exception_notification(self, task_worker, mock_task_controller, monkeypatch):
         mock_task_controller.logger.entity_id = "unexpected_entity_000"
         mock_task_controller.logger.entity_name = "resource"

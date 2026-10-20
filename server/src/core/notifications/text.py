@@ -14,6 +14,8 @@ _ACTION_LABELS = {
     "execute": "apply",
     "dryrun": "plan",
     "dryrun_with_temp_state": "plan",
+    "cascade_dryrun": "cascade plan",
+    "cascade_execute": "cascade apply",
 }
 
 
