@@ -472,19 +472,26 @@ class ResourceTask:
         if self.resource_instance.status in (ModelStatus.DONE, ModelStatus.ERROR):
             await self._notify_workflow_callback()
 
-    async def _notify_workflow_callback(self) -> None:
+    async def _notify_workflow_callback(self, step_status: ModelStatus | None = None) -> None:
         """If this resource was created by a workflow (trace_id = workflow_id),
-        send a workflow task so the pipeline resumes without polling."""
+        send a workflow task so the pipeline resumes without polling.
+
+        A dry run leaves the resource status untouched, so it passes its
+        result to the workflow as ``step_status``.
+        """
         workflow_id = getattr(self.logger, "trace_id", None)
         if not workflow_id:
             return
+        extra_metadata = {"resource_id": str(self.resource_instance.id)}
+        if step_status:
+            extra_metadata["step_status"] = str(step_status)
         try:
             workflow_sender = EventSender(entity_name="workflow")
             await workflow_sender.send_task(
                 entity_id=workflow_id,
                 requester=self.user,
                 action=ModelActions.EXECUTE,
-                extra_metadata={"resource_id": str(self.resource_instance.id)},
+                extra_metadata=extra_metadata,
                 delay_seconds=0,
             )
             await workflow_sender.flush()
@@ -600,7 +607,10 @@ class ResourceTask:
             if not isinstance(e, (CloudWrongCredentials, CloudExecutionError)):
                 logger.exception(f"Dry run failed for resource {self.resource_instance.id}")
             await self.clean_workspace()
+            await self._notify_workflow_callback(step_status=ModelStatus.ERROR)
             raise ExitWithoutSave(e) from e
+
+        await self._notify_workflow_callback(step_status=ModelStatus.DONE)
 
     async def create_makefile(self):
         assert self.workspace_path is not None, "Workspace path is not defined"

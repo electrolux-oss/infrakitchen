@@ -102,7 +102,7 @@ export const WorkflowContent = () => {
       label: "Steps",
       content: <WorkflowStepsTab workflow={workflow} />,
     },
-    ...(workflow.action !== "destroy"
+    ...(workflow.action === "create"
       ? [
           {
             label: "Variables",

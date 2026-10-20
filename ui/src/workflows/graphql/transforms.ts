@@ -5,6 +5,8 @@ import { GqlSourceCodeVersionShort } from "../../source_code_versions/graphql";
 import { GqlTemplateShort } from "../../templates/graphql";
 import { GqlUserShort } from "../../users/graphql";
 
+export type GqlWorkflowAction = "create" | "destroy" | "plan" | "apply";
+
 export interface GqlWorkflowStep {
   id: string;
   template: GqlTemplateShort;
@@ -24,7 +26,7 @@ export interface GqlWorkflowStep {
 
 export interface GqlWorkflow {
   id: string;
-  action: "create" | "destroy";
+  action: GqlWorkflowAction;
   entityName: string;
   status: string;
   errorMessage: string | null;

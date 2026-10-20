@@ -12,7 +12,7 @@ import { notify, notifyError } from "../../hooks/useNotification";
 import { ActionButton } from "../buttons/ActionButton";
 import { DeleteButton } from "../buttons/DeleteEntityButton";
 import { InlineCode } from "../code/InlineCode";
-import { CascadeDestroyDialog } from "../dialogs/CascadeDestroyDialog";
+import { CascadeDestroyDialog } from "../dialogs/CascadeActionDialog";
 import { CommonDialog } from "../dialogs/CommonDialog";
 import { ConfirmNameField } from "../fields/ConfirmNameField";
 

@@ -55,6 +55,7 @@ async def get_resource_actions(
     state: ModelState,
     temp_state_exists: bool,
     project: Project | None = None,
+    has_children: bool = False,
 ) -> list[str]:
     """
     Get all actions available for the resource.
@@ -144,6 +145,13 @@ async def get_resource_actions(
             actions.append(ModelActions.DOWNLOAD)
             actions.append(ModelActions.EXECUTE)
             actions.append(ModelActions.DRYRUN)
+
+    # Executing a resource in DESTROY state destroys it, so cascades start only from live resources
+    if has_children and state != ModelState.DESTROY:
+        if ModelActions.DRYRUN in actions:
+            actions.append(ModelActions.CASCADE_DRYRUN)
+        if ModelActions.EXECUTE in actions:
+            actions.append(ModelActions.CASCADE_EXECUTE)
 
     return actions
 

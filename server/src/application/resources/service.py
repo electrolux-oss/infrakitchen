@@ -180,7 +180,7 @@ class ResourceService:
         """Return ORM models directly, with optimized loading based on requested fields."""
         return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
 
-    async def get_actions(self, resource_id: str | UUID, requester: UserDTO) -> list[str]:
+    async def get_actions(self, resource_id: str | UUID, requester: UserDTO, include_cascade: bool = True) -> list[str]:
         resource = await self.crud.get_by_id(
             resource_id, fields={"status": None, "state": None, "project": {"id": None, "owners": {"id": None}}}
         )
@@ -194,6 +194,7 @@ class ResourceService:
             resource.state,
             resource_temp_state is not None,
             project=getattr(resource, "project", None),
+            has_children=include_cascade and await self.crud.has_children(resource.id),
         )
 
     async def create_resource(

@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from core.constants.model import ModelActions
+from core.constants.model import ModelActions, WorkflowAction
 from graphql_api.schema import schema
 
 CREATE_RESOURCE_MUTATION = """
@@ -52,6 +52,19 @@ CASCADE_DESTROY_RESOURCE_MUTATION = """
         }
     }
 """
+
+CASCADE_RUN_MUTATIONS = {
+    "cascadeDryrunResource": """
+        mutation CascadeDryrunResource($id: UUID!) {
+            cascadeDryrunResource(id: $id) { id }
+        }
+    """,
+    "cascadeExecuteResource": """
+        mutation CascadeExecuteResource($id: UUID!) {
+            cascadeExecuteResource(id: $id) { id }
+        }
+    """,
+}
 
 SYNC_WORKSPACE_MUTATION = """
     mutation SyncWorkspace($id: UUID!) {
@@ -473,3 +486,70 @@ class TestResourceMutations:
             requester=mocked_user,
         )
         session.get.assert_awaited_once_with(type(mocked_workflow), mocked_workflow.id)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "field, required, action",
+        [
+            ("cascadeDryrunResource", ModelActions.CASCADE_DRYRUN, WorkflowAction.PLAN),
+            ("cascadeExecuteResource", ModelActions.CASCADE_EXECUTE, WorkflowAction.APPLY),
+        ],
+    )
+    @patch("graphql_api.modules.resource.mutations.get_cascade_run_service")
+    @patch("graphql_api.modules.resource.mutations.get_resource_service")
+    async def test_cascade_run_resource_returns_workflow(
+        self,
+        mock_get_resource_service,
+        mock_get_cascade_run_service,
+        field,
+        required,
+        action,
+        mock_resource_service,
+        mocked_workflow,
+        mocked_user,
+    ):
+        resource_id = uuid4()
+        session = Mock()
+        session.get = AsyncMock(return_value=mocked_workflow)
+        mock_resource_service.get_actions = AsyncMock(return_value=[required])
+        mock_get_resource_service.return_value = mock_resource_service
+        cascade_service = Mock()
+        cascade_service.create_workflow = AsyncMock(return_value=SimpleNamespace(id=mocked_workflow.id))
+        mock_get_cascade_run_service.return_value = cascade_service
+
+        result = await schema.execute(
+            CASCADE_RUN_MUTATIONS[field],
+            variable_values={"id": str(resource_id)},
+            context_value=make_context(mocked_user, session=session),
+        )
+
+        assert result.errors is None
+        assert result.data == {field: {"id": str(mocked_workflow.id)}}
+        cascade_service.create_workflow.assert_awaited_once_with(
+            resource_id=resource_id, action=action, requester=mocked_user, exclude_ids=[]
+        )
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("field", ["cascadeDryrunResource", "cascadeExecuteResource"])
+    @patch("graphql_api.modules.resource.mutations.get_cascade_run_service")
+    @patch("graphql_api.modules.resource.mutations.get_resource_service")
+    async def test_cascade_run_resource_denies_without_action(
+        self,
+        mock_get_resource_service,
+        mock_get_cascade_run_service,
+        field,
+        mock_resource_service,
+        mocked_user,
+    ):
+        mock_resource_service.get_actions = AsyncMock(return_value=[ModelActions.EXECUTE, ModelActions.DRYRUN])
+        mock_get_resource_service.return_value = mock_resource_service
+
+        result = await schema.execute(
+            CASCADE_RUN_MUTATIONS[field],
+            variable_values={"id": str(uuid4())},
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.errors is not None
+        assert any("Access denied for action cascade_" in error.message for error in result.errors)
+        mock_get_cascade_run_service.assert_not_called()

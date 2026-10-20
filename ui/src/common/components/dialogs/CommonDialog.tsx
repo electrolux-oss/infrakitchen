@@ -21,6 +21,8 @@ interface CommonDialogProps {
   fullWidth?: boolean;
   headerAction?: ReactNode;
   hasFooterActions?: boolean;
+  /** Let the user resize the dialog; the content stretches to the new height. */
+  resizable?: boolean;
 }
 
 export const CommonDialog: React.FC<CommonDialogProps> = ({
@@ -33,6 +35,7 @@ export const CommonDialog: React.FC<CommonDialogProps> = ({
   fullWidth = true,
   headerAction,
   hasFooterActions = true,
+  resizable = false,
 }) => {
   return (
     <Dialog
@@ -40,6 +43,7 @@ export const CommonDialog: React.FC<CommonDialogProps> = ({
       onClose={onClose}
       maxWidth={maxWidth}
       fullWidth={fullWidth}
+      resizable={resizable}
     >
       <DialogTitle className="flex items-center justify-between px-6 pt-5 pb-3 text-[1.0625rem] leading-[1.4] font-semibold">
         {title}
@@ -58,8 +62,15 @@ export const CommonDialog: React.FC<CommonDialogProps> = ({
           </IconButton>
         </div>
       </DialogTitle>
-      <DialogContent className="min-w-75 pt-1 sm:min-w-100">
-        <div>{content}</div>
+      <DialogContent
+        className={cn(
+          "min-w-75 pt-1 sm:min-w-100",
+          resizable && "flex min-h-0 flex-col",
+        )}
+      >
+        <div className={cn(resizable && "flex min-h-0 flex-1 flex-col")}>
+          {content}
+        </div>
       </DialogContent>
       {hasFooterActions && (
         <DialogActions className="gap-2 px-6 pt-2 pb-5">

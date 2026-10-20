@@ -19,11 +19,11 @@ import {
   LinearProgress,
 } from "../../ui";
 import { cn } from "../../utils/cn";
-import { GqlWorkflowStep } from "../graphql";
+import { GqlWorkflowAction, GqlWorkflowStep } from "../graphql";
 
 interface WorkflowStepProps {
   step: GqlWorkflowStep;
-  workflowAction?: "create" | "destroy";
+  workflowAction?: GqlWorkflowAction;
 }
 
 export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
@@ -79,13 +79,22 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
               <span className="text-caption text-fg-muted">Resource</span>
               <div className="mt-1">
                 {step.resource?.id != null ? (
-                  <GetReferenceUrlValue
-                    id={step.resource.id}
-                    entityName="resource"
-                    identifier={
-                      step.resource?.name ?? step.resource.id.slice(0, 8) + "…"
-                    }
-                  />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <GetReferenceUrlValue
+                      id={step.resource.id}
+                      entityName="resource"
+                      identifier={
+                        step.resource?.name ??
+                        step.resource.id.slice(0, 8) + "…"
+                      }
+                    />
+                    {step.resource.status && (
+                      <StatusLabel
+                        status={step.resource.status}
+                        state={step.resource.state}
+                      />
+                    )}
+                  </div>
                 ) : (
                   <p className="m-0 text-body2 text-fg-disabled">
                     {workflowAction === "destroy"

@@ -82,6 +82,22 @@ export const CASCADE_DESTROY_RESOURCE_MUTATION = `
   }
 `;
 
+export const CASCADE_DRYRUN_RESOURCE_MUTATION = `
+  mutation CascadeDryrunResource($id: UUID!, $excludeIds: [UUID!]) {
+    cascadeDryrunResource(id: $id, excludeIds: $excludeIds) {
+      id
+    }
+  }
+`;
+
+export const CASCADE_EXECUTE_RESOURCE_MUTATION = `
+  mutation CascadeExecuteResource($id: UUID!, $excludeIds: [UUID!]) {
+    cascadeExecuteResource(id: $id, excludeIds: $excludeIds) {
+      id
+    }
+  }
+`;
+
 export const SYNC_WORKSPACE_MUTATION = `
   mutation SyncWorkspace($id: UUID!) {
     syncWorkspace(id: $id) {

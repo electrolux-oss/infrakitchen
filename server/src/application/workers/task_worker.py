@@ -30,7 +30,7 @@ from application.workspaces.task import WorkspaceTask
 from core.audit_logs.handler import set_audit_log_execution
 from core.tools.task import ToolTask, get_tool_task
 from core.config import Settings
-from core.constants.model import EventType, ModelActions
+from core.constants.model import EventType, ModelActions, ModelStatus
 from core.db_engine import engine
 from core.dependencies import get_async_session
 from core.utils.event_sender import flush_all_pending_senders
@@ -400,6 +400,7 @@ class TaskWorker:
             audit_log_id=item.payload.get("audit_log_id"),
             step_id=item.payload.get("step_id"),
             resource_id=item.payload.get("resource_id"),
+            step_status=item.payload.get("step_status"),
         )
 
     async def process_scheduler_job(self, session: AsyncSession, item: TaskQueueItemDTO) -> None:
@@ -451,6 +452,7 @@ class TaskWorker:
         audit_log_id: UUID | None = None,
         step_id: str | None = None,
         resource_id: str | None = None,
+        step_status: str | None = None,
     ) -> TaskController:
         match entity_controller:
             case "source_code":
@@ -516,6 +518,7 @@ class TaskWorker:
                     trace_id=trace_id,
                     step_id=step_id,
                     resource_id=resource_id,
+                    step_status=step_status,
                 )
             case "tool":
                 return await get_tool_task(
@@ -571,6 +574,11 @@ class TaskWorker:
         task_controller.logger.error(error_message)
         await task_controller.logger.save_log()
         await self.send_task_notification(task_controller, action, "failed", reason=error_message)
+        # The entity status is untouched, so tell the parent workflow or its step would wait forever.
+        # A failed dry run has already reported its result.
+        notify_workflow = getattr(task_controller, "_notify_workflow_callback", None)
+        if notify_workflow is not None and action not in (ModelActions.DRYRUN, ModelActions.DRYRUN_WITH_TEMP_STATE):
+            await notify_workflow(step_status=ModelStatus.ERROR)
         raise TaskFailure(error_message) from e
 
     async def handle_unexpected_exception(self, e, task_controller, action=None):

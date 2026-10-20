@@ -31,6 +31,7 @@ def mock_resource_crud():
     crud.delete = AsyncMock()
     crud.get_dependencies = AsyncMock()
     crud.get_tree_to_parents = AsyncMock()
+    crud.has_children = AsyncMock(return_value=False)
     crud.get_tree_to_children = AsyncMock()
     crud.get_parents_with_configs = AsyncMock()
     crud.get_parent_ids = AsyncMock()

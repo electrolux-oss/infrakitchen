@@ -2,7 +2,7 @@
 title: Workflow
 ---
 
-**Workflows** are automated execution plans that orchestrate the provisioning of multiple resources in the correct dependency order. Workflows are created from Blueprints and handle the complexity of wiring outputs from one resource into the inputs of another.
+**Workflows** are automated execution plans that orchestrate the provisioning of multiple resources in the correct dependency order. Workflows are created from Blueprints and handle the complexity of wiring outputs from one resource into the inputs of another. Workflows are also created by [cascade actions](/concepts/resource-workflows#cascade-actions) — Cascade Destroy, Cascade Plan and Cascade Apply — which run an action on a resource and all of its descendants.
 
 Workflows are the orchestration layer in your infrastructure kitchen — they take a Blueprint's definition of what needs to be built and execute it step-by-step, resolving dependencies, passing outputs between resources, and tracking progress throughout the process.
 

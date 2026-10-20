@@ -29,6 +29,18 @@ export const RESOURCE_TREE_QUERY = `
   }
 `;
 
+export const RESOURCE_CASCADE_PREVIEW_QUERY = `
+  query ResourceCascadePreview($id: UUID!, $action: String!, $excludeIds: [UUID!]) {
+    resourceCascadePreview(id: $id, action: $action, excludeIds: $excludeIds) {
+      resourceId
+      name
+      depth
+      included
+      reason
+    }
+  }
+`;
+
 export const RESOURCE_METADATA_QUERY = `
   query ResourceMetadata($id: UUID!) {
     resourceMetadata(id: $id)
