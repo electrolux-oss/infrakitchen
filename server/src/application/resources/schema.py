@@ -279,6 +279,7 @@ class ResourceVariableSchema(BaseModel):
 
 class ResourceTreeResponse(BaseModel):
     id: uuid.UUID
+    template_id: uuid.UUID
     name: str
     state: str
     status: str

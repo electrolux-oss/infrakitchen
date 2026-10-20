@@ -13,6 +13,7 @@ RESOURCE_TREE_QUERY = """
     query ResourceTree($id: UUID!, $direction: String!) {
         resourceTree(id: $id, direction: $direction) {
             id
+            templateId
             nodeId
             name
             state
@@ -20,6 +21,7 @@ RESOURCE_TREE_QUERY = """
             templateName
             children {
                 id
+                templateId
                 nodeId
                 name
                 state
@@ -64,6 +66,7 @@ class TestResourceQueries:
     ):
         child = ResourceTreeResponse(
             id=uuid4(),
+            template_id=uuid4(),
             node_id=uuid4(),
             name="child",
             status="active",
@@ -73,6 +76,7 @@ class TestResourceQueries:
         )
         root = ResourceTreeResponse(
             id=uuid4(),
+            template_id=uuid4(),
             node_id=uuid4(),
             name="root",
             status="active",
@@ -93,6 +97,7 @@ class TestResourceQueries:
         assert result.data == {
             "resourceTree": {
                 "id": str(root.id),
+                "templateId": str(root.template_id),
                 "nodeId": str(root.node_id),
                 "name": "root",
                 "state": "provisioned",
@@ -101,6 +106,7 @@ class TestResourceQueries:
                 "children": [
                     {
                         "id": str(child.id),
+                        "templateId": str(child.template_id),
                         "nodeId": str(child.node_id),
                         "name": "child",
                         "state": "provisioned",

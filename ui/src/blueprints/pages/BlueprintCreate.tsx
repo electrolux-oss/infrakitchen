@@ -1,7 +1,7 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { Control, useForm } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 import { WiringRule } from "../../common/components/viewers/Wiring/types";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -13,9 +13,16 @@ import { CREATE_BLUEPRINT_MUTATION, GqlBlueprint } from "../graphql";
 import { useBlueprintForm } from "../hooks/useBlueprintForm";
 import { BlueprintCreateRequest } from "../types";
 
+/** Router state to open the page with templates already selected. */
+export interface BlueprintCreatePrefill {
+  templateIds?: string[];
+  name?: string;
+}
+
 export const BlueprintCreatePage = () => {
   const { ikApi, linkPrefix } = useConfig();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const {
     control,
@@ -41,6 +48,18 @@ export const BlueprintCreatePage = () => {
     setValue: setValue as any,
     watch: watch as any,
   });
+
+  // Prefill once from router state (e.g. Cascade → Create Blueprint)
+  const prefilled = useRef(false);
+  const { prefillTemplates } = form;
+  useEffect(() => {
+    if (prefilled.current) return;
+    prefilled.current = true;
+    const prefill = location.state as BlueprintCreatePrefill | null;
+    if (prefill?.name) setValue("name", prefill.name);
+    if (prefill?.templateIds?.length)
+      void prefillTemplates(prefill.templateIds);
+  }, [location.state, prefillTemplates, setValue]);
 
   const onSubmit = useCallback(
     (data: BlueprintCreateRequest) => {

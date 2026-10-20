@@ -36,6 +36,7 @@ def _build_service(info: Info) -> ResourceService:
 @strawberry.type
 class ResourceTreeNodeType:
     id: uuid.UUID
+    template_id: uuid.UUID
     name: str
     state: str
     status: str
@@ -211,6 +212,7 @@ class ResourceQuery:
 def _map_tree_node(node: Any) -> ResourceTreeNodeType:
     return ResourceTreeNodeType(
         id=node.id,
+        template_id=node.template_id,
         name=node.name,
         state=node.state,
         status=node.status,

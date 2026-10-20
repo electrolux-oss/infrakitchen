@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { DragEvent } from "react";
 
-import { Connection, Edge, useStoreApi } from "@xyflow/react";
+import { Connection, Edge, useReactFlow } from "@xyflow/react";
+
+import { randomUUID } from "../../../../utils/uuid";
 
 import { parseSourceHandle, parseTargetHandle } from "./helpers";
+import { computeDiagramLayout } from "./layout";
 import { GenericTemplate, WiringRule } from "./types";
 import {
   buildEdges,
@@ -11,11 +14,16 @@ import {
   type WiringCanvasStore,
 } from "./useWiringCanvasStore";
 import {
+  ConstantType,
   TemplatePorts,
   WiringCanvasConstantBlock,
   WiringCanvasExternalTemplate,
 } from "./WiringCanvas.types";
-import { DRAG_TYPE, DRAG_TYPE_EXTERNAL } from "./WiringCanvasSidebar";
+import {
+  DRAG_TYPE,
+  DRAG_TYPE_CONSTANT,
+  DRAG_TYPE_EXTERNAL,
+} from "./WiringCanvasSidebar";
 
 interface UseWiringCanvasGraphParams {
   selectedTemplates: GenericTemplate[];
@@ -28,6 +36,7 @@ interface UseWiringCanvasGraphParams {
   onExternalTemplateAdd: (template: WiringCanvasExternalTemplate) => void;
   onExternalTemplateRemove: (templateId: string) => void;
   constants: WiringCanvasConstantBlock[];
+  onConstantAdd: (type: ConstantType, id?: string) => void;
   onConstantRemove: (constantId: string) => void;
   onConstantUpdate: (constantId: string, name: string) => void;
   onConstantDefaultValueUpdate: (
@@ -51,12 +60,15 @@ export function useWiringCanvasGraph(
     onExternalTemplateAdd,
     onExternalTemplateRemove,
     constants,
+    onConstantAdd,
     onConstantRemove,
     onConstantUpdate,
     onConstantDefaultValueUpdate,
   } = params;
 
-  const rfStore = useStoreApi();
+  const { fitView, screenToFlowPosition } = useReactFlow();
+  const autoLayout = useStore((state) => state.autoLayout);
+  const lastLayout = useRef("");
 
   const selectedIds = useMemo(
     () => new Set(selectedTemplates.map((t) => t.id)),
@@ -71,13 +83,21 @@ export function useWiringCanvasGraph(
   // Sync nodes and edges into store atomically when props change
   useEffect(() => {
     const { nodes: currentNodes, dropPositions } = useStore.getState();
-    // Merge persisted node positions with any pending drop positions
-    const positions: Record<string, { x: number; y: number }> = {
-      ...dropPositions,
-    };
-    for (const node of currentNodes) {
-      if (node.position) {
-        positions[node.id] = node.position;
+    let positions: Record<string, { x: number; y: number }>;
+    if (autoLayout) {
+      positions = computeDiagramLayout(
+        selectedTemplates,
+        externalTemplates,
+        constants,
+        wiring,
+      );
+    } else {
+      // Merge persisted node positions with any pending drop positions
+      positions = { ...dropPositions };
+      for (const node of currentNodes) {
+        if (node.position) {
+          positions[node.id] = node.position;
+        }
       }
     }
 
@@ -102,7 +122,21 @@ export function useWiringCanvasGraph(
     });
 
     useStore.setState({ nodes: nextNodes, edges: nextEdges });
+
+    // Re-fit once React Flow has measured the new layout
+    const layoutKey = autoLayout ? JSON.stringify(positions) : "";
+    if (layoutKey && layoutKey !== lastLayout.current) {
+      // Recorded only once the fit runs, so a cancelled frame is retried
+      const frame = requestAnimationFrame(() => {
+        lastLayout.current = layoutKey;
+        void fitView({ maxZoom: 1, padding: 0.2, duration: 300 });
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+    if (!autoLayout) lastLayout.current = "";
   }, [
+    autoLayout,
+    fitView,
     selectedTemplates,
     templatePorts,
     externalTemplates,
@@ -148,6 +182,7 @@ export function useWiringCanvasGraph(
       );
       if (exists) return;
 
+      useStore.getState().setAutoLayout(false);
       onWiringChange([
         ...wiring,
         {
@@ -160,21 +195,34 @@ export function useWiringCanvasGraph(
         },
       ]);
     },
-    [wiring, onWiringChange],
+    [wiring, onWiringChange, useStore],
   );
 
   const onEdgesDelete = useCallback(
     (deleted: Edge[]) => {
       const ids = new Set(deleted.map((e) => e.id));
+      useStore.getState().setAutoLayout(false);
       onWiringChange(wiring.filter((_w, i) => !ids.has(`wire-${i}`)));
     },
-    [wiring, onWiringChange],
+    [wiring, onWiringChange, useStore],
   );
+
+  // Put every node back into the dependency layout (same as the read-only
+  // diagram's Auto arrange) and keep arranging until the user moves nodes.
+  const autoArrange = useCallback(() => {
+    lastLayout.current = "";
+    useStore.getState().setAutoLayout(true);
+    // Already in auto mode: positions did not change, so just re-fit
+    requestAnimationFrame(() =>
+      fitView({ maxZoom: 1, padding: 0.2, duration: 300 }),
+    );
+  }, [useStore, fitView]);
 
   const handleDragOver = useCallback((e: DragEvent) => {
     if (
       e.dataTransfer.types.includes(DRAG_TYPE) ||
-      e.dataTransfer.types.includes(DRAG_TYPE_EXTERNAL)
+      e.dataTransfer.types.includes(DRAG_TYPE_EXTERNAL) ||
+      e.dataTransfer.types.includes(DRAG_TYPE_CONSTANT)
     ) {
       e.preventDefault();
       e.dataTransfer.dropEffect = "copy";
@@ -189,11 +237,7 @@ export function useWiringCanvasGraph(
         const template = JSON.parse(rawTemplate) as GenericTemplate;
         if (selectedIds.has(template.id)) return;
 
-        const { transform } = rfStore.getState();
-        const position = {
-          x: (e.clientX - transform[0]) / transform[2],
-          y: (e.clientY - transform[1]) / transform[2],
-        };
+        const position = screenToFlowPosition({ x: e.clientX, y: e.clientY });
         useStore.getState().setDropPosition(template.id, position);
         onTemplateAdd(template);
         return;
@@ -207,17 +251,25 @@ export function useWiringCanvasGraph(
         ) as WiringCanvasExternalTemplate;
         if (externalTemplateIds.has(extTemplate.id)) return;
 
-        const { transform } = rfStore.getState();
-        const position = {
-          x: (e.clientX - transform[0]) / transform[2],
-          y: (e.clientY - transform[1]) / transform[2],
-        };
+        const position = screenToFlowPosition({ x: e.clientX, y: e.clientY });
         useStore.getState().setDropPosition(`ext-${extTemplate.id}`, position);
         onExternalTemplateAdd(extTemplate);
+        return;
+      }
+
+      const constantType = e.dataTransfer.getData(DRAG_TYPE_CONSTANT);
+      if (constantType === "string" || constantType === "number") {
+        e.preventDefault();
+        const position = screenToFlowPosition({ x: e.clientX, y: e.clientY });
+        // Pick the id here so the node lands where it was dropped
+        const id = randomUUID();
+        useStore.getState().setDropPosition(`const-${id}`, position);
+        onConstantAdd(constantType, id);
       }
     },
     [
-      rfStore,
+      onConstantAdd,
+      screenToFlowPosition,
       onTemplateAdd,
       selectedIds,
       onExternalTemplateAdd,
@@ -231,6 +283,7 @@ export function useWiringCanvasGraph(
     onEdgesDelete,
     handleDragOver,
     handleDrop,
+    autoArrange,
     selectedIds,
     externalTemplateIds,
   };

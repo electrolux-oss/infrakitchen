@@ -1253,6 +1253,7 @@ class TestGetTree:
     async def test_get_tree_success(self, mock_resource_service, mock_resource_crud):
         raw_node = {
             "id": f"{uuid4()}",
+            "template_id": uuid4(),
             "name": "Test Resource",
             "state": "state",
             "status": "status",
@@ -1267,6 +1268,7 @@ class TestGetTree:
 
         mock_resource_crud.get_tree_to_parent.assert_awaited_once_with(RESOURCE_ID)
         assert result.name == "Test Resource"
+        assert result.template_id == raw_node["template_id"]
 
     @pytest.mark.asyncio
     async def test_get_tree_does_not_exist(self, mock_resource_service, mock_resource_crud):
@@ -1281,10 +1283,12 @@ class TestGetTree:
         # so D and E show up more than once.
         a, b, c, d, e = (uuid4() for _ in range(5))
         names = {a: "A", b: "B", c: "C", d: "D", e: "E"}
+        template_ids = {node_id: uuid4() for node_id in names}
 
         def row(node_id, link_id):
             return {
                 "id": node_id,
+                "template_id": template_ids[node_id],
                 "child_id": link_id,
                 "name": names[node_id],
                 "state": "state",
@@ -1305,6 +1309,7 @@ class TestGetTree:
         result = await mock_resource_service.get_tree(resource_id=RESOURCE_ID, direction="children")
 
         assert result.name == "A"
+        assert result.template_id == template_ids[a]
         assert [child.name for child in result.children] == ["B", "C"]
         for branch in result.children:
             assert [child.name for child in branch.children] == ["D"]

@@ -1,5 +1,6 @@
 const RESOURCE_TREE_NODE_FIELDS = `
   id
+  templateId
   nodeId
   name
   state
