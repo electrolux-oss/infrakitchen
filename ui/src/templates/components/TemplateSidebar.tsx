@@ -11,17 +11,22 @@ import { EditableDescriptionField } from "../../common/components/editors/Editab
 import { EditableNameField } from "../../common/components/editors/EditableNameField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import { MultiSelectEditor } from "../../common/components/editors/MultiSelectEditor";
-import { StringChips } from "../../common/components/editors/StringChips";
 import { StringTagEditor } from "../../common/components/editors/StringTagEditor";
-import { GetReferenceUrlValue } from "../../common/components/fields/CommonField";
+import {
+  CommonField,
+  EntityReference,
+} from "../../common/components/fields/CommonField";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import { StatusLabel } from "../../common/components/labels";
+import { Labels } from "../../common/components/labels/Labels";
 import { useConfig } from "../../common/context";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import { getProviderDisplayName, sameStringSet } from "../../common/utils";
+import { getProviderIcon } from "../../icons/Icons";
 import { IkEntity } from "../../types";
+import { Label } from "../../ui/Label";
 import { INTEGRATION_PROVIDER_OPTIONS } from "../constants";
 import { GqlTemplate } from "../graphql";
 import {
@@ -32,6 +37,22 @@ import { IntegrationProviderType, TemplateConfig } from "../types";
 
 import { NamingConventionInput } from "./NamingConventionInput";
 import { TemplateDocumentationField } from "./TemplateDocumentationField";
+
+/** Integration providers as label pills with their brand icon. */
+const ProviderLabels = ({ providers }: { providers: string[] }) => (
+  <div className="flex flex-wrap gap-1">
+    {providers.map((provider) => {
+      const ProviderIconComponent = getProviderIcon(provider);
+      return (
+        <Label
+          key={provider}
+          label={getProviderDisplayName(provider)}
+          icon={<ProviderIconComponent className="size-[1em]" />}
+        />
+      );
+    })}
+  </div>
+);
 
 export interface TemplateSidebarProps {
   template: GqlTemplate;
@@ -79,87 +100,15 @@ export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
           canEdit={canEdit}
           onSave={(value) => saveField({ description: value })}
         />
+        <CommonField
+          name="Status"
+          value={<StatusLabel status={template.status} />}
+          span="full"
+        />
         <EditableTagsField
           value={template.labels || []}
           canEdit={canEdit}
           onSave={(value) => saveField({ labels: value })}
-        />
-      </SidebarSection>
-
-      <SidebarSection title="Status">
-        <div className="col-span-full">
-          <div className="flex items-center gap-2">
-            <StatusLabel status={template.status} />
-          </div>
-        </div>
-      </SidebarSection>
-
-      <SidebarSection title="Relations">
-        <CommonEditableField<string[]>
-          name={"Parents"}
-          canEdit={canEdit}
-          value={template.parents?.map((parent) => parent.id) || []}
-          ariaLabel="Edit parents"
-          isEqual={sameStringSet}
-          display={
-            template.parents && template.parents.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {template.parents.map((parent, idx) => (
-                  <span key={parent.id || idx}>
-                    <GetReferenceUrlValue {...parent} />
-                  </span>
-                ))}
-              </div>
-            ) : null
-          }
-          onSave={(value) => saveField({ parents: value })}
-          renderEditor={({ value, onChange }) => (
-            <ArrayReferenceInput
-              ikApi={ikApi}
-              buffer={buffer}
-              setBuffer={setBuffer}
-              entity_name="templates"
-              value={value}
-              onChange={onChange}
-              ariaLabel="Parents"
-              placeholder="Select parent templates…"
-              multiple
-            />
-          )}
-          span="full"
-        />
-        <CommonEditableField<string[]>
-          name={"Children"}
-          canEdit={canEdit}
-          value={template.children?.map((child) => child.id) || []}
-          ariaLabel="Edit children"
-          isEqual={sameStringSet}
-          display={
-            template.children && template.children.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {template.children.map((child, idx) => (
-                  <span key={child.id || idx}>
-                    <GetReferenceUrlValue {...child} />
-                  </span>
-                ))}
-              </div>
-            ) : null
-          }
-          onSave={(value) => saveField({ children: value })}
-          renderEditor={({ value, onChange }) => (
-            <ArrayReferenceInput
-              ikApi={ikApi}
-              buffer={buffer}
-              setBuffer={setBuffer}
-              entity_name="templates"
-              value={value}
-              onChange={onChange}
-              ariaLabel="Children"
-              placeholder="Select child templates…"
-              multiple
-            />
-          )}
-          span="full"
         />
       </SidebarSection>
 
@@ -204,7 +153,7 @@ export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
           display={
             template.cloudResourceTypes &&
             template.cloudResourceTypes.length > 0 ? (
-              <StringChips values={template.cloudResourceTypes} />
+              <Labels margins={false} labels={template.cloudResourceTypes} />
             ) : (
               <PlaceholderText />
             )
@@ -234,11 +183,10 @@ export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
           display={
             (template.configuration?.one_resource_per_integration ?? [])
               .length ? (
-              <StringChips
-                values={
+              <ProviderLabels
+                providers={
                   template.configuration?.one_resource_per_integration ?? []
                 }
-                format={getProviderDisplayName}
               />
             ) : (
               <PlaceholderText />
@@ -271,12 +219,11 @@ export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
           display={
             (template.configuration?.allowed_provider_integration_types ?? [])
               .length ? (
-              <StringChips
-                values={
+              <ProviderLabels
+                providers={
                   template.configuration?.allowed_provider_integration_types ??
                   []
                 }
-                format={getProviderDisplayName}
               />
             ) : (
               <PlaceholderText />
@@ -307,8 +254,9 @@ export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
           display={
             (template.configuration?.required_configuration_variables ?? [])
               .length ? (
-              <StringChips
-                values={
+              <Labels
+                margins={false}
+                labels={
                   template.configuration?.required_configuration_variables ?? []
                 }
               />
@@ -325,6 +273,71 @@ export const TemplateSidebar = ({ template }: TemplateSidebarProps) => {
               onChange={onChange}
               label="Required Configuration Variables"
               helperText="Press Enter to add a variable name"
+            />
+          )}
+          span="full"
+        />
+      </SidebarSection>
+
+      <SidebarSection title="Relations">
+        <CommonEditableField<string[]>
+          name={"Parents"}
+          canEdit={canEdit}
+          value={template.parents?.map((parent) => parent.id) || []}
+          ariaLabel="Edit parents"
+          isEqual={sameStringSet}
+          display={
+            template.parents && template.parents.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {template.parents.map((parent, idx) => (
+                  <EntityReference key={parent.id || idx} {...parent} />
+                ))}
+              </div>
+            ) : null
+          }
+          onSave={(value) => saveField({ parents: value })}
+          renderEditor={({ value, onChange }) => (
+            <ArrayReferenceInput
+              ikApi={ikApi}
+              buffer={buffer}
+              setBuffer={setBuffer}
+              entity_name="templates"
+              value={value}
+              onChange={onChange}
+              ariaLabel="Parents"
+              placeholder="Select parent templates…"
+              multiple
+            />
+          )}
+          span="full"
+        />
+        <CommonEditableField<string[]>
+          name={"Children"}
+          canEdit={canEdit}
+          value={template.children?.map((child) => child.id) || []}
+          ariaLabel="Edit children"
+          isEqual={sameStringSet}
+          display={
+            template.children && template.children.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {template.children.map((child, idx) => (
+                  <EntityReference key={child.id || idx} {...child} />
+                ))}
+              </div>
+            ) : null
+          }
+          onSave={(value) => saveField({ children: value })}
+          renderEditor={({ value, onChange }) => (
+            <ArrayReferenceInput
+              ikApi={ikApi}
+              buffer={buffer}
+              setBuffer={setBuffer}
+              entity_name="templates"
+              value={value}
+              onChange={onChange}
+              ariaLabel="Children"
+              placeholder="Select child templates…"
+              multiple
             />
           )}
           span="full"

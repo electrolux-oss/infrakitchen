@@ -117,7 +117,7 @@ export const UserSidebar = ({ user }: UserSidebarProps) => {
         />
       </SidebarSection>
 
-      <SidebarSection title="Details">
+      <SidebarSection>
         <CommonField
           name="Created"
           value={<RelativeTime date={user.createdAt} />}

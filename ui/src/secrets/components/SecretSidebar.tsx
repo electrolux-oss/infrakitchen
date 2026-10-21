@@ -5,6 +5,7 @@ import {
 import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
+import { CommonField } from "../../common/components/fields/CommonField";
 import { StatusLabel } from "../../common/components/labels";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
@@ -41,6 +42,11 @@ export const SecretSidebar = ({ secret }: SecretSidebarProps) => {
           canEdit={canEdit}
           onSave={(value) => saveField({ description: value })}
         />
+        <CommonField
+          name="Status"
+          value={<StatusLabel status={secret.status} state={secret.state} />}
+          span="full"
+        />
         <EditableTagsField
           name="Secret Tags"
           editorLabel="Labels"
@@ -48,12 +54,6 @@ export const SecretSidebar = ({ secret }: SecretSidebarProps) => {
           canEdit={canEdit}
           onSave={(value) => saveField({ labels: value })}
         />
-      </SidebarSection>
-
-      <SidebarSection title="Status">
-        <div className="col-span-full">
-          <StatusLabel status={secret.status} state={secret.state} />
-        </div>
       </SidebarSection>
 
       <SidebarDetailsSection entity={secret} />

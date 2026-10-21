@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 
-import { Entity, PermissionWrapper } from "../../common";
+import { PermissionWrapper } from "../../common";
 import { SidebarSection } from "../../common/components/cards/EntitySidebar";
+import { InlineCode } from "../../common/components/code/InlineCode";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { InlineEditableFieldLock } from "../../common/components/editors/InlineEditableField";
 import {
   CommonField,
-  GetReferenceUrlValue,
+  EntityReference,
 } from "../../common/components/fields/CommonField";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
@@ -113,7 +114,7 @@ export const ResourceInfrastructureSection = ({
   };
 
   return (
-    <SidebarSection title="Infrastructure">
+    <SidebarSection title="Configuration">
       <CommonEditableField<string | null>
         name="Workspace"
         canEdit={canEdit}
@@ -122,7 +123,7 @@ export const ResourceInfrastructureSection = ({
         display={withPendingChange(
           resource.workspace ? (
             <div className="flex items-center gap-2">
-              <GetReferenceUrlValue {...resource.workspace} />
+              <EntityReference {...resource.workspace} />
               <PermissionWrapper
                 requiredPermission="api:resource"
                 permissionAction="admin"
@@ -130,12 +131,12 @@ export const ResourceInfrastructureSection = ({
                 <Tooltip title="Sync workspace">
                   <span>
                     <IconButton
-                      className="[&_svg]:text-[1.2rem]"
+                      className="size-7 opacity-40 hover:opacity-100 focus-visible:opacity-100"
                       size="small"
                       onClick={handleSync}
                       disabled={isSyncing}
                     >
-                      <HeroArrowPathRoundedSquareIcon />
+                      <HeroArrowPathRoundedSquareIcon fontSize="small" />
                     </IconButton>
                   </span>
                 </Tooltip>
@@ -172,10 +173,13 @@ export const ResourceInfrastructureSection = ({
           resource.integrationIds && resource.integrationIds.length > 0 ? (
             <div className="flex flex-col gap-1">
               {resource.integrationIds.map((integration) => (
-                <Entity
+                <EntityReference
                   key={integration.id}
-                  entity={integration}
-                  providerIconSize={18}
+                  id={integration.id}
+                  entityName="integration"
+                  name={integration.name}
+                  provider={integration.integrationProvider}
+                  urlProvider={integration.integrationProvider}
                 />
               ))}
             </div>
@@ -215,9 +219,12 @@ export const ResourceInfrastructureSection = ({
           resource.secretIds && resource.secretIds.length > 0 ? (
             <div className="flex flex-col gap-1">
               {resource.secretIds.map((secret) => (
-                <span key={secret.id}>
-                  <GetReferenceUrlValue {...secret} />
-                </span>
+                <div key={secret.id} className="flex items-center gap-2">
+                  <EntityReference
+                    {...secret}
+                    provider={secret.secretProvider}
+                  />
+                </div>
               ))}
             </div>
           ) : null,
@@ -252,7 +259,7 @@ export const ResourceInfrastructureSection = ({
             )}
             display={withPendingChange(
               resource.storage ? (
-                <GetReferenceUrlValue {...resource.storage} />
+                <EntityReference {...resource.storage} />
               ) : null,
               "storage_id",
             )}
@@ -291,7 +298,7 @@ export const ResourceInfrastructureSection = ({
               )}
               display={withPendingChange(
                 resource.storagePath ? (
-                  <span>{resource.storagePath}</span>
+                  <InlineCode>{resource.storagePath}</InlineCode>
                 ) : null,
                 "storage_path",
               )}
@@ -317,7 +324,7 @@ export const ResourceInfrastructureSection = ({
             name="Storage"
             value={withPendingChange(
               resource.storage ? (
-                <GetReferenceUrlValue {...resource.storage} />
+                <EntityReference {...resource.storage} />
               ) : null,
               "storage_id",
             )}
@@ -325,7 +332,12 @@ export const ResourceInfrastructureSection = ({
           />
           <CommonField
             name="Storage Path"
-            value={withPendingChange(resource.storagePath, "storage_path")}
+            value={withPendingChange(
+              resource.storagePath ? (
+                <InlineCode>{resource.storagePath}</InlineCode>
+              ) : null,
+              "storage_path",
+            )}
             span="full"
           />
         </>

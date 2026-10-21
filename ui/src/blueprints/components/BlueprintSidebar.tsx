@@ -1,5 +1,3 @@
-import { useNavigate } from "react-router";
-
 import {
   EntitySidebar,
   SidebarSection,
@@ -8,15 +6,14 @@ import { SidebarDetailsSection } from "../../common/components/cards/SidebarDeta
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableNameField } from "../../common/components/editors/EditableNameField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
-import { Entity } from "../../common/components/entities/Entity";
+import {
+  CommonField,
+  EntityReference,
+} from "../../common/components/fields/CommonField";
 import { Label, StatusLabel } from "../../common/components/labels";
-import { useConfig } from "../../common/context/ConfigContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
-import {
-  HeroCircleStackIcon,
-  HeroAdjustmentsHorizontalIcon,
-} from "../../icons";
+import { HeroAdjustmentsHorizontalIcon } from "../../icons";
 import { GqlBlueprint, UPDATE_BLUEPRINT_MUTATION } from "../graphql";
 import { BlueprintUpdateFieldInput } from "../graphql/mutations";
 
@@ -30,9 +27,7 @@ export interface BlueprintSidebarProps {
  * column can focus on its wiring and workflows.
  */
 export const BlueprintSidebar = ({ blueprint }: BlueprintSidebarProps) => {
-  const { linkPrefix } = useConfig();
   const { checkActionPermission } = usePermissionProvider();
-  const navigate = useNavigate();
 
   const canEdit = checkActionPermission("api:blueprint", "write");
 
@@ -63,6 +58,11 @@ export const BlueprintSidebar = ({ blueprint }: BlueprintSidebarProps) => {
           canEdit={canEdit}
           onSave={(value) => saveField({ description: value })}
         />
+        <CommonField
+          name="Status"
+          value={<StatusLabel status={blueprint.status} />}
+          span="full"
+        />
         <EditableTagsField
           value={blueprint.labels || []}
           canEdit={canEdit}
@@ -70,17 +70,11 @@ export const BlueprintSidebar = ({ blueprint }: BlueprintSidebarProps) => {
         />
       </SidebarSection>
 
-      <SidebarSection title="Status">
-        <div className="col-span-full">
-          <StatusLabel status={blueprint.status} />
-        </div>
-      </SidebarSection>
-
       <SidebarSection title="Templates" count={blueprint.templates.length}>
         <div className="col-span-full">
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap gap-2">
             {blueprint.templates.map((t) => (
-              <Entity key={t.id} entity={t} />
+              <EntityReference key={t.id} {...t} />
             ))}
           </div>
         </div>
@@ -94,13 +88,7 @@ export const BlueprintSidebar = ({ blueprint }: BlueprintSidebarProps) => {
           <div className="col-span-full">
             <div className="flex flex-wrap gap-2">
               {externalTemplates.map((t) => (
-                <Label
-                  key={t.id}
-                  label={t.name}
-                  tone="warning"
-                  icon={<HeroCircleStackIcon />}
-                  onClick={() => navigate(`${linkPrefix}templates/${t.id}`)}
-                />
+                <EntityReference key={t.id} {...t} tone="warning" />
               ))}
             </div>
           </div>

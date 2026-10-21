@@ -5,9 +5,9 @@ import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
-  TabCountLabel,
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
+import { CountLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { GoldenStateWidget } from "../../golden_state/GoldenStateWidget";
@@ -51,10 +51,7 @@ export const ProjectContent = () => {
           {
             label: "Services",
             tabLabel: (
-              <TabCountLabel
-                label="Services"
-                count={entity.servicesCount ?? 0}
-              />
+              <CountLabel label="Services" count={entity.servicesCount ?? 0} />
             ),
             content: <ProjectServices projectId={entity.id} />,
           },
@@ -63,7 +60,7 @@ export const ProjectContent = () => {
     {
       label: "Resources",
       tabLabel: (
-        <TabCountLabel label="Resources" count={entity.resourcesCount ?? 0} />
+        <CountLabel label="Resources" count={entity.resourcesCount ?? 0} />
       ),
       content: (
         <EntityResources

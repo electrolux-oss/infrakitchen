@@ -1,4 +1,5 @@
 export * from "./CodeRepository";
+export * from "./UnresolvedEntity";
 export * from "./Entity";
 export * from "./EntityActions";
 export * from "./EntityLink";

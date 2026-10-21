@@ -3,7 +3,7 @@ import { useState } from "react";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import {
   CommonField,
-  GetReferenceUrlValue,
+  EntityReference,
 } from "../../common/components/fields/CommonField";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { HeroLinkIcon } from "../../icons";
@@ -41,7 +41,7 @@ export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
                 {user.secondaryAccounts?.map((ent: GqlUserShort) => (
                   <CommonField
                     name={ent.identifier}
-                    value={<GetReferenceUrlValue {...ent} />}
+                    value={<EntityReference {...ent} />}
                     key={ent.id}
                   />
                 ))}
@@ -74,7 +74,7 @@ export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
                 {user.primaryAccount?.map((ent: GqlUserShort) => (
                   <CommonField
                     name={ent.identifier}
-                    value={<GetReferenceUrlValue {...ent} />}
+                    value={<EntityReference {...ent} />}
                     key={ent.id}
                   />
                 ))}

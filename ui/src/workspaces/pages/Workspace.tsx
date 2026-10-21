@@ -3,8 +3,8 @@ import { useParams } from "react-router";
 import { LogLiveTail } from "../../common";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { EntityProvider } from "../../common/context/EntityContext";
-import { HeroCodeBracketIcon } from "../../icons";
 import { WorkspaceActions } from "../components/WorkspaceActions";
 import { WorkspaceContent } from "../components/WorkspaceContent";
 import { WORKSPACE_DETAIL_FIELDS } from "../graphql";
@@ -19,7 +19,7 @@ export const WorkspacePage = () => {
       entityFields={WORKSPACE_DETAIL_FIELDS}
     >
       <EntityContainer
-        titleIcon={<HeroCodeBracketIcon />}
+        titleIcon={entityIcons.workspace}
         actions={
           <>
             <WorkspaceActions />

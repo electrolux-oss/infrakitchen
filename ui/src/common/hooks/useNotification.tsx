@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { ApiClientError } from "../../errors";
 import { Button } from "../../ui";
 import { SnackbarVariant, DependencyError } from "../components/notifications";
-import { ErrorWithStatusCode } from "../components/notifications/ErrorWithStatusCode";
+import { DefaultError } from "../components/notifications/DefaultError";
 
 const NotifyLinkButton = ({
   to,
@@ -110,7 +110,7 @@ export const notifyError = (error: unknown, options?: NotifyOptions) => {
   };
 
   if (error instanceof ApiClientError) {
-    const displayMessage = `${error.status} ${getMessage(error.message)}`;
+    const displayTitle = `Request failed (${error.status})`;
     const showDetailedToast = hasErrorDetails(error.metadata);
 
     if (error.error_code === "DEPENDENCY_ERROR" && showDetailedToast) {
@@ -118,7 +118,7 @@ export const notifyError = (error: unknown, options?: NotifyOptions) => {
         (id) => (
           <DependencyError
             id={id}
-            message={displayMessage}
+            title={`${error.status} ${getMessage(error.message)}`}
             metadata={error.metadata}
           />
         ),
@@ -129,9 +129,10 @@ export const notifyError = (error: unknown, options?: NotifyOptions) => {
 
     toast.custom(
       (id) => (
-        <ErrorWithStatusCode
+        <DefaultError
           id={id}
-          message={displayMessage}
+          title={displayTitle}
+          details={getMessage(error.message)}
           metadata={showDetailedToast ? error.metadata : undefined}
         />
       ),
@@ -143,9 +144,9 @@ export const notifyError = (error: unknown, options?: NotifyOptions) => {
   if (error instanceof Error) {
     toast.custom(
       (id) => (
-        <ErrorWithStatusCode
+        <DefaultError
           id={id}
-          message="Error"
+          title="Error"
           metadata={{ message: error.message }}
         />
       ),
@@ -156,9 +157,9 @@ export const notifyError = (error: unknown, options?: NotifyOptions) => {
 
   toast.custom(
     (id) => (
-      <ErrorWithStatusCode
+      <DefaultError
         id={id}
-        message="Error"
+        title="Error"
         metadata={{ message: "Request failed due to an unknown error." }}
       />
     ),

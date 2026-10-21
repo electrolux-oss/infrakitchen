@@ -5,7 +5,6 @@ import { useLocation, useNavigate, useParams } from "react-router";
 import { HeroChevronDownIcon } from "../../../icons";
 import { Menu, MenuItem, Tab, Tabs } from "../../../ui";
 import { usePermissionProvider } from "../../context";
-import { Label } from "../labels";
 
 import { useEntitySidebar } from "./EntitySidebar";
 
@@ -16,20 +15,6 @@ export interface TabDefinition {
   requiredPermission?: string;
   permissionAction?: "read" | "write" | "admin";
 }
-
-// Tab label with an info-tinted count pill, e.g. "Resources" [0].
-export const TabCountLabel = ({
-  label,
-  count,
-}: {
-  label: string;
-  count: number;
-}) => (
-  <div className="flex items-center gap-1.5">
-    {label}
-    <Label label={String(count)} />
-  </div>
-);
 
 interface TabbedContentProps {
   tabs: TabDefinition[];

@@ -12,7 +12,7 @@ import { EditableTagsField } from "../../common/components/editors/EditableTagsF
 import { CodeRepository } from "../../common/components/entities/CodeRepository";
 import {
   CommonField,
-  GetReferenceUrlValue,
+  EntityReference,
 } from "../../common/components/fields/CommonField";
 import { StatusLabel } from "../../common/components/labels";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
@@ -67,17 +67,16 @@ export const SourceCodeVersionSidebar = ({
           canEdit={canEdit}
           onSave={(value) => saveField({ description: value })}
         />
+        <CommonField
+          name="Status"
+          value={<StatusLabel status={source_code_version.status} />}
+          span="full"
+        />
         <EditableTagsField
           value={source_code_version.labels || []}
           canEdit={canEdit}
           onSave={(value) => saveField({ labels: value })}
         />
-      </SidebarSection>
-
-      <SidebarSection title="Status">
-        <div className="col-span-full">
-          <StatusLabel status={source_code_version.status} />
-        </div>
         <CommonEditableField<string>
           name="Lifecycle State"
           canEdit={canEdit}
@@ -141,7 +140,7 @@ export const SourceCodeVersionSidebar = ({
           name="Template"
           value={
             source_code_version.template ? (
-              <GetReferenceUrlValue {...source_code_version.template} />
+              <EntityReference {...source_code_version.template} />
             ) : null
           }
           span="full"

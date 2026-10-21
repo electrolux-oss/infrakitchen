@@ -8,6 +8,7 @@ from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 from core.permissions.model import Permission
 from graphql_api.modules.user.converters import get_user_type_loader
 from graphql_api.modules.user.types import UserType
+from graphql_api.dataloaders.entity_loaders import load_entity_data
 
 
 permission_mapper = StrawberrySQLAlchemyMapper()
@@ -37,10 +38,7 @@ class PermissionType:
         if entity_id == "*":
             return None
 
-        loader = info.context["loaders"].get(entity)
-        if loader is None:
-            return None
-        return await loader.load(entity_id)
+        return await load_entity_data(info, entity, entity_id)
 
     @strawberry.field
     async def user_data(self, info: Info) -> UserType | None:

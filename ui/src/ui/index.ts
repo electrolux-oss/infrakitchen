@@ -28,6 +28,7 @@ export * from "./Popover";
 export * from "./Progress";
 export * from "./Radio";
 export * from "./RemovableLabel";
+export * from "./StepNumber";
 export * from "./Select";
 export * from "./Spinner";
 export * from "./Switch";

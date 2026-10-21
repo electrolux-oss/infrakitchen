@@ -5,9 +5,9 @@ import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
-  TabCountLabel,
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
+import { CountLabel } from "../../common/components/labels";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityExecutors } from "../../executors/components/EntityExecutors";
 import { EntityResources } from "../../resources/components/EntityResources";
@@ -33,7 +33,7 @@ export const StorageContent = () => {
     {
       label: "Resources",
       tabLabel: (
-        <TabCountLabel label="Resources" count={entity.resourcesCount ?? 0} />
+        <CountLabel label="Resources" count={entity.resourcesCount ?? 0} />
       ),
       content: (
         <EntityResources
@@ -45,7 +45,7 @@ export const StorageContent = () => {
     {
       label: "Executors",
       tabLabel: (
-        <TabCountLabel label="Executors" count={entity.executorsCount ?? 0} />
+        <CountLabel label="Executors" count={entity.executorsCount ?? 0} />
       ),
       content: (
         <EntityExecutors

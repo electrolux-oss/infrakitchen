@@ -5,6 +5,7 @@ import strawberry
 
 from core.tasks.model import TaskEntity
 from graphql_api.modules.user.types import UserType
+from graphql_api.dataloaders.entity_loaders import load_entity_data
 
 
 task_mapper = StrawberrySQLAlchemyMapper()
@@ -22,10 +23,7 @@ class TaskType:
 
     @strawberry.field
     async def entity_data(self, info: Info) -> JSON | None:
-        loader = info.context["loaders"].get(self.entity)
-        if loader is None:
-            return None
-        return await loader.load(str(self.entity_id))
+        return await load_entity_data(info, self.entity, str(self.entity_id))
 
     creator: UserType | None = None
 

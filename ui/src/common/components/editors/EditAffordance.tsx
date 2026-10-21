@@ -36,7 +36,7 @@ export const EditAffordance = ({
     <IconButton
       className={cn(
         "[transition:opacity_0.15s_ease-in-out,_background-color_0.15s_ease-in-out,_border-color_0.15s_ease-in-out]",
-        "size-5 shrink-0 border border-transparent bg-transparent p-0 hover:border-divider hover:bg-hover hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100",
+        "size-7 shrink-0 hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100",
         revealOnHover ? "opacity-0" : "opacity-40",
         className,
       )}
@@ -45,7 +45,7 @@ export const EditAffordance = ({
       disabled={disabled}
       aria-label={ariaLabel}
     >
-      <HeroPencilSquareIcon className="text-[16px]" />
+      <HeroPencilSquareIcon fontSize="small" />
     </IconButton>
   );
 

@@ -1,3 +1,4 @@
+export * from "./CountLabel";
 export * from "./EntityStatusChip";
 export * from "../../../ui/Label";
 export * from "./Labels";

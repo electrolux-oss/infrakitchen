@@ -4,6 +4,8 @@ import {
   Entity,
   humanizeEntityType,
 } from "../../common/components/entities/Entity";
+import { entityIcons } from "../../common/components/entities/entityIcons";
+import { UnresolvedEntity } from "../../common/components/entities/UnresolvedEntity";
 import { UserAvatar } from "../../common/components/entities/UserAvatar";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
@@ -20,7 +22,7 @@ import { GqlAuditLog } from "../graphql";
 import { getAuditLogEntity } from "../utils/auditLogEntity";
 
 import { AuditExecutionResult } from "./AuditExecutionResult";
-import { DeletedEntityCell, DeniedEntityCell } from "./DeletedEntityCell";
+import { DeniedEntityCell } from "./DeniedEntityCell";
 
 /**
  * Merges the actor avatar with the relative time: an audit row reads as
@@ -121,7 +123,11 @@ export const auditLogColumns: EntityTableColumn[] = [
           <span className="font-mono text-caption break-all text-fg-muted">
             {params.row.entityId}
           </span>
-          <Label size="small" label={humanizeEntityType(params.row.model)} />
+          <Label
+            size="small"
+            label={humanizeEntityType(params.row.model)}
+            icon={entityIcons[params.row.model]}
+          />
         </div>
       ) : null;
       // Only chip the 1st row when it adds the nested template's name;
@@ -151,7 +157,7 @@ export const auditLogColumns: EntityTableColumn[] = [
           {uuidLine}
         </div>
       ) : (
-        <DeletedEntityCell
+        <UnresolvedEntity
           entityId={params.row.entityId}
           entityType={params.row.model}
           reason={unresolved ?? "deleted"}

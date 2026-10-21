@@ -6,6 +6,7 @@ import { SidebarDetailsSection } from "../../common/components/cards/SidebarDeta
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableNameField } from "../../common/components/editors/EditableNameField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
+import { CommonField } from "../../common/components/fields/CommonField";
 import { StatusLabel } from "../../common/components/labels";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
@@ -47,17 +48,16 @@ export const WorkspaceSidebar = ({ workspace }: WorkspaceSidebarProps) => {
           canEdit={canEdit}
           onSave={(value) => saveField({ description: value })}
         />
+        <CommonField
+          name="Status"
+          value={<StatusLabel status={workspace.status} />}
+          span="full"
+        />
         <EditableTagsField
           value={workspace.labels || []}
           canEdit={canEdit}
           onSave={(value) => saveField({ labels: value })}
         />
-      </SidebarSection>
-
-      <SidebarSection title="Status">
-        <div className="col-span-full">
-          <StatusLabel status={workspace.status} />
-        </div>
       </SidebarSection>
 
       <SidebarDetailsSection

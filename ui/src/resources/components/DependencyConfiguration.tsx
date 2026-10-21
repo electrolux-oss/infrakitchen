@@ -4,7 +4,7 @@ import { BaseCard } from "../../common/components/cards/BaseCard";
 import { EditAffordance } from "../../common/components/editors/EditAffordance";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import TagInput from "../../common/components/inputs/TagInput";
-import { Label } from "../../common/components/labels";
+import { CountLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
@@ -158,9 +158,8 @@ export const DependencyConfiguration = ({
   };
 
   const renderSectionHeader = (label: string, count: number) => (
-    <div className="mb-2 flex items-center gap-2">
-      <p className="m-0 text-body2 font-semibold">{label}</p>
-      <Label label={String(count)} />
+    <div className="mb-2 text-body2 font-semibold">
+      <CountLabel label={label} count={count} />
     </div>
   );
 

@@ -3,12 +3,13 @@ import { useParams, useNavigate } from "react-router";
 import { useConfig } from "../../common";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { EntityStatusChip, Label } from "../../common/components/labels";
 import {
   EntityProvider,
   useEntityProvider,
 } from "../../common/context/EntityContext";
-import { HeroPlusCircleIcon, HeroSquare3Stack3DIcon } from "../../icons";
+import { HeroPlusCircleIcon } from "../../icons";
 import { Button, Tooltip } from "../../ui";
 import { ENTITY_STATUS } from "../../utils/constants";
 import { TemplateContent } from "../components/TemplateContent";
@@ -48,7 +49,7 @@ const TemplatePageContent = () => {
 
   return (
     <EntityContainer
-      titleIcon={<HeroSquare3Stack3DIcon />}
+      titleIcon={entityIcons.template}
       titleAdornment={
         entity?.abstract ? (
           <>

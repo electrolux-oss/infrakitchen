@@ -3,12 +3,12 @@ import { useParams } from "react-router";
 import { LogLiveTail } from "../../common";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import {
   EntityProvider,
   useEntityProvider,
 } from "../../common/context/EntityContext";
 import { getRepoNameFromUrl } from "../../common/utils";
-import { HeroCodeBracketSquareIcon } from "../../icons";
 import { TASK_QUEUE_STATUS_SELECTION } from "../../workers/graphql";
 import { SourceCodeContent } from "../components/SourceCodeContent";
 import { SOURCE_CODE_DETAIL_FIELDS } from "../graphql";
@@ -37,7 +37,7 @@ const SourceCodePageContent = () => {
     // Code repositories are headed by the repository name from their URL, as
     // the overview card was.
     <EntityContainer
-      titleIcon={<HeroCodeBracketSquareIcon />}
+      titleIcon={entityIcons.source_code}
       title={
         entity?.sourceCodeUrl
           ? getRepoNameFromUrl(entity.sourceCodeUrl)

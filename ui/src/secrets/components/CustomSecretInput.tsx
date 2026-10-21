@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 
 import { deleteIconButtonClass } from "../../common/components/buttons/deleteIconButtonClass";
-import { Label } from "../../common/components/labels";
+import { CountLabel } from "../../common/components/labels";
 import { dashedAddButtonClass } from "../../common/utils/dashedAddButton";
 import { HeroPlusCircleIcon } from "../../icons";
 import { HeroTrashIcon } from "../../icons";
@@ -49,9 +49,8 @@ const CustomSecretInput = forwardRef<any, CustomSecretInputProps>(
       <div className="mt-4 px-4">
         {!hideHeader && (
           /* Section header: label, entry count */
-          <div className="mb-2 flex items-center gap-2">
-            <p className="m-0 text-body2 font-semibold">{label}</p>
-            <Label label={String(currentValue.length)} />
+          <div className="mb-2 text-body2 font-semibold">
+            <CountLabel label={label} count={currentValue.length} />
           </div>
         )}
 

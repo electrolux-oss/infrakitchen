@@ -1,3 +1,4 @@
+import type { EntityRecord } from "../../common/components/entities/Entity";
 import { GqlUserShort } from "../../users/graphql";
 import { NotificationChannel } from "../types";
 
@@ -73,4 +74,7 @@ type GqlUserNotificationFieldTypes = {
 export type GqlUserNotification = Pick<
   GqlUserNotificationFieldTypes,
   UserNotificationGraphqlBaseField
->;
+> & {
+  entityData?: EntityRecord | null;
+  entityLoaderMissing?: boolean;
+};

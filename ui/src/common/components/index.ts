@@ -2,7 +2,6 @@ export * from "./code";
 export * from "./dialogs";
 export * from "./editors/CommonEditableField";
 export * from "./editors/MultiSelectEditor";
-export * from "./editors/StringChips";
 export * from "./editors/StringTagEditor";
 export * from "./entities";
 export * from "./entity_table";

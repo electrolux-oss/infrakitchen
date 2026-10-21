@@ -1,7 +1,7 @@
 import { OverviewCard } from "../../common/components/cards/OverviewCard";
 import {
   CommonField,
-  GetReferenceUrlValue,
+  EntityReference,
 } from "../../common/components/fields/CommonField";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { PermissionResponse } from "../types";
@@ -16,7 +16,7 @@ export const getPermissionReference = (text: any) => {
   }
   if (text.startsWith("resource:")) {
     return (
-      <GetReferenceUrlValue
+      <EntityReference
         entityName="resource"
         name="resource"
         id={text.slice(9)}

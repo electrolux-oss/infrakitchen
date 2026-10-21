@@ -1,6 +1,7 @@
 import { createContext, ReactNode, useContext } from "react";
 
-import { Card, Label } from "../../../ui";
+import { Card } from "../../../ui";
+import { CountLabel } from "../labels/CountLabel";
 
 export interface EntitySidebarLayoutProps {
   /** Page content; must include a TabbedContent, which renders the sidebar. */
@@ -46,14 +47,14 @@ export const EntitySidebar = ({ ariaLabel, children }: EntitySidebarProps) => (
 );
 
 export interface SidebarSectionProps {
-  title: string;
+  title?: string;
   count?: number;
   /** Optional control rendered flush to the right of the section title. */
   action?: ReactNode;
   children: ReactNode;
 }
 
-/** Titled group of sidebar fields, separated from the next by a divider. */
+/** Group of sidebar fields, optionally titled, separated from the next by a divider. */
 export const SidebarSection = ({
   title,
   count,
@@ -61,16 +62,21 @@ export const SidebarSection = ({
   children,
 }: SidebarSectionProps) => (
   <section className="p-4 [&:not(:last-of-type)]:border-b [&:not(:last-of-type)]:border-divider">
-    <div
-      // Keep the title baseline steady whether or not an action is present.
-      className="mb-3 flex min-h-8 items-center justify-between gap-2"
-    >
-      <h3 className="m-0 flex items-center gap-2 text-[0.875rem] font-semibold text-fg-muted">
-        {title}
-        {count !== undefined && <Label label={count} />}
-      </h3>
-      {action}
-    </div>
+    {(title !== undefined || action) && (
+      <div
+        // Keep the title baseline steady whether or not an action is present.
+        className="mb-3 flex min-h-8 items-center justify-between gap-2"
+      >
+        <h3 className="m-0 text-[0.875rem] font-semibold text-fg-muted">
+          {count !== undefined ? (
+            <CountLabel label={title ?? ""} count={count} />
+          ) : (
+            title
+          )}
+        </h3>
+        {action}
+      </div>
+    )}
     <div className="grid grid-cols-2 gap-3">{children}</div>
   </section>
 );

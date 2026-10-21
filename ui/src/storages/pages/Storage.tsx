@@ -3,8 +3,8 @@ import { useParams } from "react-router";
 import { LogLiveTail } from "../../common";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { EntityProvider } from "../../common/context/EntityContext";
-import { HeroServerStackIcon } from "../../icons";
 import { TASK_QUEUE_STATUS_SELECTION } from "../../workers/graphql";
 import { StorageContent } from "../components/StorageContent";
 import { STORAGE_DETAIL_FIELDS } from "../graphql";
@@ -22,7 +22,7 @@ export const StoragePage = () => {
       entityFields={PAGE_FIELDS}
     >
       <EntityContainer
-        titleIcon={<HeroServerStackIcon />}
+        titleIcon={entityIcons.storage}
         actions={<EntityRefreshButton />}
       >
         <StorageContent />

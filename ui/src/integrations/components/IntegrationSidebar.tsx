@@ -53,17 +53,16 @@ export const IntegrationSidebar = ({
           canEdit={canEdit}
           onSave={(value) => saveField({ description: value })}
         />
+        <CommonField
+          name="Status"
+          value={<StatusLabel status={integration.status} />}
+          span="full"
+        />
         <EditableTagsField
           value={integration.labels || []}
           canEdit={canEdit}
           onSave={(value) => saveField({ labels: value })}
         />
-      </SidebarSection>
-
-      <SidebarSection title="Status">
-        <div className="col-span-full">
-          <StatusLabel status={integration.status} />
-        </div>
         <CommonField
           name="Provider"
           value={getProviderValue(integration.integrationProvider, 18)}

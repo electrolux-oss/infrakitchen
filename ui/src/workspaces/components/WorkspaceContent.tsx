@@ -5,9 +5,9 @@ import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
-  TabCountLabel,
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
+import { CountLabel } from "../../common/components/labels";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
 
@@ -31,7 +31,7 @@ export const WorkspaceContent = () => {
     {
       label: "Resources",
       tabLabel: (
-        <TabCountLabel label="Resources" count={entity.resourcesCount ?? 0} />
+        <CountLabel label="Resources" count={entity.resourcesCount ?? 0} />
       ),
       content: (
         <EntityResources

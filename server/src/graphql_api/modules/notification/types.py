@@ -6,6 +6,7 @@ from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
 from core.notifications.model import Subscription, NotificationPreference, UserNotification
 from graphql_api.modules.user.types import UserType
+from graphql_api.dataloaders.entity_loaders import has_entity_loader, load_entity_data
 
 
 subscription_mapper = StrawberrySQLAlchemyMapper()
@@ -22,13 +23,7 @@ class SubscriptionType:
 
     @strawberry.field
     async def entity_data(self, info: Info) -> JSON | None:
-        if self.entity_id is None or self.entity_type is None:
-            return None
-
-        loader = info.context["loaders"].get(self.entity_type)
-        if loader is None:
-            return None
-        return await loader.load(str(self.entity_id))
+        return await load_entity_data(info, self.entity_type, self.entity_id)
 
 
 @notification_preference_mapper.type(NotificationPreference)
@@ -43,6 +38,15 @@ class UserNotificationType:
 
     id: uuid.UUID = strawberry.UNSET
     entity_id: str | None = None
+    entity_type: str | None = None
+
+    @strawberry.field
+    async def entity_data(self, info: Info) -> JSON | None:
+        return await load_entity_data(info, self.entity_type, self.entity_id)
+
+    @strawberry.field
+    def entity_loader_missing(self, info: Info) -> bool:
+        return not has_entity_loader(info, self.entity_type)
 
 
 subscription_mapper.finalize()

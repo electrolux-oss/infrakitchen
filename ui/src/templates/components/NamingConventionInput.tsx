@@ -121,10 +121,9 @@ export const NamingConventionInput = ({
   );
 
   return (
-    <div className="mt-2">
+    <div>
       <TextField
         inputRef={inputRef}
-        label="Naming Convention Pattern"
         value={value ?? ""}
         onChange={handleChange}
         error={error}
@@ -133,7 +132,6 @@ export const NamingConventionInput = ({
           "Pattern for resource names. Use {variable_name} as placeholders. E.g. {project}-{env}-{region}"
         }
         fullWidth
-        margin="normal"
         inputProps={{ "aria-label": "Naming convention pattern" }}
       />
       {/* Available variables */}
@@ -157,7 +155,7 @@ export const NamingConventionInput = ({
             <span className="mb-0.5 block text-caption text-fg-muted">
               Input variables:
             </span>
-            <div className="inline-flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1">
               {configs.map((config) => (
                 <Tooltip
                   key={config.name}
@@ -184,7 +182,7 @@ export const NamingConventionInput = ({
                 <span className="mb-0.5 block text-caption text-fg-muted">
                   Parent <strong>{group.parentName}</strong> outputs:
                 </span>
-                <div className="inline-flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1">
                   {group.outputs.map((output) => (
                     <Tooltip
                       key={output.name}

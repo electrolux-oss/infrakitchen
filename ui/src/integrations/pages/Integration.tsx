@@ -5,13 +5,14 @@ import { useParams } from "react-router";
 import { LogLiveTail, PermissionWrapper, useConfig } from "../../common";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { EntityStatusChip } from "../../common/components/labels/EntityStatusChip";
 import {
   EntityProvider,
   useEntityProvider,
 } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { HeroCheckBadgeIcon, HeroPuzzlePieceIcon } from "../../icons";
+import { HeroCheckBadgeIcon } from "../../icons";
 import { Button } from "../../ui";
 import { Label } from "../../ui/Label";
 import { IntegrationContent } from "../components/IntegrationContent";
@@ -80,7 +81,7 @@ export const IntegrationPage = () => {
       entityFields={INTEGRATION_DETAILS_FIELDS}
     >
       <EntityContainer
-        titleIcon={<HeroPuzzlePieceIcon />}
+        titleIcon={entityIcons.integration}
         titleAdornment={
           <>
             <IntegrationHeaderTypeLabel />

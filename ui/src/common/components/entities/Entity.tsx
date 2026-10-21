@@ -9,6 +9,7 @@ import { cn } from "../../../utils/cn";
 import VersionLifecycleStateChip from "../../VersionLifecycleStateChip";
 
 import { CodeRepository } from "./CodeRepository";
+import { entityIcons } from "./entityIcons";
 import { EntityLink } from "./EntityLink";
 import { UserAvatar } from "./UserAvatar";
 
@@ -257,7 +258,12 @@ export const Entity = ({
   }
   const label =
     showLabel && tagLabel ? (
-      <Label className="Entity-typeLabel" size="small" label={tagLabel} />
+      <Label
+        className="Entity-typeLabel"
+        size="small"
+        label={tagLabel}
+        icon={entityIcons[entityType ?? ""]}
+      />
     ) : null;
   const contentRow = "flex min-w-0 items-center gap-1.5";
 
