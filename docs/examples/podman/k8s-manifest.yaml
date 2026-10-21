@@ -1,4 +1,11 @@
 ---
+# ServiceAccount for InfraKitchen
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: <SERVICE_ACCOUNT_NAME>
+  namespace: infrakitchen
+---
 # Service for InfraKitchen backend
 apiVersion: v1
 kind: Service
