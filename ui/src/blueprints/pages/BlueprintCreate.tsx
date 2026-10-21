@@ -107,6 +107,8 @@ export const BlueprintCreatePage = () => {
   return (
     <PageContainer
       title="Create Blueprint"
+      description="Fill in the details, drag templates from the library onto the canvas, then wire outputs to inputs."
+      fill
       bottomActions={
         <>
           <Button onClick={() => navigate(`${linkPrefix}blueprints`)}>

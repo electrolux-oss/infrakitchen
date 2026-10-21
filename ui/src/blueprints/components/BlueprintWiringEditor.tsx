@@ -152,6 +152,7 @@ export const BlueprintWiringEditor = ({
   return (
     <div className="flex flex-col gap-4">
       <WiringCanvas
+        className="h-[70vh] min-h-[520px]"
         selectedTemplates={form.selectedTemplates}
         wiring={form.currentWiring}
         onWiringChange={(newWiring: WiringRule[]) =>

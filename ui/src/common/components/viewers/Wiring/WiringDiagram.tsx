@@ -1,129 +1,136 @@
-import { useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import {
-  Background,
-  Controls,
-  ReactFlow,
-  type ReactFlowInstance,
-} from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
-import { useShallow } from "zustand/react/shallow";
+import { ReactFlowProvider } from "@xyflow/react";
 
-import {
-  HeroArrowsPointingInIcon,
-  HeroArrowsPointingOutIcon,
-  HeroSquares2X2Icon,
-} from "../../../../icons";
-import {
-  IconButton,
-  Tooltip,
-  Dialog,
-  DialogContent,
-  useColorScheme,
-} from "../../../../ui";
 import { cn } from "../../../../utils/cn";
 import { useFillViewportHeight } from "../../../hooks/useFillViewportHeight";
 
-import { ConstantNode } from "./ConstantNode";
-import { ExternalNode } from "./ExternalNode";
-import { DiagramNode } from "./helpers";
-import { computeDiagramLayout } from "./layout";
-import { TemplateNode } from "./TemplateNode";
-import { GenericStep, GenericTemplate, WiringRule } from "./types";
 import {
-  buildEdges,
-  buildNodes,
-  createWiringCanvasStore,
-  type WiringCanvasState,
-} from "./useWiringCanvasStore";
-import { TemplatePorts } from "./WiringCanvas.types";
+  CanvasGrid,
+  FlowZoomToolbar,
+  paintGrid,
+  PortLegend,
+  ViewToolbar,
+  wireEndsOf,
+} from "./CanvasChrome";
+import {
+  describeGraph,
+  layoutSignature,
+  NodeSpec,
+  NodeStep,
+  WireSpec,
+} from "./graph";
+import { computeDiagramLayout } from "./layout";
+import { GenericStep, GenericTemplate, WiringRule } from "./types";
+import { WirePopover } from "./WirePopover";
+import { ConstantType, TemplatePorts } from "./WiringCanvas.types";
+import {
+  SelectedWire,
+  WiringEditor,
+  WiringEditorHandlers,
+  WiringFlow,
+} from "./WiringFlow";
 
 const DEFAULT_HEIGHT = 600;
 const MIN_FILL_HEIGHT = 400;
 // Room kept below a "fill" canvas for the enclosing card and page padding.
 const FILL_BOTTOM_OFFSET = 88;
-const EMPTY_CONSTANTS: Array<{ id: string; name: string }> = [];
 
-/**
- * Derives input/output port names for every node from the wiring rules.
- */
+interface DiagramConstant {
+  id: string;
+  name: string;
+  type?: string;
+  defaultValue?: string;
+}
+
+interface DiagramExternalTemplate {
+  id: string;
+  name: string;
+  /** The existing resource used as the parent, in workflow mode. */
+  resource?: { id: string; name?: string; status?: string } | null;
+}
+
+const EMPTY_CONSTANTS: DiagramConstant[] = [];
+
+const Flow = memo(WiringFlow);
+
+/** Wire colour by the status of the step that produces its value. */
+const STEP_WIRE_COLOR: Record<string, string> = {
+  done: "var(--color-success)",
+  error: "var(--color-error)",
+  in_progress: "var(--color-info)",
+};
+const PENDING_WIRE_COLOR = "var(--color-grey-500)";
+
+/** Port names of every node, taken from the wiring alone. */
 function derivePorts(
-  templates: GenericTemplate[],
-  externalTemplates: Array<{ id: string; name: string }>,
-  constants: Array<{ id: string; name: string }>,
+  nodeIds: string[],
+  constants: DiagramConstant[],
   wiring: WiringRule[],
 ): Record<string, TemplatePorts> {
-  const m: Record<
-    string,
-    { inputs: Set<string>; outputs: Set<string>; configs: Set<string> }
-  > = {};
-  const ensure = (id: string) => {
-    if (!m[id])
-      m[id] = { inputs: new Set(), outputs: new Set(), configs: new Set() };
-  };
-
-  for (const t of templates) ensure(t.id);
-  for (const e of externalTemplates) ensure(e.id);
-  for (const c of constants) ensure(c.id);
-
-  const constantIdSet = new Set(constants.map((c) => c.id));
-
-  for (const w of wiring) {
-    const isConstant = constantIdSet.has(w.source_template_id);
-
-    if (isConstant) {
-      const c = constants.find((c) => c.id === w.source_template_id);
-      m[w.source_template_id]?.outputs.add(c?.name ?? "value");
-    } else if (w.source_type === "dependency_config") {
-      m[w.source_template_id]?.configs.add(w.source_output);
-    } else {
-      m[w.source_template_id]?.outputs.add(w.source_output);
-    }
-
-    ensure(w.target_template_id);
-    if (w.target_type === "dependency_config") {
-      m[w.target_template_id]?.configs.add(w.target_variable);
-    } else {
-      m[w.target_template_id]?.inputs.add(w.target_variable);
-    }
-  }
-
-  return Object.fromEntries(
-    Object.entries(m).map(([id, sets]) => [
+  const sets = new Map(
+    nodeIds.map((id) => [
       id,
       {
-        inputs: [...sets.inputs],
-        outputs: [...sets.outputs],
-        configs: [...sets.configs],
+        inputs: new Set<string>(),
+        outputs: new Set<string>(),
+        configs: new Set<string>(),
+      },
+    ]),
+  );
+  const constantIds = new Set(constants.map((c) => c.id));
+  for (const w of wiring) {
+    const source = sets.get(w.source_template_id);
+    const target = sets.get(w.target_template_id);
+    if (source && !constantIds.has(w.source_template_id)) {
+      if (w.source_type === "dependency_config") {
+        source.configs.add(w.source_output);
+      } else source.outputs.add(w.source_output);
+    }
+    if (target) {
+      if (w.target_type === "dependency_config") {
+        target.configs.add(w.target_variable);
+      } else target.inputs.add(w.target_variable);
+    }
+  }
+  return Object.fromEntries(
+    [...sets].map(([id, s]) => [
+      id,
+      {
+        inputs: [...s.inputs],
+        outputs: [...s.outputs],
+        configs: [...s.configs],
       },
     ]),
   );
 }
 
-const NODE_TYPES = {
-  templateNode: TemplateNode,
-  externalTemplateNode: ExternalNode,
-  constantNode: ConstantNode,
-};
-
 export interface WiringDiagramProps {
   templates: GenericTemplate[];
   wiring: WiringRule[];
-  externalTemplates: Array<{ id: string; name: string }>;
-  constants?: Array<{ id: string; name: string }>;
+  externalTemplates: DiagramExternalTemplate[];
+  constants?: DiagramConstant[];
   /** Canvas height in px, or "fill" to take the rest of the viewport. */
   height?: number | "fill";
   /**
-   * Workflow steps - when provided, enables workflow mode:
-   * status-coloured nodes/edges, resource links, selectable nodes,
-   * and external templates are auto-derived from the wiring.
+   * Workflow steps. When given, nodes show their run status, resource and
+   * error, wires are coloured by the status of their source step, and the
+   * layout follows the step order.
    */
   steps?: GenericStep[];
-  /** Show a fullscreen toggle button. */
+  /** Show a full screen button. */
   allowFullscreen?: boolean;
 }
 
-export const WiringDiagram = ({
+/** Read-only view of a blueprint's or workflow's wiring. */
+export const WiringDiagram = (props: WiringDiagramProps) => (
+  // The zoom toolbar and wire popover read the view from the flow store
+  <ReactFlowProvider>
+    <WiringDiagramInner {...props} />
+  </ReactFlowProvider>
+);
+
+const WiringDiagramInner = ({
   templates,
   wiring,
   externalTemplates,
@@ -132,9 +139,11 @@ export const WiringDiagram = ({
   steps,
   allowFullscreen = false,
 }: WiringDiagramProps) => {
-  const { resolvedMode: mode } = useColorScheme();
   const [fullscreen, setFullscreen] = useState(false);
-  const [flow, setFlow] = useState<ReactFlowInstance<DiagramNode>>();
+  const [wire, setWire] = useState<SelectedWire | null>(null);
+  const [editor, setEditor] = useState<WiringEditor | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const lastLayout = useRef("");
 
   const { ref: fillRef, height: fillHeight } = useFillViewportHeight({
     enabled: height === "fill",
@@ -144,24 +153,84 @@ export const WiringDiagram = ({
   const canvasHeight =
     height === "fill" ? (fillHeight ?? DEFAULT_HEIGHT) : height;
 
-  const isWorkflowMode = steps !== undefined;
-
-  // Build template-id -> step lookup for O(1) access in builders.
   const stepByTemplate = useMemo(() => {
     if (!steps) return undefined;
     const m = new Map<string, GenericStep>();
-    for (const s of steps) {
-      if (s.template_id) m.set(s.template_id, s);
-    }
+    for (const s of steps) if (s.template_id) m.set(s.template_id, s);
     return m;
   }, [steps]);
 
-  const templatePorts = useMemo(
-    () => derivePorts(templates, externalTemplates, constants, wiring),
-    [templates, externalTemplates, constants, wiring],
+  const graph = useMemo(() => {
+    const templatePorts = derivePorts(
+      [...templates, ...externalTemplates].map((t) => t.id),
+      constants,
+      wiring,
+    );
+    const described = describeGraph({
+      selectedTemplates: templates,
+      externalTemplates,
+      constants: constants.map((c) => ({
+        id: c.id,
+        name: c.name,
+        type: (c.type === "number" ? "number" : "string") as ConstantType,
+        defaultValue: c.defaultValue,
+      })),
+      templatePorts,
+      wiring,
+    });
+
+    const order = new Map(templates.map((t, i) => [t.id, i + 1]));
+    const resourceOf = new Map(
+      externalTemplates.map((t) => [t.id, t.resource]),
+    );
+    const nodes: NodeSpec[] = described.nodes.map((n) => {
+      let step: NodeStep | undefined;
+      if (n.kind === "template") {
+        const s = stepByTemplate?.get(n.entityId);
+        step = {
+          order: order.get(n.entityId),
+          status: s?.status,
+          errorMessage: s?.error_message,
+          resourceId: s?.resource_id,
+          resourceName: s?.resource?.name,
+        };
+      } else if (n.kind === "external") {
+        const r = resourceOf.get(n.entityId);
+        if (r) {
+          step = { resourceId: r.id, resourceName: r.name, status: r.status };
+        }
+      }
+      return step ? { ...n, step } : n;
+    });
+
+    const wires: WireSpec[] = stepByTemplate
+      ? described.wires.map((w) => {
+          const s = stepByTemplate.get(w.rule.source_template_id);
+          return s
+            ? { ...w, color: STEP_WIRE_COLOR[s.status] ?? PENDING_WIRE_COLOR }
+            : w;
+        })
+      : described.wires;
+
+    return { nodes, wires };
+  }, [templates, externalTemplates, constants, wiring, stepByTemplate]);
+
+  const handlers = useMemo<WiringEditorHandlers>(
+    () => ({
+      // A read-only canvas never edits, removes or reports changes
+      onWiringEdit: () => undefined,
+      onNodeRemove: () => undefined,
+      onConstantChange: () => undefined,
+      onNodeMoved: () => undefined,
+      // Panning repaints the grid directly instead of re-rendering
+      onTransform: (t) => paintGrid(gridRef.current, t),
+      onSelectionChange: () => undefined,
+      onWireSelect: setWire,
+    }),
+    [],
   );
 
-  const positions = useMemo(
+  const layoutGrid = useCallback(
     () =>
       computeDiagramLayout(
         templates,
@@ -173,141 +242,95 @@ export const WiringDiagram = ({
     [templates, externalTemplates, constants, wiring, stepByTemplate],
   );
 
-  const computedNodes = useMemo(
-    () =>
-      buildNodes({
-        selectedTemplates: templates,
-        templatePorts,
-        externalTemplates,
-        constants,
-        positions,
-        stepByTemplate,
-      }),
-    [
-      templates,
-      templatePorts,
-      externalTemplates,
-      constants,
-      positions,
-      stepByTemplate,
-    ],
-  );
-
-  const computedEdges = useMemo(
-    () =>
-      buildEdges({
-        wiring,
-        selectedTemplates: templates,
-        externalTemplates,
-        constants,
-        stepByTemplate,
-      }),
-    [wiring, templates, externalTemplates, constants, stepByTemplate],
-  );
-
-  const useStore = useMemo(() => createWiringCanvasStore(), []);
-
-  const { nodes, edges, onNodesChange } = useStore(
-    useShallow((state: WiringCanvasState) => ({
-      nodes: state.nodes,
-      edges: state.edges,
-      onNodesChange: state.onNodesChange,
-    })),
-  );
-
+  // Show the data, and lay it out again when its shape changes. Dragging
+  // only moves nodes locally; the layout is never saved.
   useEffect(() => {
-    useStore.setState({ nodes: computedNodes, edges: computedEdges });
-  }, [computedNodes, computedEdges, useStore]);
+    if (!editor) return;
+    void (async () => {
+      await editor.sync(graph.nodes, graph.wires);
+      const signature = layoutSignature(graph.nodes, graph.wires);
+      if (signature === lastLayout.current) return;
+      lastLayout.current = signature;
+      await editor.arrange(layoutGrid());
+      await editor.fit();
+    })();
+  }, [editor, graph, layoutGrid]);
 
-  // The "fill" height is only known after the first paint, so re-fit once the
-  // canvas has been resized to it.
+  // Re-fit when the canvas changes size
   useEffect(() => {
-    if (fillHeight === undefined) return;
-    const frame = requestAnimationFrame(() =>
-      flow?.fitView({ maxZoom: 1, padding: 0.2 }),
-    );
+    if (!editor) return;
+    const frame = requestAnimationFrame(() => void editor.fit());
     return () => cancelAnimationFrame(frame);
-  }, [fillHeight, flow]);
+  }, [editor, fullscreen, canvasHeight]);
 
-  // Put dragged nodes back into the dependency layout and re-fit the view
-  // once React Flow has measured the reset positions.
-  const autoArrange = () => {
-    useStore.setState({ nodes: computedNodes });
-    requestAnimationFrame(() =>
-      flow?.fitView({ maxZoom: 1, padding: 0.2, duration: 300 }),
-    );
+  useEffect(() => {
+    if (!fullscreen) return;
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === "Escape") setFullscreen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [fullscreen]);
+
+  const autoArrange = async () => {
+    if (!editor) return;
+    await editor.arrange(layoutGrid());
+    await editor.fit();
   };
 
-  const canvas = (
-    <div
-      className={cn(
-        fullscreen ? "border-0" : "border border-divider",
-        fullscreen ? "rounded-none" : "rounded-surface",
-        "relative w-full overflow-hidden",
-      )}
-      ref={fillRef}
-      style={{ height: fullscreen ? "100%" : canvasHeight }}
-    >
-      <ReactFlow
-        nodes={nodes}
-        onNodesChange={onNodesChange}
-        onInit={setFlow}
-        edges={edges}
-        nodeTypes={NODE_TYPES}
-        fitView
-        // Cap at 1: React Flow's fitView otherwise upscales to 2x.
-        fitViewOptions={{ maxZoom: 1, padding: 0.2 }}
-        // Dragging only moves nodes locally; the layout is never saved.
-        nodesDraggable
-        nodesConnectable={false}
-        elementsSelectable={isWorkflowMode}
-        colorMode={mode === "dark" ? "dark" : "light"}
-      >
-        <Background gap={20} />
-        <Controls showInteractive={false} />
-      </ReactFlow>
+  const wireEnds = useMemo(
+    () => (wire ? wireEndsOf(graph.nodes, wire) : null),
+    [wire, graph.nodes],
+  );
 
-      <div className="absolute top-2 right-2 z-10 flex gap-2">
-        <Tooltip title="Auto arrange">
-          <IconButton
-            className="border border-divider bg-paper hover:bg-hover"
-            size="small"
-            aria-label="Auto arrange nodes"
-            onClick={autoArrange}
-          >
-            <HeroSquares2X2Icon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-        {allowFullscreen && (
-          <IconButton
-            className="border border-divider bg-paper hover:bg-hover"
-            size="small"
-            aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-            onClick={() => setFullscreen((v) => !v)}
-          >
-            {fullscreen ? (
-              <HeroArrowsPointingInIcon fontSize="small" />
-            ) : (
-              <HeroArrowsPointingOutIcon fontSize="small" />
-            )}
-          </IconButton>
+  return (
+    <div
+      ref={fillRef}
+      className={cn(
+        "relative w-full overflow-hidden bg-canvas",
+        fullscreen
+          ? "fixed inset-0 z-1300 h-screen"
+          : "rounded-surface border border-divider",
+      )}
+      style={fullscreen ? undefined : { height: canvasHeight }}
+    >
+      <div
+        className="absolute inset-0 outline-none"
+        tabIndex={0}
+        aria-label="Wiring diagram"
+        onKeyDown={(e) => {
+          if (e.key === "Escape") void editor?.clearSelection();
+        }}
+      >
+        <CanvasGrid gridRef={gridRef} />
+        <Flow ref={setEditor} handlers={handlers} readOnly />
+
+        <ViewToolbar
+          fullscreen={fullscreen}
+          onArrange={() => void autoArrange()}
+          onFit={() => void editor?.fit()}
+          onFullscreenToggle={
+            allowFullscreen ? () => setFullscreen((v) => !v) : undefined
+          }
+        />
+
+        {wire && wireEnds && (
+          <WirePopover
+            from={wireEnds.from}
+            to={wireEnds.to}
+            at={wire.at}
+            readOnly
+            onRemove={() => undefined}
+            onClose={() => void editor?.clearSelection()}
+          />
         )}
+
+        <FlowZoomToolbar
+          onZoomIn={() => void editor?.zoomBy(1.2)}
+          onZoomOut={() => void editor?.zoomBy(1 / 1.2)}
+        />
+        <PortLegend />
       </div>
     </div>
   );
-
-  if (fullscreen) {
-    return (
-      <Dialog
-        open
-        fullScreen
-        onClose={() => setFullscreen(false)}
-        className="bg-canvas"
-      >
-        <DialogContent className="h-[100vh] p-0">{canvas}</DialogContent>
-      </Dialog>
-    );
-  }
-
-  return canvas;
 };

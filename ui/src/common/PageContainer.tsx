@@ -19,6 +19,8 @@ export interface PageContainerProps {
   actions?: React.ReactNode;
   /** Actions/buttons to render at the bottom of the page, centered */
   bottomActions?: React.ReactNode;
+  /** Stretch the content to the remaining height, e.g. for a full-page editor */
+  fill?: boolean;
 }
 
 export default function PageContainer(props: PageContainerProps) {
@@ -31,6 +33,7 @@ export default function PageContainer(props: PageContainerProps) {
     banner = null,
     actions = null,
     bottomActions = null,
+    fill = false,
   } = props;
 
   useDocumentTitle(
@@ -66,7 +69,12 @@ export default function PageContainer(props: PageContainerProps) {
             </div>
           </div>
         </div>
-        <div className="flex min-h-0 min-w-0 flex-col items-center overflow-y-auto">
+        <div
+          className={cn(
+            "flex min-h-0 min-w-0 flex-col",
+            fill ? "flex-1" : "items-center overflow-y-auto",
+          )}
+        >
           {children}
         </div>
         {bottomActions ? (

@@ -608,6 +608,7 @@ class SourceCodeVersionService:
 
         # Fetch all templates at once to get their parents
         templates = await self.template_service.get_all(filter={"id": [str(tid) for tid in template_ids]})
+        ancestors_by_tid = await self.template_service.get_ancestors(template_ids)
 
         result: list[TemplatePortsItem] = []
         for template in templates:
@@ -657,6 +658,7 @@ class SourceCodeVersionService:
                     outputs=filtered_outputs,
                     references=validated_refs,
                     required_configs=template.configuration.required_configuration_variables,
+                    ancestors=ancestors_by_tid.get(template_id, []),
                 )
             )
 

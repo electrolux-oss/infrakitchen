@@ -1,8 +1,34 @@
 import { GenericTemplate, WiringRule } from "./types";
 
+/** What a template says about one of its input variables. */
+export interface InputMeta {
+  required: boolean;
+  /** The variable's default; unset or null when it has none. */
+  default?: unknown;
+}
+
+export interface TemplateReference {
+  input: string;
+  sourceTemplateId: string;
+  output: string;
+}
+
+export interface TemplateAncestor {
+  id: string;
+  name: string;
+  /** The template this one is a direct parent of. */
+  childId: string;
+}
+
 export interface TemplatePorts {
   inputs: string[];
   outputs: string[];
+  /** Required flag and default per input name. */
+  inputMeta?: Record<string, InputMeta>;
+  /** Inputs the template takes from a parent template's output at run time. */
+  references?: TemplateReference[];
+  /** Templates above this one in the parent chain. */
+  ancestors?: TemplateAncestor[];
   /** Required configuration variables, both a source and a target of wires */
   configs?: string[];
 }

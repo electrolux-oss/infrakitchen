@@ -35,6 +35,7 @@ from graphql_api.modules.source_code_version.types import (
     SourceConfigType,
     SourceOutputConfigTemplateType,
     SourceOutputConfigType,
+    TemplatePortsAncestorType,
     TemplatePortsConfigType,
     TemplatePortsItemType,
     TemplatePortsOutputType,
@@ -229,7 +230,10 @@ class SourceCodeVersionQuery:
                         for parent in item.template.parents
                     ],
                 ),
-                configs=[TemplatePortsConfigType(name=config.name) for config in item.configs],
+                configs=[
+                    TemplatePortsConfigType(name=config.name, required=config.required, default=config.default)
+                    for config in item.configs
+                ],
                 outputs=[TemplatePortsOutputType(name=output.name) for output in item.outputs],
                 references=[
                     TemplatePortsReferenceType(
@@ -241,6 +245,9 @@ class SourceCodeVersionQuery:
                     for reference in item.references
                 ],
                 required_configs=item.required_configs,
+                ancestors=[
+                    TemplatePortsAncestorType(id=a.id, name=a.name, child_id=a.child_id) for a in item.ancestors
+                ],
             )
             for item in response.templates
         ]

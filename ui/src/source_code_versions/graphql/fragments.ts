@@ -134,6 +134,8 @@ export const TEMPLATE_PORTS_FIELDS = `
   }
   configs {
     name
+    required
+    default
   }
   outputs {
     name
@@ -145,6 +147,11 @@ export const TEMPLATE_PORTS_FIELDS = `
     outputConfigName
   }
   requiredConfigs
+  ancestors {
+    id
+    name
+    childId
+  }
 `;
 
 export const SCV_DETAIL_FIELDS = `
