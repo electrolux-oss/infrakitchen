@@ -4,7 +4,7 @@ import { BaseCard } from "../../common/components/cards/BaseCard";
 import { CodeBlock } from "../../common/components/code/CodeBlock";
 import { InlineCode } from "../../common/components/code/InlineCode";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
-import { Label } from "../../common/components/labels";
+import { CountLabel, Label } from "../../common/components/labels";
 import { PendingChangeBadge } from "../../common/components/labels/PendingChangeBadge";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { Button } from "../../ui";
@@ -147,8 +147,10 @@ export const TemplateConfiguration = ({
           <div className="flex items-center gap-2">
             {/* Inherit the card-title styling so this header matches the
                     plain-string titles used by the other overview cards. */}
-            <span>Input Variables</span>
-            <Label label={String(resource.variables?.length ?? 0)} />
+            <CountLabel
+              label="Input Variables"
+              count={resource.variables?.length ?? 0}
+            />
             {hasPendingChange("variables") && <PendingChangeBadge />}
           </div>
         }
@@ -167,12 +169,10 @@ export const TemplateConfiguration = ({
       </BaseCard>
       <BaseCard
         name={
-          <div className="flex items-center gap-2">
-            {/* Inherit the card-title styling so this header matches the
-                    plain-string titles used by the other overview cards. */}
-            <span>Output Values</span>
-            <Label label={String(resource.outputs?.length ?? 0)} />
-          </div>
+          <CountLabel
+            label="Output Values"
+            count={resource.outputs?.length ?? 0}
+          />
         }
       >
         <div className="col-span-full">

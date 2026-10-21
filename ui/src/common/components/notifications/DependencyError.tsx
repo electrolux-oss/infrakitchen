@@ -9,13 +9,13 @@ import { ErrorCardShell } from "./ErrorCardShell";
 
 interface DependencyErrorProps {
   id: string | number;
-  message: string;
+  title: string;
   metadata?: Record<string, any>;
 }
 
 export const DependencyError = ({
   id,
-  message,
+  title,
   metadata,
 }: DependencyErrorProps) => {
   const handleDismiss = useCallback(() => {
@@ -23,17 +23,12 @@ export const DependencyError = ({
   }, [id]);
 
   return (
-    <ErrorCardShell title={message} onDismiss={handleDismiss}>
-      {metadata?.map((r: IkEntity) => (
-        <div
-          className="mb-2 rounded-surface border border-divider p-3"
-          key={r.id}
-        >
-          <p className="m-0 text-body2 font-semibold">
-            <Entity entity={r} />
-          </p>
-        </div>
-      ))}
+    <ErrorCardShell title={title} onDismiss={handleDismiss}>
+      <div className="flex flex-col items-start gap-1.5 pl-8">
+        {metadata?.map((r: IkEntity) => (
+          <Entity key={r.id} entity={r} />
+        ))}
+      </div>
     </ErrorCardShell>
   );
 };

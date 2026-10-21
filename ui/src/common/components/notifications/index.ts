@@ -1,4 +1,4 @@
 export * from "./NotificationContent";
-export * from "./DependenciesError";
+export * from "./DependencyError";
 export * from "./GlobalNotificationPopup";
 export * from "./notificationLinks";

@@ -4,8 +4,8 @@ import { LogLiveTail } from "../../common";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { ScheduleApplyButton } from "../../common/components/buttons/ScheduleApplyButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { EntityProvider } from "../../common/context/EntityContext";
-import { HeroCpuChipIcon } from "../../icons";
 import { TASK_QUEUE_STATUS_SELECTION } from "../../workers/graphql";
 import { CloneExecutorButton } from "../components/CloneExecutorButton";
 import { ExecutorContent } from "../components/ExecutorContent";
@@ -24,7 +24,7 @@ export const ExecutorPage = () => {
       entityFields={PAGE_FIELDS}
     >
       <EntityContainer
-        titleIcon={<HeroCpuChipIcon />}
+        titleIcon={entityIcons.executor}
         actions={
           <>
             <ScheduleApplyButton entityType="executor" />

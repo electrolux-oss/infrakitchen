@@ -5,7 +5,7 @@ import { HeroCircleStackIcon } from "../../../../icons";
 import { IconButton, Label, Tooltip } from "../../../../ui";
 import { STATUS_CHIP_COLOR } from "../../../utils";
 import { InlineCode } from "../../code/InlineCode";
-import { GetReferenceUrlValue } from "../../fields/CommonField";
+import { EntityReference } from "../../fields/CommonField";
 
 import { CANVAS_PALETTE, DiagramNode, makeHandleStyle } from "./helpers";
 
@@ -99,7 +99,7 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
       {data.resourceId && (
         <div className="flex items-center gap-1 px-3 pt-2">
           <span className="text-caption text-fg-muted">Resource:</span>
-          <GetReferenceUrlValue
+          <EntityReference
             id={data.resourceId}
             entityName="resource"
             identifier={data.resourceName ?? `${data.resourceId.slice(0, 8)}…`}

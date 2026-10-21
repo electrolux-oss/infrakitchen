@@ -13,7 +13,7 @@ import { EditableTagsField } from "../../common/components/editors/EditableTagsF
 import { MultiSelectEditor } from "../../common/components/editors/MultiSelectEditor";
 import {
   CommonField,
-  GetReferenceUrlValue,
+  EntityReference,
 } from "../../common/components/fields/CommonField";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
@@ -151,7 +151,7 @@ export const ServiceSidebar = ({
           canEdit={canEdit}
           value={service.displayName}
           ariaLabel="Edit display name"
-          display={<span>{service.displayName || "-"}</span>}
+          display={service.displayName || undefined}
           onSave={(value) => saveField({ displayName: value })}
           renderEditor={({ value, onChange }) => (
             <TextField
@@ -182,7 +182,7 @@ export const ServiceSidebar = ({
           name={"Project"}
           value={
             service.project ? (
-              <GetReferenceUrlValue {...service.project} entityName="project" />
+              <EntityReference {...service.project} entityName="project" />
             ) : null
           }
           span="full"

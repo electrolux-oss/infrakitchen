@@ -1,8 +1,7 @@
 import type { EntityRecord } from "../../common/components/entities/Entity";
+import type { UnresolvedEntityReason } from "../../common/components/entities/UnresolvedEntity";
 import { ENTITY_ACTION } from "../../utils/constants";
 import type { GqlAuditLog } from "../graphql";
-
-export type UnresolvedEntityReason = "deleted" | "untracked";
 
 export function getAuditLogEntity(
   log: Pick<

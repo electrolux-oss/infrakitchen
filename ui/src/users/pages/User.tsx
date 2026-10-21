@@ -1,11 +1,11 @@
 import { useParams } from "react-router";
 
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import {
   EntityProvider,
   useEntityProvider,
 } from "../../common/context/EntityContext";
-import { HeroUsersIcon } from "../../icons";
 import { Label } from "../../ui";
 import { UserContent } from "../components/UserContent";
 import { USER_FIELDS } from "../graphql";
@@ -27,7 +27,7 @@ export const UserPage = () => {
       entityFields={USER_FIELDS}
     >
       <EntityContainer
-        titleIcon={<HeroUsersIcon />}
+        titleIcon={entityIcons.user}
         titleAdornment={<DeactivatedBadge />}
       >
         <UserContent />

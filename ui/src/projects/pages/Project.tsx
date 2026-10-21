@@ -2,8 +2,8 @@ import { useParams } from "react-router";
 
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { EntityProvider } from "../../common/context/EntityContext";
-import { HeroFolderIcon } from "../../icons";
 import { ProjectContent } from "../components/ProjectContent";
 import { PROJECT_DETAIL_FIELDS } from "../graphql";
 
@@ -17,7 +17,7 @@ export const ProjectPage = () => {
       entityFields={PROJECT_DETAIL_FIELDS}
     >
       <EntityContainer
-        titleIcon={<HeroFolderIcon />}
+        titleIcon={entityIcons.project}
         actions={<EntityRefreshButton />}
       >
         <ProjectContent />

@@ -5,6 +5,7 @@ import {
 import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
+import { CommonField } from "../../common/components/fields/CommonField";
 import { StatusLabel } from "../../common/components/labels";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
@@ -41,6 +42,11 @@ export const StorageSidebar = ({ storage }: StorageSidebarProps) => {
           canEdit={canEdit}
           onSave={(value) => saveField({ description: value })}
         />
+        <CommonField
+          name="Status"
+          value={<StatusLabel status={storage.status} state={storage.state} />}
+          span="full"
+        />
         <EditableTagsField
           name="Storage Tags"
           value={storage.labels || []}
@@ -48,12 +54,6 @@ export const StorageSidebar = ({ storage }: StorageSidebarProps) => {
           onSave={(value) => saveField({ labels: value })}
           helperText="Press Enter to add a tag"
         />
-      </SidebarSection>
-
-      <SidebarSection title="Status">
-        <div className="col-span-full">
-          <StatusLabel status={storage.status} state={storage.state} />
-        </div>
       </SidebarSection>
 
       <SidebarDetailsSection entity={storage} />

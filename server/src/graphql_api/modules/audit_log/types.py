@@ -6,6 +6,7 @@ import strawberry
 
 from core.audit_logs.model import AuditLog
 from graphql_api.modules.user.types import UserType
+from graphql_api.dataloaders.entity_loaders import has_entity_loader, load_entity_data
 
 
 audit_log_mapper = StrawberrySQLAlchemyMapper()
@@ -21,14 +22,11 @@ class AuditLogType:
 
     @strawberry.field
     async def entity_data(self, info: Info) -> JSON | None:
-        loader = info.context["loaders"].get(self.model)
-        if loader is None:
-            return None
-        return await loader.load(str(self.entity_id))
+        return await load_entity_data(info, self.model, str(self.entity_id))
 
     @strawberry.field
     def entity_loader_missing(self, info: Info) -> bool:
-        return self.model not in info.context["loaders"]
+        return not has_entity_loader(info, self.model)
 
     @strawberry.field(name="metadata")
     def resolve_metadata(self) -> JSON | None:

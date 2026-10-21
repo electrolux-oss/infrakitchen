@@ -1,10 +1,10 @@
 import { useState } from "react";
 
 import { Entity } from "../../common/components/entities/Entity";
-import { GetReferenceUrlValue } from "../../common/components/fields/CommonField";
+import { EntityReference } from "../../common/components/fields/CommonField";
 import { Duration } from "../../common/components/fields/Duration";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
-import { Label, StatusLabel } from "../../common/components/labels";
+import { CountLabel, Label, StatusLabel } from "../../common/components/labels";
 import { HeroChevronDownIcon } from "../../icons";
 import {
   Accordion,
@@ -17,6 +17,7 @@ import {
   TableHead,
   TableRow,
   LinearProgress,
+  StepNumber,
 } from "../../ui";
 import { cn } from "../../utils/cn";
 import { GqlWorkflowAction, GqlWorkflowStep } from "../graphql";
@@ -50,7 +51,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
         {/* Step header */}
         <div className="flex items-center justify-between border-b border-divider bg-canvas px-4 py-3">
           <div className="flex items-center gap-4">
-            <Label size="large" tone="primary" label={step.position + 1} />
+            <StepNumber step={step.position + 1} />
             {templateName ? (
               <Entity entity={step.template} />
             ) : (
@@ -80,7 +81,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
               <div className="mt-1">
                 {step.resource?.id != null ? (
                   <div className="flex flex-wrap items-center gap-2">
-                    <GetReferenceUrlValue
+                    <EntityReference
                       id={step.resource.id}
                       entityName="resource"
                       identifier={
@@ -143,15 +144,11 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                 </span>
                 <div className="mt-1 flex flex-wrap gap-2">
                   {step.parentResourceIds.map((res) => (
-                    <Label
+                    <EntityReference
                       key={res.id}
-                      label={
-                        <GetReferenceUrlValue
-                          id={res.id}
-                          entityName="resource"
-                          identifier={res.name ?? res.id.slice(0, 8) + "…"}
-                        />
-                      }
+                      id={res.id}
+                      entityName="resource"
+                      identifier={res.name ?? res.id.slice(0, 8) + "…"}
                     />
                   ))}
                 </div>
@@ -180,7 +177,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                           <Label tone="info" label="ABSTRACT" />
                         )}
                       </div>
-                      <GetReferenceUrlValue
+                      <EntityReference
                         id={resource.id}
                         entityName="resource"
                         identifier={
@@ -226,10 +223,12 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
               }
             >
               <AccordionSummary expandIcon={<HeroChevronDownIcon />}>
-                <span className="text-caption font-semibold">
-                  Resolved Variables (
-                  {Object.keys(step.resolvedVariables || {}).length})
-                </span>
+                <div className="text-caption font-semibold">
+                  <CountLabel
+                    label="Resolved Variables"
+                    count={Object.keys(step.resolvedVariables || {}).length}
+                  />
+                </div>
               </AccordionSummary>
               <AccordionDetails className="p-0">
                 <TableContainer>

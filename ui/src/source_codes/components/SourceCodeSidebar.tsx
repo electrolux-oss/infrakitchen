@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-import { Entity } from "../../common";
 import {
   EntitySidebar,
   SidebarSection,
@@ -12,6 +11,7 @@ import { EditableTagsField } from "../../common/components/editors/EditableTagsF
 import {
   CommonField,
   getRemoteUrlValue,
+  EntityReference,
 } from "../../common/components/fields/CommonField";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
@@ -59,17 +59,16 @@ export const SourceCodeSidebar = ({ sourceCode }: SourceCodeSidebarProps) => {
           canEdit={canEdit}
           onSave={(value) => saveField({ description: value })}
         />
+        <CommonField
+          name="Status"
+          value={<StatusLabel status={sourceCode.status} />}
+          span="full"
+        />
         <EditableTagsField
           value={sourceCode.labels || []}
           canEdit={canEdit}
           onSave={(value) => saveField({ labels: value })}
         />
-      </SidebarSection>
-
-      <SidebarSection title="Status">
-        <div className="col-span-full">
-          <StatusLabel status={sourceCode.status} />
-        </div>
       </SidebarSection>
 
       <SidebarSection title="Repository">
@@ -119,7 +118,13 @@ export const SourceCodeSidebar = ({ sourceCode }: SourceCodeSidebarProps) => {
           ariaLabel="Edit integration"
           display={
             sourceCode.integration ? (
-              <Entity entity={sourceCode.integration} providerIconSize={18} />
+              <EntityReference
+                id={sourceCode.integration.id}
+                entityName="integration"
+                name={sourceCode.integration.name}
+                provider={sourceCode.integration.integrationProvider}
+                urlProvider={sourceCode.integration.integrationProvider}
+              />
             ) : null
           }
           onSave={(value) => saveField({ integrationId: value })}

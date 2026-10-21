@@ -3,9 +3,9 @@ import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
-  TabCountLabel,
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
+import { CountLabel } from "../../common/components/labels";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { Revision } from "../../revision/Revision";
 import { SourceCodeRefSection } from "../../source_code_versions/components/SourceCodeRefSection";
@@ -34,7 +34,7 @@ export const SourceCodeContent = () => {
   const tabs: TabDefinition[] = [
     {
       label: "Commits",
-      tabLabel: <TabCountLabel label="Commits" count={entity.commitCount} />,
+      tabLabel: <CountLabel label="Commits" count={entity.commitCount} />,
       content: (
         <SourceCodeCommits
           sourceCodeId={entity.id}
@@ -46,7 +46,7 @@ export const SourceCodeContent = () => {
     },
     {
       label: "Tags",
-      tabLabel: <TabCountLabel label="Tags" count={entity.gitTags.length} />,
+      tabLabel: <CountLabel label="Tags" count={entity.gitTags.length} />,
       content: (
         <SourceCodeRefSection
           refs={entity.gitTags}
@@ -59,7 +59,7 @@ export const SourceCodeContent = () => {
     {
       label: "Branches",
       tabLabel: (
-        <TabCountLabel label="Branches" count={entity.gitBranches.length} />
+        <CountLabel label="Branches" count={entity.gitBranches.length} />
       ),
       content: (
         <SourceCodeRefSection

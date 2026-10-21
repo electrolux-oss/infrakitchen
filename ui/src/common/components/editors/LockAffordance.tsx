@@ -24,15 +24,15 @@ export const LockAffordance = ({
 }: LockAffordanceProps) => {
   const button = (
     <IconButton
-      className="size-5 shrink-0 border border-transparent p-0 hover:border-divider hover:bg-hover"
+      className="size-7 shrink-0"
       size="small"
       onClick={onClick}
       aria-label={description ? `${title}. ${description}` : title}
     >
       {locked ? (
-        <HeroLockClosedIcon className="text-[16px]" />
+        <HeroLockClosedIcon fontSize="small" />
       ) : (
-        <HeroLockOpenIcon className="text-[16px]" />
+        <HeroLockOpenIcon fontSize="small" />
       )}
     </IconButton>
   );

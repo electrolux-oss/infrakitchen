@@ -5,10 +5,10 @@ import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
-  TabCountLabel,
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
 import { TopologyTab } from "../../common/components/graph/TopologyTab";
+import { CountLabel } from "../../common/components/labels";
 import { MarkdownViewer } from "../../common/components/viewers/MarkdownViewer";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
@@ -46,7 +46,7 @@ export const TemplateContent = () => {
     {
       label: "Resources",
       tabLabel: (
-        <TabCountLabel label="Resources" count={entity.resourcesCount ?? 0} />
+        <CountLabel label="Resources" count={entity.resourcesCount ?? 0} />
       ),
       content: (
         <EntityResources
@@ -58,7 +58,7 @@ export const TemplateContent = () => {
     {
       label: "Template Versions",
       tabLabel: (
-        <TabCountLabel
+        <CountLabel
           label="Template Versions"
           count={entity.sourceCodeVersionsCount ?? 0}
         />

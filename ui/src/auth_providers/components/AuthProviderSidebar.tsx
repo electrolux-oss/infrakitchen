@@ -83,7 +83,7 @@ export const AuthProviderSidebar = ({
         />
       </SidebarSection>
 
-      <SidebarSection title="Details">
+      <SidebarSection>
         <CommonField
           name="Created"
           value={<RelativeTime date={authProvider.createdAt} />}

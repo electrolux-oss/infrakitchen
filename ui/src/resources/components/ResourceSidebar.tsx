@@ -15,7 +15,7 @@ import { EditableTagsField } from "../../common/components/editors/EditableTagsF
 import { EditAffordance } from "../../common/components/editors/EditAffordance";
 import {
   CommonField,
-  GetReferenceUrlValue,
+  EntityReference,
 } from "../../common/components/fields/CommonField";
 import {
   PlaceholderDescription,
@@ -23,16 +23,14 @@ import {
 } from "../../common/components/fields/PlaceholderDescription";
 import { ScheduledApplyValue } from "../../common/components/fields/ScheduledApplyValue";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { StatusLabel } from "../../common/components/labels";
+import { CountLabel, StatusLabel } from "../../common/components/labels";
 import { Labels } from "../../common/components/labels/Labels";
 import { useConfig } from "../../common/context";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { usePendingScheduledAction } from "../../common/hooks/usePendingScheduledAction";
 import { makeWriteAccessFilter } from "../../common/utils";
-import { ProviderIcon } from "../../icons/Icons";
 import { ToolSelect, toolLabel } from "../../tools";
 import { IkEntity } from "../../types";
-import { Label } from "../../ui";
 import { GqlResource } from "../graphql";
 import { useResourceFieldEditor } from "../hooks/useResourceFieldEditor";
 import { useResourceNotificationDialog } from "../hooks/useResourceNotificationDialog";
@@ -109,6 +107,10 @@ export const ResourceSidebar = ({
         title="About"
         action={
           <div className="flex items-center">
+            {/* Abstract resources have no source code to download. */}
+            {resource.abstract === false && (
+              <DownloadSourceCodeButton entityId={String(resource.id)} />
+            )}
             <FavoriteButton
               componentId={String(resource.id)}
               componentType="resource"
@@ -147,6 +149,13 @@ export const ResourceSidebar = ({
             "description",
           )}
         />
+        <CommonField
+          name="Status"
+          value={
+            <StatusLabel status={resource.status} state={resource.state} />
+          }
+          span="full"
+        />
         <EditableTagsField
           value={resource.labels ?? []}
           canEdit={canEdit}
@@ -156,12 +165,6 @@ export const ResourceSidebar = ({
             "labels",
           )}
         />
-      </SidebarSection>
-
-      <SidebarSection title="Status">
-        <div className="col-span-full">
-          <StatusLabel status={resource.status} state={resource.state} />
-        </div>
         {pendingScheduledAction && (
           <CommonField
             name="Next Scheduled Apply"
@@ -180,9 +183,7 @@ export const ResourceSidebar = ({
           value={resource.project?.id ?? null}
           ariaLabel="Edit project"
           display={withPendingChange(
-            resource.project ? (
-              <GetReferenceUrlValue {...resource.project} />
-            ) : null,
+            resource.project ? <EntityReference {...resource.project} /> : null,
             "project_id",
           )}
           onSave={(value) => saveField({ projectId: value })}
@@ -218,20 +219,12 @@ export const ResourceSidebar = ({
         )}
       </SidebarSection>
 
-      <SidebarSection
-        title="Template"
-        // Abstract resources have no source code to download.
-        action={
-          resource.abstract === false && (
-            <DownloadSourceCodeButton entityId={String(resource.id)} />
-          )
-        }
-      >
+      <SidebarSection title="Template">
         <CommonField
           name="Template"
           value={
             resource.template ? (
-              <GetReferenceUrlValue {...resource.template} />
+              <EntityReference {...resource.template} />
             ) : null
           }
           span="full"
@@ -270,14 +263,12 @@ export const ResourceSidebar = ({
             ariaLabel="Edit IaC tool"
             display={withPendingChange(
               resource.tool ? (
-                <div className="flex items-center gap-2">
-                  <ProviderIcon provider={resource.tool.name} />
-                  <GetReferenceUrlValue
-                    id={resource.tool.id}
-                    entityName="tool"
-                    display_name={toolLabel(resource.tool)}
-                  />
-                </div>
+                <EntityReference
+                  id={resource.tool.id}
+                  entityName="tool"
+                  provider={resource.tool.name}
+                  display_name={toolLabel(resource.tool)}
+                />
               ) : (
                 <span>Global default</span>
               ),
@@ -299,32 +290,26 @@ export const ResourceSidebar = ({
       <SidebarSection title="Relations">
         <CommonField
           name={
-            <span className="inline-flex items-center gap-1.5">
-              Parents
-              <Label size="small" label={parents.length} />
-            </span>
+            <CountLabel label="Parents" count={parents.length} size="small" />
           }
           value={
             parents.length ? (
               <RelatedResources resources={parents} />
             ) : (
-              <PlaceholderText text="No parent resources" />
+              <PlaceholderText />
             )
           }
           span="full"
         />
         <CommonField
           name={
-            <span className="inline-flex items-center gap-1.5">
-              Children
-              <Label size="small" label={children.length} />
-            </span>
+            <CountLabel label="Children" count={children.length} size="small" />
           }
           value={
             children.length ? (
               <RelatedResources resources={children} />
             ) : (
-              <PlaceholderText text="No child resources" />
+              <PlaceholderText />
             )
           }
           span="full"

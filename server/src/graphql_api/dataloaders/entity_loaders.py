@@ -422,3 +422,17 @@ def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, dict[str,
             load_fn=lambda keys: _load_feature_flags(list(keys), session)
         ),
     }
+
+
+def has_entity_loader(info: Info, entity_type: str | None) -> bool:
+    return entity_type in info.context["loaders"]
+
+
+async def load_entity_data(info: Info, entity_type: str | None, entity_id: str | None) -> Any | None:
+    """Load an entity by type and id through its dataloader; None when the type has no loader."""
+    if entity_type is None or entity_id is None:
+        return None
+    loader = info.context["loaders"].get(entity_type)
+    if loader is None:
+        return None
+    return await loader.load(str(entity_id))

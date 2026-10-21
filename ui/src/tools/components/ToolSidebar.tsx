@@ -81,7 +81,7 @@ export const ToolSidebar = ({ tool }: ToolSidebarProps) => (
         createdAt: tool.createdAt,
         updatedAt: tool.updatedAt,
       }}
-      creatorLabel="Added by"
+      createdLabel="Added"
     />
   </EntitySidebar>
 );

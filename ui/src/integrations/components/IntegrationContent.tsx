@@ -5,9 +5,9 @@ import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
-  TabCountLabel,
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
+import { CountLabel } from "../../common/components/labels";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityExecutors } from "../../executors/components/EntityExecutors";
 import { EntityResources } from "../../resources/components/EntityResources";
@@ -41,7 +41,7 @@ export const IntegrationContent = () => {
           {
             label: "Code Repositories",
             tabLabel: (
-              <TabCountLabel
+              <CountLabel
                 label="Code Repositories"
                 count={entity.sourceCodeCount ?? 0}
               />
@@ -53,7 +53,7 @@ export const IntegrationContent = () => {
           {
             label: "Workspaces",
             tabLabel: (
-              <TabCountLabel
+              <CountLabel
                 label="Workspaces"
                 count={entity.workspaceCount ?? 0}
               />
@@ -69,10 +69,7 @@ export const IntegrationContent = () => {
           {
             label: "Resources",
             tabLabel: (
-              <TabCountLabel
-                label="Resources"
-                count={entity.resourceCount ?? 0}
-              />
+              <CountLabel label="Resources" count={entity.resourceCount ?? 0} />
             ),
             content: (
               <EntityResources
@@ -86,7 +83,7 @@ export const IntegrationContent = () => {
     {
       label: "Executors",
       tabLabel: (
-        <TabCountLabel label="Executors" count={entity.executorCount ?? 0} />
+        <CountLabel label="Executors" count={entity.executorCount ?? 0} />
       ),
       content: (
         <EntityExecutors
@@ -98,7 +95,7 @@ export const IntegrationContent = () => {
     {
       label: "Storages",
       tabLabel: (
-        <TabCountLabel label="Storages" count={entity.storageCount ?? 0} />
+        <CountLabel label="Storages" count={entity.storageCount ?? 0} />
       ),
       content: (
         <EntityStorages

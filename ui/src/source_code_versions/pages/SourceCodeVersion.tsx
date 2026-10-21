@@ -5,6 +5,7 @@ import { useParams } from "react-router";
 import { LogLiveTail, PermissionWrapper } from "../../common";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { EntityStatusChip } from "../../common/components/labels/EntityStatusChip";
 import {
   EntityProvider,
@@ -50,7 +51,7 @@ const SourceCodeVersionPageContent = () => {
     <>
       <EntityContainer
         title={templateName}
-        titleIcon={<HeroTagIcon />}
+        titleIcon={entityIcons.source_code_version}
         titleAdornment={
           sourceCodeVersion && templateName ? (
             <>

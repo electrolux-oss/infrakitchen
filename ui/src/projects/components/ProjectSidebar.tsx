@@ -12,6 +12,7 @@ import { EditableNameField } from "../../common/components/editors/EditableNameF
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import { MultiSelectEditor } from "../../common/components/editors/MultiSelectEditor";
 import { Entity } from "../../common/components/entities/Entity";
+import { CommonField } from "../../common/components/fields/CommonField";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { StatusLabel } from "../../common/components/labels";
@@ -114,7 +115,23 @@ export const ProjectSidebar = ({
 
   return (
     <EntitySidebar ariaLabel="Project details">
-      <SidebarSection title="About">
+      <SidebarSection
+        title="About"
+        action={
+          <SubscribeNotificationButton
+            isSubscribed={isSubscribed}
+            isLoading={loading}
+            onSubscribeClick={() => {
+              void handleSubscribe();
+            }}
+            onUnsubscribeClick={() => {
+              void handleUnsubscribe();
+            }}
+            entityName="project"
+            showIncludeChildren={false}
+          />
+        }
+      >
         <EditableNameField
           value={project.name}
           canEdit={canEdit}
@@ -125,31 +142,16 @@ export const ProjectSidebar = ({
           canEdit={canEdit}
           onSave={(value) => saveField({ description: value })}
         />
+        <CommonField
+          name="Status"
+          value={<StatusLabel status={project.status} />}
+          span="full"
+        />
         <EditableTagsField
           value={project.labels || []}
           canEdit={canEdit}
           onSave={(value) => saveField({ labels: value })}
         />
-      </SidebarSection>
-
-      <SidebarSection title="Status">
-        <div className="col-span-full">
-          <div className="flex items-center justify-between gap-2">
-            <StatusLabel status={project.status} />
-            <SubscribeNotificationButton
-              isSubscribed={isSubscribed}
-              isLoading={loading}
-              onSubscribeClick={() => {
-                void handleSubscribe();
-              }}
-              onUnsubscribeClick={() => {
-                void handleUnsubscribe();
-              }}
-              entityName="project"
-              showIncludeChildren={false}
-            />
-          </div>
-        </div>
       </SidebarSection>
 
       <SidebarSection title="Relations">

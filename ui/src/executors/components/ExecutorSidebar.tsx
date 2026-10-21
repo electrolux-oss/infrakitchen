@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
 
-import { Entity } from "../../common";
 import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
 import {
   EntitySidebar,
   SidebarSection,
 } from "../../common/components/cards/EntitySidebar";
 import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
+import { InlineCode } from "../../common/components/code/InlineCode";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import {
   CommonField,
-  GetReferenceUrlValue,
+  EntityReference,
 } from "../../common/components/fields/CommonField";
 import { ScheduledApplyValue } from "../../common/components/fields/ScheduledApplyValue";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
@@ -24,7 +24,6 @@ import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import { usePendingScheduledAction } from "../../common/hooks/usePendingScheduledAction";
 import { sameStringSet } from "../../common/utils";
-import { ProviderIcon } from "../../icons/Icons";
 import { ToolSelect, toolLabel } from "../../tools";
 import { IkEntity } from "../../types";
 import { TextField } from "../../ui";
@@ -85,31 +84,34 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
 
   return (
     <EntitySidebar ariaLabel="Executor details">
-      <SidebarSection title="About">
+      <SidebarSection
+        title="About"
+        action={
+          <FavoriteButton
+            componentId={String(executor.id)}
+            componentType="executor"
+            ariaLabel="Add executor to favorites"
+            isFavorite={executor.isFavorite}
+          />
+        }
+      >
         <EditableDescriptionField
           value={executor.description}
           canEdit={canEdit}
           onSave={(value) => saveField({ description: value })}
+        />
+        <CommonField
+          name="Status"
+          value={
+            <StatusLabel status={executor.status} state={executor.state} />
+          }
+          span="full"
         />
         <EditableTagsField
           value={executor.labels || []}
           canEdit={canEdit}
           onSave={(value) => saveField({ labels: value })}
         />
-      </SidebarSection>
-
-      <SidebarSection title="Status">
-        <div className="col-span-full">
-          <div className="flex items-center justify-between gap-2">
-            <StatusLabel status={executor.status} state={executor.state} />
-            <FavoriteButton
-              componentId={String(executor.id)}
-              componentType="executor"
-              ariaLabel="Add executor to favorites"
-              isFavorite={executor.isFavorite}
-            />
-          </div>
-        </div>
         {pendingScheduledAction && (
           <CommonField
             name="Next Scheduled Apply"
@@ -121,7 +123,7 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
         )}
       </SidebarSection>
 
-      <SidebarSection title="Infrastructure">
+      <SidebarSection title="Configuration">
         <CommonEditableField<string[]>
           name={"Integrations"}
           canEdit={canEditInfra}
@@ -132,10 +134,13 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
             executor.integrationIds && executor.integrationIds.length > 0 ? (
               <div className="flex flex-col gap-2">
                 {executor.integrationIds.map((parent) => (
-                  <Entity
+                  <EntityReference
                     key={parent.id}
-                    entity={parent}
-                    providerIconSize={18}
+                    id={parent.id}
+                    entityName="integration"
+                    name={parent.name}
+                    provider={parent.integrationProvider}
+                    urlProvider={parent.integrationProvider}
                   />
                 ))}
               </div>
@@ -173,9 +178,12 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
             executor.secretIds && executor.secretIds.length > 0 ? (
               <div className="flex flex-col gap-2">
                 {executor.secretIds.map((secret) => (
-                  <span key={secret.id}>
-                    <GetReferenceUrlValue {...secret} />
-                  </span>
+                  <div key={secret.id} className="flex items-center gap-2">
+                    <EntityReference
+                      {...secret}
+                      provider={secret.secretProvider}
+                    />
+                  </div>
                 ))}
               </div>
             ) : null
@@ -219,9 +227,7 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
           value={executor.storage?.id ?? null}
           ariaLabel="Edit storage"
           display={
-            executor.storage ? (
-              <GetReferenceUrlValue {...executor.storage} />
-            ) : null
+            executor.storage ? <EntityReference {...executor.storage} /> : null
           }
           onSave={(value) => saveField({ storageId: value })}
           renderEditor={({ value, onChange }) => (
@@ -268,7 +274,11 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
           disabledTooltip="Only admins can change storage path"
           value={executor.storagePath}
           ariaLabel="Edit storage path"
-          display={<span>{executor.storagePath}</span>}
+          display={
+            executor.storagePath ? (
+              <InlineCode>{executor.storagePath}</InlineCode>
+            ) : null
+          }
           onSave={(value) => saveField({ storagePath: value })}
           renderEditor={({ value, onChange }) => (
             <TextField
@@ -290,14 +300,12 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
           ariaLabel="Edit IaC tool"
           display={
             executor.tool ? (
-              <div className="flex items-center gap-2">
-                <ProviderIcon provider={executor.tool.name} />
-                <GetReferenceUrlValue
-                  id={executor.tool.id}
-                  entityName="tool"
-                  display_name={toolLabel(executor.tool)}
-                />
-              </div>
+              <EntityReference
+                id={executor.tool.id}
+                entityName="tool"
+                provider={executor.tool.name}
+                display_name={toolLabel(executor.tool)}
+              />
             ) : (
               <span>Global default</span>
             )

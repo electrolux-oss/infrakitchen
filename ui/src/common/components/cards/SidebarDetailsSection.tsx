@@ -15,36 +15,35 @@ export interface SidebarDetailsEntity {
 
 export interface SidebarDetailsSectionProps {
   entity: SidebarDetailsEntity;
-  /** Label for the creator field. */
-  creatorLabel?: string;
+  /** Label for the creation field. */
+  createdLabel?: string;
 }
 
 /**
- * "Details" sidebar section shared by entity detail pages: who created the
- * entity, when it was created and last updated, and its revision.
+ * Sidebar section shared by entity detail pages: when and by whom the entity
+ * was created, when it was last updated, and its revision.
  */
 export const SidebarDetailsSection = ({
   entity,
-  creatorLabel = "Created by",
+  createdLabel = "Created",
 }: SidebarDetailsSectionProps) => {
   const hasUpdatedAt = entity.updatedAt !== undefined;
+  const hasRevision = entity.revisionNumber !== undefined;
   return (
-    <SidebarSection title="Details">
+    <SidebarSection>
       <CommonField
-        name={creatorLabel}
+        name={createdLabel}
         value={
-          entity.creator ? (
-            <UserAvatar
-              id={entity.creator.id}
-              identifier={entity.creator.identifier ?? entity.creator.name}
-            />
-          ) : null
+          <div className="flex flex-wrap items-center gap-x-1.5">
+            <RelativeTime date={entity.createdAt} />
+            {entity.creator && (
+              <UserAvatar
+                id={entity.creator.id}
+                identifier={entity.creator.identifier ?? entity.creator.name}
+              />
+            )}
+          </div>
         }
-        span="full"
-      />
-      <CommonField
-        name="Created"
-        value={<RelativeTime date={entity.createdAt} />}
         span={hasUpdatedAt ? "half" : "full"}
       />
       {hasUpdatedAt && (
@@ -56,7 +55,7 @@ export const SidebarDetailsSection = ({
           span="half"
         />
       )}
-      {entity.revisionNumber !== undefined && (
+      {hasRevision && (
         <CommonField
           name="Revision"
           value={entity.revisionNumber}

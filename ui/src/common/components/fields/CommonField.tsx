@@ -2,11 +2,13 @@ import React, { FC, ReactNode, useCallback } from "react";
 
 import { useNavigate } from "react-router";
 
-import { IconField } from "../../../icons/Icons";
+import { getProviderIcon, IconField } from "../../../icons/Icons";
 import { Link } from "../../../ui";
+import { Label } from "../../../ui/Label";
 import { cn } from "../../../utils/cn";
 import { useConfig } from "../../context";
 import { getProviderDisplayName } from "../../utils";
+import { entityIcons } from "../entities/entityIcons";
 
 import { PlaceholderText } from "./PlaceholderDescription";
 
@@ -24,7 +26,7 @@ export const getRemoteUrlValue = (url: string) => {
   );
 };
 
-interface GetReferenceUrlValueProps {
+interface EntityReferenceProps {
   id: string;
   entityName: string;
   name?: string;
@@ -32,20 +34,37 @@ interface GetReferenceUrlValueProps {
   identifier?: string;
 }
 
-export const GetReferenceUrlValue: FC<GetReferenceUrlValueProps> = ({
+/** Reference rendered as a label pill with the entity icon, linking to the entity. */
+export const EntityReference: FC<
+  EntityReferenceProps & {
+    icon?: React.ComponentProps<typeof Label>["icon"];
+    tone?: React.ComponentProps<typeof Label>["tone"];
+    /** Shows the provider's brand icon instead of the entity icon. */
+    provider?: string;
+    /** Provider route segment, as used by integration detail pages. */
+    urlProvider?: string;
+  }
+> = ({
   id,
   entityName,
   name,
   display_name,
   identifier,
+  icon,
+  tone,
+  provider,
+  urlProvider,
 }) => {
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
 
-  const fullPath = `${linkPrefix}${entityName}s/${id}`;
+  const basePath = `${linkPrefix}${entityName}s`;
+  const fullPath = urlProvider
+    ? `${basePath}/${urlProvider}/${id}`
+    : `${basePath}/${id}`;
 
   const handleClick = useCallback(
-    (e: React.MouseEvent<HTMLAnchorElement>) => {
+    (e: React.MouseEvent<HTMLElement>) => {
       // Allow default behavior for Cmd/Ctrl+Click (opens in new tab)
       if (e.metaKey || e.ctrlKey) {
         return;
@@ -57,19 +76,23 @@ export const GetReferenceUrlValue: FC<GetReferenceUrlValueProps> = ({
     [navigate, fullPath],
   );
 
-  const displayText = display_name || name || identifier;
+  const resolvedIcon =
+    icon ??
+    (provider
+      ? React.createElement(getProviderIcon(provider), {
+          className: "size-[1em]",
+        })
+      : entityIcons[entityName]);
+
   return (
-    <Link
+    <Label
+      component="a"
       href={fullPath}
       onClick={handleClick}
-      style={{
-        cursor: "pointer",
-        whiteSpace: "normal",
-        overflowWrap: "anywhere",
-      }}
-    >
-      {displayText}
-    </Link>
+      icon={resolvedIcon}
+      tone={tone}
+      label={display_name || name || identifier}
+    />
   );
 };
 

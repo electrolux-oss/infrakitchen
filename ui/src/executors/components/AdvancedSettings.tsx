@@ -2,7 +2,7 @@ import { BaseCard } from "../../common/components/cards/BaseCard";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import {
   CommonField,
-  GetReferenceUrlValue,
+  EntityReference,
 } from "../../common/components/fields/CommonField";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
@@ -37,7 +37,7 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
         name={"Code Repository"}
         value={
           executor.sourceCode ? (
-            <GetReferenceUrlValue {...executor.sourceCode} />
+            <EntityReference {...executor.sourceCode} />
           ) : null
         }
         span="full"

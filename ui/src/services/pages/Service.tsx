@@ -2,11 +2,11 @@ import { useParams } from "react-router";
 
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import {
   EntityProvider,
   useEntityProvider,
 } from "../../common/context/EntityContext";
-import { HeroRectangleStackIcon } from "../../icons";
 import { ServiceContent } from "../components/ServiceContent";
 import { SERVICE_DETAIL_FIELDS } from "../graphql";
 
@@ -30,7 +30,7 @@ const ServicePageContent = () => {
   return (
     // Services are headed by their display name, as the overview card was.
     <EntityContainer
-      titleIcon={<HeroRectangleStackIcon />}
+      titleIcon={entityIcons.service}
       title={entity?.displayName || undefined}
       actions={<EntityRefreshButton />}
     >

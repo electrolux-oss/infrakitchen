@@ -10,6 +10,7 @@ import {
   Entity,
   humanizeEntityType,
 } from "../../common/components/entities/Entity";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { paletteTextClass } from "../../common/utils";
@@ -213,7 +214,9 @@ const ActivityCardList = ({
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-fg-muted">
             <ActivityEvent activity={activity} />
-            {typeLabel && <Label label={typeLabel} />}
+            {typeLabel && (
+              <Label label={typeLabel} icon={entityIcons[activity.model]} />
+            )}
             <AuditExecutionResult log={activity} />
             <div className="ml-auto flex items-center gap-2">
               <ActivityCreator activity={activity} />

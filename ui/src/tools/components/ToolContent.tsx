@@ -10,9 +10,9 @@ import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
-  TabCountLabel,
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
+import { CountLabel } from "../../common/components/labels";
 import { useEventProvider } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
@@ -57,7 +57,7 @@ export const ToolContent = () => {
     {
       label: "Resources",
       tabLabel: (
-        <TabCountLabel label="Resources" count={tool.resourcesCount ?? 0} />
+        <CountLabel label="Resources" count={tool.resourcesCount ?? 0} />
       ),
       content: (
         <EntityResources
@@ -69,7 +69,7 @@ export const ToolContent = () => {
     {
       label: "Executors",
       tabLabel: (
-        <TabCountLabel label="Executors" count={tool.executorsCount ?? 0} />
+        <CountLabel label="Executors" count={tool.executorsCount ?? 0} />
       ),
       content: (
         <EntityExecutors

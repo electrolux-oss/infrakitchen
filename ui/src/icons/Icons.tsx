@@ -88,7 +88,7 @@ export const SlackIcon: React.FC<IconProps> = (props) => (
   <Icon icon={deviconPlainSlackData} ssr {...props} />
 );
 
-const resourceIcons = new Map<string, React.ElementType>([
+const providerIcons = new Map<string, React.ElementType>([
   ["aws", AwsIcon],
   ["azure", AzureIcon],
   ["azurerm", AzureIcon],
@@ -112,16 +112,16 @@ const resourceIcons = new Map<string, React.ElementType>([
   ["guest", HeroUserCircleIcon],
 ]);
 
-export const getResourceIcon = (type: string | undefined) => {
-  if (resourceIcons.has(type as string)) {
-    return resourceIcons.get(type as string) as any;
+export const getProviderIcon = (type: string | undefined) => {
+  if (providerIcons.has(type as string)) {
+    return providerIcons.get(type as string) as any;
   }
 
   return HeroCloudIcon as any;
 };
 
 export const IconField = (type: string | undefined, size?: number) => {
-  const LabelIcon: any = getResourceIcon(type);
+  const LabelIcon: any = getProviderIcon(type);
   const sizeProps = size ? { width: size, height: size } : {};
   return <LabelIcon {...sizeProps} />;
 };

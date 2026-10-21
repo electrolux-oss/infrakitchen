@@ -6,11 +6,10 @@ import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
-  TabCountLabel,
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
 import { HclItemList } from "../../common/components/hcl/HclItemList";
-import { Label } from "../../common/components/labels";
+import { CountLabel } from "../../common/components/labels";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
@@ -21,16 +20,6 @@ import { CodeSnapshotTab } from "./CodeSnapshotTab";
 import { InputTab } from "./InputTab";
 import { ConfigurationTabContent } from "./SourceCodeRefRow";
 import { SourceCodeVersionSidebar } from "./SourceCodeVersionSidebar";
-
-/** Card title with a count pill, e.g. "Input Variables" [4]. */
-const CardCountTitle = ({ title, count }: { title: string; count: number }) => (
-  <div className="flex items-center gap-2">
-    {/* Inherit the card-title styling so this header matches the
-        plain-string titles used by the other cards. */}
-    <span>{title}</span>
-    <Label label={String(count)} />
-  </div>
-);
 
 export const SourceCodeVersionContent = () => {
   const { entity } = useEntityProvider();
@@ -50,8 +39,8 @@ export const SourceCodeVersionContent = () => {
         <div className="grid [grid-auto-columns:minmax(0,_1fr)] [grid-auto-flow:row] grid-cols-[minmax(0,_1fr)] items-start gap-4 xl:[grid-auto-flow:column]">
           <BaseCard
             name={
-              <CardCountTitle
-                title="Input Variables"
+              <CountLabel
+                label="Input Variables"
                 count={source_code_version.variables?.length ?? 0}
               />
             }
@@ -62,8 +51,8 @@ export const SourceCodeVersionContent = () => {
           </BaseCard>
           <BaseCard
             name={
-              <CardCountTitle
-                title="Output Values"
+              <CountLabel
+                label="Output Values"
                 count={source_code_version.outputs?.length ?? 0}
               />
             }
@@ -99,7 +88,7 @@ export const SourceCodeVersionContent = () => {
     {
       label: "Resources",
       tabLabel: (
-        <TabCountLabel
+        <CountLabel
           label="Resources"
           count={source_code_version.resourcesCount ?? 0}
         />

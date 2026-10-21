@@ -15,6 +15,7 @@ import {
   CardHeader,
   Tabs,
   Link,
+  StepNumber,
 } from "../../ui";
 import { CREATE_INTEGRATION_WITH_STORAGE_MUTATION } from "../../use_cases/graphql";
 import { renderFieldsForProvider } from "../components/IntegrationProviderForms";
@@ -221,9 +222,7 @@ const IntegrationCreatePage = () => {
             <div className="flex flex-col gap-2">
               {providerObject.instructions.map((line, index) => (
                 <div className="flex gap-3" key={index}>
-                  <span className="mt-[0.8px] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[0.75rem] leading-[1] text-primary-contrast">
-                    {index + 1}
-                  </span>
+                  <StepNumber className="mt-[0.8px]" step={index + 1} />
                   <span className="self-center">{line}</span>
                 </div>
               ))}

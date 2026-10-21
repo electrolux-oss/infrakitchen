@@ -1,4 +1,5 @@
 import { Entity } from "../../common/components/entities/Entity";
+import { UnresolvedEntity } from "../../common/components/entities/UnresolvedEntity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import { relativeTimeColumn } from "../../common/components/entity_table/tableColumns";
 import { RenderCellParams } from "../../ui";
@@ -91,7 +92,13 @@ export const userNotificationColumns = (
   },
   {
     field: "entityId",
-    fetchFields: ["entityType", "entityId", "entityName"],
+    fetchFields: [
+      "entityType",
+      "entityId",
+      "entityName",
+      "entityData",
+      "entityLoaderMissing",
+    ],
     headerName: "Entity",
     flex: 2,
     sortable: false,
@@ -104,12 +111,33 @@ export const userNotificationColumns = (
       options: NOTIFICATION_ENTITY_TYPE_OPTIONS,
     },
     renderCell: (params: RenderCellParams<GqlUserNotification>) => {
-      const { entityId, entityType, entityName } = params.row;
+      const {
+        entityId,
+        entityType,
+        entityName,
+        entityData,
+        entityLoaderMissing,
+      } = params.row;
       if (!entityId) return null;
+      // Entities with a loader that no longer resolve have been deleted
+      if (!entityData && !entityLoaderMissing) {
+        return (
+          <UnresolvedEntity
+            entityId={entityId}
+            entityType={entityType}
+            reason="deleted"
+          />
+        );
+      }
       // The row click opens the entity (on the right tab) and marks the notification read
       return (
         <Entity
-          entity={{ id: entityId, entityType, name: entityName ?? entityId }}
+          entity={{
+            ...entityData,
+            id: entityId,
+            entityType,
+            name: entityData?.name ?? entityName ?? entityId,
+          }}
           showLabel
           disableLink
         />

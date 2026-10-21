@@ -125,18 +125,21 @@ export function InlineEditableField<T>({
 
   if (editing) {
     return (
-      <div className="flex w-full items-center gap-2">
-        <div className="min-w-0 grow">
+      <div className="flex w-full items-start gap-1">
+        {/* Editors bring their own form margins; drop the top one so the
+            input starts level with the action buttons. */}
+        <div className="min-w-0 grow [&>:first-child]:mt-0 [&>:first-child>:first-child]:mt-0">
           {renderEditor({ value: draft, onChange: setDraft })}
         </div>
-        <div className="flex items-center">
+        <div className="flex h-8 items-center gap-1">
           {saving ? (
-            <Spinner className="mx-2" size={20} />
+            <Spinner className="mx-1" size={20} />
           ) : (
             <>
               <Tooltip title="Save">
                 <span>
                   <IconButton
+                    className="size-7 hover:bg-success/8 hover:text-success"
                     size="small"
                     onClick={save}
                     aria-label="Save change"
@@ -147,6 +150,7 @@ export function InlineEditableField<T>({
               </Tooltip>
               <Tooltip title="Cancel">
                 <IconButton
+                  className="size-7 hover:bg-error/8 hover:text-error"
                   size="small"
                   onClick={cancel}
                   aria-label="Cancel edit"

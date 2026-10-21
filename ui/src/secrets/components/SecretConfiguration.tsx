@@ -8,7 +8,7 @@ import {
   getProviderValue,
 } from "../../common/components/fields/CommonField";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
-import { Label } from "../../common/components/labels";
+import { CountLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
@@ -183,12 +183,7 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
       {isCustom ? (
         <CommonField
           span="full"
-          name={
-            <div className="flex items-center gap-2">
-              Secret List
-              <Label label={String(secretList.length)} />
-            </div>
-          }
+          name={<CountLabel label="Secret List" count={secretList.length} />}
           value={
             editingList ? (
               <div className="w-full">
