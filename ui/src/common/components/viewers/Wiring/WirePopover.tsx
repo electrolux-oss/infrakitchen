@@ -7,7 +7,7 @@ import {
   HeroTrashIcon,
   HeroXMarkIcon,
 } from "../../../../icons";
-import { Button, Tooltip } from "../../../../ui";
+import { Button, Label, Tooltip } from "../../../../ui";
 import { cn } from "../../../../utils/cn";
 
 import { NodeSpec, PORT_COLOR, PortKind, WIRE_COLOR } from "./graph";
@@ -101,7 +101,7 @@ export function WirePopover({
 
       <div className="border-t border-divider px-3 py-3">
         <End title="From" end={from} />
-        <div className="grid h-6 w-8 place-items-center text-fg-disabled">
+        <div className="-mt-2 grid h-8 w-8 place-items-center text-fg-disabled">
           <HeroArrowDownIcon className="text-[14px]" />
         </div>
         <End title="To" end={to} />
@@ -171,11 +171,17 @@ function End({ title, end }: { title: string; end: WireEnd }) {
         <NodeIcon spec={node} className="text-[16px]" />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-[10px] font-semibold tracking-wider text-fg-muted uppercase">
-          {title} · {nodeKindLabel(node)}
-        </div>
-        <div className="truncate text-[13px] leading-5 font-semibold">
-          {node.title || "Unnamed"}
+        <div className="flex items-center gap-1.5">
+          <span className="w-8 shrink-0 text-[10px] font-semibold tracking-wider text-fg-muted uppercase">
+            {title}
+          </span>
+          <span className="truncate text-[13px] leading-5 font-semibold">
+            {node.title || "Unnamed"}
+          </span>
+          <Label
+            size="small"
+            label={node.kind === "constant" ? "Constant" : nodeKindLabel(node)}
+          />
         </div>
         <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[12px]">
           <span

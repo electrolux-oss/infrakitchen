@@ -11,7 +11,9 @@ import { Label, Tooltip } from "../../../../ui";
 import { ENTITY_STATUS } from "../../../../utils";
 import { cn } from "../../../../utils/cn";
 import { STATUS_CHIP_COLOR } from "../../../utils";
+import { InlineCode } from "../../code/InlineCode";
 import { EntityReference } from "../../fields/CommonField";
+import { CountLabel } from "../../labels";
 
 import {
   CONSTANT_OUTPUT_KEY,
@@ -308,9 +310,15 @@ export function NodeCard({
             <span className="truncate text-[13px] leading-5 font-semibold">
               {spec.kind === "constant" ? spec.title || "Unnamed" : spec.title}
             </span>
+            {spec.kind === "constant" && spec.constantType && (
+              <InlineCode disableCopy>{spec.constantType}</InlineCode>
+            )}
           </div>
           <div className="flex items-center gap-1.5 text-[11px] leading-4 text-fg-muted">
-            <span className="truncate">{spec.note ?? nodeKindLabel(spec)}</span>
+            <span className="truncate">
+              {spec.note ??
+                (spec.kind === "constant" ? "Constant" : nodeKindLabel(spec))}
+            </span>
             {spec.abstract && (
               <Label tone="info" size="small" label="ABSTRACT" />
             )}
@@ -444,13 +452,15 @@ function Section({
   if (count === 0) return null;
   return (
     <section className="pt-2">
-      <div className="flex items-center gap-1.5 px-4 pb-0.5 text-[10px] font-semibold tracking-wider text-fg-muted uppercase">
-        <span
-          className="size-1.5 rounded-full"
-          style={{ background: PORT_COLOR[kind] }}
-        />
-        {title}
-        <span className="font-normal text-fg-disabled">{count}</span>
+      <div
+        className={cn(
+          "flex items-center gap-1.5 px-4 pb-0.5 text-[10px] font-semibold tracking-wider text-fg-muted uppercase",
+          kind === "output" && "justify-end",
+        )}
+      >
+        <div style={{ color: PORT_COLOR[kind] }}>
+          <CountLabel label={title} count={count} size="small" />
+        </div>
       </div>
       {children}
     </section>

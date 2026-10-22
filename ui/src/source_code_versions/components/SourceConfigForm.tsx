@@ -143,14 +143,16 @@ export const SourceConfigForm = (props: {
           <span className="text-subtitle1 font-bold text-fg">{configName}</span>
           <Label size="small" label={configType} />
           {required ? (
-            <Label size="small" tone="warning" label="required" />
+            <Label size="small" tone="error" label="required" />
           ) : (
             <Label size="small" tone="info" label="optional" />
           )}
           {validationSummary && (
             <Label size="small" tone="success" label={validationSummary} />
           )}
-          {restricted && <Label size="small" tone="error" label="restricted" />}
+          {restricted && (
+            <Label size="small" tone="warning" label="restricted" />
+          )}
           {sensitive && (
             <Label size="small" tone="secondary" label="sensitive" />
           )}

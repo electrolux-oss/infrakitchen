@@ -1,16 +1,16 @@
-import { useNavigate } from "react-router";
-
 import {
   EntitySidebar,
   SidebarSection,
 } from "../../common/components/cards/EntitySidebar";
 import { SidebarDetailsSection } from "../../common/components/cards/SidebarDetailsSection";
-import { CommonField } from "../../common/components/fields/CommonField";
+import {
+  CommonField,
+  EntityReference,
+} from "../../common/components/fields/CommonField";
 import { Duration } from "../../common/components/fields/Duration";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { Label } from "../../common/components/labels";
 import { StatusLabel } from "../../common/components/labels";
-import { useConfig } from "../../common/context/ConfigContext";
 import { GqlWorkflow } from "../graphql";
 
 export interface WorkflowSidebarProps {
@@ -23,9 +23,6 @@ export interface WorkflowSidebarProps {
  * focus on its steps, variables and logs.
  */
 export const WorkflowSidebar = ({ workflow }: WorkflowSidebarProps) => {
-  const { linkPrefix } = useConfig();
-  const navigate = useNavigate();
-
   // Derive unique templates from steps
   const templates = workflow.steps
     .map((s) => s.template)
@@ -90,10 +87,11 @@ export const WorkflowSidebar = ({ workflow }: WorkflowSidebarProps) => {
           <div className="col-span-full">
             <div className="flex flex-wrap gap-2">
               {templates.map((t) => (
-                <Label
+                <EntityReference
                   key={t.id}
-                  label={t.name}
-                  onClick={() => navigate(`${linkPrefix}templates/${t.id}`)}
+                  id={t.id}
+                  entityName="template"
+                  name={t.name}
                 />
               ))}
             </div>

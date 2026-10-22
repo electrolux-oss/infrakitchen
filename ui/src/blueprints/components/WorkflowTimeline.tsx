@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router";
 
 import { useConfig } from "../../common";
-import { Entity } from "../../common/components/entities/Entity";
+import { EntityReference } from "../../common/components/fields/CommonField";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { StatusLabel } from "../../common/components/labels";
 import {
   Table,
@@ -45,13 +46,13 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
                   variant="subtitle2"
                   onClick={() => navigate(`${linkPrefix}workflows/${exec.id}`)}
                 >
-                  {exec.id.slice(0, 8)}…
+                  {exec.id}
                 </Link>
               </h6>
               <StatusLabel status={exec.status} />
             </div>
             <span className="text-caption text-fg-muted">
-              {new Date(exec.createdAt).toLocaleString()}
+              <RelativeTime date={exec.createdAt} />
             </span>
           </div>
 
@@ -73,25 +74,25 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
                   <TableRow key={step.id}>
                     <TableCell>{step.position + 1}</TableCell>
                     <TableCell>
-                      <Entity
-                        entity={{
-                          id: step.template?.id,
-                          entityType: "template",
-                          name: step.template?.name || "Template",
-                        }}
-                      />
+                      {step.template ? (
+                        <EntityReference
+                          id={step.template.id}
+                          entityName="template"
+                          name={step.template.name}
+                        />
+                      ) : (
+                        "-"
+                      )}
                     </TableCell>
                     <TableCell>
                       <StatusLabel status={step.status} />
                     </TableCell>
                     <TableCell>
                       {step.resource ? (
-                        <Entity
-                          entity={{
-                            id: step.resource?.id,
-                            entityType: "resource",
-                            name: step.resource?.name || "Resource",
-                          }}
+                        <EntityReference
+                          id={step.resource.id}
+                          entityName="resource"
+                          name={step.resource.name}
                         />
                       ) : (
                         "-"

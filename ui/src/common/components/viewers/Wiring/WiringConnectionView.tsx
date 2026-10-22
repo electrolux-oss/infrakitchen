@@ -103,6 +103,7 @@ export function WiringEdgeView({
             className="pointer-events-none absolute flex w-60 justify-center"
             style={{
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+              zIndex: 10000,
             }}
           >
             <span

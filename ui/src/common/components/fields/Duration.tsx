@@ -3,6 +3,8 @@ import React from "react";
 import { Tooltip } from "../../../ui";
 import { cn } from "../../../utils/cn";
 
+import { getDateValue } from "./CommonField";
+
 interface DurationProps {
   start: string | Date;
   end: string | Date;
@@ -26,15 +28,15 @@ function formatDuration(start: string | Date, end: string | Date): string {
   return `${hours}h ${remainingMins}m`;
 }
 
-function formatDetailedDuration(
-  start: string | Date,
-  end: string | Date,
-): string {
-  const startDate = start instanceof Date ? start : new Date(start);
-  const endDate = end instanceof Date ? end : new Date(end);
-
-  return `${startDate.toLocaleString()} → ${endDate.toLocaleString()}`;
-}
+const DetailedDuration: React.FC<{ start: Date; end: Date }> = ({
+  start,
+  end,
+}) => (
+  <div className="flex flex-col gap-0.5">
+    <span>Started: {getDateValue(start)}</span>
+    <span>Finished: {getDateValue(end)}</span>
+  </div>
+);
 
 export const Duration: React.FC<DurationProps> = ({
   start,
@@ -53,10 +55,9 @@ export const Duration: React.FC<DurationProps> = ({
   }
 
   const durationText = formatDuration(start, end);
-  const detailedDuration = formatDetailedDuration(start, end);
 
   return (
-    <Tooltip title={detailedDuration}>
+    <Tooltip title={<DetailedDuration start={startDate} end={endDate} />}>
       <span
         className={cn(
           "inline-flex cursor-pointer items-center text-body2 text-fg-muted underline decoration-fg-muted decoration-dashed underline-offset-[5px]",

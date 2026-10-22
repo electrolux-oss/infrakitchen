@@ -163,7 +163,7 @@ export const NamingConventionInput = ({
                   placement="top"
                 >
                   <Label
-                    className="font-mono"
+                    className="font-mono font-normal"
                     label={config.name}
                     tone="primary"
                     onClick={() => handleInsertVariable(config.name)}

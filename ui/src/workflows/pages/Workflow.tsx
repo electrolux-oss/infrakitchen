@@ -38,7 +38,7 @@ const WorkflowPageContent = () => {
     // overview card was.
     <EntityContainer
       titleIcon={<HeroArrowsRightLeftIcon />}
-      title={entity ? `Workflow ${entity.id.slice(0, 8)}…` : "Workflow"}
+      title={entity ? `Workflow ${entity.id}` : "Workflow"}
       actions={<EntityRefreshButton />}
       showEditAction
     >

@@ -5,11 +5,13 @@ import { WorkflowStep } from "./WorkflowStep";
 interface WorkflowStepsProps {
   steps: GqlWorkflowStep[];
   workflowAction?: GqlWorkflowAction;
+  workflowId?: string;
 }
 
 export const WorkflowSteps = ({
   steps,
   workflowAction,
+  workflowId,
 }: WorkflowStepsProps) => {
   if (steps.length === 0) {
     return (
@@ -27,6 +29,7 @@ export const WorkflowSteps = ({
             step={step}
             key={step.id}
             workflowAction={workflowAction}
+            workflowId={workflowId}
           />
         );
       })}

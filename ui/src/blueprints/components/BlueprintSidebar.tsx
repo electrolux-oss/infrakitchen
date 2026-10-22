@@ -13,7 +13,7 @@ import {
 import { Label, StatusLabel } from "../../common/components/labels";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
-import { HeroAdjustmentsHorizontalIcon } from "../../icons";
+import { HeroHashtagIcon, HeroLanguageIcon } from "../../icons";
 import { GqlBlueprint, UPDATE_BLUEPRINT_MUTATION } from "../graphql";
 import { BlueprintUpdateFieldInput } from "../graphql/mutations";
 
@@ -43,6 +43,7 @@ export const BlueprintSidebar = ({ blueprint }: BlueprintSidebarProps) => {
     (blueprint.configuration?.constants as Array<{
       id: string;
       name: string;
+      type?: "string" | "number";
     }>) || [];
 
   return (
@@ -104,7 +105,13 @@ export const BlueprintSidebar = ({ blueprint }: BlueprintSidebarProps) => {
                   key={c.id}
                   label={c.name}
                   tone="secondary"
-                  icon={<HeroAdjustmentsHorizontalIcon />}
+                  icon={
+                    c.type === "number" ? (
+                      <HeroHashtagIcon />
+                    ) : (
+                      <HeroLanguageIcon />
+                    )
+                  }
                 />
               ))}
             </div>

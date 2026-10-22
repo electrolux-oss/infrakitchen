@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 
 import { useConfig } from "../../../common";
 import { buildLogsQuery, GqlLog } from "../../../logs/graphql";
@@ -14,12 +14,15 @@ export interface EntityLogsProps {
   entityId?: string;
   traceId?: string;
   sourceCodeLanguage?: string;
+  /** Adds a "Resource" column, e.g. to tell which workflow step a log belongs to. */
+  renderEntity?: (entityId: string) => ReactNode;
 }
 
 export const EntityLogs = ({
   entityId,
   traceId,
   sourceCodeLanguage,
+  renderEntity,
 }: EntityLogsProps) => {
   const { ikApi } = useConfig();
 
@@ -100,6 +103,18 @@ export const EntityLogs = ({
           <div className="text-[0.875rem] font-medium">{params.value}</div>
         ),
       },
+      ...(renderEntity
+        ? [
+            {
+              field: "entityId",
+              headerName: "Resource",
+              flex: 1,
+              sortable: false,
+              renderCell: (params: { row: LogEntity }) =>
+                renderEntity(params.row.entityId),
+            } as DataTableColumn<LogEntity>,
+          ]
+        : []),
       {
         field: "createdAt",
         headerName: "Started",
@@ -144,7 +159,7 @@ export const EntityLogs = ({
         ),
       },
     ],
-    [sourceCodeLanguage],
+    [sourceCodeLanguage, renderEntity],
   );
 
   return (
