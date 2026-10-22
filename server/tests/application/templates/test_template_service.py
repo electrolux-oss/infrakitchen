@@ -423,6 +423,21 @@ class TestUpdate:
         assert str(exc.value) == "A template cannot be both a parent and a child of another template"
 
 
+class TestTemplateUpdateSchema:
+    def test_empty_parents_list_is_a_valid_update(self):
+        # Removing the last parent sends parents=[]; that must not be rejected as an empty update.
+        update = TemplateUpdate.model_validate({"name": None, "parents": [], "children": None})
+        assert update.parents == []
+
+    def test_empty_children_list_is_a_valid_update(self):
+        update = TemplateUpdate.model_validate({"children": []})
+        assert update.children == []
+
+    def test_all_none_is_rejected(self):
+        with pytest.raises(ValueError, match="At least one field"):
+            TemplateUpdate.model_validate({"name": None, "parents": None, "children": None})
+
+
 class TestPatch:
     @pytest.mark.asyncio
     async def test_patch_success_with_status_disable(
@@ -641,3 +656,20 @@ class TestGetTree:
 
         collect(result)
         assert len(node_ids) == len(set(node_ids)) == 7
+
+
+class TestGetAncestors:
+    @pytest.mark.asyncio
+    async def test_groups_rows_by_requested_template(self, mock_template_service, mock_template_crud):
+        vpc, environment, account = uuid4(), uuid4(), uuid4()
+        mock_template_crud.get_ancestors.return_value = [
+            {"root_id": vpc, "id": environment, "name": "Environment", "child_id": vpc},
+            {"root_id": vpc, "id": account, "name": "Account", "child_id": environment},
+            {"root_id": environment, "id": account, "name": "Account", "child_id": environment},
+        ]
+
+        result = await mock_template_service.get_ancestors([vpc, environment])
+
+        assert [(a.name, a.child_id) for a in result[vpc]] == [("Environment", vpc), ("Account", environment)]
+        assert [(a.name, a.child_id) for a in result[environment]] == [("Account", environment)]
+        mock_template_crud.get_ancestors.assert_awaited_once_with([vpc, environment])

@@ -18,6 +18,8 @@ export interface GenericTemplate {
   abstract: boolean;
   entityName: string;
   cloudResourceTypes: string[] | null;
+  /** Unset when unknown; null or "" when the template has no naming convention. */
+  namingConvention?: string | null;
 }
 
 export interface GenericStep {

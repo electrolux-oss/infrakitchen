@@ -14,7 +14,14 @@ from core.utils.model_tools import has_field_changes, model_db_dump
 from .functions import get_template_actions
 from .crud import TemplateCRUD
 from .model import Template
-from .schema import TemplateCreate, TemplateResponse, TemplateShort, TemplateTreeResponse, TemplateUpdate
+from .schema import (
+    TemplateAncestor,
+    TemplateCreate,
+    TemplateResponse,
+    TemplateShort,
+    TemplateTreeResponse,
+    TemplateUpdate,
+)
 from core.users.model import UserDTO
 
 from core.constants import ModelStatus
@@ -219,6 +226,13 @@ class TemplateService:
         await self.audit_log_handler.create_log(template_id, requester.id, ModelActions.DELETE)
         await self.revision_handler.delete_revisions(template_id)
         await self.crud.delete(existing_template)
+
+    async def get_ancestors(self, template_ids: list[UUID]) -> dict[UUID, list[TemplateAncestor]]:
+        """All templates above each given template in the parent chain, keyed by that template."""
+        result: dict[UUID, list[TemplateAncestor]] = defaultdict(list)
+        for row in await self.crud.get_ancestors(template_ids):
+            result[row["root_id"]].append(TemplateAncestor(id=row["id"], name=row["name"], child_id=row["child_id"]))
+        return result
 
     async def get_tree(
         self, template_id: str, direction: Literal["parents", "children"] = "children"

@@ -1,11 +1,20 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Fragment,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import { useForm, useWatch } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
+import { InlineCode } from "../../common/components/code/InlineCode";
 import { VariableCard } from "../../common/components/fields/VariableCard";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
+import { ReferenceContent } from "../../common/components/inputs/referenceContent";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import {
   WiringRule,
@@ -18,8 +27,10 @@ import { HeroExclamationCircleIcon } from "../../icons";
 import {
   HeroChevronDownIcon,
   HeroLinkIcon,
-  HeroAdjustmentsHorizontalIcon,
+  HeroCodeBracketIcon,
   HeroEyeIcon,
+  HeroHashtagIcon,
+  HeroLanguageIcon,
   HeroEyeSlashIcon,
 } from "../../icons";
 import { ResourceVariableRow } from "../../resources/components/variables/ResourceVariablesForm";
@@ -29,6 +40,8 @@ import { IkEntity } from "../../types";
 import {
   Autocomplete,
   Alert,
+  AlertTitle,
+  StepNumber,
   Spinner,
   Button,
   Tooltip,
@@ -126,6 +139,32 @@ function computeMissingParents(
   }
   return result;
 }
+
+const BoldList = ({ names }: { names: string[] }) => (
+  <>
+    {names.map((name, i) => (
+      <Fragment key={name}>
+        {i > 0 && ", "}
+        <span className="font-semibold">{name}</span>
+      </Fragment>
+    ))}
+  </>
+);
+
+const BlockersAlert = ({ items }: { items: ReactNode[] }) =>
+  items.length > 0 ? (
+    <Alert className="w-full max-w-xl" severity="warning">
+      <AlertTitle>Complete these to create the resources</AlertTitle>
+      <ul className="m-0 list-disc pl-4">
+        {items.map((item, i) => (
+          <li key={i}>{item}</li>
+        ))}
+      </ul>
+    </Alert>
+  ) : null;
+
+const scvLabel = (opt: IkEntity): string =>
+  opt.identifier || opt.sourceCodeVersion || opt.sourceCodeBranch || opt.id;
 
 export const BlueprintUsePage = () => {
   const { blueprint_id } = useParams();
@@ -280,6 +319,18 @@ export const BlueprintUsePage = () => {
     [blueprint],
   );
 
+  // Entered value per constant, falling back to the blueprint default.
+  const effectiveConstants = useMemo(
+    () =>
+      Object.fromEntries(
+        constantBlocks.map((c) => [
+          c.id,
+          constantValues[c.id] ?? c.defaultValue ?? "",
+        ]),
+      ) as Record<string, string>,
+    [constantBlocks, constantValues],
+  );
+
   // Constant wires stored separately from template wiring
   const constantWires = useMemo(
     () => (blueprint?.configuration?.constant_wires || []) as WiringRule[],
@@ -332,11 +383,10 @@ export const BlueprintUsePage = () => {
   // All constants declared in the blueprint must be filled in by the user.
   const allConstantsFilled = useMemo(
     () =>
-      constantBlocks.every((c) => {
-        const v = constantValues[c.id];
-        return v !== undefined && v !== null && String(v).trim() !== "";
-      }),
-    [constantBlocks, constantValues],
+      constantBlocks.every(
+        (c) => String(effectiveConstants[c.id]).trim() !== "",
+      ),
+    [constantBlocks, effectiveConstants],
   );
 
   // Every required, user-editable, non-wired variable must have a value
@@ -588,7 +638,7 @@ export const BlueprintUsePage = () => {
         for (const [templateId, wiredVars] of Object.entries(wiredVariables)) {
           for (const [varName, info] of Object.entries(wiredVars)) {
             if (info.isConstantWire && info.constantId) {
-              const val = data.constantValues[info.constantId];
+              const val = effectiveConstants[info.constantId];
               if (val !== undefined && val !== "") {
                 if (!variable_overrides[templateId]) {
                   variable_overrides[templateId] = {};
@@ -617,7 +667,7 @@ export const BlueprintUsePage = () => {
         for (const [templateId, wiredCfg] of Object.entries(wiredConfigs)) {
           for (const [name, info] of Object.entries(wiredCfg)) {
             const val = info.constantId
-              ? data.constantValues[info.constantId]
+              ? effectiveConstants[info.constantId]
               : undefined;
             if (info.isConstantWire && val !== undefined && val !== "") {
               dependency_config_overrides[templateId] = {
@@ -666,6 +716,7 @@ export const BlueprintUsePage = () => {
     [
       blueprint,
       blueprint_id,
+      effectiveConstants,
       wiredVariables,
       wiredConfigs,
       ikApi,
@@ -708,24 +759,83 @@ export const BlueprintUsePage = () => {
     allRequiredConfigsFilled &&
     allRequiredVariablesFilled;
 
+  const templateNames = (ids: string[]) => (
+    <BoldList
+      names={(blueprint.templates || [])
+        .filter((t) => ids.includes(t.id))
+        .map((t) => t.name)}
+    />
+  );
+  const withMissing = (map: Record<string, Set<string>>) =>
+    Object.keys(map).filter((id) => map[id].size > 0);
+
+  const blockers: ReactNode[] = [
+    !allParentsResolved &&
+      "Select existing resources for the required parent templates",
+    !hasAllScvs && (
+      <>
+        Choose a template version for{" "}
+        {templateNames(
+          (blueprint.templates || [])
+            .filter((t) => !t.abstract && !selectedScv[t.id])
+            .map((t) => t.id),
+        )}
+      </>
+    ),
+    !storageId && "Select a storage",
+    integrationRequired &&
+      integrationIds.length === 0 &&
+      "Select an integration",
+    !allConstantsFilled && (
+      <>
+        Enter a value for{" "}
+        {constantBlocks
+          .filter((c) => String(effectiveConstants[c.id]).trim() === "")
+          .map((c, i) => (
+            <Fragment key={c.id}>
+              {i > 0 && ", "}
+              <InlineCode disableCopy>{c.name}</InlineCode>
+            </Fragment>
+          ))}
+      </>
+    ),
+    !allRequiredConfigsFilled && (
+      <>
+        Fill in the required dependency configs of{" "}
+        {templateNames(withMissing(missingConfigs))}
+      </>
+    ),
+    !allRequiredVariablesFilled && (
+      <>
+        Fill in the required input variables of{" "}
+        {templateNames(withMissing(missingVariables))}
+      </>
+    ),
+  ].filter(Boolean);
+
   return (
     <PageContainer
       title={`Use Blueprint: ${blueprint.name}`}
       bottomActions={
-        <>
-          <Button
-            onClick={() => navigate(`${linkPrefix}blueprints/${blueprint_id}`)}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit(onSubmit)}
-            disabled={!canSubmit}
-          >
-            {submitting ? "Creating…" : "Create"}
-          </Button>
-        </>
+        <div className="flex flex-col items-center gap-2">
+          <BlockersAlert items={blockers} />
+          <div className="flex gap-4">
+            <Button
+              onClick={() =>
+                navigate(`${linkPrefix}blueprints/${blueprint_id}`)
+              }
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSubmit(onSubmit)}
+              disabled={!canSubmit}
+            >
+              {submitting ? "Creating…" : "Create"}
+            </Button>
+          </div>
+        </div>
       }
     >
       {!allParentsResolved && uniqueParentTemplates.length > 0 && (
@@ -873,7 +983,7 @@ export const BlueprintUsePage = () => {
               all wired template inputs.
             </p>
             {constantBlocks.map((c) => {
-              const raw = constantValues[c.id] ?? c.defaultValue ?? "";
+              const raw = effectiveConstants[c.id];
               const isEmpty = String(raw).trim() === "";
               const isNumber = c.type === "number";
               return (
@@ -897,7 +1007,9 @@ export const BlueprintUsePage = () => {
                     <Label
                       size="small"
                       tone="secondary"
-                      icon={<HeroAdjustmentsHorizontalIcon />}
+                      icon={
+                        isNumber ? <HeroHashtagIcon /> : <HeroLanguageIcon />
+                      }
                       label={isNumber ? "Number" : "String"}
                       className="mr-2"
                     />
@@ -945,7 +1057,7 @@ export const BlueprintUsePage = () => {
               key={t.id}
               title={
                 <div className="flex items-center gap-2">
-                  <Label size="large" tone="primary" label={idx + 1} />
+                  <StepNumber step={idx + 1} />
                   <span>{t.name}</span>
                   {Object.keys(wired).length > 0 && (
                     <Label
@@ -968,12 +1080,21 @@ export const BlueprintUsePage = () => {
               {!t.abstract && (
                 <Autocomplete
                   options={scvs}
-                  getOptionLabel={(opt: IkEntity) =>
-                    opt.identifier ||
-                    opt.sourceCodeVersion ||
-                    opt.sourceCodeBranch ||
-                    opt.id
-                  }
+                  getOptionLabel={scvLabel}
+                  renderOption={(opt: IkEntity) => (
+                    <ReferenceContent
+                      entityName="source_code_versions"
+                      entity={opt}
+                      fallback={scvLabel(opt)}
+                    />
+                  )}
+                  renderValue={(opt: IkEntity) => (
+                    <ReferenceContent
+                      entityName="source_code_versions"
+                      entity={opt}
+                      fallback={scvLabel(opt)}
+                    />
+                  )}
                   value={scvs.find((s) => s.id === currentScv) || null}
                   onChange={(_e, newVal) =>
                     handleScvChange(t.id, newVal?.id || null)
@@ -995,7 +1116,9 @@ export const BlueprintUsePage = () => {
               {/* Required dependency config */}
               {requiredConfigsOf(t).length > 0 && (
                 <div className="mt-2 mb-2">
-                  <h4 className="m-0 mb-2 text-h5">Dependency Config</h4>
+                  <h4 className="m-0 mb-2 text-body2 font-semibold">
+                    Dependency Config
+                  </h4>
                   {requiredConfigsOf(t).map((name) => {
                     // Rendered like the input variables: wired values show their source
                     const wiredCfg = wiredConfigs[t.id]?.[name];
@@ -1022,9 +1145,9 @@ export const BlueprintUsePage = () => {
                               className="mt-2"
                               icon={
                                 wiredCfg.isConstantWire ? (
-                                  <HeroAdjustmentsHorizontalIcon fontSize="small" />
+                                  <HeroCodeBracketIcon />
                                 ) : (
-                                  <HeroLinkIcon fontSize="small" />
+                                  <HeroLinkIcon />
                                 )
                               }
                               label={
@@ -1069,10 +1192,19 @@ export const BlueprintUsePage = () => {
                 <Accordion standalone className="mt-4" defaultExpanded>
                   <AccordionSummary expandIcon={<HeroChevronDownIcon />}>
                     <div className="flex w-full items-center gap-2">
-                      <h4 className="m-0 text-h5">
-                        Input Variables ({visibleVars.length}
-                        {hiddenCount > 0 && ` of ${totalNonRestricted}`})
-                      </h4>
+                      <div className="text-body2 font-semibold">
+                        <div className="flex items-center gap-1.5">
+                          Input Variables
+                          <Label
+                            size="small"
+                            label={
+                              hiddenCount > 0
+                                ? `${visibleVars.length} of ${totalNonRestricted}`
+                                : String(visibleVars.length)
+                            }
+                          />
+                        </div>
+                      </div>
                       <Tooltip
                         title={
                           hideDefaults
@@ -1117,7 +1249,7 @@ export const BlueprintUsePage = () => {
                           isWired && wiredInfo.isConstantWire;
                         const constantVal =
                           isConstantWired && wiredInfo.constantId
-                            ? constantValues[wiredInfo.constantId] || ""
+                            ? effectiveConstants[wiredInfo.constantId] || ""
                             : undefined;
                         const hasDefault =
                           !isWired &&
@@ -1165,9 +1297,9 @@ export const BlueprintUsePage = () => {
                                   className="mt-2"
                                   icon={
                                     wiredInfo.isConstantWire ? (
-                                      <HeroAdjustmentsHorizontalIcon fontSize="small" />
+                                      <HeroCodeBracketIcon />
                                     ) : (
-                                      <HeroLinkIcon fontSize="small" />
+                                      <HeroLinkIcon />
                                     )
                                   }
                                   label={

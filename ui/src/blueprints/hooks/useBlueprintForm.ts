@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useConfig } from "../../common";
 import { WiringRule } from "../../common/components/viewers/Wiring/types";
 import { TemplatePorts } from "../../common/components/viewers/Wiring/WiringCanvas.types";
-import { notifyError } from "../../common/hooks/useNotification";
+import { notify, notifyError } from "../../common/hooks/useNotification";
 import { TEMPLATE_PORTS_QUERY } from "../../source_code_versions/graphql";
 import { GqlTemplate, GqlTemplateShort } from "../../templates/graphql";
 import { IkEntity } from "../../types";
@@ -18,6 +18,8 @@ export interface MissingParentInfo {
 
 interface SourceConfigItem {
   name: string;
+  required?: boolean;
+  default?: unknown;
 }
 
 interface SourceConfigTemplateReferenceItem {
@@ -33,6 +35,7 @@ interface BatchTemplatePortsItem {
   outputs: Array<{ name: string }>;
   references: SourceConfigTemplateReferenceItem[];
   requiredConfigs: string[];
+  ancestors?: Array<{ id: string; name: string; childId: string }>;
 }
 
 interface BatchTemplatePortsResponse {
@@ -87,8 +90,20 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
     for (const item of resp.templatePorts) {
       newPorts[item.template.id] = {
         inputs: item.configs.map((c) => c.name),
+        inputMeta: Object.fromEntries(
+          item.configs.map((c) => [
+            c.name,
+            { required: Boolean(c.required), default: c.default },
+          ]),
+        ),
         outputs: item.outputs.map((o) => o.name),
         configs: item.requiredConfigs ?? [],
+        references: item.references.map((r) => ({
+          input: r.inputConfigName,
+          sourceTemplateId: r.referenceTemplateId,
+          output: r.outputConfigName,
+        })),
+        ancestors: item.ancestors ?? [],
       };
       newParents[item.template.id] = item.template.parents || [];
     }
@@ -312,8 +327,26 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
       setConstants((prev) =>
         prev.map((c) => (c.id === constantId ? { ...c, name } : c)),
       );
+
+      // Wires from a constant carry its name, so they follow a rename
+      const wiring: WiringRule[] = watch("wiring") || [];
+      if (
+        wiring.some(
+          (w) =>
+            w.source_template_id === constantId && w.source_output !== name,
+        )
+      ) {
+        setValue(
+          "wiring",
+          wiring.map((w) =>
+            w.source_template_id === constantId
+              ? { ...w, source_output: name }
+              : w,
+          ),
+        );
+      }
     },
-    [],
+    [watch, setValue],
   );
 
   const handleConstantDefaultValueUpdate = useCallback(
@@ -475,8 +508,19 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
 
   // Add a single template (from canvas sidebar / drop)
   const handleTemplateAdd = useCallback(
-    (template: GqlTemplateShort) => {
+    (template: GqlTemplateShort & { namingConvention?: string | null }) => {
       if (selectedTemplates.some((t) => t.id === template.id)) return;
+
+      // Blueprint runs fail on templates without a naming convention; warn but still add
+      if (
+        template.namingConvention !== undefined &&
+        !template.namingConvention
+      ) {
+        notify(
+          `Template "${template.name}" has no naming convention. Set one on the template before running this blueprint.`,
+          "warning",
+        );
+      }
 
       const newSelected = [...selectedTemplates, template];
       setSelectedTemplates(newSelected);

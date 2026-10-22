@@ -62,13 +62,13 @@ export const ResourceMoreMenu = () => {
   if (!entity) return null;
   const canMetadata = checkActionPermission("api:resource", "read");
   const canClone = checkActionPermission("api:resource", "write");
-  // Abstract resources have nothing to run, so no cascade actions
+  // Abstract resources have nothing to run, so no cascade plan or apply;
+  // their tree can still become a blueprint
   const canPlan =
     !entity.abstract && actions.includes(ENTITY_ACTION.CASCADE_DRYRUN);
   const canApply =
     !entity.abstract && actions.includes(ENTITY_ACTION.CASCADE_EXECUTE);
-  const canBlueprint =
-    !entity.abstract && checkActionPermission("api:blueprint", "write");
+  const canBlueprint = checkActionPermission("api:blueprint", "write");
   const hasCascade = canPlan || canApply || canBlueprint;
   if (!canMetadata && !canClone && !hasCascade) return null;
   const entityName = entity.name || entity.identifier || entity.id;

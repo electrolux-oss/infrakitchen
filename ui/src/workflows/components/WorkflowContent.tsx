@@ -10,6 +10,7 @@ import {
   TabbedContent,
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
+import { EntityReference } from "../../common/components/fields/CommonField";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { HeroRectangleGroupIcon, HeroBars3Icon } from "../../icons";
 import { Tab, Tabs } from "../../ui";
@@ -74,6 +75,7 @@ const WorkflowStepsTab = ({ workflow }: { workflow: GqlWorkflow }) => {
         <WorkflowSteps
           steps={workflow.steps}
           workflowAction={workflow.action}
+          workflowId={workflow.id}
         />
       ) : hasWiring ? (
         <WorkflowWiringViewer
@@ -84,6 +86,7 @@ const WorkflowStepsTab = ({ workflow }: { workflow: GqlWorkflow }) => {
         <WorkflowSteps
           steps={workflow.steps}
           workflowAction={workflow.action}
+          workflowId={workflow.id}
         />
       )}
     </PropertyCard>
@@ -117,7 +120,24 @@ export const WorkflowContent = () => {
     {
       label: "Logs",
       content: (
-        <EntityLogs traceId={workflow.id} sourceCodeLanguage={"opentofu"} />
+        <EntityLogs
+          traceId={workflow.id}
+          sourceCodeLanguage={"opentofu"}
+          renderEntity={(entityId) => {
+            const step = workflow.steps.find(
+              (s) => s.resource?.id === entityId,
+            );
+            return step?.resource ? (
+              <EntityReference
+                id={step.resource.id}
+                entityName="resource"
+                identifier={
+                  step.resource.name ?? step.resource.id.slice(0, 8) + "…"
+                }
+              />
+            ) : null;
+          }}
+        />
       ),
     },
     {

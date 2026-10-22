@@ -131,3 +131,51 @@ export function computeDiagramLayout(
 
   return positions;
 }
+
+/**
+ * Put ancestor nodes (parents not on the canvas) in a column left of
+ * everything else in a `computeDiagramLayout` grid.
+ */
+export function withAncestorColumn(
+  grid: Record<string, { x: number; y: number }>,
+  ancestorIds: string[],
+): Record<string, { x: number; y: number }> {
+  const result = { ...grid };
+  ancestorIds.forEach((id, i) => {
+    result[id] = { x: -COL_WIDTH, y: 40 + i * ROW_HEIGHT };
+  });
+  return result;
+}
+
+export const COLUMN_GAP = 112;
+export const ROW_GAP = 40;
+
+/**
+ * Turn the column/row grid from `computeDiagramLayout` into positions that
+ * use each node's measured size, so tall nodes do not overlap.
+ */
+export function packLayout(
+  grid: Record<string, { x: number; y: number }>,
+  sizeOf: (id: string) => { width: number; height: number },
+): Record<string, { x: number; y: number }> {
+  const columns = new Map<number, string[]>();
+  for (const [id, cell] of Object.entries(grid)) {
+    if (!columns.has(cell.x)) columns.set(cell.x, []);
+    columns.get(cell.x)!.push(id);
+  }
+  const positions: Record<string, { x: number; y: number }> = {};
+  let x = 0;
+  for (const colX of [...columns.keys()].sort((a, b) => a - b)) {
+    const ids = columns.get(colX)!.sort((a, b) => grid[a].y - grid[b].y);
+    let y = 0;
+    let width = 0;
+    for (const id of ids) {
+      const size = sizeOf(id);
+      positions[id] = { x, y };
+      y += size.height + ROW_GAP;
+      width = Math.max(width, size.width);
+    }
+    x += width + COLUMN_GAP;
+  }
+  return positions;
+}

@@ -4,7 +4,7 @@ import uuid
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
-from application.templates.schema import TemplateResponse, TemplateShort
+from application.templates.schema import TemplateAncestor, TemplateResponse, TemplateShort
 from application.source_codes.schema import SourceCodeShort
 from core.constants.model import ModelStatus, VersionLifecycleState
 from core.users.schema import UserShort
@@ -456,6 +456,8 @@ class TemplatePortsItem(BaseModel):
     references: list[SourceConfigTemplateReferenceResponse] = Field(default_factory=list)
     # Template required configuration variables, wired as dependency config
     required_configs: list[str] = Field(default_factory=list)
+    # Templates above this one in the parent chain; their outputs can fill its inputs at run time
+    ancestors: list[TemplateAncestor] = Field(default_factory=list)
 
 
 class BatchTemplatePortsResponse(BaseModel):

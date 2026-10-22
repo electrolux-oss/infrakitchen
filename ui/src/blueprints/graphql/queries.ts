@@ -55,6 +55,8 @@ export const BLUEPRINT_USE_SOURCE_CODE_VERSIONS_QUERY = `
       sourceCodeVersion
       sourceCodeBranch
       status
+      lifecycleState
+      breakingChanges
       template {
         id
         name

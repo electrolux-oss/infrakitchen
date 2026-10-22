@@ -34,10 +34,7 @@ import {
 } from "../../LogsComponent/LogActionButtons";
 import { LogsDialog } from "../../LogsComponent/LogsDialog";
 import { Entity } from "../entities/Entity";
-import {
-  RELATIVE_TIME_COLUMN_WIDTH,
-  USER_AVATAR_COLUMN_WIDTH,
-} from "../entity_table/tableColumns";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../entity_table/tableColumns";
 import { RelativeTime } from "../fields/RelativeTime";
 import { RevisionChip } from "../labels/RevisionChip";
 
@@ -256,30 +253,23 @@ export const Audit = ({
         ),
       },
       {
-        field: "creator",
-        headerName: "User",
-        // Avatar-only cell, so the column only needs to fit the avatar.
-        width: USER_AVATAR_COLUMN_WIDTH,
-        renderCell: (params: RenderCellParams<AuditLogEntity>) => {
-          const creator = params.row.creator;
-          if (!creator) {
-            return "System";
-          }
-          return (
-            <Entity entity={{ ...creator, entityType: "user" }} hideName />
-          );
-        },
-      },
-      {
         field: "createdAt",
         headerName: "Time",
         width: RELATIVE_TIME_COLUMN_WIDTH,
         mobile: "badge",
         align: "right",
         headerAlign: "right",
-        renderCell: (params: RenderCellParams<AuditLogEntity>) => (
-          <RelativeTime date={params.value} compact />
-        ),
+        renderCell: (params: RenderCellParams<AuditLogEntity>) => {
+          const creator = params.row.creator;
+          return (
+            <div className="flex min-w-0 items-center justify-end gap-1.5">
+              <RelativeTime date={params.value} compact />
+              {creator && (
+                <Entity entity={{ ...creator, entityType: "user" }} hideName />
+              )}
+            </div>
+          );
+        },
       },
     ],
     [
@@ -355,13 +345,15 @@ export const Audit = ({
             quickFilterValues={quickFilterValues}
           />
         ) : (
-          <RevisionTimelines
-            logs={auditLogs}
-            search={search}
-            actionsWithLogs={ACTIONS_WITH_LOGS}
-            onRevisionClick={(rev) => handleRevisionClick(entityId, rev)}
-            onOpenDialog={openDialog}
-          />
+          <div className="p-4">
+            <RevisionTimelines
+              logs={auditLogs}
+              search={search}
+              actionsWithLogs={ACTIONS_WITH_LOGS}
+              onRevisionClick={(rev) => handleRevisionClick(entityId, rev)}
+              onOpenDialog={openDialog}
+            />
+          </div>
         )}
         {logsOpen &&
           (selectedAuditLogId || selectedTraceId) &&

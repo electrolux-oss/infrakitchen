@@ -5,6 +5,8 @@ import { EntityReference } from "../../common/components/fields/CommonField";
 import { Duration } from "../../common/components/fields/Duration";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { CountLabel, Label, StatusLabel } from "../../common/components/labels";
+import { LogActionButtons } from "../../common/LogsComponent/LogActionButtons";
+import { LogsDialog } from "../../common/LogsComponent/LogsDialog";
 import { HeroChevronDownIcon } from "../../icons";
 import {
   Accordion,
@@ -25,9 +27,15 @@ import { GqlWorkflowAction, GqlWorkflowStep } from "../graphql";
 interface WorkflowStepProps {
   step: GqlWorkflowStep;
   workflowAction?: GqlWorkflowAction;
+  workflowId?: string;
 }
 
-export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
+export const WorkflowStep = ({
+  step,
+  workflowAction,
+  workflowId,
+}: WorkflowStepProps) => {
+  const [logView, setLogView] = useState<"summary" | "logs" | null>(null);
   const [expandedVars, setExpandedVars] = useState<string | null>(null);
 
   const templateName = step.template?.name;
@@ -67,10 +75,29 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                 <RelativeTime date={step.startedAt} />
               </span>
             )}
+            {workflowId && step.resource?.id && (
+              <LogActionButtons
+                action="any"
+                sourceCodeLanguage="opentofu"
+                onOpenSummary={() => setLogView("summary")}
+                onOpenLogs={() => setLogView("logs")}
+              />
+            )}
           </div>
         </div>
 
         {step.status === "in_progress" && <LinearProgress />}
+
+        {logView && workflowId && step.resource?.id && (
+          <LogsDialog
+            entityId={step.resource.id}
+            traceId={workflowId}
+            view={logView}
+            action="any"
+            onViewChange={setLogView}
+            onClose={() => setLogView(null)}
+          />
+        )}
 
         {/* Step detail fields */}
         <div className="px-4 py-3">
