@@ -24,7 +24,9 @@ def mock_crud():
         "delete_finished_before",
         "cancel_queued",
         "queue_counts",
-        "worker_counts",
+        "worker_counts_by_template",
+        "count_claimable_by_template",
+        "count_claimable",
         "commit",
         "rollback",
     ):
@@ -65,8 +67,15 @@ class TestClaim:
         assert result is not None
         assert result.id == db_item.id
         assert result.entity == "resource"
-        mock_crud.claim.assert_awaited_once_with(worker_id, 90)
+        mock_crud.claim.assert_awaited_once_with(worker_id, 90, None)
         mock_crud.commit.assert_awaited_once()
+
+    async def test_claim_passes_worker_template(self, service, mock_crud):
+        worker_id, template_id = uuid4(), uuid4()
+        mock_crud.claim.return_value = None
+
+        await service.claim(worker_id, lease_seconds=90, worker_template_id=template_id)
+        mock_crud.claim.assert_awaited_once_with(worker_id, 90, template_id)
 
     async def test_claim_returns_none_when_queue_is_empty(self, service, mock_crud):
         mock_crud.claim.return_value = None
@@ -210,7 +219,11 @@ class TestStats:
             "oldest": now - timedelta(seconds=30),
             "now": now,
         }
-        mock_crud.worker_counts.return_value = {"free": 1, "busy": 2, "offline": 3}
+        # summed over the pools of static and on-demand workers
+        mock_crud.worker_counts_by_template.return_value = {
+            None: {"free": 1, "busy": 1, "offline": 2},
+            uuid4(): {"free": 0, "busy": 1, "offline": 1},
+        }
 
         stats = await service.stats(worker_alive_seconds=90)
 
@@ -228,7 +241,7 @@ class TestStats:
             "oldest": None,
             "now": datetime.now(UTC),
         }
-        mock_crud.worker_counts.return_value = {"free": 0, "busy": 0, "offline": 0}
+        mock_crud.worker_counts_by_template.return_value = {}
 
         stats = await service.stats(worker_alive_seconds=90)
 
@@ -236,24 +249,36 @@ class TestStats:
 
 
 class TestEntityQueueStatus:
-    def row(self, entity_id, status, entity="resource", available_at=None, position=None):
+    def row(
+        self,
+        entity_id,
+        status,
+        entity="resource",
+        available_at=None,
+        position=None,
+        template_id=None,
+    ):
         item = make_db_item()
         item.entity = entity
         item.entity_id = entity_id
         item.status = status
         item.available_at = available_at or datetime.now(UTC) - timedelta(seconds=5)
+        item.worker_template_id = template_id
         return (item, "worker-host" if status == TaskQueueStatus.RUNNING else None, "user1", position)
 
-    def setup_crud(self, mock_crud, rows, free=1, busy=0):
+    def setup_crud(self, mock_crud, rows, free=1, busy=0, pools=None):
         mock_crud.get_active_for_entities = AsyncMock(return_value=rows)
         mock_crud.db_now = AsyncMock(return_value=datetime.now(UTC))
-        mock_crud.worker_counts.return_value = {"free": free, "busy": busy, "offline": 0}
+        # by default all workers are static ones
+        mock_crud.worker_counts_by_template.return_value = (
+            pools if pools is not None else {None: {"free": free, "busy": busy, "offline": 0}}
+        )
 
     async def test_returns_empty_without_active_tasks(self, service, mock_crud):
         self.setup_crud(mock_crud, [])
 
         assert await service.get_entity_queue_status(["resource"], [uuid4()], 90) == {}
-        mock_crud.worker_counts.assert_not_awaited()
+        mock_crud.worker_counts_by_template.assert_not_awaited()
 
     async def test_groups_tasks_by_entity(self, service, mock_crud):
         e1, e2 = uuid4(), uuid4()
@@ -276,6 +301,18 @@ class TestEntityQueueStatus:
         assert result[e1].tasks[1].position == 2
         assert (result[e1].workers_free, result[e1].workers_online) == (2, 3)
         assert len(result[e2].tasks) == 1
+
+    async def test_worker_counts_are_of_static_workers_only(self, service, mock_crud):
+        e1 = uuid4()
+        self.setup_crud(
+            mock_crud,
+            [self.row(e1, TaskQueueStatus.QUEUED)],
+            pools={uuid4(): {"free": 4, "busy": 1}},
+        )
+
+        result = await service.get_entity_queue_status(["resource"], [e1], 90)
+
+        assert (result[e1].workers_free, result[e1].workers_online) == (0, 0)
 
     @pytest.mark.parametrize(
         "free,busy,running_entity,delayed,expected",
@@ -302,6 +339,21 @@ class TestEntityQueueStatus:
 
         assert result[entity_id].tasks[-1].waiting_reason == expected
 
+    async def test_pool_reason_is_kept_while_in_cancel_window(self, service, mock_crud):
+        entity_id, template_id = uuid4(), uuid4()
+        row = self.row(
+            entity_id,
+            TaskQueueStatus.QUEUED,
+            available_at=datetime.now(UTC) + timedelta(seconds=5),
+            template_id=template_id,
+        )
+        self.setup_crud(mock_crud, [row], pools={})
+
+        task = (await service.get_entity_queue_status(["resource"], [entity_id], 90))[entity_id].tasks[0]
+
+        assert task.waiting_reason == WaitingReason.CANCEL_WINDOW
+        assert task.pool_reason == WaitingReason.SPAWNING
+
     async def test_retried_task_waits_for_retry_delay(self, service, mock_crud):
         entity_id = uuid4()
         row = self.row(entity_id, TaskQueueStatus.QUEUED, available_at=datetime.now(UTC) + timedelta(minutes=1))
@@ -311,3 +363,30 @@ class TestEntityQueueStatus:
         result = await service.get_entity_queue_status(["resource"], [entity_id], 90)
 
         assert result[entity_id].tasks[0].waiting_reason == WaitingReason.RETRY_DELAY
+
+    @pytest.mark.parametrize(
+        "pools,expected",
+        [
+            # static workers are free, but only workers of the task's template can run it
+            ({None: {"free": 3, "busy": 0}}, WaitingReason.SPAWNING),
+            ("own_busy", WaitingReason.WORKERS_BUSY),
+            ("own_free", WaitingReason.PENDING_PICKUP),
+        ],
+    )
+    async def test_waiting_reason_of_template_task(self, service, mock_crud, pools, expected):
+        entity_id, template_id = uuid4(), uuid4()
+        if pools == "own_busy":
+            pools = {template_id: {"free": 0, "busy": 1}, None: {"free": 2, "busy": 0}}
+        elif pools == "own_free":
+            pools = {template_id: {"free": 1, "busy": 0}}
+        row = self.row(entity_id, TaskQueueStatus.QUEUED, template_id=template_id)
+        self.setup_crud(mock_crud, [row], pools=pools)
+
+        result = await service.get_entity_queue_status(["resource"], [entity_id], 90)
+
+        task = result[entity_id].tasks[0]
+        assert task.waiting_reason == expected
+        # nothing else holds the task back, so its pool explains the wait
+        assert task.pool_reason == expected
+        # the name and the template's own state are added by worker templates
+        assert (task.worker_template_id, task.worker_template_name) == (template_id, None)

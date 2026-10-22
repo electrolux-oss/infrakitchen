@@ -13,6 +13,7 @@ const TASK_QUEUE_ITEM_FIELDS = `
   createdBy
   workerId
   workerHost
+  workerTemplateId
   creator
 `;
 

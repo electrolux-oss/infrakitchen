@@ -29,6 +29,7 @@ from application.storages.service import StorageService
 from application.templates.schema import TemplateResponse
 from application.templates.service import TemplateService
 from application.validation_rules.service import ValidationRuleService
+from application.worker_templates.service import WorkerTemplateService
 from core.adapters.cloud_resource_adapter import CloudResourceAdapter
 from core.adapters.provider_adapters import IntegrationProvider
 from core.audit_logs.handler import AuditLogHandler
@@ -121,6 +122,7 @@ class ResourceService:
         subscription_service: SubscriptionService,
         project_service: ProjectService,
         tool_service: ToolService,
+        worker_template_service: WorkerTemplateService,
     ):
         self.crud: ResourceCRUD = crud
         self.template_service: TemplateService = template_service
@@ -140,6 +142,14 @@ class ResourceService:
         self.subscription_service: SubscriptionService = subscription_service
         self.project_service: ProjectService = project_service
         self.tool_service: ToolService = tool_service
+        self.worker_template_service: WorkerTemplateService = worker_template_service
+
+    async def _update(self, existing_resource: Resource, body: dict[str, Any]) -> Resource:
+        resource = await self.crud.update(existing_resource, body)
+        if "worker_template_id" in body:
+            # tasks queued before the change must run on the newly selected workers
+            _ = await self.worker_template_service.retarget_tasks("resource", existing_resource.id)
+        return resource
 
     async def get_dto_by_id(self, resource_id: str | UUID) -> ResourceDTO | None:
         if not is_valid_uuid(resource_id):
@@ -423,6 +433,9 @@ class ResourceService:
         if resource.tool_id is not None:
             _ = await self.tool_service.validate_ready(resource.tool_id)
 
+        if resource.worker_template_id is not None:
+            _ = await self.worker_template_service.validate_selectable(resource.worker_template_id, requester)
+
         body = resource.model_dump(exclude_unset=True)
         if template.abstract is True:
             body["abstract"] = True
@@ -653,6 +666,14 @@ class ResourceService:
         ):
             _ = await self.tool_service.validate_ready(resource.tool_id)
 
+        # a disabled template stays selected, its tasks wait until it is enabled again
+        if (
+            resource.worker_template_id is not None
+            and "worker_template_id" in resource.model_fields_set
+            and resource.worker_template_id != existing_resource.worker_template_id
+        ):
+            _ = await self.worker_template_service.validate_selectable(resource.worker_template_id, requester)
+
         if not has_field_changes(body, existing_resource):
             # Values set back to the applied ones cancel the pending changes for those fields
             reverted = [k for k, v in set_fields.items() if _equals_applied(existing_resource, k, v)]
@@ -674,7 +695,7 @@ class ResourceService:
         )
 
         if should_apply_metadata_update_directly:
-            await self.crud.update(existing_resource, body)
+            await self._update(existing_resource, body)
             existing_resource = await self.crud.get_by_id(existing_resource.id)
             if not existing_resource:
                 raise EntityNotFound("Resource not found after update")
@@ -685,7 +706,7 @@ class ResourceService:
             and existing_resource_pydantic.state == ModelState.PROVISION
             and body is not None
         ):
-            await self.crud.update(existing_resource, body)
+            await self._update(existing_resource, body)
             existing_resource = await self.crud.get_by_id(existing_resource.id)
             if not existing_resource:
                 raise EntityNotFound("Resource not found after update")
@@ -808,7 +829,7 @@ class ResourceService:
                 ModelActions.UPDATE,
                 revision_number=pydantic_resource.revision_number,
             )
-            existing_resource = await self.crud.update(existing_resource, resource_temp_state.value)
+            existing_resource = await self._update(existing_resource, resource_temp_state.value)
             await self.revision_handler.handle_revision(existing_resource)
             if resource_variables_differ():
                 await approve_entity(existing_resource, abstract=existing_resource.abstract)
@@ -824,7 +845,7 @@ class ResourceService:
                 ModelActions.UPDATE,
                 revision_number=pydantic_resource.revision_number,
             )
-            existing_resource = await self.crud.update(existing_resource, resource_temp_state.value)
+            existing_resource = await self._update(existing_resource, resource_temp_state.value)
             await self.revision_handler.handle_revision(existing_resource)
             await self.resource_temp_state_handler.delete_by_resource_id(resource_id=pydantic_resource.id)
             await self.crud.refresh(existing_resource)

@@ -3,7 +3,7 @@ import re
 import uuid
 from typing import Any, TypeVar
 
-from sqlalchemy import JSON, BinaryExpression, ColumnElement, and_, cast, func, literal, or_
+from sqlalchemy import JSON, BinaryExpression, ColumnElement, and_, cast, func, literal, or_, select
 from sqlalchemy.dialects.postgresql import JSONB, JSONPATH
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import RelationshipProperty, aliased, load_only
@@ -29,6 +29,54 @@ class EventFlushingSession(AsyncSession):
 SessionLocal = async_sessionmaker(engine, class_=EventFlushingSession, expire_on_commit=False)
 
 T = TypeVar("T", bound=Base)
+
+
+async def find_referencing_rows(
+    session: AsyncSession,
+    table_name: str,
+    entity_id: Any,
+    pending_resource_field: str,
+    skip_tables: tuple[str, ...] = (),
+) -> list[Any]:
+    """Rows referencing an entity, as ``(id, type, name)``, e.g. to refuse deleting it while in use.
+
+    Referencing tables are discovered from foreign keys, so the entities using it don't have to be known.
+    Pending (not yet approved) resource changes keep ``pending_resource_field`` in a JSON blob without a
+    foreign key, so they are searched too.
+    """
+    dependencies: list[Any] = []
+    for table in Base.metadata.sorted_tables:
+        if table.name in skip_tables:
+            continue
+        for column in table.columns:
+            if not any(fk.column.table.name == table_name for fk in column.foreign_keys):
+                continue
+            name_column = table.c["name"] if "name" in table.c else literal("")
+            entity_name = str(table.name).removesuffix("s")
+            statement = select(
+                table.c["id"].label("id"),
+                literal(entity_name).label("type"),
+                name_column.label("name"),
+            ).where(column == entity_id)
+            result = await session.execute(statement)
+            dependencies.extend(result.fetchall())
+
+    temp_state = Base.metadata.tables.get("resources_temp_state")
+    resources = Base.metadata.tables.get("resources")
+    if temp_state is not None and resources is not None:
+        statement = (
+            select(
+                resources.c["id"].label("id"),
+                literal("resource").label("type"),
+                resources.c["name"].label("name"),
+            )
+            .join(temp_state, temp_state.c["resource_id"] == resources.c["id"])
+            .where(temp_state.c["value"][pending_resource_field].as_string() == str(entity_id))
+        )
+        result = await session.execute(statement)
+        known = {dependency.id for dependency in dependencies}
+        dependencies.extend(row for row in result.fetchall() if row.id not in known)
+    return dependencies
 
 
 def to_dict(obj: Base) -> dict[str, Any]:

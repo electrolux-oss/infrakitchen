@@ -8,6 +8,7 @@ export type ResourceCreateFieldInput = {
   secretIds: string[];
   storagePath: string | null;
   toolId: string | null;
+  workerTemplateId: string | null;
   variables: object[];
   outputs: object[];
   dependencyTags: object[];
@@ -44,6 +45,7 @@ export type ResourceUpdateFieldInput = Partial<{
   storageId: string | null;
   storagePath: string | null;
   toolId: string | null;
+  workerTemplateId: string | null;
   variables: object[];
   dependencyTags: object[];
   dependencyConfig: object[];

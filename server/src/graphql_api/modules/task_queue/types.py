@@ -26,6 +26,7 @@ class TaskQueueItemType:
     entity_id: uuid.UUID | None = None
     created_by: uuid.UUID | None = None
     worker_id: uuid.UUID | None = None
+    worker_template_id: uuid.UUID | None = None
 
     @strawberry.field
     def entity_name(self) -> str:
@@ -86,9 +87,12 @@ class QueuedTaskType:
     max_retries: int
     position: int | None
     worker_host: str | None
+    worker_template_id: uuid.UUID | None
+    worker_template_name: str | None
     creator_id: uuid.UUID | None
     creator_name: str | None
     waiting_reason: str | None
+    pool_reason: str | None
 
 
 @strawberry.type

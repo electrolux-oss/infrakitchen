@@ -19,6 +19,8 @@ import { RefFolders } from "../../source_codes/types";
 import { ToolSelect } from "../../tools";
 import { IkEntity } from "../../types";
 import { Autocomplete, Button, TextField, MenuItem } from "../../ui";
+import { WorkerTemplateSelect } from "../../worker_templates/components/WorkerTemplateSelect";
+import { useCanSelectWorkerTemplate } from "../../worker_templates/hooks/useCanSelectWorkerTemplate";
 import { EXECUTOR_CREATE_MUTATION } from "../graphql";
 import { GqlExecutor } from "../graphql/transforms";
 import { ExecutorCreate } from "../types";
@@ -38,10 +40,12 @@ const toCloneDefaults = (source: GqlExecutor): Partial<ExecutorCreate> => ({
   storageId: source.storage?.id ?? "",
   storagePath: "",
   toolId: source.tool?.id ?? "",
+  workerTemplateId: source.workerTemplate?.id ?? "",
 });
 
 const ExecutorCreatePageInner = () => {
   const { ikApi, linkPrefix } = useConfig();
+  const canSelectWorkerTemplate = useCanSelectWorkerTemplate();
   const {
     control,
     formState: { errors },
@@ -165,7 +169,15 @@ const ExecutorCreatePageInner = () => {
       ikApi
         .graphqlRequest<{ createExecutor: { id: string; name: string } }>(
           EXECUTOR_CREATE_MUTATION,
-          { input: { ...data, toolId: data.toolId || null } },
+          {
+            input: {
+              ...data,
+              toolId: data.toolId || null,
+              // a cloned selection is only kept by users who may select one
+              workerTemplateId:
+                (canSelectWorkerTemplate && data.workerTemplateId) || null,
+            },
+          },
         )
         .then((response) => {
           const created = response.createExecutor;
@@ -181,7 +193,7 @@ const ExecutorCreatePageInner = () => {
           setSaving(false);
         });
     },
-    [ikApi, navigate, trigger, setSaving, linkPrefix],
+    [ikApi, navigate, trigger, setSaving, linkPrefix, canSelectWorkerTemplate],
   );
 
   const watchedIntegrationIds = watch("integrationIds");
@@ -521,6 +533,19 @@ const ExecutorCreatePageInner = () => {
                 )}
               />
             )}
+
+            {watchedStorage && (
+              <Controller
+                name="workerTemplateId"
+                control={control}
+                render={({ field }) => (
+                  <WorkerTemplateSelect
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+            )}
           </div>
         </PropertyCard>
       </div>
@@ -546,6 +571,7 @@ const ExecutorCreatePage = () => {
           storageId: "",
           storagePath: "",
           toolId: "",
+          workerTemplateId: "",
         },
     mode: "onChange",
   });

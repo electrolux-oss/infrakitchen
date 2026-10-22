@@ -1,4 +1,5 @@
 import { GqlUserShort } from "../../users/graphql";
+import type { TaskWaitingReason } from "../../workers/graphql/transforms";
 
 export interface GqlTask {
   id: string;
@@ -29,6 +30,7 @@ export interface GqlTaskQueueItem {
   createdBy: string | null;
   workerId: string | null;
   workerHost: string | null;
+  workerTemplateId: string | null;
   creator: { id: string; identifier: string } | null;
 }
 
@@ -51,9 +53,15 @@ export interface QueueTask {
   maxRetries: number;
   createdBy: string | null;
   workerId: string | null;
+  /** Only workers of this template run the task; null means static workers. */
+  workerTemplateId?: string | null;
   entityData?: Record<string, any> | null;
   creatorName?: string | null;
   workerHost?: string | null;
+  /** Only known from entity page queries. */
+  workerTemplateName?: string | null;
+  /** Why the task's workers can't take it, from the last entity page query. */
+  poolReason?: TaskWaitingReason | null;
   /** Place among queued tasks; only known right after a query. */
   position?: number | null;
 }

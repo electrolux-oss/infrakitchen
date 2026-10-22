@@ -14,6 +14,7 @@ from graphql_api.dataloaders.entity_loaders import (
     get_resource_temp_state_loader,
 )
 from graphql_api.modules.tool.types import ToolType
+from graphql_api.modules.worker_template.types import WorkerTemplateShortType
 from graphql_api.modules.integration.types import IntegrationType
 from graphql_api.modules.resource_temp_state.types import ResourceTempStateType
 from graphql_api.modules.secret.types import SecretType
@@ -38,6 +39,8 @@ class ResourceType:
         "storage_id",
         "tool",
         "tool_id",
+        "worker_template",
+        "worker_template_id",
         "integration_ids",
         "secret_ids",
         "parents",
@@ -53,6 +56,8 @@ class ResourceType:
     template: TemplateType | None = None
     storage: StorageType | None = None
     tool: ToolType | None = None
+    # not the full type: its configuration is only for worker template admins
+    worker_template: WorkerTemplateShortType | None = None
     workspace: WorkspaceType | None = None
     project: ProjectType | None = None
     source_code_version: SourceCodeVersionType | None = None

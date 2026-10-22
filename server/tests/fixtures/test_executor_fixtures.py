@@ -40,6 +40,7 @@ def mock_executor_service(
     mock_task_entity_service,
     mock_favorite_service,
     mock_tool_service,
+    stub_worker_template_service,
 ):
     return ExecutorService(
         crud=mock_executor_crud,
@@ -54,6 +55,7 @@ def mock_executor_service(
         task_service=mock_task_entity_service,
         favorite_service=mock_favorite_service,
         tool_service=mock_tool_service,
+        worker_template_service=stub_worker_template_service,
     )
 
 

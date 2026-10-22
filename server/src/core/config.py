@@ -71,6 +71,14 @@ class Settings(BaseSettings):
     NOTIFICATION_DISPATCHERS: int = 4  # notification outbox items routed concurrently per API process
     NOTIFICATION_LEASE_SECONDS: int = 120  # a claimed outbox item is retried by another dispatcher after this
     NOTIFICATION_RETENTION_DAYS: int = 30  # in-app notifications older than this are purged
+    WORKER_NAME: str = "task_worker"  # name the standalone worker registers with
+    WORKER_IDLE_EXIT_SECONDS: int = 0  # exit after this long without work and an empty queue; 0 runs forever
+    WORKER_TEMPLATE_ID: str = ""  # set on workers spawned on demand from a worker template
+    WORKER_HOST: str = ""  # host the worker registers with, the hostname when empty; set to the instance name on spawn
+    # On-demand workers
+    WORKER_AUTOSCALER_INTERVAL_SECONDS: int = 15  # how often the scheduler reconciles on-demand workers
+    WORKER_START_TIMEOUT_SECONDS: int = 600  # a spawned worker still pending after this is deleted
+    WORKER_FAILED_RETENTION_SECONDS: int = 3600  # failed workers are kept this long for their logs, then deleted
 
     class ConfigDict:
         env_file = ".env"

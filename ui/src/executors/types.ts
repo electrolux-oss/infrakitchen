@@ -12,6 +12,7 @@ export interface ExecutorCreate {
   secretIds: string[];
   storagePath: string | null;
   toolId?: string | null;
+  workerTemplateId?: string | null;
   labels: string[];
 }
 
@@ -28,4 +29,5 @@ export interface ExecutorUpdate {
   storagePath: string | null;
   storageId: string | null;
   toolId?: string | null;
+  workerTemplateId?: string | null;
 }
