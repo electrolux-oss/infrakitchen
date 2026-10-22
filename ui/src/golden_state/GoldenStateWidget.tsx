@@ -1,6 +1,6 @@
 import { useState, type MouseEvent } from "react";
 
-import { Link as RouterLink } from "react-router";
+import { Link as RouterLink, useNavigate } from "react-router";
 
 import { FilterClause } from "../common/components/filter_panel/FilterConfig";
 import { Label } from "../common/components/labels";
@@ -83,6 +83,7 @@ function ProjectHeatMapTile({
 }: {
   project: GoldenStateProjectReport;
 }) {
+  const navigate = useNavigate();
   const comparable = project.total - project.noGolden;
   const scoreColor = getScoreChipColor(project.score);
   const resourcesUrl = buildProjectResourcesUrl(project);
@@ -121,10 +122,14 @@ function ProjectHeatMapTile({
   ]);
 
   return (
-    <RouterLink
-      to={projectPageResourcesUrl}
+    // Not an <a>: the tile holds links of its own, and anchors can't nest.
+    <div
+      onClick={(event: MouseEvent) => {
+        if ((event.target as Element).closest("a")) return;
+        navigate(projectPageResourcesUrl);
+      }}
       className={cn(
-        "flex min-h-32 flex-col gap-2 rounded-[12px] border p-3 text-fg no-underline [transition:transform_120ms_ease,box-shadow_120ms_ease] hover:[transform:translateY(-1px)] hover:shadow-[var(--ik-shadow-2)]",
+        "flex min-h-32 cursor-pointer flex-col gap-2 rounded-[12px] border p-3 text-fg no-underline [transition:transform_120ms_ease,box-shadow_120ms_ease] hover:[transform:translateY(-1px)] hover:shadow-[var(--ik-shadow-2)]",
         SCORE_CARD_CLASSES[scoreColor],
       )}
     >
@@ -200,7 +205,7 @@ function ProjectHeatMapTile({
           />
         )}
       </div>
-    </RouterLink>
+    </div>
   );
 }
 
