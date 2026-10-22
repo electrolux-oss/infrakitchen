@@ -9,6 +9,7 @@ import {
   HeroPuzzlePieceIcon,
   HeroRectangleGroupIcon,
   HeroRectangleStackIcon,
+  HeroRocketLaunchIcon,
   HeroServerStackIcon,
   HeroSquare3Stack3DIcon,
   HeroTagIcon,
@@ -31,5 +32,6 @@ export const entityIcons: Record<string, ComponentProps<typeof Label>["icon"]> =
     storage: <HeroServerStackIcon />,
     template: <HeroSquare3Stack3DIcon />,
     user: <HeroUserIcon />,
+    worker_template: <HeroRocketLaunchIcon />,
     workspace: <HeroCodeBracketIcon />,
   };

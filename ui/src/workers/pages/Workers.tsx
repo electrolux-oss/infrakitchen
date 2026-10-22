@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
@@ -7,9 +7,12 @@ import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { StatusLabel } from "../../common/components/labels";
 import PageContainer from "../../common/PageContainer";
 import { PermissionWrapper } from "../../common/wrappers/PermissionWrapper";
+import { HeroDocumentTextIcon } from "../../icons";
 import { TaskQueueButton } from "../../tasks/components/TaskQueueDialog";
-import { Tooltip } from "../../ui";
+import { IconButton, Tooltip } from "../../ui";
 import { RenderCellParams } from "../../ui";
+import { WorkerLogsDialog } from "../../worker_templates/components/WorkerLogsDialog";
+import { WORKER_LOGS_QUERY } from "../../worker_templates/graphql";
 import { WORKER_FIELD_MAP } from "../graphql";
 
 // Helper function to flatten nested objects,
@@ -68,6 +71,10 @@ const HostInfoField = {
 };
 
 export default function WorkerList() {
+  const [logsWorker, setLogsWorker] = useState<{
+    id: string;
+    host: string;
+  } | null>(null);
   const columns = useMemo(
     () => [
       {
@@ -75,6 +82,12 @@ export default function WorkerList() {
         headerName: "Host",
         flex: 1,
         hideable: false,
+      },
+      {
+        // On-demand workers are named after the worker template they were spawned from
+        field: "name",
+        headerName: "Name",
+        flex: 1,
       },
       {
         field: "status",
@@ -148,6 +161,24 @@ export default function WorkerList() {
         ),
       },
       HostInfoField,
+      {
+        field: "logs",
+        headerName: "",
+        width: 60,
+        sortable: false,
+        hideable: false,
+        renderCell: (params: RenderCellParams) => (
+          <Tooltip title="Logs of on-demand workers">
+            <IconButton
+              onClick={() =>
+                setLogsWorker({ id: params.row.id, host: params.row.host })
+              }
+            >
+              <HeroDocumentTextIcon className="size-5" />
+            </IconButton>
+          </Tooltip>
+        ),
+      },
     ],
     [],
   );
@@ -171,6 +202,13 @@ export default function WorkerList() {
         entityName="worker"
         columns={columns}
         entityFieldMap={WORKER_FIELD_MAP}
+      />
+      <WorkerLogsDialog
+        title={logsWorker?.host ?? null}
+        query={WORKER_LOGS_QUERY}
+        variables={{ id: logsWorker?.id }}
+        resultKey="workerLogs"
+        onClose={() => setLogsWorker(null)}
       />
     </PageContainer>
   );

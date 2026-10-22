@@ -1,6 +1,9 @@
 import { GraphqlFieldMap } from "../../common/graphql/buildGraphqlFields";
 
-export const WORKER_FIELD_MAP: GraphqlFieldMap = {};
+export const WORKER_FIELD_MAP: GraphqlFieldMap = {
+  // Display-only column (logs button): no field of its own, the row id is enough
+  logs: "id",
+};
 
 /**
  * Selection for the queued/running tasks of an entity. Entity pages append it to

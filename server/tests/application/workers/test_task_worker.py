@@ -7,7 +7,7 @@ from unittest.mock import Mock, AsyncMock
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from application.workers import TaskWorker
-from core.constants.model import EventType
+from core.constants.model import EventType, ModelStatus
 from core.notifications.controller import NotificationEvent
 from core.errors import CannotProceed, ExitWithoutSave, ParentIsNotReady
 from core.scheduler.executor import SchedulerExecutor
@@ -478,3 +478,73 @@ class TestNotifications:
                     event_type=EventType.EXECUTE,
                 )
             )
+
+
+class TestIdleExit:
+    async def test_disabled_by_default(self, task_worker, mock_queue):
+        mock_queue.count_claimable = AsyncMock(return_value=0)
+
+        assert await task_worker.idle_expired(last_work_at=0) is False
+        mock_queue.count_claimable.assert_not_awaited()
+
+    async def test_exits_when_idle_and_queue_is_empty(self, task_worker, mock_queue):
+        task_worker.settings.WORKER_IDLE_EXIT_SECONDS = 60
+        mock_queue.count_claimable = AsyncMock(return_value=0)
+
+        assert await task_worker.idle_expired(last_work_at=tw_mod.time.monotonic() - 61) is True
+
+    async def test_stays_while_tasks_are_waiting(self, task_worker, mock_queue):
+        task_worker.settings.WORKER_IDLE_EXIT_SECONDS = 60
+        mock_queue.count_claimable = AsyncMock(return_value=2)
+
+        assert await task_worker.idle_expired(last_work_at=tw_mod.time.monotonic() - 61) is False
+
+    async def test_stays_before_timeout(self, task_worker, mock_queue):
+        task_worker.settings.WORKER_IDLE_EXIT_SECONDS = 60
+        mock_queue.count_claimable = AsyncMock(return_value=0)
+
+        assert await task_worker.idle_expired(last_work_at=tw_mod.time.monotonic()) is False
+        mock_queue.count_claimable.assert_not_awaited()
+
+    async def test_run_stops_after_idle_timeout(self, task_worker, mock_queue, mock_worker_service, monkeypatch):
+        task_worker.settings.WORKER_IDLE_EXIT_SECONDS = 1
+        task_worker.settings.WORKER_POLL_INTERVAL = 0.01
+        mock_queue.count_claimable = AsyncMock(return_value=0)
+        mock_worker_service.save_worker = AsyncMock(return_value=task_worker.worker)
+        monkeypatch.setattr(tw_mod, "get_host_metadata", AsyncMock(return_value={}))
+        monkeypatch.setattr(task_worker, "listen_loop", AsyncMock())
+
+        await asyncio.wait_for(task_worker.run(), timeout=5)
+
+        assert task_worker._stopping.is_set()
+        mock_worker_service.change_worker_status.assert_awaited_with(task_worker.worker_id, "offline")
+
+
+class TestDisabledTemplate:
+    async def test_plain_worker_ignores_templates(self, task_worker):
+        assert await task_worker.template_disabled() is False
+
+    @pytest.mark.parametrize(
+        ("status", "expected"),
+        [(ModelStatus.ENABLED, False), (ModelStatus.DISABLED, True), (None, True)],
+    )
+    async def test_status_decides(self, task_worker, mock_session, status, expected):
+        task_worker.settings.WORKER_TEMPLATE_ID = str(uuid4())
+        mock_session.execute = AsyncMock(return_value=Mock(scalar_one_or_none=Mock(return_value=status)))
+
+        assert await task_worker.template_disabled() is expected
+
+    async def test_check_failure_keeps_working(self, task_worker, mock_session):
+        task_worker.settings.WORKER_TEMPLATE_ID = str(uuid4())
+        mock_session.execute = AsyncMock(side_effect=RuntimeError("db down"))
+
+        assert await task_worker.template_disabled() is False
+
+    async def test_disabled_template_claims_nothing_and_drains(self, task_worker, mock_queue, monkeypatch):
+        mock_queue.claim_expired = AsyncMock(return_value=None)
+        mock_queue.claim = AsyncMock()
+        monkeypatch.setattr(task_worker, "template_disabled", AsyncMock(return_value=True))
+
+        assert await task_worker.run_once() is False
+        mock_queue.claim.assert_not_awaited()
+        assert task_worker._stopping.is_set()

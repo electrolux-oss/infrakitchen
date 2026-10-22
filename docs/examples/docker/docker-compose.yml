@@ -40,6 +40,9 @@ services:
       - iknetwork
     volumes:
       - ./server/:/app
+      # Optional: lets the scheduler/backend start on-demand workers as Docker containers
+      # (Docker worker templates). Access to the socket is equivalent to root on the host.
+      # - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - "postgres"
 volumes:

@@ -16,7 +16,15 @@ from application.logger import change_logger, get_uvicorn_log_config
 from build_info import write_build_info
 from core.config import setup_service_environment
 from core.utils.event_sender import EventSender
-from scheduler import schedule_jobs, schedule_polling_job, schedule_task_queue_cleanup_job, start_reload_consumer
+from scheduler import (
+    schedule_jobs,
+    schedule_polling_job,
+    schedule_task_queue_cleanup_job,
+    schedule_worker_autoscaler_job,
+    schedule_worker_offline_job,
+    start_reload_consumer,
+    start_worker_autoscaler_listener,
+)
 from worker import run_task_worker
 
 from src.app import app
@@ -58,18 +66,21 @@ def run_sql_migrations():
 
 
 def dev_worker_count() -> int:
-    """Number of task workers to run in-process, from DEV_WORKERS (default 1)."""
+    """Number of task workers to run in-process, from DEV_WORKERS (default 1, 0 disables them)."""
     value = os.getenv("DEV_WORKERS", "1")
     try:
         count = int(value)
     except ValueError:
         logger.warning(f"Invalid DEV_WORKERS={value!r}, running 1 worker")
         return 1
-    return max(count, 1)
+    return max(count, 0)
 
 
 async def start_task_workers(count: int):
     """Runs ``count`` TaskWorkers indefinitely, like separate worker nodes sharing the queue."""
+    if count == 0:
+        logger.info("No in-process task workers (DEV_WORKERS=0)")
+        return
     await web.start_http_server(port=8001)
     # Workers register by name + host, so each one needs its own name to get its own worker row
     names = ["task_worker"] if count == 1 else [f"task_worker_{i}" for i in range(1, count + 1)]
@@ -78,7 +89,7 @@ async def start_task_workers(count: int):
     _ = await asyncio.gather(*(run_task_worker(handle_signals=False, name=name) for name in names))
 
 
-async def setup_scheduler() -> tuple[AsyncIOScheduler, "asyncio.Task[None]"]:
+async def setup_scheduler() -> tuple[AsyncIOScheduler, "asyncio.Future[tuple[None, None]]"]:
     """Initializes and configures the AsyncIOScheduler.
 
     Returns the scheduler and the background task running its reload consumer so
@@ -91,10 +102,15 @@ async def setup_scheduler() -> tuple[AsyncIOScheduler, "asyncio.Task[None]"]:
     await schedule_jobs(scheduler=scheduler, event_sender=event_sender)
     await schedule_polling_job(scheduler=scheduler, event_sender=event_sender)
     schedule_task_queue_cleanup_job(scheduler=scheduler)
+    schedule_worker_autoscaler_job(scheduler=scheduler)
+    schedule_worker_offline_job(scheduler=scheduler)
 
     scheduler.start()
 
-    reload_task = asyncio.create_task(start_reload_consumer(scheduler=scheduler, event_sender=event_sender))
+    reload_task = asyncio.gather(
+        start_reload_consumer(scheduler=scheduler, event_sender=event_sender),
+        start_worker_autoscaler_listener(scheduler=scheduler),
+    )
 
     return scheduler, reload_task
 

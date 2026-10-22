@@ -1,6 +1,6 @@
-from typing import Any
+from typing import Any, cast
 from datetime import datetime, UTC
-from kubernetes_asyncio.client import Configuration, CoreV1Api, ApiClient, AppsV1Api
+from kubernetes_asyncio.client import Configuration, CoreV1Api, ApiClient, AppsV1Api, V1Pod
 
 
 class KubernetesClient:
@@ -83,6 +83,33 @@ class KubernetesClient:
         async with ApiClient(self.configuration) as api:
             v1 = CoreV1Api(api)
             return await v1.delete_namespaced_pod(pod_name, namespace)
+
+    async def read_namespaced_pod(self, pod_name: str, namespace: str) -> dict[str, Any]:
+        """The pod as a manifest-style dict (camelCase keys), as it would be written in YAML."""
+        async with ApiClient(self.configuration) as api:
+            v1 = CoreV1Api(api)
+            pod = await v1.read_namespaced_pod(pod_name, namespace)
+            return api.sanitize_for_serialization(pod)
+
+    async def read_namespaced_pod_log(self, pod_name: str, namespace: str, tail_lines: int = 500) -> str:
+        async with ApiClient(self.configuration) as api:
+            v1 = CoreV1Api(api)
+            return await v1.read_namespaced_pod_log(pod_name, namespace, tail_lines=tail_lines, timestamps=True)
+
+    async def list_labeled_pods(self, namespace: str, label_selector: str) -> list[V1Pod]:
+        async with ApiClient(self.configuration) as api:
+            v1 = CoreV1Api(api)
+            pods = await v1.list_namespaced_pod(namespace, label_selector=label_selector)
+        return list(pods.items)
+
+    async def create_namespaced_pod(self, namespace: str, body: dict[str, Any], dry_run: bool = False) -> V1Pod:
+        # The API client serializes plain dicts as-is, so a manifest can be sent without building a V1Pod
+        pod = cast(V1Pod, cast(object, body))
+        async with ApiClient(self.configuration) as api:
+            v1 = CoreV1Api(api)
+            if dry_run:
+                return await v1.create_namespaced_pod(namespace, pod, dry_run="All")
+            return await v1.create_namespaced_pod(namespace, pod)
 
     async def restart_namespaced_deployment(self, deployment: str, namespace: str):
         async with ApiClient(self.configuration) as api:

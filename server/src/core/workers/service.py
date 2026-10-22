@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 import logging
 from typing import Any, Literal
 from uuid import UUID
@@ -63,6 +63,18 @@ class WorkerService:
         await self.crud.commit()
 
         return WorkerDTO.model_validate(response)
+
+    async def delete_by_host(self, host: str) -> int:
+        """Remove the rows of workers that ran on ``host``, e.g. a deleted on-demand worker pod."""
+        deleted = await self.crud.delete_by_host(host)
+        await self.crud.commit()
+        return deleted
+
+    async def mark_stale_offline(self, stale_after_seconds: int) -> int:
+        """Set workers that stopped heartbeating (e.g. killed without a clean shutdown) to offline."""
+        updated = await self.crud.mark_stale_offline(datetime.now(UTC) - timedelta(seconds=stale_after_seconds))
+        await self.crud.commit()
+        return updated
 
     async def change_worker_status(self, worker_id: str | UUID, status: Literal["free", "busy", "offline"]) -> None:
         worker = await self.crud.get_by_id(str(worker_id))

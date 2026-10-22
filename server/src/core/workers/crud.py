@@ -1,7 +1,9 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, select
+from datetime import datetime
+
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import (
@@ -67,6 +69,19 @@ class WorkerCRUD:
             setattr(existing_worker, key, value)
 
         return existing_worker
+
+    async def delete_by_host(self, host: str) -> int:
+        result = await self.session.execute(delete(Worker).where(Worker.host == host))
+        return getattr(result, "rowcount", 0) or 0
+
+    async def mark_stale_offline(self, cutoff: datetime) -> int:
+        result = await self.session.execute(
+            update(Worker)
+            .where(Worker.status != "offline", Worker.updated_at < cutoff)
+            .values(status="offline", current_task=None)
+            .execution_options(synchronize_session=False)
+        )
+        return getattr(result, "rowcount", 0) or 0
 
     async def commit(self) -> None:
         await self.session.commit()
