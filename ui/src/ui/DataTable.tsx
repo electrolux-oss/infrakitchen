@@ -10,16 +10,23 @@ import {
 } from "react";
 
 import {
-  ColumnDef,
+  type ColumnDef,
+  columnVisibilityFeature,
+  createPaginatedRowModel,
+  createSortedRowModel,
   functionalUpdate,
-  getCoreRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  PaginationState,
-  RowSelectionState,
-  SortingState,
-  Updater,
-  useReactTable,
+  type PaginationState,
+  type Row,
+  type RowData,
+  rowPaginationFeature,
+  type RowSelectionState,
+  rowSelectionFeature,
+  rowSortingFeature,
+  type SortingState,
+  sortFns,
+  tableFeatures,
+  type Updater,
+  useTable,
 } from "@tanstack/react-table";
 
 import { HeroArrowDownIcon, HeroArrowUpIcon } from "../icons";
@@ -111,6 +118,17 @@ const JUSTIFY = {
   right: "justify-end",
 };
 
+const features = tableFeatures({
+  columnVisibilityFeature,
+  rowSelectionFeature,
+  rowSortingFeature,
+  rowPaginationFeature,
+  sortedRowModel: createSortedRowModel(),
+  paginatedRowModel: createPaginatedRowModel(),
+  sortFns,
+});
+type Features = typeof features;
+
 const defaultGetRowId = (row: any): RowId => row?.id;
 
 const toSorting = (model: SortModel): SortingState =>
@@ -145,7 +163,7 @@ function useWidth() {
  * columns flex to the container width and resize by dragging the header
  * separators.
  */
-export function DataTable<R = any>({
+export function DataTable<R extends RowData = any>({
   rows,
   columns,
   getRowId = defaultGetRowId,
@@ -214,15 +232,16 @@ export function DataTable<R = any>({
     });
   }, [rows, quickFilterValues, visibleColumns]);
 
-  const columnDefs = useMemo<ColumnDef<R>[]>(
+  const columnDefs = useMemo<ColumnDef<Features, R>[]>(
     () =>
       columns.map((column) => ({
         id: column.field,
         accessorFn: (row: R) => getCellValue(column, row),
         enableSorting: column.sortable !== false,
         enableHiding: column.hideable !== false,
-        sortingFn: column.sortComparator
-          ? (a, b, id) => column.sortComparator!(a.getValue(id), b.getValue(id))
+        sortFn: column.sortComparator
+          ? (a: Row<Features, R>, b: Row<Features, R>, id: string) =>
+              column.sortComparator!(a.getValue(id), b.getValue(id))
           : "auto",
       })),
     [columns],
@@ -243,7 +262,8 @@ export function DataTable<R = any>({
     ? (rowCount ?? filteredRows.length)
     : filteredRows.length;
 
-  const table = useReactTable<R>({
+  const table = useTable({
+    features,
     data: filteredRows as R[],
     columns: columnDefs,
     getRowId: (row) => String(getRowId(row)),
@@ -282,11 +302,6 @@ export function DataTable<R = any>({
     rowCount: totalRows,
     // DataGrid keeps the page when rows change; we clamp below instead.
     autoResetPageIndex: false,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel:
-      sortingMode === "client" ? getSortedRowModel() : undefined,
-    getPaginationRowModel:
-      paginated && !serverPaging ? getPaginationRowModel() : undefined,
   });
 
   // A shrinking client-side result can leave the page past the end.

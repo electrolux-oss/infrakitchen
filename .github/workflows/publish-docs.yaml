@@ -20,17 +20,20 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.0
 
+      - name: Enable corepack
+        run: corepack enable
+
       - name: use node.js 24.x
         uses: actions/setup-node@v6
         with:
           node-version: "24.x"
-          cache: npm
+          cache: yarn
 
       - name: Install dependencies
-        run: npm ci
+        run: yarn install --immutable
 
       - name: Build docs
-        run: npm run build
+        run: yarn build
 
       # GitHub Pages runs Jekyll by default, which drops directories starting
       # with an underscore — including the _astro/ asset bundle.
