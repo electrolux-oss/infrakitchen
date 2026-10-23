@@ -9,5 +9,6 @@
   },
   "dependencies": {
     "blume": "^2.2.1"
-  }
+  },
+  "packageManager": "yarn@4.4.1"
 }

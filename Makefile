@@ -25,10 +25,10 @@ format:
 
 # --- Docs (Blume) ---
 docs-dev:
-	npm run dev
+	yarn dev
 
 docs-build:
-	npm run build
+	yarn build
 
 docs-validate:
-	npx blume validate --isolated
+	yarn blume validate --isolated
