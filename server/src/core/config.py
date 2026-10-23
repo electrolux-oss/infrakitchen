@@ -26,6 +26,25 @@ def setup_service_environment():
         _ = load_dotenv(".env_local", override=True)
 
 
+# Publicly known JWT keys: the Settings default and the placeholder committed in server/.env
+INSECURE_JWT_KEYS = {"supersecret", "CHANGE_ME"}
+MIN_JWT_KEY_LENGTH = 32
+
+
+def validate_jwt_key() -> None:
+    """Refuse to serve with a JWT signing key anyone could know or brute force.
+
+    Tokens are trusted without a database lookup, so whoever holds the key can
+    mint a token for any user, super admins included.
+    """
+    jwt_key = Settings().JWT_KEY
+    if not jwt_key or jwt_key in INSECURE_JWT_KEYS or len(jwt_key) < MIN_JWT_KEY_LENGTH:
+        raise RuntimeError(
+            f"JWT_KEY must be a random secret of at least {MIN_JWT_KEY_LENGTH} characters. "
+            "Generate one with `python generate_encryption_key.py` or `openssl rand -base64 32`."
+        )
+
+
 class Settings(BaseSettings):
     INFRAKITCHEN_URL: str = ""  # e.g. https://infrakitchen.io
     # Database settings

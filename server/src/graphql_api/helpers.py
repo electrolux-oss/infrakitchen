@@ -184,8 +184,17 @@ def parse_sort(sort: list[str] | None) -> tuple[str, str] | None:
     return None
 
 
+MAX_PAGE_SIZE = 1000
+
+
 def parse_range(range: list[int] | None) -> tuple[int, int] | None:  # noqa: A002
-    """Convert a [skip, end] list into the tuple expected by evaluate_sqlalchemy_pagination."""
+    """Convert a [skip, end] list into the tuple expected by evaluate_sqlalchemy_pagination.
+
+    Client ranges are capped at MAX_PAGE_SIZE rows so one query cannot pull a whole table.
+    """
     if range and len(range) >= 2:
-        return (range[0], range[1])
+        skip, end = range[0], range[1]
+        if skip < 0 or end < skip:
+            raise ValueError("Invalid range: expected [skip, end] with 0 <= skip <= end")
+        return (skip, min(end, skip + MAX_PAGE_SIZE))
     return None

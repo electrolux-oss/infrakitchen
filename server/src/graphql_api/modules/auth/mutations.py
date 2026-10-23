@@ -13,7 +13,7 @@ from core.sso.guest import guest_refresh_token
 from core.sso.microsoft import microsoft_refresh_token
 from core.sso.service import SSOService
 from core.sso.functions import create_user_token
-from core.utils.password_manager import is_correct_password
+from core.sso.service_account import authenticate_service_account
 from graphql_api.helpers import IsAuthenticated
 from graphql_api.modules.auth.types import (
     LogoutResponseType,
@@ -63,22 +63,7 @@ class AuthMutation:
     @strawberry.mutation
     async def service_account_token(self, info: Info, identifier: str, password: str) -> ServiceAccountTokenType:
         service: SSOService = info.context["sso_service"]
-
-        ik_sa_provider = await service.auth_provider_service.get_all(filter={"auth_provider": "ik_service_account"})
-        if len(ik_sa_provider) == 0 or not ik_sa_provider[0].enabled:
-            raise AccessUnauthorized("Service Account login is disabled")
-
-        if not identifier or not password:
-            raise ValueError("identifier and password are required")
-
-        user = await service.user_service.get_user_by_identifier(identifier)
-
-        if not user or not user.password:
-            raise AccessUnauthorized("Invalid password or username")
-
-        salt, hashed_password = user.password.get_decrypted_value().split("$", maxsplit=1)
-        if not is_correct_password(salt, hashed_password, password):
-            raise AccessUnauthorized("Invalid password or username")
+        user = await authenticate_service_account(service, info.context.get("request"), identifier, password)
 
         expiration = datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=30)
         token = create_user_token(user, expiration)

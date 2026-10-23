@@ -52,7 +52,7 @@ The built-in GraphiQL UI is accessible at `/api/graphql` in the browser. To auth
 4. Write and run queries — the UI provides autocompletion and schema documentation
 
 :::note
-Schema introspection works without authentication, so autocompletion is available even before you add a token. However, executing any query requires a valid token.
+Schema introspection requires a valid token, so autocompletion and schema documentation appear once you add the `Authorization` header.
 :::
 
 ## Query Examples

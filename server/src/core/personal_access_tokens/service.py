@@ -1,4 +1,7 @@
-from datetime import UTC, datetime
+from collections import OrderedDict
+from datetime import UTC, datetime, timedelta
+import hashlib
+import hmac
 import logging
 import secrets
 import uuid
@@ -9,7 +12,7 @@ from core.dependencies import get_async_session
 from core.models.encrypted_secret import EncryptedSecretStr
 from core.request_context import get_current_user_agent
 from core.users.functions import user_apis_permissions
-from core.utils.password_manager import hash_new_password, is_correct_password
+from core.utils.password_manager import hash_new_password, is_correct_password_async
 from core.users.model import UserDTO
 
 from .crud import PersonalAccessTokenCRUD
@@ -156,8 +159,7 @@ class PersonalAccessTokenService:
             )
             return None
 
-        salt, hashed_token = EncryptedSecretStr(token.token_hash).get_decrypted_value().split("$", maxsplit=1)
-        if not is_correct_password(salt, hashed_token, raw_token):
+        if not await _verify_token_secret(token.token_hash, raw_token):
             await _audit_token_authentication(
                 token.id,
                 token.user_id,
@@ -167,14 +169,44 @@ class PersonalAccessTokenService:
             )
             return None
 
-        await self.crud.update(token, {"last_used_at": datetime.now(UTC)})
-        await _audit_token_authentication(
-            token.id,
-            token.user_id,
-            token_prefix=token.token_prefix,
-            token_name=token.name,
-        )
+        # Tokens authenticate every API call, so record usage at most once per interval
+        # instead of writing last_used_at and a login audit row on each request.
+        now = datetime.now(UTC)
+        if token.last_used_at is None or now - token.last_used_at >= USAGE_RECORD_INTERVAL:
+            await self.crud.update(token, {"last_used_at": now})
+            await _audit_token_authentication(
+                token.id,
+                token.user_id,
+                token_prefix=token.token_prefix,
+                token_name=token.name,
+            )
         return PersonalAccessTokenDTO.model_validate(token)
+
+
+USAGE_RECORD_INTERVAL = timedelta(minutes=1)
+
+# token_hash -> sha256 of a raw token that already passed PBKDF2. Tokens are
+# high-entropy, so a fast hash is safe for the repeat check; keying on the
+# stored hash means a re-issued token never matches a stale entry.
+_VERIFIED_CACHE_SIZE = 1024
+_verified_tokens: OrderedDict[str, bytes] = OrderedDict()
+
+
+async def _verify_token_secret(token_hash: str, raw_token: str) -> bool:
+    digest = hashlib.sha256(raw_token.encode()).digest()
+    cached = _verified_tokens.get(token_hash)
+    if cached is not None and hmac.compare_digest(cached, digest):
+        _verified_tokens.move_to_end(token_hash)
+        return True
+
+    salt, hashed_token = EncryptedSecretStr(token_hash).get_decrypted_value().split("$", maxsplit=1)
+    if not await is_correct_password_async(salt, hashed_token, raw_token):
+        return False
+
+    _verified_tokens[token_hash] = digest
+    if len(_verified_tokens) > _VERIFIED_CACHE_SIZE:
+        _ = _verified_tokens.popitem(last=False)
+    return True
 
 
 def get_token_lookup_id(raw_token: str) -> UUID | None:

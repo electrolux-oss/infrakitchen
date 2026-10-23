@@ -10,6 +10,9 @@ from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
+import pytest
+
+from core.personal_access_tokens import service as pat_service
 from core.personal_access_tokens.service import _audit_token_authentication, PersonalAccessTokenService
 from core.request_context import set_current_user_agent
 
@@ -17,6 +20,13 @@ from core.request_context import set_current_user_agent
 # A well-formed raw token ("ik_<32hex>_<secret>") so the id lookup parses; the
 # secret part is irrelevant, the test mocks the password check.
 RAW_TOKEN = f"ik_{'1' * 32}_secret"
+
+
+@pytest.fixture(autouse=True)
+def _clear_verified_tokens():
+    pat_service._verified_tokens.clear()
+    yield
+    pat_service._verified_tokens.clear()
 
 
 def _make_token(**overrides):
@@ -125,7 +135,7 @@ async def test_successful_authentication_is_audited():
     service, crud = _make_service(token)
 
     with (
-        patch("core.personal_access_tokens.service.is_correct_password", return_value=True),
+        patch("core.personal_access_tokens.service.is_correct_password_async", AsyncMock(return_value=True)),
         patch(
             # Avoids real hashing and a real DTO: EncryptedSecretStr needs an
             # ENCRYPTION_KEY and pydantic would reserialize the hash.
@@ -154,7 +164,7 @@ async def test_expired_token_is_audited_as_failure():
     service, crud = _make_service(token)
 
     with (
-        patch("core.personal_access_tokens.service.is_correct_password", return_value=True),
+        patch("core.personal_access_tokens.service.is_correct_password_async", AsyncMock(return_value=True)),
         patch("core.personal_access_tokens.service._audit_token_authentication") as audit,
     ):
         result = await service.get_valid_token(RAW_TOKEN)
@@ -194,7 +204,7 @@ async def test_wrong_secret_is_audited_as_failure():
     service, crud = _make_service(token)
 
     with (
-        patch("core.personal_access_tokens.service.is_correct_password", return_value=False),
+        patch("core.personal_access_tokens.service.is_correct_password_async", AsyncMock(return_value=False)),
         patch("core.personal_access_tokens.service.EncryptedSecretStr") as encrypted_cls,
         patch("core.personal_access_tokens.service._audit_token_authentication") as audit,
     ):
@@ -314,7 +324,7 @@ async def test_auditing_failure_does_not_break_authentication():
     service, crud = _make_service(token)
 
     with (
-        patch("core.personal_access_tokens.service.is_correct_password", return_value=True),
+        patch("core.personal_access_tokens.service.is_correct_password_async", AsyncMock(return_value=True)),
         patch("core.personal_access_tokens.service.EncryptedSecretStr") as encrypted_cls,
         patch("core.personal_access_tokens.service.PersonalAccessTokenDTO") as dto_cls,
         patch(
@@ -330,3 +340,59 @@ async def test_auditing_failure_does_not_break_authentication():
         result = await service.get_valid_token(RAW_TOKEN)
 
     assert result == "sentinel-dto"
+
+
+async def test_verified_token_skips_pbkdf2_on_repeat_use():
+    """A token that already passed PBKDF2 is re-checked with a fast hash."""
+    token = _make_token()
+    service, _ = _make_service(token)
+    check = AsyncMock(return_value=True)
+
+    with (
+        patch("core.personal_access_tokens.service.is_correct_password_async", check),
+        patch("core.personal_access_tokens.service.EncryptedSecretStr") as encrypted_cls,
+        patch("core.personal_access_tokens.service.PersonalAccessTokenDTO"),
+        patch("core.personal_access_tokens.service._audit_token_authentication"),
+    ):
+        encrypted_cls.return_value.get_decrypted_value.return_value = "salt$hash"
+        await service.get_valid_token(RAW_TOKEN)
+        await service.get_valid_token(RAW_TOKEN)
+
+    check.assert_awaited_once()
+
+
+async def test_cached_verification_does_not_accept_a_different_secret():
+    token = _make_token()
+    service, _ = _make_service(token)
+
+    with (
+        patch("core.personal_access_tokens.service.EncryptedSecretStr") as encrypted_cls,
+        patch("core.personal_access_tokens.service.PersonalAccessTokenDTO"),
+        patch("core.personal_access_tokens.service._audit_token_authentication"),
+    ):
+        encrypted_cls.return_value.get_decrypted_value.return_value = "salt$hash"
+        with patch("core.personal_access_tokens.service.is_correct_password_async", AsyncMock(return_value=True)):
+            assert await service.get_valid_token(RAW_TOKEN) is not None
+        with patch("core.personal_access_tokens.service.is_correct_password_async", AsyncMock(return_value=False)):
+            assert await service.get_valid_token(f"ik_{'1' * 32}_other") is None
+
+
+async def test_recent_use_is_not_recorded_again():
+    """last_used_at and the success audit row are written at most once per interval."""
+    token = _make_token(last_used_at=datetime.now(UTC) - timedelta(seconds=5))
+    service, crud = _make_service(token)
+
+    with (
+        patch("core.personal_access_tokens.service.is_correct_password_async", AsyncMock(return_value=True)),
+        patch("core.personal_access_tokens.service.EncryptedSecretStr") as encrypted_cls,
+        patch("core.personal_access_tokens.service.PersonalAccessTokenDTO") as dto_cls,
+        patch("core.personal_access_tokens.service._audit_token_authentication") as audit,
+    ):
+        encrypted_cls.return_value.get_decrypted_value.return_value = "salt$hash"
+        dto_cls.model_validate.return_value = "sentinel-dto"
+
+        result = await service.get_valid_token(RAW_TOKEN)
+
+    assert result == "sentinel-dto"
+    audit.assert_not_awaited()
+    crud.update.assert_not_awaited()

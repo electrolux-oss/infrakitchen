@@ -1,5 +1,8 @@
 import strawberry
-from graphql_api.extensions import GraphQLFailureFlagExtension
+from strawberry.extensions import MaxAliasesLimiter, MaxTokensLimiter, QueryDepthLimiter
+from strawberry.extensions.query_depth_limiter import IgnoreContext
+from graphql_api.extensions import AuthenticatedIntrospectionExtension, GraphQLFailureFlagExtension
+from graphql_api.helpers import MAX_PAGE_SIZE
 
 from graphql_api.modules.config.queries import ConfigQuery
 from graphql_api.modules.cloud_resource.queries import CloudResourceQuery
@@ -165,9 +168,21 @@ class Subscription(
     pass
 
 
+def _is_tree_query(context: IgnoreContext) -> bool:
+    # Tree nodes are built server-side in one pass and nest up to MAX_TREE_DEPTH (100) levels
+    return context.field_name in ("resourceTree", "templateTree")
+
+
 schema = strawberry.Schema(
     query=Query,
     mutation=Mutation,
     subscription=Subscription,
-    extensions=[GraphQLFailureFlagExtension],
+    extensions=[
+        GraphQLFailureFlagExtension,
+        AuthenticatedIntrospectionExtension,
+        lambda: QueryDepthLimiter(max_depth=10, should_ignore=_is_tree_query),
+        # Batch dialogs send one alias per selected resource, so this follows the page size cap
+        lambda: MaxAliasesLimiter(max_alias_count=MAX_PAGE_SIZE),
+        lambda: MaxTokensLimiter(max_token_count=60_000),
+    ],
 )

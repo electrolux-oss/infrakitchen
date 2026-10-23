@@ -2,6 +2,7 @@ from datetime import datetime
 import json
 import logging
 import re
+import time
 from typing import Any
 
 import httpx
@@ -123,58 +124,90 @@ async def check_api_permission(request: Request):
     raise HTTPException(status_code=403, detail=f"{request.method} method is forbidden")
 
 
+INFRAKITCHEN_TOKEN_TYPE = "infrakitchen.auth.token"
+INFRAKITCHEN_TOKEN_ALG = "HS256"
+INFRAKITCHEN_TOKEN_AUDIENCE = "infrakitchen"
+BACKSTAGE_TOKEN_TYPE = "vnd.backstage.user"
+BACKSTAGE_TOKEN_ALG = "ES256"
+BACKSTAGE_TOKEN_AUDIENCE = "backstage"
+
+JWKS_CACHE_TTL_SECONDS = 300
+# An unknown kid triggers a refetch (key rotation), but not more often than this,
+# so tokens with made-up kids cannot turn every request into an outbound call.
+JWKS_MIN_REFETCH_SECONDS = 30
+JWKS_FETCH_TIMEOUT_SECONDS = 5
+
+# jwks_url -> (fetched_at, {kid: public key})
+_jwks_cache: dict[str, tuple[float, dict[str, Any]]] = {}
+
+
 async def get_jwks(jwks_url) -> list[dict[str, Any]]:
     """
     Fetch JWT keys from public endpoint
     """
     if jwks_url:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=JWKS_FETCH_TIMEOUT_SECONDS) as client:
             response = await client.get(jwks_url)
-            resp_json = response.json()
-            return resp_json["keys"] if response.status_code == 200 else []
+            if response.status_code != 200:
+                return []
+            return response.json().get("keys", [])
     else:
         return []
 
 
-def validate_token(token: str, alg: str, audience: str) -> dict[str, Any]:
+async def get_jwks_key(jwks_url: str, kid: str) -> Any:
+    now = time.monotonic()
+    fetched_at, keys = _jwks_cache.get(jwks_url, (0.0, {}))
+    age = now - fetched_at
+    if age >= JWKS_CACHE_TTL_SECONDS or (kid not in keys and age >= JWKS_MIN_REFETCH_SECONDS):
+        keys = {}
+        for jwk in await get_jwks(jwks_url):
+            if jwk.get("kid"):
+                keys[jwk["kid"]] = ECAlgorithm(ECAlgorithm.SHA256).from_jwk(jwk)
+        _jwks_cache[jwks_url] = (now, keys)
+
+    key = keys.get(kid)
+    if key is None:
+        raise AccessUnauthorized("Invalid authentication credentials")
+    return key
+
+
+def validate_token(token: str) -> dict[str, Any]:
     JWT_KEY = Settings().JWT_KEY
     assert JWT_KEY is not None, "JWT_KEY is not set"
     try:
-        return jwt.decode(token, key=JWT_KEY, algorithms=[alg], audience=audience)
+        return jwt.decode(token, key=JWT_KEY, algorithms=[INFRAKITCHEN_TOKEN_ALG], audience=INFRAKITCHEN_TOKEN_AUDIENCE)
     except Exception as error:
         logger.error(f"Error decoding token: {error}")
-        raise HTTPException(status_code=401, detail=f"Invalid authentication credentials. {error}") from error
+        raise AccessUnauthorized("Invalid authentication credentials") from error
 
 
-async def get_decoded_token(
-    service: SSOService, token: str, alg: str, token_type: str, audience: str
-) -> dict[str, Any]:
+async def get_decoded_token(service: SSOService, token: str, token_type: str) -> dict[str, Any]:
     """
     Decodes and validates a JWT token based on its type.
 
+    The algorithm and audience are fixed per token type rather than taken from
+    the token, so a token cannot choose how it gets verified.
+
     Args:
         token (str): The JWT token to decode
-        alg (str): The algorithm used to sign the token (e.g. 'HS256')
         token_type (str): Type of token - either 'infrakitchen.auth.token' or 'vnd.backstage.user'
-        audience (str): Expected audience claim for token validation
 
     Returns:
         dict: Decoded token claims
 
     Raises:
-        HTTPException:
-            - 401 if token decoding fails
-            - 401 if token validation fails
+        AccessUnauthorized: if the token fails validation
         NotImplementedError: If token_type is not supported
 
     Notes:
         - For 'infrakitchen.auth.token': Validates signature using JWT_KEY
-        - For 'vnd.backstage.user': Decodes without signature verification
+        - For 'vnd.backstage.user': Validates signature against the provider's JWKS
     """
-    if token_type == "infrakitchen.auth.token":
-        return validate_token(token, alg, audience)
+    if token_type == INFRAKITCHEN_TOKEN_TYPE:
+        return validate_token(token)
 
-    elif token_type == "vnd.backstage.user":
+    elif token_type == BACKSTAGE_TOKEN_TYPE:
         backstage_providers = await service.auth_provider_service.get_all(filter={"auth_provider": "backstage"})
         if len(backstage_providers) == 0 or backstage_providers[0].enabled is False:
             raise AccessUnauthorized("Backstage authentication provider is not enabled")
@@ -182,23 +215,17 @@ async def get_decoded_token(
 
         if not isinstance(backstage_provider.configuration, BackstageProviderConfig):
             raise AccessUnauthorized("Backstage authentication provider configuration is invalid")
-        jwks_url = backstage_provider.configuration.backstage_jwks_url
-        jwks_keys = await get_jwks(jwks_url)
         header = jwt.get_unverified_header(token)
         kid = header.get("kid")
         if not kid:
             raise jwt.exceptions.InvalidKeyError("JWKS can not be applied while key does not have kid")
 
-        public_keys = {}
-        for jwk in jwks_keys:
-            jkid = jwk["kid"]
-            public_keys[jkid] = ECAlgorithm(ECAlgorithm.SHA256).from_jwk(jwk)
-        key = public_keys[kid]
+        key = await get_jwks_key(backstage_provider.configuration.backstage_jwks_url, kid)
         try:
-            return jwt.decode(token, algorithms=[alg], key=key, audience=audience)  # type: ignore [arg-type]
+            return jwt.decode(token, algorithms=[BACKSTAGE_TOKEN_ALG], key=key, audience=BACKSTAGE_TOKEN_AUDIENCE)
         except Exception as error:
             logger.error(f"Error decoding token: {error}")
-            raise AccessUnauthorized(f"Invalid authentication credentials. {error}") from error
+            raise AccessUnauthorized("Invalid authentication credentials") from error
     else:
         raise NotImplementedError(f"Invalid token type: {token_type}")
 
@@ -246,27 +273,23 @@ async def get_user_from_token(service: SSOService, token: str | None = Security(
 
         return user
 
-    # get audience of token to choose the right validation
+    # the token type only selects the validation path; it never sets its parameters
     try:
-        token_headers = jwt.get_unverified_header(token)
-        alg = token_headers["alg"]
-        token_type = token_headers["typ"]
-        decoded_token: dict[str, Any] = jwt.decode(token, algorithms=[alg], options={"verify_signature": False})
-        audience = decoded_token.get("aud", "")
+        token_type = jwt.get_unverified_header(token)["typ"]
     except Exception as error:
         logger.error(f"Error decoding token: {error}")
         raise AccessUnauthorized("Invalid authentication credentials") from error
 
     try:
-        claims = await get_decoded_token(service, token, alg, token_type, audience)
-        if token_type == "infrakitchen.auth.token":
+        claims = await get_decoded_token(service, token, token_type)
+        if token_type == INFRAKITCHEN_TOKEN_TYPE:
             user_id = claims.get("pld", {}).get("id")
             if user_id is None:
                 raise AccessUnauthorized("User ID not found in token claims")
             # trusting JWT token, so no need to check if user exists in database
             user = UserDTO.model_validate(claims["pld"])
             return user
-        elif token_type == "vnd.backstage.user":
+        elif token_type == BACKSTAGE_TOKEN_TYPE:
             user_id = claims.get("sub")
             if not user_id:
                 raise AccessUnauthorized("Invalid authentication credentials")
@@ -274,7 +297,7 @@ async def get_user_from_token(service: SSOService, token: str | None = Security(
             return await provision_backstage_user(service, user_id)
     except Exception as error:
         logger.error(f"Error decoding token: {error}")
-        raise AccessUnauthorized(f"Invalid authentication credentials. {error}") from error
+        raise AccessUnauthorized("Invalid authentication credentials") from error
 
     raise AccessUnauthorized("Invalid authentication credentials")
 
@@ -345,10 +368,10 @@ def create_user_token(user: UserDTO, expiration: datetime) -> str:
             "pld": json.loads(json.dumps(dumped_user, cls=JsonEncoder)),
             "exp": expiration,
             "sub": str(user.id),
-            "aud": "infrakitchen",
+            "aud": INFRAKITCHEN_TOKEN_AUDIENCE,
         },
         key=JWT_KEY,
-        algorithm="HS256",
-        headers={"typ": "infrakitchen.auth.token", "alg": "HS256"},
+        algorithm=INFRAKITCHEN_TOKEN_ALG,
+        headers={"typ": INFRAKITCHEN_TOKEN_TYPE, "alg": INFRAKITCHEN_TOKEN_ALG},
     )
     return token

@@ -24,7 +24,7 @@ from core.utils.event_stream_manager import start_event_consumer
 from application.init_app import init_app
 from fastapi import FastAPI, Request
 from prometheus_fastapi_instrumentator import Instrumentator
-from core.config import setup_service_environment
+from core.config import setup_service_environment, validate_jwt_key
 from application.views import main_router
 from application.oidc import oidc_router
 from graphql_api.helpers import mask_sensitive_values
@@ -57,6 +57,8 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    validate_jwt_key()
+
     mcp_http_app = setup_mcp_server(app, mount_path="/api/mcp")
     mcp_context = mcp_http_app.router.lifespan_context(mcp_http_app)
 
