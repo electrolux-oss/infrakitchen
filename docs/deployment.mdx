@@ -91,6 +91,9 @@ authentication tokens:
 python server/generate_encryption_key.py
 ```
 
+The API refuses to start when `JWT_KEY` is missing, shorter than 32
+characters, or one of the published placeholders (`CHANGE_ME`, `supersecret`).
+
 Rerunning the script produces fresh values you can use to rotate the keys.
 Note that rotating the `ENCRYPTION_KEY` invalidates everything encrypted with
 the previous one (e.g. stored integration credentials), so plan the rotation
@@ -119,6 +122,12 @@ The manifest references the secret created in the previous step:
 ```bash
 kubectl apply -f docs/examples/podman/k8s-manifest.yaml
 ```
+
+The UI and API are served from one origin through nginx, so the API sends no
+CORS headers. To let another browser origin call the API, set
+`CORS_ALLOW_ORIGINS` to a comma-separated list of exact origins (e.g.
+`https://portal.example.com`). When `INFRAKITCHEN_URL` starts with `https://`,
+the API also sends `Strict-Transport-Security`.
 
 </Step>
 

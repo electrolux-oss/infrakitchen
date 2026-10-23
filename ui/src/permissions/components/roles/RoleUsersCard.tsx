@@ -117,7 +117,7 @@ export const RoleUsersCard = (props: { role: string }) => {
         ref={tableRef}
         title="Role Users"
         entityName="permission"
-        defaultFilter={{ ptype: "g", v1: role, v0__like: "user:%" }}
+        defaultFilter={{ ptype: "g", v1: role, v0__like: "user:" }}
         columns={columns}
         entityFieldMap={PERMISSION_FIELD_MAP}
       />

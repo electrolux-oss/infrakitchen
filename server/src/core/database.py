@@ -122,6 +122,15 @@ def _is_json_column(column: Any) -> bool:
     return isinstance(getattr(column, "type", None), JSON)
 
 
+def _like_condition(column: Any, value: Any, negate: bool = False) -> ColumnElement[Any]:
+    """Case-insensitive substring match with LIKE wildcards in the value taken literally.
+
+    Surrounding ``%`` are stripped first, so callers that still send ``"%text%"`` keep working.
+    """
+    condition = column.icontains(str(value).strip("%"), autoescape=True)
+    return ~condition if negate else condition
+
+
 def _parse_entry_filter(entry: Any) -> tuple[str, Any | None, bool]:
     """Parse a name/value entry filter into (name, value, has_value).
 
@@ -252,9 +261,9 @@ def _build_sqlalchemy_filters(model: type, body: dict[str, Any]) -> list[BinaryE
                 elif operator == "not_eq":
                     relation_filter = related_column != value
                 elif operator == "like":
-                    relation_filter = related_column.ilike(f"%{value}%")
+                    relation_filter = _like_condition(related_column, value)
                 elif operator == "not_like":
-                    relation_filter = ~related_column.ilike(f"%{value}%")
+                    relation_filter = _like_condition(related_column, value, negate=True)
                 elif operator == "is_none":
                     relation_filter = related_column.is_(None)
                 else:
@@ -355,9 +364,9 @@ def _build_sqlalchemy_filters(model: type, body: dict[str, Any]) -> list[BinaryE
 
                 filters.append(column != value)
             case "like":
-                filters.append(column.ilike(f"%{value}%"))
+                filters.append(_like_condition(column, value))
             case "not_like":
-                filters.append(~column.ilike(f"%{value}%"))
+                filters.append(_like_condition(column, value, negate=True))
             case "in":
                 if isinstance(value, list) and value:
                     filters.append(column.in_(value))

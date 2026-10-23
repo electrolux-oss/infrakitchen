@@ -24,9 +24,11 @@ from core.utils.event_stream_manager import start_event_consumer
 from application.init_app import init_app
 from fastapi import FastAPI, Request
 from prometheus_fastapi_instrumentator import Instrumentator
-from core.config import setup_service_environment, validate_jwt_key
+from fastapi.middleware.cors import CORSMiddleware
+from core.config import Settings, setup_service_environment, validate_jwt_key
 from application.views import main_router
 from application.oidc import oidc_router
+from graphql_api.error_handling import integrity_error_message
 from graphql_api.helpers import mask_sensitive_values
 from core.casbin.enforcer import CasbinEnforcer
 from core.errors import (
@@ -136,8 +138,8 @@ async def mask_graphql_secrets(request: Request, call_next):
                 continue
             target_response.raw_headers.append((key, value))
 
-    # Only process JSON responses
-    if response.headers.get("content-type") != "application/json":
+    # Only process JSON responses; compare the media type so "; charset=..." still gets masked
+    if response.headers.get("content-type", "").split(";")[0].strip().lower() != "application/json":
         return response
 
     # Read and parse response body
@@ -158,6 +160,41 @@ async def mask_graphql_secrets(request: Request, call_next):
         passthrough_response = StreamingResponse(iter([body]), status_code=response.status_code)
         _copy_headers_preserving_cookies(passthrough_response, response)
         return passthrough_response
+
+
+_SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+}
+# TLS terminates at the ingress, so HSTS follows the externally-visible URL
+_HSTS_ENABLED = Settings().INFRAKITCHEN_URL.lower().startswith("https://")
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    for name, value in _SECURITY_HEADERS.items():
+        response.headers.setdefault(name, value)
+    # GraphiQL is served as HTML and loads its scripts from a CDN; every other response is data
+    if not response.headers.get("content-type", "").startswith("text/html"):
+        response.headers.setdefault("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
+    if _HSTS_ENABLED:
+        response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+    return response
+
+
+# The UI is served from the same origin through the proxy, so CORS stays off unless origins are listed
+_cors_origins = [origin.strip() for origin in Settings().CORS_ALLOW_ORIGINS.split(",") if origin.strip()]
+if _cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_cors_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PATCH", "DELETE"],
+        allow_headers=["Authorization", "Content-Type"],
+        expose_headers=["Content-Range"],
+    )
 
 
 app.include_router(main_router)
@@ -332,7 +369,7 @@ async def exists_in_db_error_handler(request: Request, exc: IntegrityError):
     logger.error(f"IntegrityError: {exc.orig.__cause__ if exc.orig else exc}")
     return JSONResponse(
         status_code=409,
-        content={"message": f"{exc.orig.__cause__ if exc.orig else exc}"},
+        content={"message": integrity_error_message(exc)},
     )
 
 

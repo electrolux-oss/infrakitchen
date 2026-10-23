@@ -47,6 +47,8 @@ def validate_jwt_key() -> None:
 
 class Settings(BaseSettings):
     INFRAKITCHEN_URL: str = ""  # e.g. https://infrakitchen.io
+    # Comma-separated browser origins allowed to call the API cross-origin; empty keeps CORS off
+    CORS_ALLOW_ORIGINS: str = ""
     # Database settings
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: str = "5432"

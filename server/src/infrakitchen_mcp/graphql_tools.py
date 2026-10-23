@@ -39,7 +39,8 @@ For example, use `resources` (NOT `allResources`), `templates` (NOT
 
 Filters are passed as a JSON object. Use double-underscore suffixes for operators:
   - `{name: "exact-match"}` — exact equality (default, no suffix)
-  - `{name__like: "%substring%"}` — case-insensitive substring match
+  - `{name__like: "substring"}` — case-insensitive substring match (`%` and `_`
+    are matched literally, no wildcards needed)
   - `{id__in: ["uuid1", "uuid2"]}` — value in list
   - `{integration_ids__any: ["uuid"]}` — for relationship collections, matches
     if ANY related record's ID is in the provided list
@@ -48,7 +49,7 @@ Filters are passed as a JSON object. Use double-underscore suffixes for operator
     lists (dependency_tags, dependency_config, variables, outputs): has all given
     entries; `name:value` matches name and value (sensitive entries never match
     on value), `name` matches name only
-  - Nested relationships: `{template__name__like: "%redis%"}` — filter by
+  - Nested relationships: `{template__name__like: "redis"}` — filter by
     related object's field
 
 ## Pagination & sorting
@@ -88,7 +89,7 @@ Fetch a resource by ID with full detail:
 
 List resources with filtering and pagination:
 ```graphql
-{ resources(filter: {template__name__like: "%VPC%"}, range: [0, 50]) {
+{ resources(filter: {template__name__like: "VPC"}, range: [0, 50]) {
     id name state template { id name }
 } }
 ```
