@@ -129,7 +129,7 @@ export const ApiPoliciesCard = (props: { role: string }) => {
         ref={tableRef}
         title="Api Policies"
         entityName="permission"
-        defaultFilter={{ v0: role, ptype: "p", v1__like: "api:%" }}
+        defaultFilter={{ v0: role, ptype: "p", v1__like: "api:" }}
         columns={columns}
         entityFieldMap={PERMISSION_FIELD_MAP}
       />

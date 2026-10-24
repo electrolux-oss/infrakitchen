@@ -158,7 +158,10 @@ class TestEvaluateSqlalchemyFilters:
         body = {"name__like": "pg", "or": [{"name": "a"}, {"name": "b"}]}
         statement = evaluate_sqlalchemy_filters(MockModel, select(MockModel), body)
         filter_str = _get_compiled_filter_str(statement)
-        assert "LIKE lower('%pg%') AND (mock_model.name = 'a' OR mock_model.name = 'b')" in filter_str
+        assert (
+            "LIKE '%' || lower('pg') || '%' ESCAPE '/') AND (mock_model.name = 'a' OR mock_model.name = 'b')"
+            in filter_str
+        )
 
     @pytest.mark.parametrize("value", [{"name": "a"}, [{}], ["name"]])
     def test_or_filter_invalid(self, value):
@@ -229,3 +232,26 @@ class TestEvaluateSqlalchemySorting:
     def test_regular_column_is_sorted(self):
         statement = evaluate_sqlalchemy_sorting(MockModel, select(MockModel), ("name", "DESC"))
         assert "ORDER BY mock_model.name DESC" in str(statement)
+
+
+class TestLikeFilters:
+    def test_like_matches_wildcards_literally(self):
+        statement = evaluate_sqlalchemy_filters(MockModel, select(MockModel), {"name__like": "50%_off"})
+        sql, params = _compile_with_params(statement)
+
+        assert "ILIKE" in sql
+        assert "ESCAPE '/'" in sql
+        assert "50/%/_off" in params
+
+    def test_like_strips_surrounding_wildcards(self):
+        plain = evaluate_sqlalchemy_filters(MockModel, select(MockModel), {"name__like": "VPC"})
+        wrapped = evaluate_sqlalchemy_filters(MockModel, select(MockModel), {"name__like": "%VPC%"})
+
+        assert _compile_with_params(plain) == _compile_with_params(wrapped)
+
+    def test_not_like_is_negated(self):
+        statement = evaluate_sqlalchemy_filters(MockModel, select(MockModel), {"name__not_like": "api:"})
+        sql, params = _compile_with_params(statement)
+
+        assert "NOT ILIKE" in sql or "NOT (" in sql
+        assert "api:" in params

@@ -1,4 +1,10 @@
+import json
+from unittest.mock import Mock
+
+import pytest
+from asyncpg import exceptions as asyncpg_exceptions
 from graphql import GraphQLError
+from sqlalchemy.exc import IntegrityError
 
 from core.errors import (
     AccessDenied,
@@ -157,3 +163,48 @@ def test_format_dependency_error_includes_metadata_in_extensions() -> None:
     assert payload["extensions"]["code"] == "DEPENDENCY"
     assert payload["extensions"]["metadata"] == meta
     assert payload["extensions"]["error_code"] == "DEPENDENCY_ERROR"
+
+
+def _integrity_error(cause: Exception | None) -> IntegrityError:
+    orig = Exception("driver error")
+    orig.__cause__ = cause
+    return IntegrityError("INSERT ...", {}, orig)
+
+
+@pytest.mark.parametrize(
+    ("cause", "expected"),
+    [
+        (
+            asyncpg_exceptions.UniqueViolationError(
+                'duplicate key value violates unique constraint "uq_secret_name" '
+                "DETAIL: Key (name)=(prod) already exists."
+            ),
+            "A record with these values already exists.",
+        ),
+        (
+            asyncpg_exceptions.ForeignKeyViolationError('violates foreign key constraint "fk_resource_template"'),
+            "A referenced record does not exist or is still in use.",
+        ),
+        (
+            asyncpg_exceptions.NotNullViolationError('null value in column "name" violates not-null constraint'),
+            "A required value is missing.",
+        ),
+        (None, "The request conflicts with existing data."),
+    ],
+)
+def test_classify_integrity_error_hides_constraint_details(cause, expected) -> None:
+    error = GraphQLError("integrity", original_error=_integrity_error(cause))
+    code, message, _ = classify_graphql_error(error)
+    assert code == "CONFLICT"
+    assert message == expected
+
+
+@pytest.mark.asyncio
+async def test_rest_integrity_error_hides_constraint_details() -> None:
+    from app import exists_in_db_error_handler
+
+    cause = asyncpg_exceptions.UniqueViolationError('violates unique constraint "uq_secret_name"')
+    response = await exists_in_db_error_handler(Mock(), _integrity_error(cause))
+
+    assert response.status_code == 409
+    assert json.loads(bytes(response.body)) == {"message": "A record with these values already exists."}
