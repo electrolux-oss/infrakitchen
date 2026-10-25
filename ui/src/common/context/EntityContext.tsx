@@ -27,6 +27,26 @@ const snakeToCamel = (s: string): string => {
   return camel.charAt(0).toLowerCase() + camel.slice(1);
 };
 
+// Fields holding user data (GraphQL JSON scalars): their contents keep the
+// original keys, e.g. Terraform variable values or tags.
+const RAW_JSON_FIELDS = new Set([
+  "value",
+  "default",
+  "configuration",
+  "dependency_tags",
+  "dependency_config",
+  "dependency_config_overrides",
+  "default_variables",
+  "resolved_variables",
+  "resolved_dependency_config",
+  "variable_overrides",
+  "source_code_version_overrides",
+  "parent_overrides",
+  "wiring",
+  "payload",
+  "host_metadata",
+]);
+
 export const camelizeKeys = (obj: any): any => {
   if (Array.isArray(obj)) {
     return obj.map(camelizeKeys);
@@ -36,7 +56,7 @@ export const camelizeKeys = (obj: any): any => {
     return Object.fromEntries(
       Object.entries(obj).map(([key, value]) => [
         snakeToCamel(key),
-        camelizeKeys(value),
+        RAW_JSON_FIELDS.has(key) ? value : camelizeKeys(value),
       ]),
     );
   }
