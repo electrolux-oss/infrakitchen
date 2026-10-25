@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 
-import { HeroClockIcon } from "../..//icons";
 import { CommonDialog } from "../../common/components/dialogs/CommonDialog";
 import { Entity } from "../../common/components/entities/Entity";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
@@ -9,16 +8,16 @@ import { useConfig } from "../../common/context";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { useNow } from "../../common/hooks/useNow";
 import { formatTimeUntil } from "../../common/utils";
-import { HeroArrowPathIcon } from "../../icons";
+import {
+  HeroArrowPathIcon,
+  HeroClockIcon,
+  HeroQueueListIcon,
+} from "../../icons";
 import { Divider, Spinner, Button, IconButton, Tooltip, Badge } from "../../ui";
 import { ENTITY_STATUS } from "../../utils/constants";
 import { CANCEL_QUEUED_TASK_MUTATION } from "../../workers/graphql";
-import {
-  ACTIVE_TASK_QUEUE_COUNT_QUERY,
-  ACTIVE_TASK_QUEUE_FILTER,
-  ACTIVE_TASK_QUEUE_QUERY,
-  GqlTaskQueueItem,
-} from "../graphql";
+import { useTaskQueue } from "../context/TaskQueueContext";
+import { QueueTask } from "../graphql";
 
 // Enough to cover a real backlog without paging inside a dialog
 const DIALOG_LIMIT = 100;
@@ -26,7 +25,7 @@ const DIALOG_LIMIT = 100;
 const humanize = (value: string) =>
   value.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 
-const actionLabel = (item: GqlTaskQueueItem) => {
+const actionLabel = (item: QueueTask) => {
   const action = humanize(item.action || "task");
   // Workspace syncs are queued under the resource they sync
   return item.entity === "workspace"
@@ -39,7 +38,7 @@ const QueueRow = ({
   canCancel,
   onCancelled,
 }: {
-  item: GqlTaskQueueItem;
+  item: QueueTask;
   canCancel: boolean;
   onCancelled: () => void;
 }) => {
@@ -47,7 +46,7 @@ const QueueRow = ({
   const [isCancelling, setIsCancelling] = useState(false);
   const now = useNow();
   const running = item.status === "running";
-  const requestedBy = item.creator?.identifier;
+  const requestedBy = item.creatorName;
   // Just-requested tasks wait a few seconds so they can still be cancelled
   const startsAt =
     !running && item.retries === 0 && item.availableAt
@@ -127,60 +126,59 @@ const QueueRow = ({
  * cancelled by its requester or a super admin; entity admins can also cancel
  * it from the entity page. The server re-checks permissions.
  */
-export const TaskQueueButton = () => {
-  const { ikApi, currentUser, bootstrapPermissions } = useConfig();
+export const TaskQueueButton = ({
+  variant = "button",
+}: {
+  /** "icon" is the compact header version next to the notification bell. */
+  variant?: "button" | "icon";
+}) => {
+  const { currentUser, bootstrapPermissions, webSocketEnabled, globalConfig } =
+    useConfig();
+  const { tasks, count, loading, refresh, removeTask } = useTaskQueue();
+  const liveUpdates = !!webSocketEnabled && !!globalConfig?.websocket;
   const isSuperAdmin = bootstrapPermissions?.["*"] === "admin";
   const [open, setOpen] = useState(false);
-  const [count, setCount] = useState(0);
-  const [items, setItems] = useState<GqlTaskQueueItem[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    ikApi
-      .graphqlRequest(ACTIVE_TASK_QUEUE_COUNT_QUERY, {
-        filter: ACTIVE_TASK_QUEUE_FILTER,
-      })
-      .then((response: any) => setCount(response?.taskQueueItemsCount ?? 0))
-      .catch(() => setCount(0));
-  }, [ikApi]);
-
-  const loadQueue = useCallback(() => {
-    setLoading(true);
-    ikApi
-      .graphqlRequest(ACTIVE_TASK_QUEUE_QUERY, {
-        filter: ACTIVE_TASK_QUEUE_FILTER,
-        sort: ["created_at", "ASC"],
-        range: [0, DIALOG_LIMIT],
-      })
-      .then((response: any) => {
-        setItems(response?.taskQueueItems ?? []);
-        setCount(response?.taskQueueItemsCount ?? 0);
-      })
-      .catch(notifyError)
-      .finally(() => setLoading(false));
-  }, [ikApi]);
 
   const handleOpen = () => {
     setOpen(true);
-    loadQueue();
+    // Live events keep the list current; without them it may be up to a poll behind
+    if (!liveUpdates) refresh();
   };
 
+  const items = tasks.slice(0, DIALOG_LIMIT);
   const running = items.filter((item) => item.status === "running");
   const queued = items.filter((item) => item.status === "queued");
 
   return (
     <>
-      <Tooltip title="Tasks waiting for or running on a worker">
-        <Badge badgeContent={count} color="primary" max={99}>
-          <Button
-            variant="outlined"
-            startIcon={<HeroClockIcon />}
+      {variant === "icon" ? (
+        <Tooltip title="Task queue">
+          <IconButton
+            className="border-0 bg-transparent hover:bg-transparent [&_svg]:size-4.5"
+            size="small"
+            aria-label={
+              count > 0 ? `Task queue, ${count} active` : "Task queue"
+            }
             onClick={handleOpen}
           >
-            Queue
-          </Button>
-        </Badge>
-      </Tooltip>
+            <Badge badgeContent={count} color="primary" max={99}>
+              <HeroQueueListIcon />
+            </Badge>
+          </IconButton>
+        </Tooltip>
+      ) : (
+        <Tooltip title="Tasks waiting for or running on a worker">
+          <Badge badgeContent={count} color="primary" max={99}>
+            <Button
+              variant="outlined"
+              startIcon={<HeroClockIcon />}
+              onClick={handleOpen}
+            >
+              Queue
+            </Button>
+          </Badge>
+        </Tooltip>
+      )}
       <CommonDialog
         open={open}
         onClose={() => setOpen(false)}
@@ -190,7 +188,7 @@ export const TaskQueueButton = () => {
         headerAction={
           <Tooltip title="Refresh">
             <span>
-              <IconButton size="small" onClick={loadQueue} disabled={loading}>
+              <IconButton size="small" onClick={refresh} disabled={loading}>
                 <HeroArrowPathIcon fontSize="small" />
               </IconButton>
             </span>
@@ -220,9 +218,9 @@ export const TaskQueueButton = () => {
                     item={item}
                     canCancel={
                       isSuperAdmin ||
-                      (!!currentUser?.id && item.creator?.id === currentUser.id)
+                      (!!currentUser?.id && item.createdBy === currentUser.id)
                     }
-                    onCancelled={loadQueue}
+                    onCancelled={() => removeTask(item.id)}
                   />
                 </div>
               ))}

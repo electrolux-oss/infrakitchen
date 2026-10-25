@@ -15,6 +15,7 @@ def mock_crud():
     crud = Mock(spec=TaskQueueCRUD)
     for name in (
         "notify",
+        "notify_changed",
         "claim",
         "claim_expired",
         "extend_lease",
@@ -91,7 +92,7 @@ class TestLifecycle:
 
     async def test_complete(self, service, mock_crud):
         task_id, worker_id = uuid4(), uuid4()
-        mock_crud.finish.return_value = True
+        mock_crud.finish.return_value = make_db_item()
 
         assert await service.complete(task_id, worker_id) is True
 
@@ -100,20 +101,20 @@ class TestLifecycle:
 
     async def test_fail_records_error(self, service, mock_crud):
         task_id, worker_id = uuid4(), uuid4()
-        mock_crud.finish.return_value = True
+        mock_crud.finish.return_value = make_db_item()
 
         await service.fail(task_id, worker_id, "boom")
 
         mock_crud.finish.assert_awaited_once_with(task_id, worker_id, TaskQueueStatus.FAILED, error="boom")
 
     async def test_finish_reports_lost_ownership(self, service, mock_crud):
-        mock_crud.finish.return_value = False
+        mock_crud.finish.return_value = None
 
         assert await service.complete(uuid4(), uuid4()) is False
 
     async def test_requeue_notifies_workers(self, service, mock_crud):
         task_id, worker_id = uuid4(), uuid4()
-        mock_crud.requeue.return_value = True
+        mock_crud.requeue.return_value = make_db_item()
 
         assert await service.requeue(task_id, worker_id, 5.0) is True
 
@@ -122,7 +123,7 @@ class TestLifecycle:
         mock_crud.commit.assert_awaited_once()
 
     async def test_requeue_without_ownership_does_not_notify(self, service, mock_crud):
-        mock_crud.requeue.return_value = False
+        mock_crud.requeue.return_value = None
 
         assert await service.requeue(uuid4(), uuid4(), 5.0) is False
         mock_crud.notify.assert_not_awaited()
@@ -153,6 +154,50 @@ class TestCancelQueued:
         mock_crud.cancel_queued.return_value = None
 
         assert await service.cancel_queued(uuid4(), reason="Cancelled by admin") is None
+
+
+class TestQueueChangedSignal:
+    """Changes to the active queue are announced on the event stream, so the UI count stays live."""
+
+    async def test_claim_signals(self, service, mock_crud):
+        mock_crud.claim.return_value = make_db_item()
+        await service.claim(uuid4(), lease_seconds=90)
+        mock_crud.notify_changed.assert_awaited_once()
+
+    async def test_empty_claim_does_not_signal(self, service, mock_crud):
+        mock_crud.claim.return_value = None
+        await service.claim(uuid4(), lease_seconds=90)
+        mock_crud.notify_changed.assert_not_awaited()
+
+    async def test_claim_expired_signals(self, service, mock_crud):
+        mock_crud.claim_expired.return_value = make_db_item()
+        await service.claim_expired(uuid4(), lease_seconds=90)
+        mock_crud.notify_changed.assert_awaited_once()
+
+    async def test_finish_signals(self, service, mock_crud):
+        mock_crud.finish.return_value = make_db_item()
+        await service.complete(uuid4(), uuid4())
+        mock_crud.notify_changed.assert_awaited_once()
+
+    async def test_lost_ownership_does_not_signal(self, service, mock_crud):
+        mock_crud.finish.return_value = None
+        await service.fail(uuid4(), uuid4(), "boom")
+        mock_crud.notify_changed.assert_not_awaited()
+
+    async def test_requeue_signals(self, service, mock_crud):
+        mock_crud.requeue.return_value = make_db_item()
+        await service.requeue(uuid4(), uuid4(), 5.0)
+        mock_crud.notify_changed.assert_awaited_once()
+
+    async def test_cancel_signals(self, service, mock_crud):
+        mock_crud.cancel_queued.return_value = make_db_item()
+        await service.cancel_queued(uuid4(), reason="Cancelled by admin")
+        mock_crud.notify_changed.assert_awaited_once()
+
+    async def test_heartbeat_does_not_signal(self, service, mock_crud):
+        mock_crud.extend_lease.return_value = True
+        await service.heartbeat(uuid4(), uuid4(), 90)
+        mock_crud.notify_changed.assert_not_awaited()
 
 
 class TestStats:

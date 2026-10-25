@@ -118,15 +118,8 @@ export const EntityProvider = ({
 
   const { event } = useEventProvider();
 
-  // Pages that show the entity's task queue refetch silently on status events:
-  // events carry the entity fields only, so the queue section would go stale.
-  const tracksTaskQueue = !!entityFields?.includes("taskQueueStatus");
-  const entityStatusRef = useRef<string | undefined>(undefined);
+  // The entity's task queue section follows queue events on its own (TaskQueueProvider)
   const [silentRefresh, setSilentRefresh] = useState<number>(0);
-
-  useEffect(() => {
-    entityStatusRef.current = entity?.status;
-  }, [entity]);
 
   useEffect(() => {
     if (event && event.id === entity_id) {
@@ -134,17 +127,15 @@ export const EntityProvider = ({
         setSilentRefresh((prev) => prev + 1);
         return;
       }
-      const statusChanged =
-        event.status !== undefined && event.status !== entityStatusRef.current;
       // Events too big for the live stream keep only small top-level fields,
       // the rest has to be refetched
       const truncated = !!event._metadata?.truncated;
       setEntity((prev) => ({ ...prev, ...camelizeKeys(event) }));
-      if (truncated || (tracksTaskQueue && statusChanged)) {
+      if (truncated) {
         setSilentRefresh((prev) => prev + 1);
       }
     }
-  }, [event, entity_id, tracksTaskQueue, refetchOnEvent]);
+  }, [event, entity_id, refetchOnEvent]);
 
   // Events can trigger refetches in quick succession; only the latest response is applied
   const latestFetchRef = useRef(0);

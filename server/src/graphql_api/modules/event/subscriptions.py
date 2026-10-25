@@ -8,11 +8,13 @@ from strawberry.types import Info
 
 import core.pubsub as pubsub
 from core.config import InfrakitchenConfig
+from core.task_queue.enqueue import QUEUE_ITEM_EVENT
 from core.personal_access_tokens.scopes import get_current_token_scopes, scope_allows
 from core.users.functions import user_has_access_to_api
 from core.users.model import UserDTO
 from graphql_api.helpers import mask_sensitive_values
 from graphql_api.modules.log.subscriptions import _authenticate_subscription
+from graphql_api.modules.task_queue.types import ENTITY_DATA_LOADER
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +31,16 @@ async def _can_read(user: UserDTO, entity_name: str) -> bool:
     if not scope_allows(get_current_token_scopes(), "read", entity_name):
         return False
     return await user_has_access_to_api(user, entity_name, "read")
+
+
+async def _can_read_queue_item(user: UserDTO, msg: dict[str, Any]) -> bool:
+    """Queue item events also go to readers of the entity the task works on, like its
+    entity page's ``taskQueueStatus`` does, so that page stays live without task access."""
+    item = msg.get(QUEUE_ITEM_EVENT)
+    if not isinstance(item, dict) or not item.get("entity"):
+        return False
+    entity = str(item["entity"])
+    return await _can_read(user, ENTITY_DATA_LOADER.get(entity, entity))
 
 
 @strawberry.type
@@ -61,8 +73,11 @@ class EventSubscription:
                 # The topic carries every entity change plus internal reload signals:
                 # forward only entities the subscriber may read, like the list queries do.
                 entity_name = msg.get("_entity_name")
-                if not entity_name or not await _can_read(user, str(entity_name)):
+                if not entity_name:
                     continue
+                if not await _can_read(user, str(entity_name)):
+                    if metadata.get("event") != QUEUE_ITEM_EVENT or not await _can_read_queue_item(user, msg):
+                        continue
 
                 yield EventStreamMessage(
                     event=str(metadata.get("event", "")),

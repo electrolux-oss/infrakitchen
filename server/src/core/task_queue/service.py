@@ -52,6 +52,8 @@ class TaskQueueService:
         for _ in range(2):
             try:
                 item = await self.crud.claim(worker_id, lease_seconds)
+                if item:
+                    await self.crud.notify_changed(item)
                 await self.crud.commit()
             except IntegrityError:
                 await self.crud.rollback()
@@ -61,6 +63,8 @@ class TaskQueueService:
 
     async def claim_expired(self, worker_id: UUID, lease_seconds: int) -> TaskQueueItemDTO | None:
         item = await self.crud.claim_expired(worker_id, lease_seconds)
+        if item:
+            await self.crud.notify_changed(item)
         await self.crud.commit()
         return TaskQueueItemDTO.model_validate(item) if item else None
 
@@ -78,20 +82,23 @@ class TaskQueueService:
         return await self._finish(task_id, worker_id, TaskQueueStatus.FAILED, error=error)
 
     async def _finish(self, task_id: UUID, worker_id: UUID, status: TaskQueueStatus, error: str | None = None) -> bool:
-        finished = await self.crud.finish(task_id, worker_id, status, error=error)
+        item = await self.crud.finish(task_id, worker_id, status, error=error)
+        if item:
+            await self.crud.notify_changed(item)
         await self.crud.commit()
-        if not finished:
+        if not item:
             logger.warning(f"Worker {worker_id} no longer owns task {task_id}; not marking it {status}")
-        return finished
+        return item is not None
 
     async def requeue(self, task_id: UUID, worker_id: UUID, delay_seconds: float) -> bool:
-        requeued = await self.crud.requeue(task_id, worker_id, delay_seconds)
-        if requeued:
+        item = await self.crud.requeue(task_id, worker_id, delay_seconds)
+        if item:
             await self.crud.notify()
+            await self.crud.notify_changed(item)
         await self.crud.commit()
-        if not requeued:
+        if not item:
             logger.warning(f"Worker {worker_id} no longer owns task {task_id}; not re-queueing it")
-        return requeued
+        return item is not None
 
     async def cancel_queued(self, task_id: UUID, reason: str) -> TaskQueueItemDTO | None:
         """Cancel a task that is still waiting for a worker.
@@ -100,6 +107,8 @@ class TaskQueueService:
         or it finished or was cancelled meanwhile). The caller commits.
         """
         item = await self.crud.cancel_queued(task_id, reason)
+        if item:
+            await self.crud.notify_changed(item)
         return TaskQueueItemDTO.model_validate(item) if item else None
 
     async def purge_finished(self, older_than_days: int) -> int:

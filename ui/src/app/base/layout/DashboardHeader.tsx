@@ -2,12 +2,15 @@ import * as React from "react";
 
 import { Link } from "react-router";
 
+import { TaskQueueButton } from "../../../tasks/components/TaskQueueDialog";
+
 import ThemeSwitcher from "./ThemeSwitcher";
 import UserSidebar from "./UserSidebar";
 
 import {
   Label,
   NotificationBell,
+  PermissionWrapper,
   ServerInfoDialog,
   useConfig,
   IconButton,
@@ -116,6 +119,13 @@ export default function DashboardHeader({
           <div className="ml-auto flex shrink-0 flex-row items-center gap-0.5">
             <div className="flex flex-row items-center -space-x-1">
               <ThemeSwitcher />
+              {/* The queue is task data, so it needs task read access */}
+              <PermissionWrapper
+                requiredPermission="api:task"
+                permissionAction="read"
+              >
+                <TaskQueueButton variant="icon" />
+              </PermissionWrapper>
               <NotificationBell />
             </div>
             <UserSidebar />
