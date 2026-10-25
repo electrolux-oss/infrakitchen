@@ -1,10 +1,26 @@
+import importlib
 import json
+import logging
+from types import ModuleType
 
 import pytest
 from fastapi.responses import HTMLResponse, Response
 from fastapi.testclient import TestClient
 
-import app as app_module
+
+def _import_app() -> ModuleType:
+    """app.py configures root logging on import (DEBUG in tests, with its own stderr
+    handler), which would flood every later test's output; keep pytest's setup."""
+    root = logging.getLogger()
+    level, handlers = root.level, root.handlers[:]
+    try:
+        return importlib.import_module("app")
+    finally:
+        root.setLevel(level)
+        root.handlers[:] = handlers
+
+
+app_module = _import_app()
 
 # Under /api/graphql so the secret-masking middleware applies
 MASK_TEST_PATH = "/api/graphql-middleware-test"
