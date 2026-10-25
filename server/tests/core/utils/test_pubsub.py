@@ -68,3 +68,46 @@ class TestHub:
             hub.dispatch(payload("events", {"ok": True}))
 
             assert await anext(events) == {"ok": True}
+
+
+class TestListenerReconnect:
+    async def test_events_subscribers_get_resync_after_reconnect(self, monkeypatch):
+        """Messages published while the listener was down are lost, so subscribers are told."""
+        from contextlib import asynccontextmanager
+        from types import SimpleNamespace
+
+        pings = 0
+
+        async def execute(_sql: str) -> None:
+            nonlocal pings
+            pings += 1
+            if pings == 1:
+                raise ConnectionError("connection lost")
+            await asyncio.Future()  # stays connected
+
+        async def add_listener(*_args: Any) -> None:
+            pass
+
+        driver = SimpleNamespace(add_listener=add_listener, remove_listener=add_listener, execute=execute)
+
+        @asynccontextmanager
+        async def connect():
+            async def get_raw_connection():
+                return SimpleNamespace(driver_connection=driver)
+
+            yield SimpleNamespace(get_raw_connection=get_raw_connection)
+
+        real_sleep = asyncio.sleep
+
+        async def no_sleep(_seconds: float) -> None:
+            # Skips the reconnect backoff
+            await real_sleep(0)
+
+        monkeypatch.setattr(pubsub, "engine", SimpleNamespace(connect=connect))
+        hub = PubSubHub(ping_seconds=0)
+        async with hub.subscribe(pubsub.EVENTS_TOPIC) as events:
+            monkeypatch.setattr(pubsub.asyncio, "sleep", no_sleep)
+            message = await asyncio.wait_for(anext(events), timeout=1)
+            await hub.close()
+
+        assert message == {"_metadata": {"event": pubsub.EVENTS_RESYNC}}

@@ -25,6 +25,7 @@ from core.tasks.model import TaskEntity
 from core.users.crud import UserCRUD
 from core.users.service import UserService
 from core.utils.event_sender import EventSender
+from core.pubsub import EVENTS_RESYNC
 from core.utils.event_stream_manager import consume_events
 
 
@@ -276,8 +277,9 @@ async def start_reload_consumer(scheduler: AsyncIOScheduler, event_sender: Event
     """Re-sync jobs whenever a ``reload_scheduler_jobs`` event is broadcast."""
 
     async def on_event(event: str) -> None:
-        if event == "reload_scheduler_jobs":
-            logger.info("Got reload_scheduler_jobs event, re-syncing jobs")
+        # After a listener reconnect a reload signal may have been lost
+        if event in ("reload_scheduler_jobs", EVENTS_RESYNC):
+            logger.info(f"Got {event} event, re-syncing jobs")
             await schedule_jobs(scheduler=scheduler, event_sender=event_sender)
 
     await consume_events(on_event, name="Scheduler reload consumer")

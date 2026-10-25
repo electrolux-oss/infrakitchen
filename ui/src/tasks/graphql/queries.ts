@@ -35,10 +35,4 @@ export const TASK_QUEUE_ITEMS_BY_ID_QUERY = `
   }
 `;
 
-export const ACTIVE_TASK_QUEUE_COUNT_QUERY = `
-  query ActiveTaskQueueCount($filter: JSON) {
-    taskQueueItemsCount(filter: $filter)
-  }
-`;
-
 export const ACTIVE_TASK_QUEUE_FILTER = { status__in: ["queued", "running"] };

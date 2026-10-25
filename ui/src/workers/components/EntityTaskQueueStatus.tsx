@@ -211,18 +211,21 @@ const toQueuedTask = (
  * picks it up; the server re-checks both.
  */
 export const EntityTaskQueueStatus = () => {
-  const { entity, entity_name, userEntityPermissions } = useEntityProvider();
+  const { entity, entity_name, userEntityPermissions, fetchedAt } =
+    useEntityProvider();
   const { currentUser, bootstrapPermissions } = useConfig();
   const { tasks: queueTasks, seedEntity, removeTask, workers } = useTaskQueue();
   const now = useNow();
   const entityId: string | undefined = entity?.id;
   const status = entity?.taskQueueStatus as GqlEntityQueueStatus | undefined;
 
-  // The entity query brings the queue state once; events keep it current after that
+  // Each entity query brings the queue state; events keep it current in between
   useEffect(() => {
     if (entityId && status !== undefined) {
-      seedEntity(entityId, status);
+      seedEntity(entityId, status, fetchedAt);
     }
+    // fetchedAt changes together with status
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityId, status, seedEntity]);
 
   const tasks = useMemo(

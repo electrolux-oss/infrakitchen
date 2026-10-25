@@ -35,6 +35,9 @@ MAX_PAYLOAD_BYTES = 7900
 
 # Entity changes and reload signals, broadcast to every process
 EVENTS_TOPIC = "events"
+# Given to this process's events subscribers after its listener reconnects: messages
+# published while it was down are lost, so they should reload what they keep
+EVENTS_RESYNC = "events_resync"
 # Wakes up notification dispatchers when new outbox rows are committed
 NOTIFICATION_OUTBOX_TOPIC = "notification_outbox"
 
@@ -140,7 +143,9 @@ class PubSubHub:
         except (ValueError, KeyError, TypeError):
             logger.warning(f"Ignoring malformed pubsub payload: {payload[:200]}")
             return
+        self._deliver(topic, data)
 
+    def _deliver(self, topic: str, data: dict[str, Any]) -> None:
         for queue in self._subscribers.get(topic, ()):
             if queue.full():
                 _ = queue.get_nowait()
@@ -156,6 +161,7 @@ class PubSubHub:
             self.dispatch(payload)
 
         backoff = 1.0
+        listened_before = False
         while True:
             try:
                 async with engine.connect() as connection:
@@ -166,6 +172,9 @@ class PubSubHub:
                     await driver.add_listener(self.channel, on_notify)
                     logger.info(f"Listening for pubsub messages on {self.channel}")
                     backoff = 1.0
+                    if listened_before:
+                        self._deliver(EVENTS_TOPIC, {"_metadata": {"event": EVENTS_RESYNC}})
+                    listened_before = True
                     try:
                         # A dead connection delivers nothing without raising, so check it periodically
                         while True:

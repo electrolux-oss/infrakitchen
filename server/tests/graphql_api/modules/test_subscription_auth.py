@@ -162,6 +162,28 @@ async def test_event_stream_sends_queue_items_to_readers_of_their_entity(monkeyp
 
 
 @pytest.mark.asyncio
+async def test_event_stream_forwards_resync_to_everyone(monkeypatch, mock_user_dto):
+    """After the pubsub listener reconnects, every subscriber is told to reload its live data."""
+    from core import pubsub
+    from graphql_api.modules.event import subscriptions as event_module
+
+    hub = _FakeHub([{"_metadata": {"event": pubsub.EVENTS_RESYNC}}])
+    monkeypatch.setattr(event_module.pubsub, "hub", hub)
+    monkeypatch.setattr(event_module, "_authenticate_subscription", AsyncMock(return_value=mock_user_dto))
+    monkeypatch.setattr(event_module, "user_has_access_to_api", AsyncMock(return_value=False))
+
+    result = await schema.subscribe(
+        "subscription { eventStream { event entityName payload } }",
+        context_value={"user": None},
+    )
+    messages = await _collect(result)
+
+    assert [m.data["eventStream"] for m in messages] == [
+        {"event": pubsub.EVENTS_RESYNC, "entityName": None, "payload": {}}
+    ]
+
+
+@pytest.mark.asyncio
 async def test_log_stream_requires_log_read_permission(monkeypatch, mock_user_dto):
     from graphql_api.modules.log import subscriptions as log_module
 

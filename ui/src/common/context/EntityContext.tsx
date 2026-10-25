@@ -70,6 +70,8 @@ interface EntityContextType {
   entity_name: string;
   entity_id: string;
   refreshVersion: number;
+  /** When the query that loaded `entity` was sent (ms); events after it are newer. */
+  fetchedAt: number;
   loading: boolean;
   error?: string | null;
   notFound: boolean;
@@ -116,10 +118,19 @@ export const EntityProvider = ({
   const [notFound, setNotFound] = useState<boolean>(false);
   const { ikApi } = useConfig();
 
-  const { event } = useEventProvider();
+  const [fetchedAt, setFetchedAt] = useState<number>(0);
+  const { event, resyncVersion } = useEventProvider();
 
   // The entity's task queue section follows queue events on its own (TaskQueueProvider)
   const [silentRefresh, setSilentRefresh] = useState<number>(0);
+
+  // Events may have been lost, so the merged entity may be behind
+  const handledResyncRef = useRef(resyncVersion);
+  useEffect(() => {
+    if (resyncVersion === handledResyncRef.current) return;
+    handledResyncRef.current = resyncVersion;
+    setSilentRefresh((prev) => prev + 1);
+  }, [resyncVersion]);
 
   useEffect(() => {
     if (event && event.id === entity_id) {
@@ -146,6 +157,7 @@ export const EntityProvider = ({
       if (!silent) setLoading(true);
       const fetchId = ++latestFetchRef.current;
       const isStale = () => fetchId !== latestFetchRef.current;
+      const startedAt = Date.now();
       try {
         await ikApi
           .graphqlRequest(
@@ -180,6 +192,7 @@ export const EntityProvider = ({
           .then((response: any) => {
             if (isStale()) return;
             setEntity(response);
+            setFetchedAt(startedAt);
             setNotFound(false);
             setError(null);
           });
@@ -268,6 +281,7 @@ export const EntityProvider = ({
     entity_name,
     entity_id,
     refreshVersion: refresh,
+    fetchedAt,
     loading,
     error,
     notFound,

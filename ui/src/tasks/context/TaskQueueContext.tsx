@@ -32,6 +32,8 @@ const SNAPSHOT_LIMIT = 500;
 const POLL_INTERVAL_MS = 30_000;
 // Events often come in bursts (claim, finish, next claim)
 const DETAILS_DEBOUNCE_MS = 300;
+// A backlog too big for the store reloads at most this often while events arrive
+const BACKLOG_REFRESH_MS = 5_000;
 // Finished ids are remembered so a stale query result can't bring them back
 const FINISHED_MEMORY = 500;
 
@@ -62,7 +64,7 @@ type Action =
       type: "seed";
       entityId: string;
       tasks: QueueTask[];
-      authoritative: boolean;
+      startedAt: number;
     }
   | { type: "remove"; id: string };
 
@@ -116,10 +118,21 @@ const reducer = (state: State, action: Action): State => {
     }
     case "snapshot": {
       const { startedAt, complete } = action;
+      // The query holds every active task created before its last one (oldest first);
+      // tasks older than that which it lacks are gone. Tasks sharing the last one's
+      // created_at may sit beyond the page, so they stay.
+      const last = action.tasks[action.tasks.length - 1];
+      const coveredUntil = complete
+        ? Infinity
+        : last
+          ? new Date(last.createdAt).getTime()
+          : -Infinity;
       const tasks: Record<string, Entry> = {};
-      // Tasks changed by an event after the query started are newer than the query
       for (const [id, entry] of Object.entries(state.tasks)) {
-        if ((entry.eventAt ?? 0) > startedAt || !complete) {
+        // Tasks changed by an event after the query started are newer than the query
+        const changedSince = (entry.eventAt ?? 0) > startedAt;
+        const covered = new Date(entry.createdAt).getTime() < coveredUntil;
+        if (changedSince || !covered) {
           tasks[id] = entry;
         }
       }
@@ -144,21 +157,22 @@ const reducer = (state: State, action: Action): State => {
       return { ...state, tasks };
     }
     case "seed": {
-      const { entityId, authoritative } = action;
+      const { entityId, startedAt } = action;
       const tasks = { ...state.tasks };
-      if (authoritative) {
-        for (const [id, entry] of Object.entries(tasks)) {
-          if (entry.entityId === entityId) delete tasks[id];
+      // The query has all of the entity's active tasks: one it lacks is gone,
+      // unless an event changed it after the query started (e.g. it was just queued)
+      for (const [id, entry] of Object.entries(tasks)) {
+        if (entry.entityId === entityId && (entry.eventAt ?? 0) <= startedAt) {
+          delete tasks[id];
         }
       }
       for (const task of action.tasks) {
         if (state.finished.includes(task.id)) continue;
         const current = tasks[task.id];
-        // With live events the store is already newer; the query only adds details
-        tasks[task.id] =
-          current?.eventAt !== undefined
-            ? { ...keepDetails(current, task), eventAt: current.eventAt }
-            : keepDetails(task, current);
+        // A task still here was changed by a newer event; the query only adds details
+        tasks[task.id] = current
+          ? keepDetails(current, task)
+          : keepDetails(task, state.tasks[task.id]);
       }
       return { ...state, tasks };
     }
@@ -209,8 +223,12 @@ interface TaskQueueContextType {
   loading: boolean;
   /** Reload the queue from the server (task read access only). */
   refresh: () => Promise<void>;
-  /** Add an entity page's `taskQueueStatus` to the store. */
-  seedEntity: (entityId: string, status: GqlEntityQueueStatus | null) => void;
+  /** Replace the entity's tasks with its page's `taskQueueStatus`, queried at `startedAt` (ms). */
+  seedEntity: (
+    entityId: string,
+    status: GqlEntityQueueStatus | null,
+    startedAt: number,
+  ) => void;
   /** Drop a task right away, e.g. after the user cancelled it. */
   removeTask: (id: string) => void;
   /** Worker availability from the last entity page query. */
@@ -229,7 +247,7 @@ const TaskQueueContext = createContext<TaskQueueContextType | undefined>(
 export const TaskQueueProvider = ({ children }: { children: ReactNode }) => {
   const { ikApi, webSocketEnabled, globalConfig } = useConfig();
   const { permissions } = usePermissionProvider();
-  const { event } = useEventProvider();
+  const { event, resyncVersion } = useEventProvider();
   const liveUpdates = !!webSocketEnabled && !!globalConfig?.websocket;
   const canReadTasks =
     permissions["*"] === "admin" || !!permissions["api:task"];
@@ -242,6 +260,9 @@ export const TaskQueueProvider = ({ children }: { children: ReactNode }) => {
   const [serverCount, setServerCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [workers, setWorkers] = useState<WorkerAvailability | null>(null);
+  // Read by the event handler without re-running it on every state change
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   const refresh = useCallback(async () => {
     if (!canReadTasks) return;
@@ -282,6 +303,15 @@ export const TaskQueueProvider = ({ children }: { children: ReactNode }) => {
     return () => clearInterval(timer);
   }, [liveUpdates, canReadTasks, refresh]);
 
+  // Events may have been lost (reconnect): reload instead of trusting the store.
+  // Entity pages reload themselves and re-seed their tasks.
+  const handledResyncRef = useRef(resyncVersion);
+  useEffect(() => {
+    if (resyncVersion === handledResyncRef.current) return;
+    handledResyncRef.current = resyncVersion;
+    refresh();
+  }, [resyncVersion, refresh]);
+
   // Tasks first seen in an event lack the entity, creator and worker names
   const pendingDetails = useRef(new Set<string>());
   const detailsTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -305,31 +335,43 @@ export const TaskQueueProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => () => clearTimeout(detailsTimer.current), []);
 
   // Count of an incomplete store comes from the server
-  const countTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const completeRef = useRef(state.complete);
-  completeRef.current = state.complete;
-  useEffect(() => () => clearTimeout(countTimer.current), []);
+  const backlogTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(backlogTimer.current), []);
 
   useEffect(() => {
     const raw = event?._entity_name === "task" ? event.task_queue_item : null;
     if (!raw?.id) return;
     const task = camelizeKeys(raw) as Partial<QueueTask> & { id: string };
+    const prev = stateRef.current.tasks[task.id];
     dispatch({ type: "event", task, at: Date.now() });
 
     if (!canReadTasks) return;
-    if (ACTIVE_STATUSES.includes(task.status as string)) {
+    // Most events are for tasks the store already has details for
+    const needsDetails =
+      !prev ||
+      prev.entityData === undefined ||
+      prev.creatorName === undefined ||
+      (!!task.workerId && task.workerId !== prev.workerId);
+    if (ACTIVE_STATUSES.includes(task.status as string) && needsDetails) {
       pendingDetails.current.add(task.id);
       clearTimeout(detailsTimer.current);
       detailsTimer.current = setTimeout(fetchDetails, DETAILS_DEBOUNCE_MS);
     }
-    if (!completeRef.current) {
-      clearTimeout(countTimer.current);
-      countTimer.current = setTimeout(refresh, DETAILS_DEBOUNCE_MS);
+    // Throttled, not debounced: a busy queue sends events without pause
+    if (!stateRef.current.complete && !backlogTimer.current) {
+      backlogTimer.current = setTimeout(() => {
+        backlogTimer.current = undefined;
+        refresh();
+      }, BACKLOG_REFRESH_MS);
     }
   }, [event, canReadTasks, fetchDetails, refresh]);
 
   const seedEntity = useCallback(
-    (entityId: string, status: GqlEntityQueueStatus | null) => {
+    (
+      entityId: string,
+      status: GqlEntityQueueStatus | null,
+      startedAt: number,
+    ) => {
       if (status) {
         setWorkers({
           workersFree: status.workersFree,
@@ -339,7 +381,7 @@ export const TaskQueueProvider = ({ children }: { children: ReactNode }) => {
       dispatch({
         type: "seed",
         entityId,
-        authoritative: !liveUpdates,
+        startedAt,
         tasks: (status?.tasks ?? []).map((task) => ({
           id: task.id,
           entity: task.entity,
@@ -359,7 +401,7 @@ export const TaskQueueProvider = ({ children }: { children: ReactNode }) => {
         })),
       });
     },
-    [liveUpdates],
+    [],
   );
 
   const removeTask = useCallback(

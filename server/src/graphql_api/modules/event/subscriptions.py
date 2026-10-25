@@ -70,6 +70,11 @@ class EventSubscription:
                 msg: dict[str, Any] = dict(message)
                 metadata = msg.pop("_metadata", {})
 
+                # Events may have been lost: the browser reloads the data it keeps live
+                if metadata.get("event") == pubsub.EVENTS_RESYNC:
+                    yield EventStreamMessage(event=pubsub.EVENTS_RESYNC, payload=JSON({}))
+                    continue
+
                 # The topic carries every entity change plus internal reload signals:
                 # forward only entities the subscriber may read, like the list queries do.
                 entity_name = msg.get("_entity_name")
