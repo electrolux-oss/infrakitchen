@@ -7,6 +7,7 @@ from starlette.requests import HTTPConnection
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.dependencies import get_db_session
+from core.request_context import set_current_user_agent
 from core.sso.dependencies import get_sso_service
 from core.sso.functions import get_user_from_token
 from core.sso.service import SSOService
@@ -29,6 +30,7 @@ async def get_context(
     auth_header = connection.headers.get("authorization", "")
     if auth_header.lower().startswith("bearer "):
         token_str = auth_header[7:]
+        set_current_user_agent(connection.headers.get("user-agent"))
         user = await get_user_from_token(service, token_str)
         if user is not None and isinstance(connection, Request):
             connection.state.user = user

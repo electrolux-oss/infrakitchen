@@ -88,6 +88,13 @@ def mock_source_code_version_crud():
     crud.get_output_by_scv_id = AsyncMock()
     crud.create_output_config = AsyncMock()
     crud.get_dependencies = AsyncMock()
+    crud.delete_config = AsyncMock()
+    crud.get_output_configs_by_scv_id = AsyncMock(return_value=[])
+    crud.update_output_config = AsyncMock()
+    crud.delete_output_config = AsyncMock()
+    crud.get_configs_by_template_ids = AsyncMock(return_value={})
+    crud.get_reference_output_configs_by_template_id = AsyncMock(return_value=[])
+    crud.delete_template_references = AsyncMock()
     return crud
 
 

@@ -83,9 +83,7 @@ plugins = ["pydantic.mypy"]
 
 [project]
 name = "infrakitchen"
-version = "0.0.1"
-description = "Infrastructure provisioning service"
-authors = [{ name = "SRE team", email = "sre@electrolux.com" }]
+dynamic = ["version"]
 dependencies = [
   "python-dotenv>=1.2.2",
   "fastapi>=0.139.0",
@@ -122,13 +120,16 @@ dependencies = [
   "strawberry-sqlalchemy-mapper>=0.8.0",
   "jinja2>=3.1.6",
 ]
-requires-python = "==3.14.*"
+requires-python = ">=3.14"
 readme = "README.md"
 license = { text = "Apache 2.0" }
 
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = { file = "VERSION" }
 
 [dependency-groups]
 dev = [

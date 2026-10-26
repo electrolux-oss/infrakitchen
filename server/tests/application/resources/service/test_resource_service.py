@@ -164,7 +164,8 @@ class TestCreate:
         "expected_state,expected_status, disabled_approval_flow_feature",
         [
             (ModelState.PROVISION, ModelStatus.APPROVAL_PENDING, False),
-            (ModelState.PROVISION, ModelStatus.READY, True),
+            # Nothing to execute for abstract resources, without approval they are provisioned right away
+            (ModelState.PROVISIONED, ModelStatus.DONE, True),
         ],
     )
     async def test_create_abstract_success(
@@ -630,6 +631,26 @@ class TestCreate:
 
         with pytest.raises(ValueError, match="Missing required dependency config variable\\(s\\): region"):
             await mock_resource_service.create(resource_create, requester)
+
+    @pytest.mark.asyncio
+    async def test_create_abstract_missing_required_configuration_variables(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_user,
+        mocked_template,
+        mock_template_crud,
+        mocked_resource,
+    ):
+        mocked_template.configuration["required_configuration_variables"] = ["service_name"]
+        mocked_template.abstract = True
+        resource_create = ResourceCreate(name=mocked_resource.name, template_id=mocked_template.id)
+        mock_template_crud.get_by_id.return_value = mocked_template
+
+        with pytest.raises(ValueError, match="Missing required dependency config variable\\(s\\): service_name"):
+            await mock_resource_service.create(resource_create, mocked_user)
+
+        mock_resource_crud.create.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_create_all_required_configuration_variables_present(
@@ -1232,6 +1253,7 @@ class TestGetTree:
     async def test_get_tree_success(self, mock_resource_service, mock_resource_crud):
         raw_node = {
             "id": f"{uuid4()}",
+            "template_id": uuid4(),
             "name": "Test Resource",
             "state": "state",
             "status": "status",
@@ -1246,6 +1268,7 @@ class TestGetTree:
 
         mock_resource_crud.get_tree_to_parent.assert_awaited_once_with(RESOURCE_ID)
         assert result.name == "Test Resource"
+        assert result.template_id == raw_node["template_id"]
 
     @pytest.mark.asyncio
     async def test_get_tree_does_not_exist(self, mock_resource_service, mock_resource_crud):
@@ -1253,6 +1276,54 @@ class TestGetTree:
 
         with pytest.raises(EntityNotFound, match="Resource not found"):
             await mock_resource_service.get_tree(resource_id=RESOURCE_ID, direction="parents")
+
+    @pytest.mark.asyncio
+    async def test_get_tree_shared_dependency(self, mock_resource_service, mock_resource_crud):
+        # Diamond A -> B -> D, A -> C -> D, D -> E. The recursive query returns one row per path,
+        # so D and E show up more than once.
+        a, b, c, d, e = (uuid4() for _ in range(5))
+        names = {a: "A", b: "B", c: "C", d: "D", e: "E"}
+        template_ids = {node_id: uuid4() for node_id in names}
+
+        def row(node_id, link_id):
+            return {
+                "id": node_id,
+                "template_id": template_ids[node_id],
+                "child_id": link_id,
+                "name": names[node_id],
+                "state": "state",
+                "status": "status",
+                "template_name": "template1",
+            }
+
+        mock_resource_crud.get_tree_to_children.return_value = [
+            row(a, None),
+            row(b, a),
+            row(c, a),
+            row(d, b),
+            row(d, c),
+            row(e, d),
+            row(e, d),
+        ]
+
+        result = await mock_resource_service.get_tree(resource_id=RESOURCE_ID, direction="children")
+
+        assert result.name == "A"
+        assert result.template_id == template_ids[a]
+        assert [child.name for child in result.children] == ["B", "C"]
+        for branch in result.children:
+            assert [child.name for child in branch.children] == ["D"]
+            assert [child.name for child in branch.children[0].children] == ["E"]
+
+        node_ids = []
+
+        def collect(node):
+            node_ids.append(node.node_id)
+            for child in node.children:
+                collect(child)
+
+        collect(result)
+        assert len(node_ids) == len(set(node_ids)) == 7
 
 
 class TestParentConfigs:
@@ -1721,6 +1792,7 @@ class TestSyncWorkspace:
         mock_resource_service,
         mock_resource_crud,
         mock_event_sender,
+        mock_audit_log_handler,
         mocked_resource,
         mock_user_dto,
     ):
@@ -1733,7 +1805,16 @@ class TestSyncWorkspace:
         )
 
         mock_resource_crud.get_by_id.assert_awaited_once_with(str(mocked_resource.id))
+        mock_audit_log_handler.create_log.assert_awaited_once_with(
+            mocked_resource.id,
+            mock_user_dto.id,
+            ModelActions.SYNC,
+            revision_number=mocked_resource.revision_number,
+        )
         mock_event_sender.send_task.assert_awaited_once_with(
-            mocked_resource.id, requester=mock_user_dto, action=ModelActions.SYNC
+            mocked_resource.id,
+            requester=mock_user_dto,
+            action=ModelActions.SYNC,
+            audit_log_id=mock_audit_log_handler.audit_log_id,
         )
         assert result == mocked_resource

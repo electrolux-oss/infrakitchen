@@ -1,13 +1,11 @@
 import uuid
 from typing import Any
 
-import core.pubsub as pubsub
+from core.constants.model import EventType
+from core.notifications.in_app import deliver_in_app_notification
+from core.notifications.text import action_label, entity_reference, notification_message, notification_title
 
 from .model import SupersededTask
-
-
-def _label(entity: str) -> str:
-    return entity.replace("_", " ").capitalize()
 
 
 async def _send_in_app(user_id: uuid.UUID, title: str, message: str, task: SupersededTask) -> None:
@@ -17,25 +15,27 @@ async def _send_in_app(user_id: uuid.UUID, title: str, message: str, task: Super
         "msg": message,
         "title": title,
         "status": "warning",
+        "event_type": str(EventType.EXECUTE),
+        "entity_type": task.entity,
         "entity_id": str(task.entity_id),
-        "entity_name": task.entity,
+        "entity_name": None,
         "provider": "in_app",
         "user_id": str(user_id),
     }
-    await pubsub.publish(pubsub.in_app_notifications_topic(user_id), body)
+    await deliver_in_app_notification(body)
 
 
 async def notify_superseded(task: SupersededTask) -> None:
     """Tell the new requester (and the previous one, if different) that a queued action was replaced."""
-    label = _label(task.entity)
-    title = f"{label} action already queued"
+    entity = entity_reference(task.entity, entity_id=task.entity_id)
+    title = notification_title(task.entity, "action replaced")
+    queued, newer = action_label(task.action), action_label(task.replaced_by_action)
 
     if task.replaced_by_user is not None:
         await _send_in_app(
             task.replaced_by_user,
             title,
-            f"{label} {task.entity_id} already had '{task.action}' waiting for a worker. "
-            + f"It was cancelled and replaced by your '{task.replaced_by_action}'.",
+            notification_message(f"The queued {queued} for {entity} was cancelled and replaced by your {newer}"),
             task,
         )
 
@@ -43,7 +43,6 @@ async def notify_superseded(task: SupersededTask) -> None:
         await _send_in_app(
             task.created_by,
             title,
-            f"Your queued '{task.action}' for {label.lower()} {task.entity_id} was cancelled "
-            + f"and replaced by a newer '{task.replaced_by_action}' request.",
+            notification_message(f"Your queued {queued} for {entity} was cancelled and replaced by a newer {newer}"),
             task,
         )

@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import String, case, cast, func, select, text
+from sqlalchemy import String, case, cast, exists, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -18,7 +18,7 @@ from core.database import (
 )
 from core.utils.model_tools import is_valid_uuid
 
-from .model import Resource
+from .model import Resource, resource_links
 from .query_options import build_resource_query_options
 
 
@@ -156,6 +156,7 @@ class ResourceCRUD:
             WITH RECURSIVE tree_view AS (
                 SELECT
                     c.id,
+                    c.template_id,
                     NULL::uuid AS parent_id,
                     c.name,
                     c.status,
@@ -171,6 +172,7 @@ class ResourceCRUD:
 
                 SELECT
                     child.id,
+                    child.template_id,
                     cl.parent_id,
                     child.name,
                     child.status,
@@ -187,6 +189,7 @@ class ResourceCRUD:
 
             SELECT
                 id,
+                template_id,
                 parent_id,
                 name,
                 status,
@@ -201,7 +204,11 @@ class ResourceCRUD:
         rows = result.mappings().all()
         return [dict(row) for row in rows]
 
-    async def get_tree_to_children(self, resource_id: str | UUID) -> list[dict[str, Any]]:
+    async def get_tree_to_children(self, resource_id: str | UUID, limit: int | None = None) -> list[dict[str, Any]]:
+        """
+        Walk the tree to the resources that depend on this one. One row per path, so a
+        shared dependency repeats; ``limit`` bounds the rows read.
+        """
         recursive_query = text("""
             WITH RECURSIVE tree_view AS (
                 SELECT
@@ -211,6 +218,7 @@ class ResourceCRUD:
                     c.name,
                     c.status,
                     c.state,
+                    c.abstract,
                     temp.name AS template_name,
                     0 AS level,
                     ARRAY[c.id] AS path -- track visited nodes to avoid cycles
@@ -227,6 +235,7 @@ class ResourceCRUD:
                     parent.name,
                     parent.status,
                     parent.state,
+                    parent.abstract,
                     temp.name AS template_name,
                     tv.level + 1 AS level,
                     path || parent.id
@@ -244,15 +253,22 @@ class ResourceCRUD:
                 name,
                 status,
                 state,
+                abstract,
                 template_name,
                 level
             FROM tree_view
-            ORDER BY level, id;
+            ORDER BY level, id
+            LIMIT :row_limit;
         """)
 
-        result = await self.session.execute(recursive_query, {"root_id": str(resource_id)})
+        result = await self.session.execute(recursive_query, {"root_id": str(resource_id), "row_limit": limit})
         rows = result.mappings().all()
         return [dict(row) for row in rows]
+
+    async def has_children(self, resource_id: str | UUID) -> bool:
+        # resource_links columns are named the other way round: child_id holds the parent
+        query = select(exists().where(resource_links.c.child_id == resource_id))
+        return bool(await self.session.scalar(query))
 
     async def get_parent_ids(self, resource_id: str | UUID) -> list[UUID]:
         """Get all parent ids of a resource by id. Direction is from parent to child (root)."""

@@ -1,0 +1,111 @@
+import {
+  NOTIFICATION_PREFERENCE_FIELDS,
+  NOTIFICATION_SUBSCRIPTION_FIELDS,
+  USER_NOTIFICATION_FIELDS,
+} from "./fragments";
+
+export const RECENT_USER_NOTIFICATIONS_QUERY = `
+  query RecentUserNotifications($range: [Int!]) {
+    userNotifications(sort: ["created_at", "DESC"], range: $range) {
+      ${USER_NOTIFICATION_FIELDS}
+    }
+    unreadUserNotificationsCount
+  }
+`;
+
+export const MARK_USER_NOTIFICATIONS_READ_MUTATION = `
+  mutation MarkUserNotificationsRead($ids: [UUID!]!) {
+    markUserNotificationsRead(ids: $ids)
+  }
+`;
+
+export const MARK_ALL_USER_NOTIFICATIONS_READ_MUTATION = `
+  mutation MarkAllUserNotificationsRead {
+    markAllUserNotificationsRead
+  }
+`;
+
+export const MARK_USER_NOTIFICATIONS_UNREAD_MUTATION = `
+  mutation MarkUserNotificationsUnread($ids: [UUID!]!) {
+    markUserNotificationsUnread(ids: $ids)
+  }
+`;
+
+export const RESOURCE_NOTIFICATION_STATE_QUERY = `
+  query ResourceNotificationState($subscriptionFilter: JSON, $preferenceFilter: JSON) {
+    subscriptions(filter: $subscriptionFilter) {
+      ${NOTIFICATION_SUBSCRIPTION_FIELDS}
+    }
+    notificationPreferences(filter: $preferenceFilter) {
+      ${NOTIFICATION_PREFERENCE_FIELDS}
+    }
+  }
+`;
+
+export const CREATE_SUBSCRIPTION_MUTATION = `
+  mutation CreateSubscription($input: SubscriptionCreateInput!) {
+    createSubscription(input: $input) {
+      id
+    }
+  }
+`;
+
+export const DELETE_SUBSCRIPTION_MUTATION = `
+  mutation DeleteSubscription($id: UUID!) {
+    deleteSubscription(id: $id)
+  }
+`;
+
+export const CREATE_NOTIFICATION_PREFERENCE_MUTATION = `
+  mutation CreateNotificationPreference($input: NotificationPreferenceCreateInput!) {
+    createNotificationPreference(input: $input) {
+      id
+      eventType
+      channels
+    }
+  }
+`;
+
+export const DELETE_NOTIFICATION_PREFERENCE_MUTATION = `
+  mutation DeleteNotificationPreference($id: UUID!) {
+    deleteNotificationPreference(id: $id)
+  }
+`;
+
+export const UPSERT_NOTIFICATION_PREFERENCE_MUTATION = `
+  mutation UpsertNotificationPreference($input: NotificationPreferenceCreateInput!) {
+    upsertNotificationPreference(input: $input) {
+      id
+      eventType
+      channels
+    }
+  }
+`;
+
+export const CREATE_RESOURCE_SUBSCRIPTION_MUTATION = `
+  mutation CreateResourceSubscription($input: ResourceSubscriptionCreateInput!) {
+    createResourceSubscription(input: $input) {
+      id
+    }
+  }
+`;
+
+export const DELETE_RESOURCE_SUBSCRIPTION_MUTATION = `
+  mutation DeleteResourceSubscription($input: ResourceSubscriptionDeleteInput!) {
+    deleteResourceSubscription(input: $input)
+  }
+`;
+
+export const CREATE_PROJECT_SUBSCRIPTION_MUTATION = `
+  mutation CreateProjectSubscription($input: ProjectSubscriptionCreateInput!) {
+    createProjectSubscription(input: $input) {
+      id
+    }
+  }
+`;
+
+export const DELETE_PROJECT_SUBSCRIPTION_MUTATION = `
+  mutation DeleteProjectSubscription($input: ProjectSubscriptionDeleteInput!) {
+    deleteProjectSubscription(input: $input)
+  }
+`;

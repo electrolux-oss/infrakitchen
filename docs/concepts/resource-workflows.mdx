@@ -389,6 +389,10 @@ The Destroy step removes infrastructure from the cloud provider while keeping th
 - No child resources in `provisioned` state
 - User must have admin permissions
 
+:::tip[Destroying a whole tree]
+To destroy a resource together with everything below it, use [Cascade Destroy](#cascade-destroy) instead of destroying each child by hand.
+:::
+
 ### Dependency Checks
 
 Before destroying, InfraKitchen verifies:
@@ -448,6 +452,64 @@ Common destroy errors:
 - **Resource in use**: Cloud provider preventing deletion (e.g., VPC with ENIs)
 - **Permission denied**: Insufficient IAM/RBAC permissions
 - **Resource not found**: Already deleted outside of InfraKitchen
+
+## Cascade Actions
+
+Cascade actions run on a resource **and every resource that depends on it**. Instead of acting directly, each one builds a [workflow](/concepts/workflow) with one step per resource, ordered by the resource's depth in the tree. Resources reachable through more than one parent are included once, at their deepest level.
+
+| Action | Where | Order | On failure |
+|--------|-------|-------|------------|
+| Cascade Destroy | **Settings** tab → **Danger Zone** | Children first (deepest level first) | Workflow stops |
+| Cascade Plan | **More** menu on the resource page | Parents first | Continues with the next levels; ends in `error` |
+| Cascade Apply | **More** menu on the resource page | Parents first | Workflow stops at the failed level |
+
+Steps at the same level run in parallel; the next level starts when all of them have finished.
+
+The **More** menu also has **Create Blueprint**, which uses the same tree selection to open a new [blueprint](/concepts/blueprint#creating-a-blueprint-from-existing-resources) with the templates of the selected resources. It does not run anything.
+
+### Running a Cascade Workflow
+
+Creating a cascade workflow **does not start it**. After you confirm the action, InfraKitchen opens the new workflow so you can review its steps; click <kbd>Apply</kbd> on the workflow to run it.
+
+- A workflow can be run again with <kbd>Apply</kbd>. One that ended in `error` resumes: only the failed and not-yet-run steps run. A plan or apply that ended in `done` runs every step again.
+- Every step records the action in the resource's own audit log, linked to the workflow.
+
+### Cascade Destroy
+
+Destroys the resource and all of its descendants, leaves first, so no resource is destroyed while a child still exists.
+
+- Confirm by typing the resource's name.
+- Requires **admin** permission on every resource in the tree.
+- Resources that are waiting for destroy approval are approved by the workflow.
+
+### Cascade Plan and Cascade Apply
+
+Cascade Plan runs a [dry run](#dry-run-plan) on each resource of the tree; Cascade Apply provisions or updates each one, parents before children.
+
+The confirmation dialog lists the whole tree. Each resource shows whether it will run or why it is skipped, and you can deselect resources you want to leave out. The dialog can be resized to see large trees.
+
+A resource is skipped when it is:
+
+- **Abstract** — nothing to run
+- **Destroyed**, or has a **destroy pending**
+- In a status that does not allow the action
+- On apply only: **waiting for approval** or **rejected** — cascade apply never approves anything
+- Deselected in the dialog
+
+On apply, when a skipped resource is not provisioned, its children are skipped too (**parent not provisioned**), because they cannot be applied on top of it.
+
+The action is refused when:
+
+- A resource in the tree is `queued` or `in_progress` — wait for it to finish
+- You do not have write permission on every resource in the tree
+- The tree is too large (more than 5000 parent/child paths)
+- Nothing in the tree can run
+
+:::caution[Plan shows each resource against its parents' current state]
+A child's plan reads its parents' **currently applied** outputs. If Cascade Plan shows changes for a parent that would change its outputs, the child's plan does not reflect them — run Cascade Apply and plan again to see the final result.
+:::
+
+To apply a resource that is waiting for approval, approve it first, then run Cascade Apply (or run the workflow again).
 
 ## Delete
 

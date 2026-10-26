@@ -28,7 +28,7 @@ from core.errors import EntityExistsError
 from core.notifications.service import SubscriptionService
 from core.permissions.schema import ActionLiteral, EntityPolicyCreate
 from core.permissions.service import PermissionService
-from core.users.functions import user_entity_permissions
+from core.users.functions import get_entity_admin_user_ids, user_entity_permissions
 from core.users.model import UserDTO
 from application.types import STATE_BACKEND_INTEGRATION_PROVIDERS
 from application.validation_rules.model import ValidationRuleTargetType
@@ -55,6 +55,7 @@ async def get_resource_actions(
     state: ModelState,
     temp_state_exists: bool,
     project: Project | None = None,
+    has_children: bool = False,
 ) -> list[str]:
     """
     Get all actions available for the resource.
@@ -145,7 +146,28 @@ async def get_resource_actions(
             actions.append(ModelActions.EXECUTE)
             actions.append(ModelActions.DRYRUN)
 
+    # Executing a resource in DESTROY state destroys it, so cascades start only from live resources
+    if has_children and state != ModelState.DESTROY:
+        if ModelActions.DRYRUN in actions:
+            actions.append(ModelActions.CASCADE_DRYRUN)
+        if ModelActions.EXECUTE in actions:
+            actions.append(ModelActions.CASCADE_EXECUTE)
+
     return actions
+
+
+async def get_resource_approver_ids(resource: ResourceResponse) -> set[str]:
+    """IDs of users who can approve the resource: project owners and resource/project admins.
+
+    Super admins are only included when they were granted one of these roles explicitly.
+    """
+    entities: list[tuple[str, str | UUID]] = [("resource", resource.id)]
+    approver_ids: set[str] = set()
+    if resource.project:
+        entities.append(("project", resource.project.id))
+        approver_ids.update(str(owner.id) for owner in resource.project.owners)
+    approver_ids |= await get_entity_admin_user_ids(entities)
+    return approver_ids
 
 
 def merge_tags_or_configs(tags: Sequence[DependencyType], *args: Sequence[DependencyType]) -> Sequence[DependencyType]:
@@ -462,7 +484,10 @@ async def validate_resource_variables_on_create(
             continue
 
         if resource_variable is None:
-            raise ValueError(f"Variable '{variable.name}' is missing in the resource.")
+            if variable.required:
+                raise ValueError(f"Variable '{variable.name}' is missing in the resource.")
+            # An optional variable left out gets its default, like one sent without a value
+            resource_variable = Variables(name=variable.name, value=None)
 
         resource_variable.type = variable.type
         resource_variable.description = variable.description if variable.description else resource_variable.description
@@ -626,6 +651,11 @@ async def convert_field_by_naming_convention_pattern(
         for var in resource.variables:
             if var.name in matches:
                 resource_field_value = resource_field_value.replace(f"{{{var.name}}}", str(var.value))
+
+        # Own dependency config, e.g. required configuration of abstract templates
+        for config in resource.dependency_config:
+            if config.name in matches and config.value is not None:
+                resource_field_value = resource_field_value.replace(f"{{{config.name}}}", str(config.value))
 
         if "{" in resource_field_value or "}" in resource_field_value:
             for parent in parents or []:

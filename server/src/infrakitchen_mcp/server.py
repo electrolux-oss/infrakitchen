@@ -11,6 +11,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from fastmcp import FastMCP
 
+from core.config import InfrakitchenConfig
 from graphql_api.schema import schema as graphql_schema
 
 from .context import request_auth_token
@@ -57,6 +58,9 @@ def _auth_middleware_factory(client: httpx.AsyncClient):
     """
 
     async def _dispatch(request: Request, call_next):
+        if InfrakitchenConfig().mcp is False:
+            return JSONResponse({"detail": "Not Found"}, status_code=404)
+
         auth_header = request.headers.get("Authorization")
         if not auth_header:
             return JSONResponse({"detail": "Missing Authorization header"}, status_code=401)

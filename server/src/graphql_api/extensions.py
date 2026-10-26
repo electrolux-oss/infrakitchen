@@ -1,3 +1,4 @@
+from graphql.validation import NoSchemaIntrospectionCustomRule
 from strawberry.extensions import SchemaExtension
 
 
@@ -31,3 +32,20 @@ class GraphQLFailureFlagExtension(SchemaExtension):
 
         if request is not None:
             request.state.graphql_failed = True
+
+
+class AuthenticatedIntrospectionExtension(SchemaExtension):
+    """Rejects ``__schema`` / ``__type`` queries from anonymous callers.
+
+    GraphiQL and ikctl keep working once a token is sent; ``__typename`` stays allowed.
+    """
+
+    def on_operation(self):
+        context = self.execution_context.context
+        user = context.get("user") if isinstance(context, dict) else getattr(context, "user", None)
+        if user is None:
+            self.execution_context.validation_rules = (
+                *self.execution_context.validation_rules,
+                NoSchemaIntrospectionCustomRule,
+            )
+        yield

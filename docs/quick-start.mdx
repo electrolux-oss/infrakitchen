@@ -7,9 +7,8 @@ sidebar:
 
 In about **10 minutes**, **Part 1** will have you run InfraKitchen locally and provision your first resource from a dummy template. **Part 2** then connects AWS and provisions a real VPC in about **18** more minutes.
 
-{/* Fragment-link targets for #nix|#docker|#podman deep links. */}
+{/* Fragment-link targets for #nix|#podman deep links. */}
 <span id="nix"></span>
-<span id="docker"></span>
 <span id="podman"></span>
 <span id="podman-compose"></span>
 
@@ -19,11 +18,11 @@ This part takes about <Badge color="blue" icon="clock" shape="pill">10 min</Badg
 
 ### Prerequisites
 
-- **Nix** (preferred) or **Podman/Docker** — pick one in the tabs below
+- **Nix** (preferred) or **Podman** — pick one in the tabs below
 - **git**, to clone the repository
 
 :::tip[No other installs needed]
-No separate OpenTofu/Terraform CLI, Python, or Node.js installation is needed — the Nix or Podman/Docker setup provides everything, including [PostgreSQL](https://www.postgresql.org/) for storing data and [RabbitMQ](https://www.rabbitmq.com/) for processing events. No cloud account is needed either — Part 1 runs entirely on your machine.
+No separate OpenTofu/Terraform CLI, Python, or Node.js installation is needed — the Nix or Podman setup provides everything, including [PostgreSQL](https://www.postgresql.org/) for storing data, the task queue, and processing events. No cloud account is needed either — Part 1 runs entirely on your machine.
 :::
 
 ### 1. Run InfraKitchen Locally
@@ -58,19 +57,10 @@ experimental-features = nix-command flakes
 
 </Tab>
 
-<Tab title="Docker">
-
-```bash
-cp docs/examples/docker/docker-compose.yml ./docker-compose.yml
-docker compose up -d
-```
-
-</Tab>
-
 <Tab title="Podman">
 
 ```bash
-cp docs/examples/docker/docker-compose.yml ./docker-compose.yml
+cp docs/examples/podman/compose.yml ./compose.yml
 podman compose up -d
 ```
 
@@ -87,7 +77,7 @@ podman compose down && podman compose up -d
 <Tab title="Podman Compose">
 
 ```bash
-cp docs/examples/docker/docker-compose.yml ./docker-compose.yml
+cp docs/examples/podman/compose.yml ./compose.yml
 podman-compose up -d
 ```
 
@@ -164,6 +154,7 @@ In InfraKitchen, go to **Configurations > Integrations**, click **Connect Cloud*
 | **User** | `dev_user` |
 | **Password** | `password` |
 | **Database** | Any name, e.g. `infrakitchen_states` — created automatically if it does not already exist |
+| **Maintenance Database** | A different, already-existing database used only to create **Database**; defaults to `postgres` |
 | **SSL Mode** | `disable` — the local instance does not use TLS |
 
 Click <kbd>Test Connection</kbd> and save.
@@ -359,9 +350,9 @@ Save, click <kbd>Plan</kbd> to preview the changes, then click <kbd>Review</kbd>
 
 ### 5. Clean Up
 
-Go to the **demo-account** resource's **Settings** tab, and in the **Danger Zone**, click <kbd>Cascade Destroy</kbd>, type the resource's name to confirm, and click <kbd>Cascade Destroy</kbd> again — InfraKitchen creates a destroy workflow covering the account resource and the VPC beneath it, and opens it. Click <kbd>Apply</kbd> to run the workflow: both resources are destroyed in the right order (children first).
+Go to the **demo-account** resource's **Settings** tab, and in the **Danger Zone**, click <kbd>Cascade Destroy</kbd>, type the resource's name to confirm, and click <kbd>Cascade Destroy</kbd> again — InfraKitchen creates a destroy workflow covering the account resource and the VPC beneath it, and opens it. Click <kbd>Apply</kbd> to run the workflow: both resources are destroyed in the right order (children first). See [Cascade Actions](/concepts/resource-workflows#cascade-actions) for details.
 
-Exit the Nix shell with <kbd>Ctrl</kbd>+<kbd>D</kbd>, or stop InfraKitchen with `docker compose down`.
+Exit the Nix shell with <kbd>Ctrl</kbd>+<kbd>D</kbd>, or stop InfraKitchen with `podman compose down`.
 
 :::tip[Just want a quick look?]
 Run `make fixtures` to populate the instance with realistic mock data. It runs on the host, so use the Nix dev shell (or an environment with `uv` and PostgreSQL reachable on `localhost`). Everything above also works on an empty instance.
@@ -372,4 +363,4 @@ Run `make fixtures` to populate the instance with realistic mock data. It runs o
 For local development, InfraKitchen automatically configures the following on first run — no manual setup needed:
 
 - **Encryption & signing keys** — `ENCRYPTION_KEY` encrypts sensitive data at rest (e.g. stored integration credentials), and `JWT_KEY` signs auth tokens. Generated into `server/.env_local`.
-- **Data storage** (Nix only) — PostgreSQL data, RabbitMQ data/logs, and other local state are stored in the `ik_data/` directory. Delete this directory to start the project from scratch. (Docker/Podman store data in their own named volumes instead.)
+- **Data storage** (Nix only) — PostgreSQL data and other local state are stored in the `ik_data/` directory. Delete this directory to start the project from scratch. (Docker/Podman store data in their own named volumes instead.)

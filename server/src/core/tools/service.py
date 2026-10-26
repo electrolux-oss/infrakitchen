@@ -11,7 +11,7 @@ from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
 
 from .crud import ToolCRUD
-from .functions import host_arch
+from .functions import host_arch, host_os
 from .model import Tool
 from .release_sources import get_release_source, list_versions
 from .schema import ToolDownloadRequest, ToolResponse
@@ -153,23 +153,24 @@ class ToolService:
 
     async def request_download(self, request: ToolDownloadRequest, requester: UserDTO) -> Tool:
         source = get_release_source(request.name)
+        os = request.os or host_os()
         arch = request.arch or host_arch()
 
         available = await list_versions(request.name, include_prerelease=True)
         if request.version not in available:
             raise ValueError(f"Version {request.version} of {request.name} is not available")
 
-        existing = await self.crud.get_one(name=request.name, version=request.version, os=request.os, arch=arch)
+        existing = await self.crud.get_one(name=request.name, version=request.version, os=os, arch=arch)
         if existing is not None and existing.status != ModelStatus.ERROR:
-            raise EntityExistsError(f"{request.name} {request.version} ({request.os}/{arch}) already exists")
+            raise EntityExistsError(f"{request.name} {request.version} ({os}/{arch}) already exists")
 
         body: dict[str, Any] = {
             "name": request.name,
             "version": request.version,
-            "os": request.os,
+            "os": os,
             "arch": arch,
-            "executable": source.executable,
-            "source_url": source.download_url(request.version, request.os, arch),
+            "executable": source.executable_name(os),
+            "source_url": source.download_url(request.version, os, arch),
             "status": ModelStatus.QUEUED,
             "error_message": "",
             "created_by": requester.id,

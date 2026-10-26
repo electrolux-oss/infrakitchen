@@ -314,64 +314,63 @@ class TestHeartbeat:
 class TestNotifications:
     async def test_send_task_notification_success(self, task_worker, mock_task_controller, monkeypatch):
         mock_task_controller.logger.entity_id = "test_entity_123"
-        mock_task_controller.logger.entity_name = "test_source_code"
+        mock_task_controller.logger.entity_name = "source_code"
 
         mock_publish = AsyncMock()
         monkeypatch.setattr(tw_mod, "publish_notification_event", mock_publish)
 
-        test_message = "Test notification message"
-        await task_worker.send_task_notification(mock_task_controller, test_message)
+        await task_worker.send_task_notification(mock_task_controller, "sync", "failed", reason="CannotProceed")
 
         mock_publish.assert_awaited_once_with(
             NotificationEvent(
-                message=test_message,
-                title="Task Update",
-                status="info",
+                message="Sync for source code test_entity_123 failed: CannotProceed.",
+                title="Source code sync failed",
+                status="error",
                 entity_id="test_entity_123",
-                entity_type="test_source_code",
+                entity_type="source_code",
                 event_type=EventType.EXECUTE,
             )
         )
 
     async def test_success_notification_message_format(self, task_worker, mock_task_controller, monkeypatch):
         mock_task_controller.logger.entity_id = "entity_789"
-        mock_task_controller.logger.entity_name = "my_deployment"
+        mock_task_controller.logger.entity_name = "resource"
 
         mock_publish = AsyncMock()
         monkeypatch.setattr(tw_mod, "publish_notification_event", mock_publish)
 
-        await task_worker._send_success_notification(mock_task_controller, "deploy")
+        await task_worker._send_success_notification(mock_task_controller, "dryrun")
 
         mock_publish.assert_awaited_once_with(
             NotificationEvent(
-                message="Task deploy for my_deployment completed successfully.",
-                title="My deployment deploy succeeded",
+                message="Plan for resource entity_789 completed successfully.",
+                title="Resource plan succeeded",
                 status="success",
                 entity_id="entity_789",
-                entity_type="my_deployment",
+                entity_type="resource",
                 event_type=EventType.EXECUTE,
             )
         )
 
     async def test_generic_exception_notification(self, task_worker, mock_task_controller, monkeypatch):
         mock_task_controller.logger.entity_id = "failed_entity_123"
-        mock_task_controller.logger.entity_name = "failed_resource"
+        mock_task_controller.logger.entity_name = "resource"
 
         mock_publish = AsyncMock()
         monkeypatch.setattr(tw_mod, "publish_notification_event", mock_publish)
 
         with pytest.raises(tw_mod.TaskFailure):
             await task_worker.handle_generic_exception(
-                CannotProceed("Test error message"), mock_task_controller, "CannotProceed"
+                CannotProceed("Test error message"), mock_task_controller, "CannotProceed", action="execute"
             )
 
         mock_publish.assert_awaited_once_with(
             NotificationEvent(
-                message="Task  failed for failed_entity_123: CannotProceed",
-                title="Failed resource task failed",
+                message="Apply for resource failed_entity_123 failed: CannotProceed.",
+                title="Resource apply failed",
                 status="error",
                 entity_id="failed_entity_123",
-                entity_type="failed_resource",
+                entity_type="resource",
                 event_type=EventType.EXECUTE,
             )
         )
@@ -380,7 +379,7 @@ class TestNotifications:
 
     async def test_timeout_notification_on_max_retries(self, task_worker, mock_task_controller, monkeypatch):
         mock_task_controller.logger.entity_id = "timeout_entity_456"
-        mock_task_controller.logger.entity_name = "timeout_storage"
+        mock_task_controller.logger.entity_name = "storage"
 
         mock_publish = AsyncMock()
         monkeypatch.setattr(tw_mod, "publish_notification_event", mock_publish)
@@ -394,11 +393,11 @@ class TestNotifications:
 
         mock_publish.assert_awaited_once_with(
             NotificationEvent(
-                message="Task  failed for timeout_entity_456: Task is timed out",
-                title="Timeout storage task timed out",
+                message="Task for storage timeout_entity_456 timed out.",
+                title="Storage task timed out",
                 status="error",
                 entity_id="timeout_entity_456",
-                entity_type="timeout_storage",
+                entity_type="storage",
                 event_type=EventType.EXECUTE,
             )
         )
@@ -406,46 +405,68 @@ class TestNotifications:
 
     async def test_exit_without_save_notification(self, task_worker, mock_task_controller, monkeypatch):
         mock_task_controller.logger.entity_id = "exit_entity_789"
-        mock_task_controller.logger.entity_name = "exit_workspace"
+        mock_task_controller.logger.entity_name = "workspace"
 
         mock_publish = AsyncMock()
         monkeypatch.setattr(tw_mod, "publish_notification_event", mock_publish)
 
         with pytest.raises(tw_mod.TaskFailure):
             await task_worker.handle_exit_without_state_exception(
-                ExitWithoutSave("Exit without saving changes"), mock_task_controller
+                ExitWithoutSave("Exit without saving changes"), mock_task_controller, action="sync"
             )
 
         mock_publish.assert_awaited_once_with(
             NotificationEvent(
-                message="Task  failed for exit_entity_789: ExitWithoutSave: Exit without saving changes",
-                title="Exit workspace task failed",
+                message="Sync for workspace exit_entity_789 failed: ExitWithoutSave: Exit without saving changes.",
+                title="Workspace sync failed",
                 status="error",
                 entity_id="exit_entity_789",
-                entity_type="exit_workspace",
+                entity_type="workspace",
                 event_type=EventType.EXECUTE,
             )
         )
 
+    async def test_exit_without_save_notifies_parent_workflow(self, task_worker, mock_task_controller, monkeypatch):
+        monkeypatch.setattr(tw_mod, "publish_notification_event", AsyncMock())
+        mock_task_controller._notify_workflow_callback = AsyncMock()
+
+        with pytest.raises(tw_mod.TaskFailure):
+            await task_worker.handle_exit_without_state_exception(
+                ExitWithoutSave("wrong state"), mock_task_controller, action="execute"
+            )
+
+        mock_task_controller._notify_workflow_callback.assert_awaited_once_with(step_status="error")
+
+    async def test_failed_dry_run_does_not_notify_twice(self, task_worker, mock_task_controller, monkeypatch):
+        monkeypatch.setattr(tw_mod, "publish_notification_event", AsyncMock())
+        mock_task_controller._notify_workflow_callback = AsyncMock()
+
+        with pytest.raises(tw_mod.TaskFailure):
+            await task_worker.handle_exit_without_state_exception(
+                ExitWithoutSave("plan failed"), mock_task_controller, action="dryrun"
+            )
+
+        mock_task_controller._notify_workflow_callback.assert_not_awaited()
+
     async def test_unexpected_exception_notification(self, task_worker, mock_task_controller, monkeypatch):
         mock_task_controller.logger.entity_id = "unexpected_entity_000"
-        mock_task_controller.logger.entity_name = "unexpected_resource"
+        mock_task_controller.logger.entity_name = "resource"
 
         mock_publish = AsyncMock()
         monkeypatch.setattr(tw_mod, "publish_notification_event", mock_publish)
 
         with pytest.raises(tw_mod.TaskFailure):
             await task_worker.handle_unexpected_exception(
-                RuntimeError("Unexpected runtime error"), mock_task_controller
+                RuntimeError("Unexpected runtime error"), mock_task_controller, action="dryrun"
             )
 
         mock_publish.assert_awaited_once_with(
             NotificationEvent(
-                message="Task  failed for unexpected_entity_000: UnhandledException: Unexpected runtime error",
-                title="Unexpected resource task failed",
+                message="Plan for resource unexpected_entity_000 failed: UnhandledException: Unexpected runtime error.",
+                title="Resource plan failed",
                 status="error",
                 entity_id="unexpected_entity_000",
-                entity_type="unexpected_resource",
+                entity_type="resource",
                 event_type=EventType.EXECUTE,
             )
         )
@@ -457,22 +478,22 @@ class TestNotifications:
         monkeypatch.setattr(tw_mod, "publish_notification_event", mock_publish)
 
         test_cases = [
-            ("storage_entity_123", "my_storage"),
-            ("workspace_entity_456", "dev_workspace"),
-            ("resource_entity_789", "api_resource"),
+            ("storage_entity_123", "storage"),
+            ("workspace_entity_456", "workspace"),
+            ("resource_entity_789", "resource"),
         ]
 
         for entity_id, entity_name in test_cases:
             controller = mock_task_controller_factory(entity_id=entity_id, entity_name=entity_name, user=mocked_user)
-            await task_worker.send_task_notification(controller, f"Test message for {entity_name}")
+            await task_worker.send_task_notification(controller, "execute", "succeeded")
 
         assert mock_publish.await_count == 3
         for entity_id, entity_name in test_cases:
             mock_publish.assert_any_await(
                 NotificationEvent(
-                    message=f"Test message for {entity_name}",
-                    title="Task Update",
-                    status="info",
+                    message=f"Apply for {entity_name} {entity_id} completed successfully.",
+                    title=f"{entity_name.capitalize()} apply succeeded",
+                    status="success",
                     entity_id=entity_id,
                     entity_type=entity_name,
                     event_type=EventType.EXECUTE,

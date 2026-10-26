@@ -20,7 +20,9 @@ const compat = new FlatCompat({
 });
 
 export default defineConfig([
+  { ignores: ["**/dist/**", "**/node_modules/**"] },
   {
+    files: ["**/*.{js,jsx,ts,tsx}"],
     extends: fixupConfigRules(
       compat.extends(
         "eslint:recommended",

@@ -97,7 +97,8 @@ class TemplateUpdate(BaseModel):
     def at_least_one_field_present(cls, values):
         if not isinstance(values, dict):
             return values
-        if not any(values.get(field) not in (None, [], "") for field in TemplateUpdate.model_fields):
+        # An empty list is a real value: it clears parents/children/labels.
+        if not any(values.get(field) not in (None, "") for field in TemplateUpdate.model_fields):
             raise ValueError("At least one field must be provided in Template update.")
         return values
 
@@ -145,6 +146,15 @@ class TemplateResponse(BaseModel):
     @computed_field
     def _entity_name(self) -> str:
         return "template"
+
+
+class TemplateAncestor(BaseModel):
+    """A template above another one in the parent chain."""
+
+    id: uuid.UUID
+    name: str
+    # The template this one is a direct parent of
+    child_id: uuid.UUID
 
 
 class TemplateTreeResponse(BaseModel):

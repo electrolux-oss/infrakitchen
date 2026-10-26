@@ -380,8 +380,8 @@ InfraKitchen path: `/integrations/postgresql/setup`
 | -------------------- | ------------------------------------------------------------------- |
 | **Integration Name** | Unique name for this integration (e.g., `pg-states`)                |
 | **Host** / **Port**  | PostgreSQL server address (port defaults to `5432`)                 |
-| **Database**         | Database name, created when it does not exist                       |
-| **Maintenance Database** | Existing database used to create the database, defaults to `postgres` |
+| **Database**         | Target database name, created automatically if it does not exist    |
+| **Maintenance Database** | A different, already-existing database used only to connect and run `CREATE DATABASE` for **Database**; defaults to `postgres` |
 | **User**             | PostgreSQL user                                                     |
 | **Password**         | Password of the user, stored encrypted                              |
 | **SSL Mode**         | libpq `sslmode`, defaults to `require`                              |

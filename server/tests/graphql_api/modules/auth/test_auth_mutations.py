@@ -51,7 +51,7 @@ def make_context(cookies: dict[str, str]):
 class TestAuthMutations:
     @pytest.mark.asyncio
     @patch("graphql_api.modules.auth.mutations.create_user_token")
-    @patch("graphql_api.modules.auth.mutations.is_correct_password")
+    @patch("core.sso.service_account.is_correct_password_async", new_callable=AsyncMock)
     async def test_service_account_token_returns_token(
         self,
         mock_is_correct_password,
@@ -79,7 +79,7 @@ class TestAuthMutations:
         assert result.data["serviceAccountToken"]["token"] == "service-account-token"
         assert result.data["serviceAccountToken"]["expiresAt"]
         mock_service.user_service.get_user_by_identifier.assert_awaited_once_with("svc-user")
-        mock_is_correct_password.assert_called_once_with("salt", "hashed-password", "svc-password")
+        mock_is_correct_password.assert_awaited_once_with("salt", "hashed-password", "svc-password")
 
     @pytest.mark.asyncio
     async def test_service_account_token_returns_error_when_provider_disabled(self):

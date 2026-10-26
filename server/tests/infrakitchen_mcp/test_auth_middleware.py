@@ -5,7 +5,18 @@ from typing import Any
 import pytest
 import httpx
 
+from core.config import InfrakitchenConfig
 from infrakitchen_mcp.server import _auth_middleware_factory, AUTH_PROBE_PATH
+
+
+@pytest.fixture(autouse=True)
+def _mcp_enabled(monkeypatch):
+    """The auth middleware gates on the InfrakitchenConfig.mcp feature flag;
+    tests exercise the auth path with the flag treated as enabled."""
+    from core.config import InfrakitchenConfig
+
+    cfg = InfrakitchenConfig()
+    monkeypatch.setattr(cfg, "mcp", True)
 
 
 def _make_middleware(probe_status: int = 200, probe_error: bool = False):
@@ -35,6 +46,28 @@ def _fake_request(headers: dict[str, str] | None = None) -> Any:
 
 class _FakeResponse:
     status_code = 200
+
+
+@pytest.mark.asyncio
+async def test_disabled_flag_returns_plain_404(monkeypatch):
+    """With the MCP flag off, the endpoint answers with FastAPI's default
+    not-found body."""
+    monkeypatch.setattr(InfrakitchenConfig(), "mcp", False)
+    dispatch = _make_middleware(probe_status=200)
+    request = _fake_request(headers={"Authorization": "Bearer valid-token"})
+
+    call_next_called = False
+
+    async def call_next(req):
+        nonlocal call_next_called
+        call_next_called = True
+        return _FakeResponse()
+
+    response = await dispatch(request, call_next=call_next)
+    assert not call_next_called
+    assert response.status_code == 404
+    assert b'{"detail":"Not Found"}' in response.body
+    assert b"MCP" not in response.body
 
 
 @pytest.mark.asyncio

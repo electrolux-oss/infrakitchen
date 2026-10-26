@@ -1,7 +1,7 @@
-FROM python:3.14.6-slim-bookworm
+FROM python:3.15.1-slim-bookworm@sha256:575f8bc12ec26542e0678bc6b60e385218248019d433157ec327264a78c3a853
 
 # install tofu
-RUN apt-get update && apt-get install -y apt-transport-https ca-certificates curl gnupg && \
+RUN apt-get update && apt-get install -y apt-transport-https ca-certificates curl gnupg git && \
     install -m 0755 -d /etc/apt/keyrings && \
     curl -fsSL https://get.opentofu.org/opentofu.gpg | tee /etc/apt/keyrings/opentofu.gpg >/dev/null && \
     curl -fsSL https://packages.opentofu.org/opentofu/tofu/gpgkey | gpg --no-tty --batch --dearmor -o /etc/apt/keyrings/opentofu-repo.gpg >/dev/null && \

@@ -1,6 +1,12 @@
 ---
 title: Feature Flags
+description: Runtime toggles for InfraKitchen capabilities, managed in the Settings page.
 ---
+
+Feature flags allow admins to turn InfraKitchen capabilities on or off at runtime. Changes are
+saved from the Settings page and take effect without a restart. If a flag change did not
+propagate as expected, an admin can trigger a manual reload from the Reload button on the
+Settings page.
 
 ## Approval Flow
 
@@ -12,7 +18,16 @@ When enabled, requests will require approval from designated approvers before pr
 Demo mode can be toggled via a feature flag to allow users to explore InfraKitchen's capabilities
 without making actual changes to infrastructure. This is useful for training and demonstrations.
 
-## Websockets
+## Websocket
 
-Websocket support can be enabled or disabled using a feature flag.
+Websocket support can be enabled or disabled using this feature flag.
 When enabled, users will receive real-time updates on the status of their provisioning requests.
+
+## Services
+
+The Services catalog can be enabled or disabled using this feature flag.
+
+## MCP
+
+The MCP (Model Context Protocol) endpoint can be enabled or disabled using this feature flag.
+When enabled, AI agents can connect to InfraKitchen via MCP. See [MCP Support](/operations/mcp) for details.

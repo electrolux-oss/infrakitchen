@@ -7,11 +7,11 @@ import strawberry
 from strawberry.scalars import JSON
 from strawberry.types import Info
 
-from application.resources.dependencies import get_resource_service
+from application.resources.dependencies import get_cascade_run_service, get_resource_service
 from application.resources.service import ResourceService
 from application.workers.utils import get_resource_task
-from core.constants.model import ModelActions
-from core.errors import EntityNotFound
+from core.constants.model import ModelActions, WorkflowAction
+from core.errors import AccessDenied, EntityNotFound
 from graphql_api.helpers import (
     IsAuthenticated,
     build_field_spec,
@@ -36,12 +36,22 @@ def _build_service(info: Info) -> ResourceService:
 @strawberry.type
 class ResourceTreeNodeType:
     id: uuid.UUID
+    template_id: uuid.UUID
     name: str
     state: str
     status: str
     template_name: str
     node_id: uuid.UUID
     children: list["ResourceTreeNodeType"]
+
+
+@strawberry.type
+class ResourceCascadeNodeType:
+    resource_id: uuid.UUID
+    name: str
+    depth: int
+    included: bool
+    reason: str | None
 
 
 @strawberry.type
@@ -110,6 +120,32 @@ class ResourceQuery:
         return _map_tree_node(tree)
 
     @strawberry.field(permission_classes=[IsAuthenticated])
+    async def resource_cascade_preview(
+        self,
+        info: Info,
+        id: uuid.UUID,
+        action: str,
+        exclude_ids: list[uuid.UUID] | None = None,
+    ) -> list[ResourceCascadeNodeType]:
+        """Resources a cascade plan or apply would run, and why the others are skipped."""
+        await check_api_permission(info, "resource", ["read"])
+        if action not in (WorkflowAction.PLAN, WorkflowAction.APPLY):
+            raise ValueError(f"Unsupported cascade action: {action}")
+        requester = info.context["request"].state.user
+        required_action = ModelActions.CASCADE_DRYRUN if action == WorkflowAction.PLAN else ModelActions.CASCADE_EXECUTE
+        if required_action not in await get_resource_service(info.context["session"]).get_actions(id, requester):
+            raise AccessDenied(f"Access denied for action {required_action.value}")
+        nodes = await get_cascade_run_service(session=info.context["session"]).preview(
+            resource_id=id, action=WorkflowAction(action), requester=requester, exclude_ids=exclude_ids or []
+        )
+        return [
+            ResourceCascadeNodeType(
+                resource_id=n.resource_id, name=n.name, depth=n.depth, included=n.included, reason=n.reason
+            )
+            for n in nodes
+        ]
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
     async def resource_metadata(self, info: Info, id: uuid.UUID) -> JSON:
         await check_api_permission(info, "resource", ["read"])
         service = _build_service(info)
@@ -176,6 +212,7 @@ class ResourceQuery:
 def _map_tree_node(node: Any) -> ResourceTreeNodeType:
     return ResourceTreeNodeType(
         id=node.id,
+        template_id=node.template_id,
         name=node.name,
         state=node.state,
         status=node.status,

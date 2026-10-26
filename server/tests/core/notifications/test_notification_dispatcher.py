@@ -1,11 +1,16 @@
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock, Mock
+from uuid import uuid4
 
 import pytest
+from sqlalchemy.dialects import postgresql
 
 from application.tools import notification_manager
 from application.tools.notification_manager import NotificationDispatcher
+from core.notifications import in_app
 from core.notifications.model import OutboxStatus
 
 PAYLOAD = {
@@ -87,13 +92,81 @@ class TestDispatchOnce:
         route.assert_not_awaited()
         assert outbox.finish.await_args_list[0].args[1] == OutboxStatus.FAILED
 
+    async def test_routing_is_keyed_by_the_outbox_item(self, outbox, monkeypatch):
+        route = AsyncMock()
+        monkeypatch.setattr(notification_manager, "_route_notification_event", route)
+        outbox.claim.return_value = item()
 
-class TestInAppDispatch:
-    async def test_in_app_goes_to_the_users_topic(self, monkeypatch):
-        publish = AsyncMock()
-        monkeypatch.setattr(notification_manager.pubsub, "publish", publish)
-        body = {"provider": "in_app", "user_id": "u1", "msg": "hi"}
+        _ = await NotificationDispatcher(concurrency=1).dispatch_once()
 
-        await notification_manager._dispatch_notification(body)
+        route.assert_awaited_once()
+        assert route.call_args.kwargs["outbox_id"] == "item-1"
 
-        publish.assert_awaited_once_with("notifications.in_app.u1", body)
+
+CREATED_AT = datetime(2026, 10, 12, tzinfo=UTC)
+
+
+@pytest.fixture
+def in_app_delivery(monkeypatch):
+    """Fake DB session returning ``state.inserted`` user IDs as the rows actually inserted."""
+    state = SimpleNamespace(inserted=[], published=[], session=Mock(commit=AsyncMock()))
+
+    async def execute(_statement):
+        rows = [SimpleNamespace(id=f"n-{u}", user_id=u, created_at=CREATED_AT) for u in state.inserted]
+        return Mock(all=lambda: rows)
+
+    state.session.execute = AsyncMock(side_effect=execute)
+
+    @asynccontextmanager
+    async def fake_session(_engine):
+        yield state.session
+
+    async def publish_many(messages):
+        state.published.extend(messages)
+
+    monkeypatch.setattr(in_app, "AsyncSession", fake_session)
+    monkeypatch.setattr(in_app.pubsub, "publish_many", publish_many)
+    return state
+
+
+def inserted_rows(statement: Any) -> list[dict[str, Any]]:
+    return [{column.key: value for column, value in row.items()} for row in statement._multi_values[0]]
+
+
+class TestInAppDelivery:
+    async def test_batch_is_stored_once_per_primary_account_and_streamed(self, monkeypatch, in_app_delivery):
+        primary, secondary, other = uuid4(), uuid4(), uuid4()
+        in_app_delivery.inserted = [primary, other]
+        monkeypatch.setattr(in_app, "get_primary_account_ids", AsyncMock(return_value={secondary: primary}))
+
+        await in_app.deliver_in_app_notifications(
+            [{"user_id": str(u), "msg": "hi", "provider": "in_app"} for u in (primary, secondary, other)]
+        )
+
+        statement = in_app_delivery.session.execute.await_args.args[0]
+        assert [row["user_id"] for row in inserted_rows(statement)] == [primary, other]
+        published = in_app_delivery.published
+        assert [topic for topic, _ in published] == [
+            f"notifications.in_app.{primary}",
+            f"notifications.in_app.{other}",
+        ]
+        assert published[0][1]["id"] == f"n-{primary}"
+        assert published[0][1]["created_at"] == CREATED_AT.isoformat()
+
+    async def test_retry_skips_recipients_already_reached(self, monkeypatch, in_app_delivery):
+        reached, missed = uuid4(), uuid4()
+        outbox_id = uuid4()
+        # The unique (outbox_id, user_id) index drops the row stored by the previous attempt
+        in_app_delivery.inserted = [missed]
+        monkeypatch.setattr(in_app, "get_primary_account_ids", AsyncMock(return_value={}))
+
+        await in_app.deliver_in_app_notifications(
+            [{"user_id": str(u), "msg": "hi", "provider": "in_app"} for u in (reached, missed)], outbox_id=outbox_id
+        )
+
+        statement = in_app_delivery.session.execute.await_args.args[0]
+        assert {row["outbox_id"] for row in inserted_rows(statement)} == {outbox_id}
+        assert "ON CONFLICT (outbox_id, user_id) WHERE outbox_id IS NOT NULL DO NOTHING" in str(
+            statement.compile(dialect=postgresql.dialect())
+        )
+        assert [topic for topic, _ in in_app_delivery.published] == [f"notifications.in_app.{missed}"]

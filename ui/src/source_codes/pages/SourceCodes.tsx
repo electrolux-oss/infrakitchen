@@ -1,0 +1,50 @@
+import { useNavigate } from "react-router";
+
+import { PermissionWrapper, useConfig } from "../../common";
+import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
+import PageContainer from "../../common/PageContainer";
+import { HeroArrowDownCircleIcon } from "../../icons";
+import { Button } from "../../ui";
+import {
+  sourceCodeColumns,
+  sourceCodeDefaultColumnVisibilityModel,
+} from "../components/sourceCodeTableConfig";
+import { SOURCE_CODE_FIELD_MAP } from "../graphql";
+
+export const SourceCodesPage = () => {
+  const { linkPrefix } = useConfig();
+  const navigate = useNavigate();
+
+  const actions = (
+    <PermissionWrapper
+      requiredPermission="api:source_code"
+      permissionAction="write"
+    >
+      <Button
+        onClick={() => navigate(`${linkPrefix}source_codes/create`)}
+        startIcon={<HeroArrowDownCircleIcon />}
+      >
+        Import
+      </Button>
+    </PermissionWrapper>
+  );
+
+  return (
+    <PageContainer
+      title="Code Repositories"
+      description="Register Git repositories containing Terraform or OpenTofu modules used by your templates and executors."
+      actions={actions}
+    >
+      <EntityFetchTable
+        title="Code Repositories"
+        entityName="sourceCode"
+        columns={sourceCodeColumns}
+        defaultColumnVisibilityModel={sourceCodeDefaultColumnVisibilityModel}
+        entityFieldMap={SOURCE_CODE_FIELD_MAP}
+        syncFiltersToUrl
+      />
+    </PageContainer>
+  );
+};
+
+SourceCodesPage.path = "/source_codes";

@@ -14,5 +14,9 @@
   {
     "name": "Services",
     "enabled": false
+  },
+  {
+    "name": "MCP",
+    "enabled": false
   }
 ]

@@ -14,6 +14,7 @@ from graphql_api.modules.user.types import UserType
 
 import strawberry
 from datetime import datetime
+from strawberry.scalars import JSON
 from strawberry.types import Info
 
 source_code_version_mapper = StrawberrySQLAlchemyMapper()
@@ -96,6 +97,8 @@ class TemplatePortsTemplateType:
 @strawberry.type
 class TemplatePortsConfigType:
     name: str
+    required: bool = False
+    default: JSON | None = None
 
 
 @strawberry.type
@@ -112,8 +115,17 @@ class TemplatePortsReferenceType:
 
 
 @strawberry.type
+class TemplatePortsAncestorType:
+    id: uuid.UUID
+    name: str
+    child_id: uuid.UUID
+
+
+@strawberry.type
 class TemplatePortsItemType:
     template: TemplatePortsTemplateType
     configs: list[TemplatePortsConfigType]
     outputs: list[TemplatePortsOutputType]
     references: list[TemplatePortsReferenceType]
+    required_configs: list[str]
+    ancestors: list[TemplatePortsAncestorType]

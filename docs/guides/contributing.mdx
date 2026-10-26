@@ -5,6 +5,70 @@ description: Conventions and workflows for developers contributing code to Infra
 
 Follow these conventions when a change touches the areas below — they keep the codebase consistent and make reviews faster.
 
+## Codebase Structure
+
+```
+server/src/
+├── application/          # Application layer, one folder per domain
+│   ├── resources/        #   crud.py · service.py · model.py · schema.py · task.py
+│   ├── executors/        #   same structure
+│   ├── templates/        #   ...
+│   ├── integrations/
+│   ├── workspaces/
+│   ├── workflows/
+│   ├── views/            # Router mounting (auth + GraphQL)
+│   ├── use_cases/        # Multi-service orchestration
+│   └── ...
+├── graphql_api/          # GraphQL API (Strawberry)
+│   ├── context.py        # Auth context & DB session
+│   ├── endpoint.py       # GraphQLRouter mount
+│   ├── helpers.py        # Permissions, field optimization
+│   ├── schema.py         # Merged query schema
+│   └── modules/          # Per-entity types, converters, queries, mutations, subscriptions
+├── core/                 # Core utilities and shared domains
+│   ├── adapters/         # External service adapters
+│   ├── config.py         # Configuration
+│   ├── database.py       # Database connection
+│   ├── base_models.py    # Base / BaseEntity / BaseModel / MessageModel
+│   ├── errors.py         # Custom exceptions
+│   └── ...
+├── infrakitchen_mcp/     # MCP server
+├── worker.py             # Task worker entrypoint (claims tasks from the Postgres task queue)
+├── scheduler.py          # Scheduler entrypoint (APScheduler)
+├── app.py                # FastAPI app entrypoint
+└── fixtures/             # Demo data
+```
+
+### Code Layers
+
+1. **GraphQL Layer** (`graphql_api/`)
+      - [Strawberry GraphQL](https://strawberry.rocks/) schema and types
+      - Queries, mutations, and subscriptions per entity
+      - Bearer token authentication via permission classes
+      - See [GraphQL API](../references/graphql) for usage details
+
+2. **Service Layer** (`service.py`)
+      - Business logic
+      - Orchestration between modules
+      - Transaction management, publishing task/event messages
+
+3. **CRUD Layer** (`crud.py`)
+      - Database operations
+      - Query building
+      - Data access patterns
+
+4. **Task Layer** (`task.py`)
+      - Asynchronous operations executed by the worker
+      - Long-running processes (provisioning, destroying, dry runs)
+      - Pipeline orchestration per entity
+
+5. **Model Layer** (`model.py`)
+      - SQLAlchemy ORM models (extending `BaseEntity` / `BaseRevision`)
+      - An internal Pydantic DTO used between the service and task layers
+
+6. **Schema Layer** (`schema.py`)
+      - Pydantic request/response schemas (create/update/response types) used by the GraphQL and REST layers
+
 ## Database Migrations
 
 InfraKitchen's backend uses [SQLAlchemy](https://www.sqlalchemy.org/) as its ORM to define database models, and [Alembic](https://alembic.sqlalchemy.org/) to manage schema migrations.

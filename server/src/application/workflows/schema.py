@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 import uuid
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
 from application.integrations.schema import IntegrationShort
 from application.resources.schema import ResourceShort
@@ -23,12 +23,24 @@ class WiringRule(BaseModel):
     source_output: str = Field(..., description="Name of the output variable on the source resource")
     target_template_id: uuid.UUID = Field(..., description="Template whose resource consumes the value")
     target_variable: str = Field(..., description="Name of the input variable on the target resource")
+    source_type: Literal["output", "dependency_config"] = Field(
+        default="output",
+        description="Whether source_output names an output or a required dependency config variable of the source",
+    )
+    target_type: Literal["variable", "dependency_config"] = Field(
+        default="variable",
+        description="Whether target_variable names an input variable or a required dependency config variable",
+    )
 
 
 class WorkflowRequest(BaseModel):
     variable_overrides: dict[str, dict[str, Any]] = Field(
         default_factory=dict,
         description="Per-template variable overrides keyed by template_id",
+    )
+    dependency_config_overrides: dict[str, dict[str, Any]] = Field(
+        default_factory=dict,
+        description="Per-template dependency config values keyed by template_id",
     )
     workspace_id: uuid.UUID | None = Field(
         default=None,
@@ -61,6 +73,7 @@ class WorkflowStepCreate(BaseModel):
     position: int
     status: str = ModelStatus.PENDING
     resolved_variables: dict[str, Any] = Field(default_factory=dict)
+    resolved_dependency_config: dict[str, Any] = Field(default_factory=dict)
     resource_id: uuid.UUID | None = None
     parent_resource_ids: list[uuid.UUID] = Field(default_factory=list)
     source_code_version_id: uuid.UUID | None = None
@@ -82,6 +95,7 @@ class WorkflowStepUpdate(BaseModel):
 
     id: uuid.UUID
     resolved_variables: dict[str, Any] | None = None
+    resolved_dependency_config: dict[str, Any] | None = None
     parent_resource_ids: list[uuid.UUID] | None = None
     source_code_version_id: uuid.UUID | None = None
     integration_ids: list[uuid.UUID] | None = None
@@ -105,6 +119,7 @@ class WorkflowStepResponse(BaseModel):
     status: str
     error_message: str | None = None
     resolved_variables: dict[str, Any] = Field(default_factory=dict)
+    resolved_dependency_config: dict[str, Any] = Field(default_factory=dict)
     parent_resource_ids: list[ResourceShort] = Field(default_factory=list)
     integration_ids: list[IntegrationShort] = Field(default_factory=list)
     secret_ids: list[SecretShort] = Field(default_factory=list)
@@ -115,6 +130,12 @@ class WorkflowStepResponse(BaseModel):
     completed_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("resolved_dependency_config", mode="before")
+    @classmethod
+    def _empty_dependency_config(cls, value: Any) -> Any:
+        # Steps not yet flushed to the database have no value set
+        return {} if value is None else value
 
 
 class WorkflowResponse(BaseModel):

@@ -96,9 +96,6 @@ spec:
                   name: infrakitchen-secrets
                   key: postgres-password
 
-            - name: BROKER_URL
-              value: <RabbitMQ_URL>
-              # example value: amqp://guest:password@infrakitchen-rabbitmq:5672
             - name: JWT_KEY
               valueFrom:
                 secretKeyRef:
@@ -172,9 +169,6 @@ spec:
                 secretKeyRef:
                   name: infrakitchen-secrets
                   key: postgres-password
-            - name: BROKER_URL
-              value: <RabbitMQ_URL>
-              # example value: amqp://guest:password@infrakitchen-rabbitmq:5672
             - name: JWT_KEY
               valueFrom:
                 secretKeyRef:
@@ -246,9 +240,6 @@ spec:
                 secretKeyRef:
                   name: infrakitchen-secrets
                   key: postgres-password
-            - name: BROKER_URL
-              value: <RabbitMQ_URL>
-              # example value: amqp://guest:password@infrakitchen-rabbitmq:5672
             - name: JWT_KEY
               valueFrom:
                 secretKeyRef:

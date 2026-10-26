@@ -1,4 +1,4 @@
-FROM docker.io/library/python:3.14.6-slim-bookworm@sha256:86f975aca15cf04a40b399eebede9aea7c82eae084d1f1a0a6ef6bcaae871a30 AS python_builder
+FROM docker.io/library/python:3.15.1-slim-bookworm@sha256:575f8bc12ec26542e0678bc6b60e385218248019d433157ec327264a78c3a853 AS python_builder
 
 ARG TARGETARCH
 
@@ -39,6 +39,10 @@ RUN pip install --no-cache-dir uv && \
 
 RUN uv run --project server /app/server/generate_build_info.py
 
+# aws_config is optional; COPY alone would fail when it's missing
+RUN mkdir -p /aws-home && \
+  if [ -f /app/aws_config ]; then cp /app/aws_config /aws-home/config; fi
+
 RUN find /app/.venv -type d -name "__pycache__" -prune -exec rm -rf {} + && \
   find /app/.venv -type d -name "tests" -prune -exec rm -rf {} + && \
   find /app/.venv -type d -name "test" -prune -exec rm -rf {} + && \
@@ -53,14 +57,14 @@ WORKDIR /app
 COPY ./ /app
 RUN cd ./ui && yarn install --frozen-lockfile && yarn cache clean && yarn build
 
-FROM docker.io/library/python:3.14.6-slim-bookworm@sha256:86f975aca15cf04a40b399eebede9aea7c82eae084d1f1a0a6ef6bcaae871a30
+FROM docker.io/library/python:3.15.1-slim-bookworm@sha256:575f8bc12ec26542e0678bc6b60e385218248019d433157ec327264a78c3a853
 
 RUN apt-get update && apt-get install -y --no-install-recommends nginx git openssh-client && \
   apt-get clean && rm -rf /var/lib/apt/lists/* && \
   useradd --create-home --shell /bin/bash infrakitchen && \
   mkdir -p /home/infrakitchen/.aws
 
-COPY ./aws_config /home/infrakitchen/.aws/config
+COPY --from=python_builder /aws-home/ /home/infrakitchen/.aws/
 
 COPY ./docs/examples/docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY ./docs/examples/docker/websocket-map.conf /etc/nginx/conf.d/websocket-map.conf

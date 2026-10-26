@@ -10,52 +10,80 @@ additional privileges.
 
 ## Enabling MCP
 
-MCP is disabled by default, and the `MCP_ENABLED` flag is only checked once when the server
-starts — a restart is required for changes to take effect. To enable it, set the flag in your
-environment or `.env` file:
+MCP is controlled by the [**MCP** feature flag](/operations/feature_flags#mcp).
 
-```dotenv
-MCP_ENABLED=true
-```
-
-When MCP is enabled, the endpoint is mounted at `/api/mcp`; when it is disabled, the route is
-never registered and requests to `/api/mcp` return `404 Not Found`.
+When the flag is on, the endpoint is served at `/api/mcp`; when it is off, requests to
+`/api/mcp` return a standard `404 Not Found`.
 
 ## Authentication
 
 The MCP endpoint requires authentication on every request. The data and actions available
-through MCP mirror the permissions of the authenticating service account.
+through MCP mirror the permissions of the authenticating identity. Two token types work:
+
+### Option A: Scoped personal access token
+
+A user creates a token for the agent from their own account with explicitly granted
+permissions — the agent can never exceed those grants.
+
+:::tip[Recommended for user-delegated agents]
+Use a scoped token when the agent acts on behalf of a user: its access is limited to
+the scopes you grant, and you can delete it at any time without affecting your own
+login.
+:::
 
 <Steps>
 
-<Step title="Create the service account">
+<Step title="Create a scoped token">
 
-Create an auth provider with type `ik_service_account` and a user with the permissions the
-agent should have. See [Service Account](../integrations/auth#service-account).
+On your user page, open **Personal Access Tokens → Create Token**, tick at least one
+permission to grant (e.g. `read:resource`, `write:resource`; admin authority is never
+grantable to a scoped token), and set an expiry in the future.
 
-</Step>
-
-<Step title="Generate a token">
-
-Generate a token with the `serviceAccountToken` GraphQL mutation.
+:::tip[Prefer short-lived tokens]
+Short-lived tokens limit the damage window if a token leaks — prefer expiries of a few
+hours for agent use.
+:::
 
 </Step>
 
 <Step title="Send the token with every request">
 
-Configure your MCP client to send the token as a bearer header on every request:
-
 ```text
-Authorization: Bearer <service-account-token>
+Authorization: Bearer <agent-token>
 ```
 
 </Step>
 
 </Steps>
 
+Scoped tokens:
+
+- carry **only** the selected scopes (write implies read on the same entity)
+- are revocable instantly from the same page
+- are traceable to the token in Audit Logs: every authentication attempt with the token
+  is recorded there as a `login` event whose Result shows success or the failure reason,
+  and the actions taken while authenticated are attributed to the token's owner
+
+:::warning[Keep the token scoped]
+An unscoped token carries your full permissions.
+:::
+
+### Option B: Service account token
+
+For unattended workloads owning their own permissions, create an auth provider of type
+`ik_service_account` with its own user, then mint a 30-day token via the
+`serviceAccountToken` GraphQL mutation. See [Service Account](../integrations/auth#service-account).
+
+Either token is sent the same way:
+
+```text
+Authorization: Bearer <token>
+```
+
 :::warning[Renew tokens before they expire]
-Service account tokens carry an expiry (`expiresAt`). When the token expires, MCP requests
-fail with `401 Unauthorized` — generate a new token and update your client configuration.
+Both token types expire (scoped personal access tokens when you set an expiry, service-account
+tokens after 30 days). When a token expires, MCP requests fail with `401 Unauthorized` —
+generate a new token and update your client configuration.
 :::
 
 ## Connecting an MCP client
@@ -191,10 +219,10 @@ storages, integrations, and executors take effect immediately — there is no ap
 
 | Symptom | Cause and fix |
 | ------- | ------------- |
-| `404 Not Found` on `/api/mcp` | MCP is not enabled. Set `MCP_ENABLED=true` and restart the server. |
+| `404 Not Found` on `/api/mcp` | A plain 404 can mean the MCP feature flag is off — toggle the [**MCP** feature flag](/operations/feature_flags#mcp) — or that the path is wrong. Note: an unauthenticated request never gets a 401 when the flag is off, so absence of an auth error confirms the flag is on. |
 | `401 Missing Authorization header` | The client is not sending the bearer header. Configure it as shown in [Authentication](#authentication). |
 | `401 Invalid or expired token` | The token expired or was revoked. Generate a new one and update the client configuration. |
 | `503 Auth service unavailable` | The server could not validate the token against the auth service. Check the server logs. |
-| `list_docs` returns an empty list | The documentation directory is not bundled in the deployment (for example the Docker image). The docs tools are available in source/dev deployments. |
+| `list_docs` returns an empty list | The documentation directory is not bundled in the deployment (for example the container image). The docs tools are available in source/dev deployments. |
 | Repeated GraphQL errors when composing queries | Call `list_schema_types` and `get_schema` first to discover exact field names — field names are `camelCase` and some fields are JSON scalars rather than objects. |
 | `patch_action_*` reports no allowed actions | The entity's current state does not permit the action. Query the entity's `*Actions` query to see what is currently allowed. |

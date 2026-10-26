@@ -1,0 +1,148 @@
+import { useCallback, useEffect, useRef } from "react";
+
+import { Control, useForm } from "react-hook-form";
+import { useLocation, useNavigate } from "react-router";
+
+import { WiringRule } from "../../common/components/viewers/Wiring/types";
+import { useConfig } from "../../common/context/ConfigContext";
+import { notify, notifyError } from "../../common/hooks/useNotification";
+import PageContainer from "../../common/PageContainer";
+import { Button } from "../../ui";
+import { BlueprintFormFields } from "../components/BlueprintFormFields";
+import { CREATE_BLUEPRINT_MUTATION, GqlBlueprint } from "../graphql";
+import { useBlueprintForm } from "../hooks/useBlueprintForm";
+import { BlueprintCreateRequest } from "../types";
+
+/** Router state to open the page with templates already selected. */
+export interface BlueprintCreatePrefill {
+  templateIds?: string[];
+  name?: string;
+}
+
+export const BlueprintCreatePage = () => {
+  const { ikApi, linkPrefix } = useConfig();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useForm<BlueprintCreateRequest>({
+    defaultValues: {
+      name: "",
+      description: "",
+      templateIds: [],
+      externalTemplateIds: [],
+      wiring: [],
+      defaultVariables: {},
+      configuration: {},
+      labels: [],
+    },
+    mode: "onChange",
+  });
+
+  const form = useBlueprintForm({
+    setValue: setValue as any,
+    watch: watch as any,
+  });
+
+  // Prefill once from router state (e.g. Cascade → Create Blueprint)
+  const prefilled = useRef(false);
+  const { prefillTemplates } = form;
+  useEffect(() => {
+    if (prefilled.current) return;
+    prefilled.current = true;
+    const prefill = location.state as BlueprintCreatePrefill | null;
+    if (prefill?.name) setValue("name", prefill.name);
+    if (prefill?.templateIds?.length)
+      void prefillTemplates(prefill.templateIds);
+  }, [location.state, prefillTemplates, setValue]);
+
+  const onSubmit = useCallback(
+    (data: BlueprintCreateRequest) => {
+      // Separate constant wires from template wires (backend validates UUIDs in wiring)
+      const constantIds = new Set(form.constants.map((c) => c.id));
+      const templateWiring = data.wiring.filter(
+        (w) => !constantIds.has(w.source_template_id),
+      );
+      const constantWiring = data.wiring.filter((w) =>
+        constantIds.has(w.source_template_id),
+      );
+      const input = {
+        name: data.name,
+        description: data.description,
+        templateIds: data.templateIds,
+        externalTemplateIds: form.externalTemplates.map((t) => t.id),
+        wiring: templateWiring,
+        defaultVariables: data.defaultVariables,
+        configuration: {
+          ...data.configuration,
+          constants: form.constants,
+          constant_wires: constantWiring,
+        },
+        labels: data.labels,
+      };
+      ikApi
+        .graphqlRequest<{ createBlueprint: GqlBlueprint }>(
+          CREATE_BLUEPRINT_MUTATION,
+          { input },
+        )
+        .then((response) => {
+          const created = response.createBlueprint;
+          if (created?.id) {
+            notify("Blueprint created successfully", "success");
+            navigate(`${linkPrefix}blueprints/${created.id}`);
+          }
+        })
+        .catch((error: any) => {
+          notifyError(error);
+        });
+    },
+    [ikApi, navigate, linkPrefix, form.externalTemplates, form.constants],
+  );
+
+  return (
+    <PageContainer
+      title="Create Blueprint"
+      description="Fill in the details, drag templates from the library onto the canvas, then wire outputs to inputs."
+      fill
+      bottomActions={
+        <>
+          <Button onClick={() => navigate(`${linkPrefix}blueprints`)}>
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleSubmit(onSubmit)}>
+            Save
+          </Button>
+        </>
+      }
+    >
+      <BlueprintFormFields
+        control={control as Control<any>}
+        errors={errors}
+        selectedTemplates={form.selectedTemplates}
+        templatePorts={form.templatePorts}
+        currentWiring={form.currentWiring}
+        missingParentTemplates={form.missingParentTemplates}
+        externalTemplates={form.externalTemplates}
+        onExternalTemplateAdd={form.handleExternalTemplateAdd}
+        onExternalTemplateRemove={form.handleExternalTemplateRemove}
+        constants={form.constants}
+        onConstantAdd={form.handleConstantAdd}
+        onConstantRemove={form.handleConstantRemove}
+        onConstantUpdate={form.handleConstantUpdate}
+        onConstantDefaultValueUpdate={form.handleConstantDefaultValueUpdate}
+        onTemplateAdd={form.handleTemplateAdd}
+        onTemplateRemove={form.handleTemplateRemove}
+        onWiringChange={(newWiring: WiringRule[]) =>
+          setValue("wiring", newWiring)
+        }
+      />
+    </PageContainer>
+  );
+};
+
+BlueprintCreatePage.path = "/blueprints/create";

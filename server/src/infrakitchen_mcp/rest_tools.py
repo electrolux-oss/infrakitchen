@@ -55,7 +55,7 @@ ENTITIES: list[EntityWrites] = [
             "If a name is taken, use a different name (e.g. append a suffix). "
             "\n\nTo discover field values, query an existing resource of the same template "
             "via GraphQL (even destroyed ones work): "
-            '`{ resources(filter: {template__name__like: "%example%"}) { '
+            '`{ resources(filter: {template__name__like: "example"}) { '
             "id name state variables sourceCodeVersion { id } storage { id } storagePath "
             "integrationIds { id } parents { id } template { id slug } } }`. "
             "Then copy `source_code_version_id`, `variables`, `integration_ids`, and "

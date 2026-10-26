@@ -2,6 +2,7 @@ import json
 import logging
 from typing import Any
 
+from asyncpg import exceptions as asyncpg_exceptions
 from fastapi.exceptions import RequestValidationError
 from graphql import GraphQLError
 from sqlalchemy.exc import IntegrityError
@@ -48,6 +49,22 @@ def _unwrap_original_error(error: GraphQLError) -> Exception | None:
     return current
 
 
+def integrity_error_message(error: IntegrityError) -> str:
+    """Client-facing message for a constraint violation.
+
+    The raw driver text names constraints and echoes key values
+    (``DETAIL: Key (name)=(...) already exists``), so only the violation kind is returned.
+    """
+    cause = error.orig.__cause__ if error.orig else None
+    if isinstance(cause, asyncpg_exceptions.UniqueViolationError):
+        return "A record with these values already exists."
+    if isinstance(cause, asyncpg_exceptions.ForeignKeyViolationError):
+        return "A referenced record does not exist or is still in use."
+    if isinstance(cause, asyncpg_exceptions.NotNullViolationError):
+        return "A required value is missing."
+    return "The request conflicts with existing data."
+
+
 def _sanitize_message(message: str) -> str:
     sanitized = " ".join(message.split())
     if len(sanitized) > 300:
@@ -78,12 +95,7 @@ def _classify_known_exception(original: Exception) -> tuple[str, str, dict[str, 
         return "CONFLICT", _sanitize_message(str(original)), None
 
     if isinstance(original, IntegrityError):
-        safe_msg = (
-            str(original.orig.__cause__)
-            if original.orig and original.orig.__cause__
-            else "A conflicting record already exists."
-        )
-        return "CONFLICT", _sanitize_message(safe_msg), None
+        return "CONFLICT", integrity_error_message(original), None
 
     if isinstance(original, ChildrenIsNotReady):
         return "CHILDREN_NOT_READY", _sanitize_message(str(original)), None

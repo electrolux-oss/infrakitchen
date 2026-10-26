@@ -243,6 +243,7 @@ async def get_workflow_task(
     trace_id: str | None = None,
     step_id: str | None = None,
     resource_id: str | None = None,
+    step_status: str | None = None,
 ) -> WorkflowTask:
     workflow_service = get_workflow_service(session=session)
     workflow_instance = await workflow_service.crud.get_by_id(obj_id)
@@ -272,6 +273,7 @@ async def get_workflow_task(
         event_sender=EventSender(entity_name="workflow"),
         action=action,
         step_id=step_id,
+        step_status=step_status,
     )
 
 

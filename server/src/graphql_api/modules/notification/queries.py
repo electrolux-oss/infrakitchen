@@ -8,6 +8,7 @@ from strawberry.types import Info
 from core.notifications.dependencies import (
     get_subscription_service,
     get_notification_preference_service,
+    get_user_notification_service,
 )
 from graphql_api.helpers import (
     IsAuthenticated,
@@ -17,7 +18,11 @@ from graphql_api.helpers import (
     parse_range,
     parse_sort,
 )
-from graphql_api.modules.notification.types import SubscriptionType, NotificationPreferenceType
+from graphql_api.modules.notification.types import (
+    SubscriptionType,
+    NotificationPreferenceType,
+    UserNotificationType,
+)
 
 
 @strawberry.type
@@ -105,3 +110,37 @@ class NotificationQuery:
         return await service.count(
             filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
         )
+
+    # The notification inbox is always scoped to the authenticated user
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def user_notifications(
+        self,
+        info: Info,
+        filter: JSON | None = None,
+        sort: list[str] | None = None,
+        range: list[int] | None = None,
+    ) -> list[UserNotificationType]:
+        service = get_user_notification_service(info.context["session"])
+        return await service.query_all(
+            requester=info.context["user"],
+            filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
+            sort=parse_sort(sort),
+            range=parse_range(range),
+        )
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def user_notifications_count(
+        self,
+        info: Info,
+        filter: JSON | None = None,
+    ) -> int:
+        service = get_user_notification_service(info.context["session"])
+        return await service.count(
+            requester=info.context["user"],
+            filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
+        )
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def unread_user_notifications_count(self, info: Info) -> int:
+        service = get_user_notification_service(info.context["session"])
+        return await service.unread_count(requester=info.context["user"])

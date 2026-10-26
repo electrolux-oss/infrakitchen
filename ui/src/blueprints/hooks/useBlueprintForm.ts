@@ -1,0 +1,587 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import { useConfig } from "../../common";
+import { WiringRule } from "../../common/components/viewers/Wiring/types";
+import { TemplatePorts } from "../../common/components/viewers/Wiring/WiringCanvas.types";
+import { notify, notifyError } from "../../common/hooks/useNotification";
+import { TEMPLATE_PORTS_QUERY } from "../../source_code_versions/graphql";
+import { GqlTemplate, GqlTemplateShort } from "../../templates/graphql";
+import { IkEntity } from "../../types";
+import { randomUUID } from "../../utils/uuid";
+import { ConstantBlock, ConstantType, ExternalTemplate } from "../types";
+
+export interface MissingParentInfo {
+  parentId: string;
+  parentName: string;
+  abstract: boolean;
+}
+
+interface SourceConfigItem {
+  name: string;
+  required?: boolean;
+  default?: unknown;
+}
+
+interface SourceConfigTemplateReferenceItem {
+  referenceTemplateId: string;
+  templateId: string;
+  inputConfigName: string;
+  outputConfigName: string;
+}
+
+interface BatchTemplatePortsItem {
+  template: GqlTemplate;
+  configs: SourceConfigItem[];
+  outputs: Array<{ name: string }>;
+  references: SourceConfigTemplateReferenceItem[];
+  requiredConfigs: string[];
+  ancestors?: Array<{ id: string; name: string; childId: string }>;
+}
+
+interface BatchTemplatePortsResponse {
+  templatePorts: BatchTemplatePortsItem[];
+}
+
+interface UseBlueprintFormOptions {
+  setValue: (name: string, value: any) => void;
+  watch: (name: string) => any;
+}
+
+export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
+  const { ikApi } = useConfig();
+  const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
+    {},
+  );
+  const [selectedTemplates, setSelectedTemplates] = useState<
+    GqlTemplateShort[]
+  >([]);
+  const [templatePorts, setTemplatePorts] = useState<
+    Record<string, TemplatePorts>
+  >({});
+
+  // Parent info per template (fetched from full template details)
+  const [templateParents, setTemplateParents] = useState<
+    Record<string, GqlTemplateShort[]>
+  >({});
+
+  // External (input) templates pinned as parents on the canvas
+  const [externalTemplates, setExternalTemplates] = useState<
+    ExternalTemplate[]
+  >([]);
+
+  // Constant blocks pinned on the canvas
+  const [constants, setConstants] = useState<ConstantBlock[]>([]);
+
+  // Read current wiring from form - note: intentionally not memoised so that
+  // it is always fresh when passed out via the return value.  Callbacks that
+  // need the value read it via `watch("wiring")` internally to avoid stale
+  // closures.
+  const currentWiring: WiringRule[] = watch("wiring") || [];
+
+  const buildExtraSourceIds = useCallback(
+    (templates: ExternalTemplate[]) => new Set(templates.map((t) => t.id)),
+    [],
+  );
+
+  // Store ports and parents from a TEMPLATE_PORTS_QUERY response
+  const applyPortsResponse = useCallback((resp: BatchTemplatePortsResponse) => {
+    const newPorts: Record<string, TemplatePorts> = {};
+    const newParents: Record<string, GqlTemplateShort[]> = {};
+    for (const item of resp.templatePorts) {
+      newPorts[item.template.id] = {
+        inputs: item.configs.map((c) => c.name),
+        inputMeta: Object.fromEntries(
+          item.configs.map((c) => [
+            c.name,
+            { required: Boolean(c.required), default: c.default },
+          ]),
+        ),
+        outputs: item.outputs.map((o) => o.name),
+        configs: item.requiredConfigs ?? [],
+        references: item.references.map((r) => ({
+          input: r.inputConfigName,
+          sourceTemplateId: r.referenceTemplateId,
+          output: r.outputConfigName,
+        })),
+        ancestors: item.ancestors ?? [],
+      };
+      newParents[item.template.id] = item.template.parents || [];
+    }
+    setTemplatePorts((prev) => ({ ...prev, ...newPorts }));
+    setTemplateParents((prev) => ({ ...prev, ...newParents }));
+  }, []);
+
+  // ── Batch fetch ports, parents, and references for multiple templates ──
+  const fetchBatchPorts = useCallback(
+    async (
+      templateIds: string[],
+      opts?: {
+        /** Extra template IDs that are valid wiring sources (external templates) */
+        extraSourceIds?: Set<string>;
+        /** If true, skip auto-wiring (edit page restores wiring from saved data) */
+        skipAutoWire?: boolean;
+      },
+    ) => {
+      if (templateIds.length === 0) return;
+
+      // Include external template IDs in the batch so we also fetch their ports
+      const allIds = [
+        ...new Set([...templateIds, ...(opts?.extraSourceIds || [])]),
+      ];
+
+      try {
+        const resp = (await ikApi.graphqlRequest(TEMPLATE_PORTS_QUERY, {
+          templateIds: allIds,
+        })) as BatchTemplatePortsResponse;
+
+        applyPortsResponse(resp);
+
+        // Auto-wire from references (unless skipAutoWire)
+        if (!opts?.skipAutoWire) {
+          const selectedIds = new Set(templateIds);
+          const validSourceIds = new Set([
+            ...selectedIds,
+            ...(opts?.extraSourceIds || []),
+          ]);
+
+          const unique: WiringRule[] = [];
+          const uniqueKeys = new Set<string>();
+          for (const item of resp.templatePorts) {
+            for (const ref of item.references) {
+              if (
+                !validSourceIds.has(ref.referenceTemplateId) ||
+                !selectedIds.has(ref.templateId)
+              ) {
+                continue;
+              }
+
+              const key = `${ref.referenceTemplateId}|${ref.outputConfigName}|${ref.templateId}|${ref.inputConfigName}`;
+              if (uniqueKeys.has(key)) {
+                continue;
+              }
+              uniqueKeys.add(key);
+
+              unique.push({
+                source_template_id: ref.referenceTemplateId,
+                source_output: ref.outputConfigName,
+                target_template_id: ref.templateId,
+                target_variable: ref.inputConfigName,
+              });
+            }
+          }
+
+          if (unique.length > 0) {
+            const existing: WiringRule[] = watch("wiring") || [];
+            const merged = [...existing];
+            const existingKeys = new Set(
+              existing.map(
+                (w) =>
+                  `${w.source_template_id}|${w.source_output}|${w.target_template_id}|${w.target_variable}`,
+              ),
+            );
+            for (const w of unique) {
+              const key = `${w.source_template_id}|${w.source_output}|${w.target_template_id}|${w.target_variable}`;
+              if (existingKeys.has(key)) {
+                continue;
+              }
+              existingKeys.add(key);
+              merged.push(w);
+            }
+            setValue("wiring", merged);
+          }
+        }
+      } catch {
+        // Fallback: set empty ports for all requested IDs
+        const emptyPorts: Record<string, TemplatePorts> = {};
+        for (const tid of allIds) {
+          emptyPorts[tid] = { inputs: [], outputs: [], configs: [] };
+        }
+        setTemplatePorts((prev) => ({ ...prev, ...emptyPorts }));
+      }
+    },
+    [ikApi, setValue, watch, applyPortsResponse],
+  );
+
+  const refreshAutoWiring = useCallback(
+    (
+      templates: GqlTemplateShort[],
+      externals: ExternalTemplate[],
+      clearWhenNotApplicable = false,
+    ) => {
+      const canFetch =
+        templates.length >= 2 ||
+        (templates.length === 1 && externals.length > 0);
+
+      if (canFetch) {
+        fetchBatchPorts(
+          templates.map((t) => t.id),
+          { extraSourceIds: buildExtraSourceIds(externals) },
+        );
+        return;
+      }
+
+      if (clearWhenNotApplicable) {
+        setValue("wiring", []);
+      }
+    },
+    [buildExtraSourceIds, fetchBatchPorts, setValue],
+  );
+
+  // Sync ports & parents when selectedTemplates changes
+  useEffect(() => {
+    const missing = selectedTemplates.filter(
+      (t) => !templatePorts[t.id] || !templateParents[t.id],
+    );
+    if (missing.length > 0) {
+      fetchBatchPorts(
+        missing.map((t) => t.id),
+        { skipAutoWire: true },
+      );
+    }
+  }, [selectedTemplates, templatePorts, templateParents, fetchBatchPorts]);
+
+  const missingParents: Record<string, MissingParentInfo[]> = useMemo(() => {
+    const selectedIds = new Set(selectedTemplates.map((t) => t.id));
+    const result: Record<string, MissingParentInfo[]> = {};
+
+    for (const t of selectedTemplates) {
+      const parents = templateParents[t.id] || [];
+      const missing = parents.filter((p) => !selectedIds.has(p.id));
+      if (missing.length > 0) {
+        result[t.id] = missing.map((p) => ({
+          parentId: p.id,
+          parentName: p.name,
+          abstract: p.abstract,
+        }));
+      }
+    }
+
+    return result;
+  }, [selectedTemplates, templateParents]);
+
+  const missingParentTemplates: ExternalTemplate[] = useMemo(() => {
+    const map = new Map<string, ExternalTemplate>();
+    for (const infos of Object.values(missingParents)) {
+      for (const info of infos) {
+        if (!map.has(info.parentId)) {
+          map.set(info.parentId, {
+            id: info.parentId,
+            name: info.parentName,
+            abstract: info.abstract,
+          });
+        }
+      }
+    }
+    return [...map.values()];
+  }, [missingParents]);
+
+  const handleExternalTemplateAdd = useCallback(
+    (template: ExternalTemplate) => {
+      if (externalTemplates.some((t) => t.id === template.id)) return;
+      const newExternals = [...externalTemplates, template];
+      setExternalTemplates(newExternals);
+
+      refreshAutoWiring(selectedTemplates, newExternals);
+    },
+    [externalTemplates, selectedTemplates, refreshAutoWiring],
+  );
+
+  const handleExternalTemplateRemove = useCallback(
+    (templateId: string) => {
+      setExternalTemplates((prev) => prev.filter((t) => t.id !== templateId));
+
+      // Remove wiring that references this external template
+      const wiring: WiringRule[] = watch("wiring") || [];
+      const newWiring = wiring.filter(
+        (w) => w.source_template_id !== templateId,
+      );
+      setValue("wiring", newWiring);
+    },
+    [watch, setValue],
+  );
+
+  const handleConstantAdd = useCallback(
+    (type: ConstantType, id: string = randomUUID()) => {
+      const name = `constant_${constants.length + 1}`;
+      setConstants((prev) => [...prev, { id, name, type }]);
+    },
+    [constants.length],
+  );
+
+  const handleConstantRemove = useCallback(
+    (constantId: string) => {
+      setConstants((prev) => prev.filter((c) => c.id !== constantId));
+
+      // Remove wiring that references this constant
+      const wiring: WiringRule[] = watch("wiring") || [];
+      const newWiring = wiring.filter(
+        (w) => w.source_template_id !== constantId,
+      );
+      setValue("wiring", newWiring);
+    },
+    [watch, setValue],
+  );
+
+  const handleConstantUpdate = useCallback(
+    (constantId: string, name: string) => {
+      setConstants((prev) =>
+        prev.map((c) => (c.id === constantId ? { ...c, name } : c)),
+      );
+
+      // Wires from a constant carry its name, so they follow a rename
+      const wiring: WiringRule[] = watch("wiring") || [];
+      if (
+        wiring.some(
+          (w) =>
+            w.source_template_id === constantId && w.source_output !== name,
+        )
+      ) {
+        setValue(
+          "wiring",
+          wiring.map((w) =>
+            w.source_template_id === constantId
+              ? { ...w, source_output: name }
+              : w,
+          ),
+        );
+      }
+    },
+    [watch, setValue],
+  );
+
+  const handleConstantDefaultValueUpdate = useCallback(
+    (constantId: string, defaultValue: string) => {
+      setConstants((prev) =>
+        prev.map((c) => (c.id === constantId ? { ...c, defaultValue } : c)),
+      );
+    },
+    [],
+  );
+
+  const handleTemplateIdsChange = useCallback(
+    (ids: string[]) => {
+      const templateEntities = (buffer["templates"] as IkEntity[]) || [];
+      const selectedById = new Map(selectedTemplates.map((t) => [t.id, t]));
+      const entityById = new Map(templateEntities.map((t) => [t.id, t]));
+
+      const selected: GqlTemplateShort[] = [];
+      for (const id of ids) {
+        const candidate = selectedById.get(id) || entityById.get(id);
+        if (candidate) {
+          selected.push(candidate as GqlTemplateShort);
+        }
+      }
+
+      setSelectedTemplates(selected);
+
+      refreshAutoWiring(selected, externalTemplates, true);
+
+      return ids;
+    },
+    [buffer, selectedTemplates, refreshAutoWiring, externalTemplates],
+  );
+
+  // Sort by parent->child hierarchy (topological sort)
+  const sortByHierarchy = useCallback(() => {
+    const ids = selectedTemplates.map((t) => t.id);
+    const idSet = new Set(ids);
+    const templateMap = new Map(selectedTemplates.map((t) => [t.id, t]));
+
+    // Build adjacency: parent -> children (within selected set)
+    const childrenOf = new Map<string, Set<string>>();
+    const inDegree = new Map<string, number>();
+    for (const id of ids) {
+      childrenOf.set(id, new Set());
+      inDegree.set(id, 0);
+    }
+
+    for (const t of selectedTemplates) {
+      const parents = templateParents[t.id] || [];
+      for (const p of parents) {
+        if (idSet.has(p.id)) {
+          childrenOf.get(p.id)!.add(t.id);
+          inDegree.set(t.id, (inDegree.get(t.id) || 0) + 1);
+        }
+      }
+    }
+
+    // Kahn's algorithm
+    const queue = ids.filter((id) => (inDegree.get(id) || 0) === 0);
+    const sorted: GqlTemplateShort[] = [];
+
+    while (queue.length > 0) {
+      const id = queue.shift()!;
+      sorted.push(templateMap.get(id)!);
+      for (const child of childrenOf.get(id) || []) {
+        const deg = (inDegree.get(child) || 1) - 1;
+        inDegree.set(child, deg);
+        if (deg === 0) queue.push(child);
+      }
+    }
+
+    // Append any remaining (cycles) in original order
+    const sortedIds = new Set(sorted.map((t) => t.id));
+    for (const t of selectedTemplates) {
+      if (!sortedIds.has(t.id)) sorted.push(t);
+    }
+
+    const isSameOrder =
+      sorted.length === selectedTemplates.length &&
+      sorted.every((t, index) => t.id === selectedTemplates[index].id);
+
+    if (!isSameOrder) {
+      setSelectedTemplates(sorted);
+      setValue(
+        "templateIds",
+        sorted.map((t) => t.id),
+      );
+    }
+  }, [selectedTemplates, templateParents, setValue]);
+
+  // Auto-sort by hierarchy when parent info arrives
+  useEffect(() => {
+    if (selectedTemplates.length >= 2) {
+      sortByHierarchy();
+    }
+    // Only re-run when templateParents changes (new parent info loaded)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templateParents]);
+
+  // Fill the form with these templates (e.g. from a resource tree selection).
+  // Parents that are not in the list are pinned as external templates, then
+  // wiring is generated from template references as when adding by hand.
+  const prefillTemplates = useCallback(
+    async (templateIds: string[]) => {
+      if (templateIds.length === 0) return;
+      let resp: BatchTemplatePortsResponse;
+      try {
+        resp = (await ikApi.graphqlRequest(TEMPLATE_PORTS_QUERY, {
+          templateIds,
+        })) as BatchTemplatePortsResponse;
+      } catch (error) {
+        notifyError(error);
+        return;
+      }
+      applyPortsResponse(resp);
+
+      const byId = new Map(
+        resp.templatePorts.map((item) => [item.template.id, item.template]),
+      );
+      const selected: GqlTemplateShort[] = templateIds.flatMap((id) => {
+        const template = byId.get(id);
+        return template
+          ? [
+              {
+                id: template.id,
+                name: template.name,
+                abstract: template.abstract,
+                cloudResourceTypes: null,
+                entityName: "template",
+              },
+            ]
+          : [];
+      });
+      const selectedIds = new Set(selected.map((t) => t.id));
+      const externals = new Map<string, ExternalTemplate>();
+      for (const id of selectedIds) {
+        for (const parent of byId.get(id)?.parents ?? []) {
+          if (!selectedIds.has(parent.id) && !externals.has(parent.id)) {
+            externals.set(parent.id, {
+              id: parent.id,
+              name: parent.name,
+              abstract: parent.abstract,
+            });
+          }
+        }
+      }
+
+      setSelectedTemplates(selected);
+      setValue(
+        "templateIds",
+        selected.map((t) => t.id),
+      );
+      setExternalTemplates([...externals.values()]);
+      refreshAutoWiring(selected, [...externals.values()]);
+    },
+    [ikApi, applyPortsResponse, setValue, refreshAutoWiring],
+  );
+
+  // Add a single template (from canvas sidebar / drop)
+  const handleTemplateAdd = useCallback(
+    (template: GqlTemplateShort & { namingConvention?: string | null }) => {
+      if (selectedTemplates.some((t) => t.id === template.id)) return;
+
+      // Blueprint runs fail on templates without a naming convention; warn but still add
+      if (
+        template.namingConvention !== undefined &&
+        !template.namingConvention
+      ) {
+        notify(
+          `Template "${template.name}" has no naming convention. Set one on the template before running this blueprint.`,
+          "warning",
+        );
+      }
+
+      const newSelected = [...selectedTemplates, template];
+      setSelectedTemplates(newSelected);
+      setValue(
+        "templateIds",
+        newSelected.map((t) => t.id),
+      );
+
+      refreshAutoWiring(newSelected, externalTemplates);
+    },
+    [selectedTemplates, setValue, externalTemplates, refreshAutoWiring],
+  );
+
+  const handleTemplateRemove = useCallback(
+    (templateId: string) => {
+      const currentIds: string[] = watch("templateIds") || [];
+      const newIds = currentIds.filter((id) => id !== templateId);
+      setValue("templateIds", newIds);
+
+      const wiring: WiringRule[] = watch("wiring") || [];
+      const newWiring = wiring.filter(
+        (w) =>
+          w.source_template_id !== templateId &&
+          w.target_template_id !== templateId,
+      );
+      setValue("wiring", newWiring);
+
+      setSelectedTemplates((prev) => prev.filter((t) => t.id !== templateId));
+
+      setTemplatePorts((prev) => {
+        const updated = { ...prev };
+        delete updated[templateId];
+        return updated;
+      });
+    },
+    [watch, setValue],
+  );
+
+  return {
+    buffer,
+    setBuffer,
+    selectedTemplates,
+    setSelectedTemplates,
+    templatePorts,
+    currentWiring,
+    missingParents,
+    missingParentTemplates,
+    fetchBatchPorts,
+    prefillTemplates,
+    handleTemplateAdd,
+    handleTemplateIdsChange,
+    handleTemplateRemove,
+    externalTemplates,
+    setExternalTemplates,
+    handleExternalTemplateAdd,
+    handleExternalTemplateRemove,
+    constants,
+    setConstants,
+    handleConstantAdd,
+    handleConstantRemove,
+    handleConstantUpdate,
+    handleConstantDefaultValueUpdate,
+  };
+}

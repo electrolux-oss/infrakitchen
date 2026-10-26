@@ -22,6 +22,7 @@ from core.tasks.dependencies import get_task_service
 from core.utils.event_sender import EventSender
 
 from .cascade_destroy_service import CascadeDestroyService
+from .cascade_run_service import CascadeRunService
 from .crud import ResourceCRUD
 from .service import ResourceService
 
@@ -71,4 +72,21 @@ def get_cascade_destroy_service(
         workflow_service=workflow_service,
         event_sender=event_sender,
         audit_log_handler=AuditLogHandler(session=session, entity_name="cascade_destroy"),
+    )
+
+
+def get_cascade_run_service(
+    session: AsyncSession = Depends(get_db_session),
+) -> CascadeRunService:
+    workflow_service = WorkflowService(
+        crud=WorkflowCRUD(session=session),
+        revision_handler=RevisionHandler(session=session, entity_name="workflow"),
+        event_sender=EventSender(entity_name="workflow"),
+        audit_log_handler=AuditLogHandler(session=session, entity_name="workflow"),
+    )
+    return CascadeRunService(
+        resource_crud=ResourceCRUD(session=session),
+        resource_service=get_resource_service(session=session),
+        workflow_service=workflow_service,
+        audit_log_handler=AuditLogHandler(session=session, entity_name="workflow"),
     )

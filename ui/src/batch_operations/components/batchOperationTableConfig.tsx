@@ -1,0 +1,54 @@
+import { Entity } from "../../common/components/entities/Entity";
+import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
+import {
+  createdUpdatedColumns,
+  NUMERIC_COLUMN_ALIGN,
+} from "../../common/components/entity_table/tableColumns";
+import { RenderCellParams } from "../../ui";
+
+export const batchOperationColumns: EntityTableColumn[] = [
+  {
+    field: "name",
+    headerName: "Name",
+    fetchFields: ["name", "id", "entityName"],
+    flex: 1,
+    hideable: false,
+    filter: {
+      field: "name",
+      operators: ["like", "eq", "not_like"],
+      valueType: "text",
+      defaultOperator: "like",
+      defaultSelected: true,
+    },
+    renderCell: (params: RenderCellParams) => {
+      return (
+        <Entity entity={{ ...params.row, entityType: "batch_operation" }} />
+      );
+    },
+  },
+  {
+    field: "entityType",
+    headerName: "Entity",
+    flex: 0.5,
+    filter: {
+      field: "entity_type",
+      label: "Entity Type",
+      operators: ["eq"],
+      valueType: "select",
+      defaultOperator: "eq",
+      selectOptions: [
+        { label: "Resource", value: "resource" },
+        { label: "Executor", value: "executor" },
+      ],
+    },
+  },
+  {
+    field: "entityIds",
+    headerName: "# of Entities",
+    width: 120,
+    sortable: false,
+    ...NUMERIC_COLUMN_ALIGN,
+    valueGetter: (value: any) => (value ? value.length : 0),
+  },
+  ...createdUpdatedColumns({ withCreator: true }),
+];

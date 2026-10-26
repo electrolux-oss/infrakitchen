@@ -11,6 +11,7 @@ ENTITY_ID = uuid4()
 
 resolve_entity_data = AuditLogType.entity_data
 resolve_metadata = AuditLogType.resolve_metadata
+resolve_entity_loader_missing = AuditLogType.entity_loader_missing
 
 
 class _Loader:
@@ -56,6 +57,14 @@ class TestEntityData:
         result = await resolve_entity_data(_audit_log(), _info({}))
 
         assert result is None
+
+
+class TestEntityLoaderMissing:
+    def test_true_when_no_loader_is_registered(self):
+        assert resolve_entity_loader_missing(_audit_log(), _info({})) is True
+
+    def test_false_when_loader_is_registered(self):
+        assert resolve_entity_loader_missing(_audit_log(), _info({"resource": _Loader(None)})) is False
 
 
 class TestMetadata:

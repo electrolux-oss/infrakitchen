@@ -1,8 +1,14 @@
 ---
 title: Blueprint
+sidebar:
+  badge: alpha
 ---
 
 **Blueprints** are reusable definitions that combine multiple Templates into a single, executable plan. A Blueprint describes which infrastructure components to provision and how their outputs wire together — turning a multi-resource stack into a one-click operation.
+
+:::caution[Alpha Feature]
+Blueprints are in **alpha**. Behavior, properties, and APIs described below may change without notice.
+:::
 
 Blueprints are the recipes in your infrastructure kitchen — they define the ingredients (templates), the order of preparation (dependency graph), and the connections between components (wiring rules), so you can reliably reproduce entire environments.
 
@@ -109,6 +115,19 @@ Click <kbd>Save</kbd>.
 </Step>
 
 </Steps>
+
+### Creating a Blueprint from Existing Resources
+
+To turn infrastructure you already run into a blueprint, open a resource and choose **More** → **Create Blueprint**. The dialog lists the resource and every resource that depends on it; untick the ones to leave out and confirm.
+
+The Create Blueprint page then opens with:
+
+- The templates of the selected resources, in parent → child order. Resources that share a template add it once.
+- Parent templates that are not in the selection pinned as external inputs.
+- Wiring generated from the templates' references, as when you add templates by hand.
+- A suggested name (`<resource> blueprint`).
+
+Variable values are not copied from the resources, and nothing is saved until you click <kbd>Save</kbd>. Requires write permission on blueprints.
 
 :::tip[When to Use Blueprints]
 Use blueprints for:

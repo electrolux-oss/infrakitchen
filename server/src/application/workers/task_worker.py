@@ -7,6 +7,7 @@ from datetime import datetime, UTC
 from typing import Any, Literal
 from uuid import UUID
 
+from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
@@ -26,12 +27,15 @@ from application.workers.utils import (
 )
 from application.workflows.task import WorkflowTask
 from application.workspaces.task import WorkspaceTask
+from core.audit_logs.handler import set_audit_log_execution
 from core.tools.task import ToolTask, get_tool_task
 from core.config import Settings
-from core.constants.model import EventType, ModelActions
+from core.constants.model import EventType, ModelActions, ModelStatus
 from core.db_engine import engine
 from core.dependencies import get_async_session
+from core.utils.event_sender import flush_all_pending_senders
 from core.notifications.controller import NotificationEvent, publish_notification_event
+from core.notifications.text import action_label, entity_reference, notification_message, notification_title
 from core.errors import (
     CannotProceed,
     ChildrenIsNotReady,
@@ -76,6 +80,16 @@ TaskController = (
 )
 
 SessionFactory = Callable[[], AbstractAsyncContextManager[AsyncSession]]
+
+
+def _loaded_entity_name(task_controller: Any) -> str | None:
+    """Name of the task's entity, read without lazy loading (the session may be rolled back already)."""
+    instance = getattr(task_controller, f"{task_controller.logger.entity_name}_instance", None)
+    if instance is None:
+        return None
+    state = sa_inspect(instance, raiseerr=False)
+    name = state.dict.get("name") if state is not None else getattr(instance, "name", None)
+    return name if isinstance(name, str) else None
 
 
 class RequeueTask(Exception):
@@ -307,6 +321,8 @@ class TaskWorker:
         async with self.session_factory() as session:
             try:
                 await self.execute_task(session, item)
+                # Write tasks and events buffered after the controller's last commit
+                await flush_all_pending_senders()
             except BaseException:
                 # Includes cancellation after a lost lease
                 await session.rollback()
@@ -320,13 +336,45 @@ class TaskWorker:
         task_controller = await self.build_task_controller(session, item)
         action = item.action
 
+        audit_log_id = item.payload.get("audit_log_id")
+        execution: dict[str, Any] = {
+            "status": "running",
+            "entity": item.entity,
+            "action": action,
+            "worker": self.worker.host,
+            "attempt": item.retries + 1,
+            "started_at": datetime.now(UTC).isoformat(),
+        }
+        await self._update_audit_log_execution(audit_log_id, execution)
+
+        # Main task flow
+        status = "failed"
         try:
             await task_controller.start_pipeline()
+            status = "success"
             await self._send_success_notification(task_controller, action)
             task_executions_counter.add(1, {"job_type": item.entity, "status": "success"})
         except Exception as e:
+            status = "failed"
+            execution["error"] = f"{type(e).__name__}: {e}"
             task_executions_counter.add(1, {"job_type": item.entity, "status": "error"})
-            await self.handle_exception(e, item, task_controller, action)
+            try:
+                await self.handle_exception(e, item, task_controller, action)
+            except RequeueTask:
+                status = "retry"
+                raise
+        finally:
+            if status == "failed" and await self._entity_is_healthy(task_controller):
+                status = "warning"
+            await self._add_log_footer(task_controller, status)
+            finished_at = datetime.now(UTC)
+            execution.update(
+                status=status,
+                finished_at=finished_at.isoformat(),
+                duration_seconds=int(finished_at.timestamp()) - task_controller.logger.execution_start,
+                details=getattr(task_controller.logger, "result", {}),
+            )
+            await self._update_audit_log_execution(audit_log_id, execution)
 
     async def build_task_controller(self, session: AsyncSession, item: TaskQueueItemDTO) -> TaskController:
         action = item.action
@@ -357,6 +405,7 @@ class TaskWorker:
             audit_log_id=item.payload.get("audit_log_id"),
             step_id=item.payload.get("step_id"),
             resource_id=item.payload.get("resource_id"),
+            step_status=item.payload.get("step_status"),
         )
 
     async def process_scheduler_job(self, session: AsyncSession, item: TaskQueueItemDTO) -> None:
@@ -389,14 +438,7 @@ class TaskWorker:
                     await task_controller.make_failed()
                     await task_controller.logger.save_log()
                     await session.commit()
-                    entity_name = task_controller.logger.entity_name or item.entity
-                    entity_label = entity_name.replace("_", " ").capitalize()
-                    await self.send_task_notification(
-                        task_controller,
-                        f"Task {item.action or ''} failed for {task_controller.logger.entity_id}: {error}",
-                        title=f"{entity_label} {item.action or 'task'} failed",
-                        status="error",
-                    )
+                    await self.send_task_notification(task_controller, item.action, "failed", reason=error)
             except Exception as e:
                 logger.error(f"Failed to mark entity of reaped task {item.id} as failed: {e}")
 
@@ -415,6 +457,7 @@ class TaskWorker:
         audit_log_id: UUID | None = None,
         step_id: str | None = None,
         resource_id: str | None = None,
+        step_status: str | None = None,
     ) -> TaskController:
         match entity_controller:
             case "source_code":
@@ -480,6 +523,7 @@ class TaskWorker:
                     trace_id=trace_id,
                     step_id=step_id,
                     resource_id=resource_id,
+                    step_status=step_status,
                 )
             case "tool":
                 return await get_tool_task(
@@ -504,14 +548,7 @@ class TaskWorker:
         task_controller.logger.error("Task is timed out")
         await task_controller.make_failed()
         await task_controller.logger.save_log()
-        entity_name = task_controller.logger.entity_name
-        entity_label = entity_name.replace("_", " ").capitalize()
-        await self.send_task_notification(
-            task_controller,
-            f"Task {action or ''} failed for {task_controller.logger.entity_id}: Task is timed out".strip(),
-            title=f"{entity_label} {action or 'task'} timed out".strip(),
-            status="error",
-        )
+        await self.send_task_notification(task_controller, action, "timed out")
         raise TaskFailure("Task is timed out") from e
 
     async def handle_is_not_ready_exception(self, e, item: TaskQueueItemDTO, task_controller, action=None):
@@ -534,28 +571,19 @@ class TaskWorker:
         task_controller.logger.error(f"{error_type}: {e}")
         await task_controller.make_failed()
         await task_controller.logger.save_log()
-        entity_name = task_controller.logger.entity_name
-        entity_label = entity_name.replace("_", " ").capitalize()
-        await self.send_task_notification(
-            task_controller,
-            f"Task {action or ''} failed for {task_controller.logger.entity_id}: {error_type}".strip(),
-            title=f"{entity_label} {action or 'task'} failed".strip(),
-            status="error",
-        )
+        await self.send_task_notification(task_controller, action, "failed", reason=error_type)
         raise TaskFailure(f"{error_type}: {e}") from e
 
     async def handle_exit_without_state_exception(self, e, task_controller, action=None):
         error_message = f"ExitWithoutSave: {e}"
         task_controller.logger.error(error_message)
         await task_controller.logger.save_log()
-        entity_name = task_controller.logger.entity_name
-        entity_label = entity_name.replace("_", " ").capitalize()
-        await self.send_task_notification(
-            task_controller,
-            f"Task {action or ''} failed for {task_controller.logger.entity_id}: {error_message}".strip(),
-            title=f"{entity_label} {action or 'task'} failed".strip(),
-            status="error",
-        )
+        await self.send_task_notification(task_controller, action, "failed", reason=error_message)
+        # The entity status is untouched, so tell the parent workflow or its step would wait forever.
+        # A failed dry run has already reported its result.
+        notify_workflow = getattr(task_controller, "_notify_workflow_callback", None)
+        if notify_workflow is not None and action not in (ModelActions.DRYRUN, ModelActions.DRYRUN_WITH_TEMP_STATE):
+            await notify_workflow(step_status=ModelStatus.ERROR)
         raise TaskFailure(error_message) from e
 
     async def handle_unexpected_exception(self, e, task_controller, action=None):
@@ -565,39 +593,63 @@ class TaskWorker:
         await task_controller.logger.save_log()
 
         error_message = f"UnhandledException: {e}"
-        entity_name = task_controller.logger.entity_name
-        entity_label = entity_name.replace("_", " ").capitalize()
-        await self.send_task_notification(
-            task_controller,
-            f"Task {action or ''} failed for {task_controller.logger.entity_id}: {error_message}".strip(),
-            title=f"{entity_label} {action or 'task'} failed".strip(),
-            status="error",
-        )
+        await self.send_task_notification(task_controller, action, "failed", reason=error_message)
         raise TaskFailure(error_message) from e
 
     async def send_task_notification(
         self,
         task_controller,
-        message: str,
-        title: str | None = None,
-        status: str = "info",
+        action: str | None,
+        outcome: Literal["succeeded", "failed", "timed out"],
+        reason: str | None = None,
     ):
         logger.debug(f"Preparing to send notification - entity_id: {task_controller.logger.entity_id}")
+        entity_type = task_controller.logger.entity_name
+        entity_name = _loaded_entity_name(task_controller)
+        action_text = action_label(action)
+        entity = entity_reference(entity_type, entity_name, task_controller.logger.entity_id)
+        outcome_text = "completed successfully" if outcome == "succeeded" else outcome
+        message = f"{action_text} for {entity} {outcome_text}"
         event_message = NotificationEvent(
-            message=message,
-            title=title or "Task Update",
-            status=status,
+            message=notification_message(f"{message}: {reason}" if reason else message),
+            title=notification_title(entity_type, f"{action_text} {outcome}"),
+            status="success" if outcome == "succeeded" else "error",
             entity_id=task_controller.logger.entity_id,
-            entity_type=task_controller.logger.entity_name,
+            entity_type=entity_type,
+            entity_name=entity_name,
             event_type=EventType.EXECUTE,
         )
         await publish_notification_event(event_message)
 
+    async def _add_log_footer(self, task_controller, status: str):
+        if not hasattr(task_controller.logger, "add_log_footer"):
+            return
+        try:
+            task_controller.logger.add_log_footer(status)
+            await task_controller.logger.save_log()
+        except Exception as e:
+            logger.error(f"Failed to save log footer: {e}", exc_info=True)
+
+    async def _entity_is_healthy(self, task_controller) -> bool:
+        """Task failed only in a side effect (e.g. workspace sync), the entity itself is fine"""
+        if not hasattr(task_controller, "entity_is_healthy"):
+            return False
+        try:
+            return await task_controller.entity_is_healthy()
+        except Exception as e:
+            logger.error(f"Failed to check entity state: {e}", exc_info=True)
+            return False
+
+    async def _update_audit_log_execution(self, audit_log_id: str | None, execution: dict[str, Any]):
+        if not audit_log_id:
+            return
+        try:
+            await set_audit_log_execution(audit_log_id, execution)
+        except Exception as e:
+            logger.error(f"Failed to save execution result to audit log {audit_log_id}: {e}", exc_info=True)
+
     async def _send_success_notification(self, task_controller, action):
-        entity_name = task_controller.logger.entity_name
-        title = f"{entity_name.replace('_', ' ').capitalize()} {action} succeeded"
-        notification_message = f"Task {action} for {entity_name} completed successfully."
-        await self.send_task_notification(task_controller, notification_message, title=title, status="success")
+        await self.send_task_notification(task_controller, action, "succeeded")
 
     async def handle_exception(self, e, item: TaskQueueItemDTO, task_controller, action=None):
         if isinstance(e, ParentIsNotReady) or isinstance(e, ChildrenIsNotReady):

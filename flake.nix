@@ -120,7 +120,7 @@
 
             # Init InfraKitchen Python server
             export UV_PYTHON_INSTALL_DIR=${UV_PYTHON_INSTALL_DIR}
-            export UV_PYTHON=${pkgs.python314}/bin/python3
+            export UV_PYTHON=${pkgs.python315}/bin/python3
 
             ${pkgs.bash}/bin/bash ${initPythonServerScript}
 

@@ -423,6 +423,21 @@ class TestUpdate:
         assert str(exc.value) == "A template cannot be both a parent and a child of another template"
 
 
+class TestTemplateUpdateSchema:
+    def test_empty_parents_list_is_a_valid_update(self):
+        # Removing the last parent sends parents=[]; that must not be rejected as an empty update.
+        update = TemplateUpdate.model_validate({"name": None, "parents": [], "children": None})
+        assert update.parents == []
+
+    def test_empty_children_list_is_a_valid_update(self):
+        update = TemplateUpdate.model_validate({"children": []})
+        assert update.children == []
+
+    def test_all_none_is_rejected(self):
+        with pytest.raises(ValueError, match="At least one field"):
+            TemplateUpdate.model_validate({"name": None, "parents": None, "children": None})
+
+
 class TestPatch:
     @pytest.mark.asyncio
     async def test_patch_success_with_status_disable(
@@ -598,3 +613,63 @@ class TestGetTree:
 
         with pytest.raises(EntityNotFound, match="Template not found"):
             await mock_template_service.get_tree(template_id=TEMPLATE_ID, direction="parents")
+
+    @pytest.mark.asyncio
+    async def test_get_tree_shared_dependency(self, mock_template_service, mock_template_crud):
+        # Diamond A -> B -> D, A -> C -> D, D -> E. The recursive query returns one row per path,
+        # so D and E show up more than once.
+        a, b, c, d, e = (uuid4() for _ in range(5))
+        names = {a: "A", b: "B", c: "C", d: "D", e: "E"}
+
+        def row(node_id, link_id):
+            return {
+                "id": node_id,
+                "child_id": link_id,
+                "name": names[node_id],
+                "status": "status",
+            }
+
+        mock_template_crud.get_tree_to_children.return_value = [
+            row(a, None),
+            row(b, a),
+            row(c, a),
+            row(d, b),
+            row(d, c),
+            row(e, d),
+            row(e, d),
+        ]
+
+        result = await mock_template_service.get_tree(template_id=TEMPLATE_ID, direction="children")
+
+        assert result.name == "A"
+        assert [child.name for child in result.children] == ["B", "C"]
+        for branch in result.children:
+            assert [child.name for child in branch.children] == ["D"]
+            assert [child.name for child in branch.children[0].children] == ["E"]
+
+        node_ids = []
+
+        def collect(node):
+            node_ids.append(node.node_id)
+            for child in node.children:
+                collect(child)
+
+        collect(result)
+        assert len(node_ids) == len(set(node_ids)) == 7
+
+
+class TestGetAncestors:
+    @pytest.mark.asyncio
+    async def test_groups_rows_by_requested_template(self, mock_template_service, mock_template_crud):
+        vpc, environment, account = uuid4(), uuid4(), uuid4()
+        mock_template_crud.get_ancestors.return_value = [
+            {"root_id": vpc, "id": environment, "name": "Environment", "child_id": vpc},
+            {"root_id": vpc, "id": account, "name": "Account", "child_id": environment},
+            {"root_id": environment, "id": account, "name": "Account", "child_id": environment},
+        ]
+
+        result = await mock_template_service.get_ancestors([vpc, environment])
+
+        assert [(a.name, a.child_id) for a in result[vpc]] == [("Environment", vpc), ("Account", environment)]
+        assert [(a.name, a.child_id) for a in result[environment]] == [("Account", environment)]
+        mock_template_crud.get_ancestors.assert_awaited_once_with([vpc, environment])

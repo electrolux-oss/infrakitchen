@@ -35,12 +35,37 @@ class TestSupersedeKey:
         )
         assert supersede_key(task("workflow", entity_id)) != supersede_key(task("workflow", entity_id, step_id="a"))
 
+    def test_workflow_resource_callbacks_are_distinct(self):
+        """Parallel resources finishing must each resume the workflow."""
+        entity_id = uuid4()
+        assert supersede_key(task("workflow", entity_id, resource_id="r1")) != supersede_key(
+            task("workflow", entity_id, resource_id="r2")
+        )
+        assert supersede_key(task("workflow", entity_id)) != supersede_key(
+            task("workflow", entity_id, resource_id="r1")
+        )
+        assert supersede_key(task("workflow", entity_id, resource_id="r1")) == supersede_key(
+            task("workflow", entity_id, resource_id="r1")
+        )
+
+    def test_step_and_resource_targets_do_not_collide(self):
+        entity_id = uuid4()
+        assert supersede_key(task("workflow", entity_id, step_id="x")) != supersede_key(
+            task("workflow", entity_id, resource_id="x")
+        )
+
     def test_scheduler_jobs_are_never_superseded(self):
         job = {"kind": TaskQueueKind.SCHEDULER_JOB, "entity": "scheduler_job", "payload": {"job_id": "1"}}
         assert supersede_key(job) is None
 
 
 class TestCollapseBatch:
+    def test_keeps_parallel_workflow_callbacks(self):
+        entity_id = uuid4()
+        items = [task("workflow", entity_id, resource_id="r1"), task("workflow", entity_id, resource_id="r2")]
+
+        assert collapse_batch(items) == items
+
     def test_keeps_last_task_per_key_in_order(self):
         e1, e2 = uuid4(), uuid4()
         job = {"kind": TaskQueueKind.SCHEDULER_JOB, "entity": "scheduler_job", "payload": {}}
@@ -65,27 +90,28 @@ class TestNotifySuperseded:
 
     async def test_notifies_requester_once_when_same_user(self, monkeypatch):
         send = AsyncMock()
-        monkeypatch.setattr(notifications_mod.pubsub, "publish", send)
+        monkeypatch.setattr(notifications_mod, "deliver_in_app_notification", send)
         user = uuid4()
 
         await notify_superseded(self.superseded(created_by=user, replaced_by_user=user))
 
         send.assert_awaited_once()
-        topic, body = send.await_args_list[0].args
-        assert topic == f"notifications.in_app.{user}"
+        body = send.await_args_list[0].args[0]
+        assert body["user_id"] == str(user)
+        assert body["entity_type"] == "resource"
         assert body["status"] == "warning"
-        assert body["title"] == "Resource action already queued"
-        assert "'execute'" in body["msg"] and "'dryrun'" in body["msg"]
+        assert body["title"] == "Resource action replaced"
+        assert "execute" not in body["msg"] and "apply" in body["msg"] and "plan" in body["msg"]
 
     async def test_notifies_both_users_when_different(self, monkeypatch):
         send = AsyncMock()
-        monkeypatch.setattr(notifications_mod.pubsub, "publish", send)
+        monkeypatch.setattr(notifications_mod, "deliver_in_app_notification", send)
         old_user, new_user = uuid4(), uuid4()
 
         await notify_superseded(self.superseded(created_by=old_user, replaced_by_user=new_user))
 
-        topics = [call.args[0] for call in send.await_args_list]
-        assert topics == [f"notifications.in_app.{new_user}", f"notifications.in_app.{old_user}"]
+        user_ids = [call.args[0]["user_id"] for call in send.await_args_list]
+        assert user_ids == [str(new_user), str(old_user)]
 
 
 class TestToRow:

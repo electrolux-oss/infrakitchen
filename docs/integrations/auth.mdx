@@ -4,6 +4,25 @@ title: Authentication Providers
 
 This section provides an overview of the various **Authentication Providers** integrated into our project, enabling users and services to securely access resources. These providers allow you to leverage existing identity systems, often referred to as **Single Sign-On (SSO)**, to manage authentication.
 
+## Authentication Flow
+
+Interactive logins (OAuth 2.0, Backstage) follow the same general flow: InfraKitchen redirects to the identity provider, then exchanges the result for its own JWT.
+
+```mermaid
+---
+config:
+  themeVariables:
+    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+---
+flowchart LR
+    User[User] -->|Login| IDP[Identity Providers]
+    IDP -->|Token| Auth[Authentication]
+    Auth -->|JWT| User
+    User -->|JWT in Header| Auth
+```
+
+Service accounts and Guest access skip the external Identity Provider step: Service accounts exchange long-lived credentials directly for a JWT, and Guest access issues a JWT for a shared, unauthenticated identity (development only).
+
 ## Available Integrations
 
 We support a variety of authentication methods tailored to different use cases:

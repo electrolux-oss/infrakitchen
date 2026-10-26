@@ -10,7 +10,7 @@ from application.source_code_versions.schema import (
     SourceOutputConfigTemplateResponse,
     TemplatePortsItem,
 )
-from application.templates.schema import TemplateShort
+from application.templates.schema import TemplateAncestor, TemplateShort
 from graphql_api.schema import schema
 
 SOURCE_CODE_VERSION_TEMPLATE_CONFIGS_QUERY = """
@@ -38,6 +38,8 @@ TEMPLATE_PORTS_QUERY = """
             }
             configs {
                 name
+                required
+                default
             }
             outputs {
                 name
@@ -47,6 +49,12 @@ TEMPLATE_PORTS_QUERY = """
                 templateId
                 inputConfigName
                 outputConfigName
+            }
+            requiredConfigs
+            ancestors {
+                id
+                name
+                childId
             }
         }
     }
@@ -99,6 +107,7 @@ class TestSourceCodeVersionQueries:
         mocked_user,
     ):
         parent_id = uuid4()
+        grandparent_id = uuid4()
         template_response.abstract = False
         template_response.parents = [
             TemplateShort(
@@ -112,7 +121,9 @@ class TestSourceCodeVersionQueries:
             templates=[
                 TemplatePortsItem(
                     template=template_response,
-                    configs=[mocked_source_config_response],
+                    configs=[
+                        mocked_source_config_response.model_copy(update={"required": True, "default": "t3.micro"})
+                    ],
                     outputs=[
                         SourceOutputConfigTemplateResponse(
                             name="output_one",
@@ -128,6 +139,8 @@ class TestSourceCodeVersionQueries:
                             output_config_name="output_one",
                         )
                     ],
+                    required_configs=["service_name"],
+                    ancestors=[TemplateAncestor(id=grandparent_id, name="Account", child_id=parent_id)],
                 )
             ]
         )
@@ -157,7 +170,7 @@ class TestSourceCodeVersionQueries:
                             }
                         ],
                     },
-                    "configs": [{"name": mocked_source_config_response.name}],
+                    "configs": [{"name": mocked_source_config_response.name, "required": True, "default": "t3.micro"}],
                     "outputs": [{"name": "output_one"}],
                     "references": [
                         {
@@ -167,6 +180,8 @@ class TestSourceCodeVersionQueries:
                             "outputConfigName": "output_one",
                         }
                     ],
+                    "requiredConfigs": ["service_name"],
+                    "ancestors": [{"id": str(grandparent_id), "name": "Account", "childId": str(parent_id)}],
                 }
             ]
         }

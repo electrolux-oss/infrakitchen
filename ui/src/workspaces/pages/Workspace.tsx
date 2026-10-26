@@ -1,0 +1,37 @@
+import { useParams } from "react-router";
+
+import { LogLiveTail } from "../../common";
+import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
+import { EntityContainer } from "../../common/components/cards/EntityContainer";
+import { entityIcons } from "../../common/components/entities/entityIcons";
+import { EntityProvider } from "../../common/context/EntityContext";
+import { WorkspaceActions } from "../components/WorkspaceActions";
+import { WorkspaceContent } from "../components/WorkspaceContent";
+import { WORKSPACE_DETAIL_FIELDS } from "../graphql";
+
+export const WorkspacePage = () => {
+  const { workspace_id } = useParams();
+
+  return (
+    <EntityProvider
+      entity_name="workspace"
+      entity_id={workspace_id || ""}
+      entityFields={WORKSPACE_DETAIL_FIELDS}
+    >
+      <EntityContainer
+        titleIcon={entityIcons.workspace}
+        actions={
+          <>
+            <WorkspaceActions />
+            <EntityRefreshButton />
+          </>
+        }
+      >
+        <WorkspaceContent />
+        <LogLiveTail />
+      </EntityContainer>
+    </EntityProvider>
+  );
+};
+
+WorkspacePage.path = "/workspaces/:workspace_id/:tab?";

@@ -12,35 +12,34 @@ To successfully deploy InfraKitchen, ensure that your system meets the following
 - **Python**: Version 3.14
 - **Node.js**: Version 24
 - **PostgreSQL**: Version 17
-- **RabbitMQ**: Version 4.0.9
 - **Nginx**: Version 1.28
 - **OpenTofu/Terraform**: Version 1.10
 - **Yarn**: Version 1.22
 - **Git Client**: Latest stable version
 
-## Docker Image
+## Container Image
 
-InfraKitchen provides a multi-stage Dockerfile that builds the backend (Python + OpenTofu/Terraform + AWS CLI) and the frontend (Node.js), and serves the UI through the bundled Nginx.
+InfraKitchen provides a multi-stage Containerfile that builds the backend (Python + OpenTofu/Terraform + AWS CLI) and the frontend (Node.js), and serves the UI through the bundled Nginx.
 
 The example file also references the Nginx configs and entrypoint script shipped in the same directory:
 
-- [`docs/examples/docker/Dockerfile`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/Dockerfile)
-- [`docs/examples/docker/nginx.conf`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/nginx.conf)
-- [`docs/examples/docker/websocket-map.conf`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/websocket-map.conf)
-- [`docs/examples/docker/entrypoint.sh`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/entrypoint.sh)
+- [`docs/examples/podman/Containerfile`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/podman/Containerfile)
+- [`docs/examples/podman/nginx.conf`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/podman/nginx.conf)
+- [`docs/examples/podman/websocket-map.conf`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/podman/websocket-map.conf)
+- [`docs/examples/podman/entrypoint.sh`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/podman/entrypoint.sh)
 
-To build the docker image, run the following command from the root directory of the project:
+To build the container image, run the following command from the root directory of the project:
 
 ```bash
-docker build -f docs/examples/docker/Dockerfile -t your-image-name:tag .
+podman build -f docs/examples/podman/Containerfile -t your-image-name:tag .
 ```
 
 ## Kubernetes
 
-InfraKitchen provides an example manifest: [`docs/examples/docker/k8s-manifest.yaml`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/k8s-manifest.yaml).
+InfraKitchen provides an example manifest: [`docs/examples/podman/k8s-manifest.yaml`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/podman/k8s-manifest.yaml).
 
 It contains an Nginx Ingress, a Service, and backend, scheduler, and worker
-Deployments, wired to PostgreSQL and RabbitMQ:
+Deployments, wired to PostgreSQL:
 
 ```mermaid
 ---
@@ -53,24 +52,21 @@ flowchart LR
     Ing --> Svc["Service"]
     Svc --> B["backend<br/>(2 replicas)"]
     S["scheduler<br/>(1 replica)"] --> PG[(PostgreSQL)]
-    S --> RQ[(RabbitMQ)]
     B --> PG
-    B --> RQ
     W["worker<br/>(2 replicas)"] --> PG
-    W --> RQ
 ```
 
 Use it directly, or as a base for your own manifest.
 
 :::note
-RabbitMQ and PostgreSQL services are assumed to be running and accessible from the Kubernetes cluster.
+PostgreSQL is assumed to be running and accessible from the Kubernetes cluster.
 :::
 
 <Steps>
 
 <Step title="Prepare the manifest">
 
-Replace the placeholders `<SERVICE_ACCOUNT_NAME>`, `<IMG_NAME>`, `<POSTGRES_HOST>`, `<RabbitMQ_URL>` and `<HOST_NAME>` with your actual values.
+Replace the placeholders `<SERVICE_ACCOUNT_NAME>`, `<IMG_NAME>`, `<POSTGRES_HOST>` and `<HOST_NAME>` with your actual values. Feel free to choose a Service Account name as you wish, for example `infrakitchen-sa`, it will be created when applying the manifest.
 
 </Step>
 
@@ -94,6 +90,9 @@ authentication tokens:
 ```bash
 python server/generate_encryption_key.py
 ```
+
+The API refuses to start when `JWT_KEY` is missing, shorter than 32
+characters, or one of the published placeholders (`CHANGE_ME`, `supersecret`).
 
 Rerunning the script produces fresh values you can use to rotate the keys.
 Note that rotating the `ENCRYPTION_KEY` invalidates everything encrypted with
@@ -121,8 +120,14 @@ kubectl create secret generic infrakitchen-secrets \
 The manifest references the secret created in the previous step:
 
 ```bash
-kubectl apply -f docs/examples/docker/k8s-manifest.yaml
+kubectl apply -f docs/examples/podman/k8s-manifest.yaml
 ```
+
+The UI and API are served from one origin through nginx, so the API sends no
+CORS headers. To let another browser origin call the API, set
+`CORS_ALLOW_ORIGINS` to a comma-separated list of exact origins (e.g.
+`https://portal.example.com`). When `INFRAKITCHEN_URL` starts with `https://`,
+the API also sends `Strict-Transport-Security`.
 
 </Step>
 

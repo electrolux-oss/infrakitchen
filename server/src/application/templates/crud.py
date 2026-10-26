@@ -170,6 +170,48 @@ class TemplateCRUD:
         rows = result.mappings().all()
         return [dict(row) for row in rows]
 
+    async def get_ancestors(self, template_ids: list[UUID]) -> list[dict[str, Any]]:
+        """
+        Every template above each of ``template_ids`` in the parent chain, in one query.
+        Rows are ``root_id`` (the template asked for), ``id``, ``name`` and ``child_id``
+        (the template ``id`` is a direct parent of). A template reached by several paths
+        gives one row per path.
+        """
+        if not template_ids:
+            return []
+        recursive_query = text("""
+            WITH RECURSIVE tree_view AS (
+                SELECT
+                    c.id AS root_id,
+                    c.id,
+                    NULL::uuid AS child_id,
+                    c.name,
+                    ARRAY[c.id] AS path -- track visited nodes to avoid cycles
+                FROM templates c
+                WHERE c.id = ANY(:root_ids)
+
+                UNION ALL
+
+                SELECT
+                    tv.root_id,
+                    parent.id,
+                    cl.child_id,
+                    parent.name,
+                    path || parent.id
+                FROM templates parent
+                JOIN template_links cl ON cl.parent_id = parent.id
+                JOIN tree_view tv ON tv.id = cl.child_id
+                WHERE NOT parent.id = ANY(path)
+            )
+
+            SELECT DISTINCT root_id, id, name, child_id
+            FROM tree_view
+            WHERE child_id IS NOT NULL;
+        """)
+
+        result = await self.session.execute(recursive_query, {"root_ids": [str(t) for t in template_ids]})
+        return [dict(row) for row in result.mappings().all()]
+
     async def get_tree_to_children(self, template_id: str | UUID) -> list[dict[str, Any]]:
         recursive_query = text("""
             WITH RECURSIVE tree_view AS (

@@ -4,7 +4,7 @@ import uuid
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
-from application.templates.schema import TemplateResponse, TemplateShort
+from application.templates.schema import TemplateAncestor, TemplateResponse, TemplateShort
 from application.source_codes.schema import SourceCodeShort
 from core.constants.model import ModelStatus, VersionLifecycleState
 from core.users.schema import UserShort
@@ -342,6 +342,20 @@ class SourceConfigUpdateWithId(BaseModel):
     output_config_name: str | None = Field(default=None)
 
 
+class ConfigSyncSummary(BaseModel):
+    """
+    Result of reconciling variable/output configs with freshly parsed source code.
+    """
+
+    added_configs: list[str] = Field(default_factory=list)
+    updated_configs: list[str] = Field(default_factory=list)
+    removed_configs: list[str] = Field(default_factory=list)
+    added_outputs: list[str] = Field(default_factory=list)
+    updated_outputs: list[str] = Field(default_factory=list)
+    removed_outputs: list[str] = Field(default_factory=list)
+    removed_references: list[str] = Field(default_factory=list)
+
+
 class SourceOutputConfigResponse(BaseModel):
     id: uuid.UUID = Field(...)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
@@ -440,6 +454,10 @@ class TemplatePortsItem(BaseModel):
     configs: list[SourceConfigResponse] = Field(default_factory=list)
     outputs: list[SourceOutputConfigTemplateResponse] = Field(default_factory=list)
     references: list[SourceConfigTemplateReferenceResponse] = Field(default_factory=list)
+    # Template required configuration variables, wired as dependency config
+    required_configs: list[str] = Field(default_factory=list)
+    # Templates above this one in the parent chain; their outputs can fill its inputs at run time
+    ancestors: list[TemplateAncestor] = Field(default_factory=list)
 
 
 class BatchTemplatePortsResponse(BaseModel):

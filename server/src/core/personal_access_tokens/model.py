@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 import uuid
 
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import UUID, DateTime, ForeignKey, Index, String, func
+from sqlalchemy import JSON, UUID, DateTime, ForeignKey, Index, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.base_models import Base
@@ -18,6 +18,11 @@ class PersonalAccessToken(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     token_hash: Mapped[str] = mapped_column(nullable=False)
     token_prefix: Mapped[str] = mapped_column(String(32), nullable=False)
+    # NULL = full permissions of the owning user (developer token).
+    # Non-NULL = granted scope list, e.g. ["read:resource", "write:resource"];
+    # the token is treated as an agent token and enforcement clamps access to
+    # these scopes (must be a subset of the owner's own permissions).
+    scopes: Mapped[list[str] | None] = mapped_column(JSON, default=None, nullable=True)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -35,6 +40,7 @@ class PersonalAccessTokenDTO(BaseModel):
     name: str = Field(...)
     token_hash: EncryptedSecretStr = Field(...)
     token_prefix: str = Field(...)
+    scopes: list[str] | None = Field(default=None)
     expires_at: datetime | None = Field(default=None)
     last_used_at: datetime | None = Field(default=None)
     revoked_at: datetime | None = Field(default=None)

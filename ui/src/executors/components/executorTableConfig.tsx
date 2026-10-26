@@ -1,0 +1,131 @@
+import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
+import { Entity } from "../../common/components/entities/Entity";
+import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
+import {
+  createdUpdatedColumns,
+  labelsColumn,
+} from "../../common/components/entity_table/tableColumns";
+import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
+import { StatusLabel } from "../../common/components/labels";
+import { toolColumn } from "../../tools/components/toolColumn";
+import { RenderCellParams } from "../../ui";
+import { ENTITY_STATE, ENTITY_STATUS } from "../../utils/constants";
+
+export const executorColumns: EntityTableColumn[] = [
+  {
+    field: "Favorite",
+    fetchFields: ["isFavorite"],
+    headerName: "",
+    width: 60,
+    resizable: false,
+    sortable: true,
+    filterable: false,
+    align: "center",
+    headerAlign: "center",
+    renderCell: (params: RenderCellParams) => (
+      <FavoriteButton
+        componentId={String(params.row.id)}
+        componentType="executor"
+        ariaLabel="Toggle executor favorite"
+        format="table"
+        isFavorite={params.row.isFavorite}
+      />
+    ),
+  },
+  {
+    field: "name",
+    headerName: "Name",
+    fetchFields: ["name", "entityName"],
+    flex: 1,
+    hideable: false,
+    filter: {
+      field: "name",
+      operators: ["like", "eq", "not_like"],
+      valueType: "text",
+      defaultOperator: "like",
+      defaultSelected: true,
+    },
+    renderCell: (params: RenderCellParams) => {
+      return <Entity entity={params.row} />;
+    },
+  },
+  {
+    field: "sourceCode",
+    headerName: "Code Repository",
+    flex: 1,
+    sortField: "source_code.source_code_url",
+    filter: {
+      field: "source_code_id",
+      label: "Code Repository",
+      operators: ["eq", "in"],
+      valueType: "reference",
+      defaultOperator: "eq",
+      makeReferenceLoader: serverSearchReference({
+        entityPlural: "sourceCodes",
+        labelField: "identifier",
+      }),
+    },
+    valueGetter: (_value: any, row: any) => row.sourceCode?.identifier || "",
+    renderCell: (params: RenderCellParams) => {
+      const sourceCodeVersion = params.row.sourceCode;
+      return (
+        <Entity
+          entity={{
+            ...sourceCodeVersion,
+            sourceCodeUrl: params.row.sourceCode?.sourceCodeUrl,
+            sourceCodeProvider: params.row.sourceCode?.sourceCodeProvider,
+          }}
+        />
+      );
+    },
+  },
+  {
+    field: "state",
+    fetchFields: ["state", "status"],
+    headerName: "State",
+    flex: 1,
+    filter: [
+      {
+        field: "state",
+        operators: ["eq", "in"],
+        valueType: "select",
+        defaultOperator: "eq",
+        selectOptions: [
+          { label: "Provision", value: ENTITY_STATE.PROVISION },
+          { label: "Provisioned", value: ENTITY_STATE.PROVISIONED },
+          { label: "Destroy", value: ENTITY_STATE.DESTROY },
+          { label: "Destroyed", value: ENTITY_STATE.DESTROYED },
+          { label: "Update", value: ENTITY_STATE.UPDATE },
+        ],
+      },
+      {
+        field: "status",
+        label: "Status",
+        operators: ["eq", "in"],
+        valueType: "select",
+        defaultOperator: "eq",
+        selectOptions: [
+          { label: "Queued", value: ENTITY_STATUS.QUEUED },
+          { label: "In Progress", value: ENTITY_STATUS.IN_PROGRESS },
+          { label: "Done", value: ENTITY_STATUS.DONE },
+          { label: "Error", value: ENTITY_STATUS.ERROR },
+          { label: "Unknown", value: ENTITY_STATUS.UNKNOWN },
+          { label: "Approval Pending", value: ENTITY_STATUS.APPROVAL_PENDING },
+          { label: "Pending", value: ENTITY_STATUS.PENDING },
+          { label: "Rejected", value: ENTITY_STATUS.REJECTED },
+          { label: "Ready", value: ENTITY_STATUS.READY },
+        ],
+      },
+    ],
+    valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
+    renderCell: (params: RenderCellParams) => (
+      <StatusLabel
+        status={String(params.row.status).toLowerCase()}
+        state={String(params.row.state).toLowerCase()}
+      />
+    ),
+  },
+  toolColumn(),
+  ...createdUpdatedColumns({ withCreator: true }),
+  labelsColumn("executor"),
+];

@@ -1,0 +1,610 @@
+import React, { lazy } from "react";
+
+import { RouteObject } from "react-router";
+
+import { useConfig, usePermissionProvider } from "./common";
+import { NotFoundPage } from "./dashboard/pages/NotFound";
+
+type LazyRouteDefinition = RouteObject & {
+  requiredPermission?: string;
+  permissionAction?: string;
+  /** Key in `globalConfig`; the route only exists while that flag is enabled. */
+  featureFlag?: string;
+};
+
+const lz = <T extends Record<string, React.ComponentType<any>>>(
+  factory: () => Promise<T>,
+  name: keyof T,
+) =>
+  lazy(() =>
+    factory().then((m) => ({ default: m[name] as React.ComponentType<any> })),
+  );
+
+const allRoutes: LazyRouteDefinition[] = [
+  // ── Settings ────────────────────────────────────────────────────────────────
+  {
+    path: "/admin/:tab?",
+    Component: lz(
+      () => import("./administration/pages/AdminPage"),
+      "AdminPage",
+    ),
+    requiredPermission: "api:admin",
+    permissionAction: "admin",
+  },
+
+  // ── IaC Tools ────────────────────────────────────────────────────────────────
+  {
+    path: "/tools",
+    Component: lz(() => import("./tools/pages/ToolsPage"), "ToolsPage"),
+    requiredPermission: "api:tool",
+    permissionAction: "read",
+  },
+  {
+    path: "/tools/:tool_id/:tab?",
+    Component: lz(() => import("./tools/pages/Tool"), "ToolPage"),
+    requiredPermission: "api:tool",
+    permissionAction: "read",
+  },
+
+  // ── Audit Logs ───────────────────────────────────────────────────────────────
+  {
+    path: "/audit_logs",
+    Component: lz(
+      () => import("./audit_logs/pages/AuditLogs"),
+      "AuditLogsPage",
+    ),
+    requiredPermission: "api:audit_log",
+    permissionAction: "read",
+  },
+
+  // ── Auth Providers ───────────────────────────────────────────────────────────
+  {
+    path: "/auth_providers",
+    Component: lz(
+      () => import("./auth_providers/pages/AuthProviders"),
+      "AuthProvidersPage",
+    ),
+    requiredPermission: "api:auth_provider",
+    permissionAction: "read",
+  },
+  {
+    path: "/auth_providers/create",
+    Component: lz(
+      () => import("./auth_providers/pages/AuthProviderCreate"),
+      "AuthProviderCreatePage",
+    ),
+    requiredPermission: "api:auth_provider",
+    permissionAction: "write",
+  },
+  {
+    path: "/auth_providers/:auth_provider_id/:tab?",
+    Component: lz(
+      () => import("./auth_providers/pages/AuthProvider"),
+      "AuthProviderPage",
+    ),
+    requiredPermission: "api:auth_provider",
+    permissionAction: "read",
+  },
+
+  // ── Blueprints ───────────────────────────────────────────────────────────────
+  {
+    path: "/blueprints",
+    Component: lz(
+      () => import("./blueprints/pages/Blueprints"),
+      "BlueprintsPage",
+    ),
+    requiredPermission: "api:blueprint",
+    permissionAction: "read",
+  },
+  {
+    path: "/blueprints/create",
+    Component: lz(
+      () => import("./blueprints/pages/BlueprintCreate"),
+      "BlueprintCreatePage",
+    ),
+    requiredPermission: "api:blueprint",
+    permissionAction: "write",
+  },
+  {
+    path: "/blueprints/:blueprint_id/use",
+    Component: lz(
+      () => import("./blueprints/pages/BlueprintUse"),
+      "BlueprintUsePage",
+    ),
+    requiredPermission: "api:blueprint",
+    permissionAction: "write",
+  },
+  {
+    path: "/blueprints/:blueprint_id/:tab?",
+    Component: lz(
+      () => import("./blueprints/pages/Blueprint"),
+      "BlueprintPage",
+    ),
+    requiredPermission: "api:blueprint",
+    permissionAction: "read",
+  },
+
+  // ── Batch Operations ─────────────────────────────────────────────────────────
+  {
+    path: "/batch_operations",
+    Component: lz(
+      () => import("./batch_operations/pages/BatchOperations"),
+      "BatchOperationsPage",
+    ),
+    requiredPermission: "api:batch_operation",
+    permissionAction: "read",
+  },
+  {
+    path: "/batch_operations/create",
+    Component: lz(
+      () => import("./batch_operations/pages/BatchOperationCreate"),
+      "BatchOperationCreatePage",
+    ),
+    requiredPermission: "api:batch_operation",
+    permissionAction: "read",
+  },
+  {
+    path: "/batch_operations/:batch_operation_id/:tab?",
+    Component: lz(
+      () => import("./batch_operations/pages/BatchOperation"),
+      "BatchOperationPage",
+    ),
+    requiredPermission: "api:batch_operation",
+    permissionAction: "read",
+  },
+
+  // ── Executors ────────────────────────────────────────────────────────────────
+  {
+    path: "/executors",
+    Component: lz(() => import("./executors/pages/Executors"), "ExecutorsPage"),
+    requiredPermission: "api:executor",
+    permissionAction: "read",
+  },
+  {
+    path: "/executors/create",
+    Component: lz(
+      () => import("./executors/pages/ExecutorCreate"),
+      "ExecutorCreatePage",
+    ),
+    requiredPermission: "api:executor",
+    permissionAction: "read",
+  },
+  {
+    path: "/executors/:executor_id/:tab?",
+    Component: lz(() => import("./executors/pages/Executor"), "ExecutorPage"),
+    requiredPermission: "api:executor",
+    permissionAction: "read",
+  },
+
+  // ── Integrations ─────────────────────────────────────────────────────────────
+  {
+    path: "/integrations",
+    Component: lz(
+      () => import("./integrations/pages/Integrations"),
+      "IntegrationsPage",
+    ),
+    requiredPermission: "api:integration",
+    permissionAction: "read",
+  },
+  {
+    path: "/integrations/:provider/setup",
+    Component: lz(
+      () => import("./integrations/pages/IntegrationCreate"),
+      "IntegrationCreatePage",
+    ),
+    requiredPermission: "api:integration",
+    permissionAction: "write",
+  },
+  {
+    path: "/integrations/:provider/:integration_id/:tab?",
+    Component: lz(
+      () => import("./integrations/pages/Integration"),
+      "IntegrationPage",
+    ),
+    requiredPermission: "api:integration",
+    permissionAction: "read",
+  },
+
+  // ── Permissions ───────────────────────────────────────────────────────────────
+  {
+    path: "/permissions/:permission_id",
+    Component: lz(
+      () => import("./permissions/pages/Permission"),
+      "PermissionPage",
+    ),
+    requiredPermission: "api:permission",
+    permissionAction: "read",
+  },
+
+  // ── Resources ─────────────────────────────────────────────────────────────────
+  {
+    path: "/resources",
+    Component: lz(() => import("./resources/pages/Resources"), "ResourcesPage"),
+    requiredPermission: "api:resource",
+    permissionAction: "read",
+  },
+  {
+    path: "/resources/create",
+    Component: lz(
+      () => import("./resources/pages/ResourceCreate"),
+      "ResourceCreatePage",
+    ),
+    requiredPermission: "api:resource",
+    permissionAction: "read",
+  },
+  {
+    path: "/resources/:resource_id/metadata",
+    Component: lz(
+      () => import("./resources/components/ResourceMetadata"),
+      "ResourceMetadataPage",
+    ),
+    requiredPermission: "api:resource",
+    permissionAction: "read",
+  },
+  {
+    path: "/resources/:resource_id/:tab?",
+    Component: lz(() => import("./resources/pages/Resource"), "ResourcePage"),
+    requiredPermission: "api:resource",
+    permissionAction: "read",
+  },
+
+  // ── Roles ─────────────────────────────────────────────────────────────────────
+  {
+    path: "/roles/create",
+    Component: lz(() => import("./roles/pages/RoleCreate"), "RoleCreatePage"),
+    requiredPermission: "api:permission",
+    permissionAction: "write",
+  },
+  {
+    path: "/roles",
+    Component: lz(() => import("./roles/pages/Roles"), "RolesPage"),
+    requiredPermission: "api:permission",
+    permissionAction: "read",
+  },
+  {
+    path: "/roles/:role_id/:tab?",
+    Component: lz(() => import("./roles/pages/Role"), "RolePage"),
+    requiredPermission: "api:permission",
+    permissionAction: "read",
+  },
+
+  // ── Secrets ───────────────────────────────────────────────────────────────────
+  {
+    path: "/secrets",
+    Component: lz(() => import("./secrets/pages/Secrets"), "SecretsPage"),
+    requiredPermission: "api:secret",
+    permissionAction: "read",
+  },
+  {
+    path: "/secrets/create",
+    Component: lz(
+      () => import("./secrets/pages/SecretCreate"),
+      "SecretCreatePage",
+    ),
+    requiredPermission: "api:secret",
+    permissionAction: "write",
+  },
+  {
+    path: "/secrets/:secret_id/:tab?",
+    Component: lz(() => import("./secrets/pages/Secret"), "SecretPage"),
+    requiredPermission: "api:secret",
+    permissionAction: "read",
+  },
+
+  // ── Source Codes ──────────────────────────────────────────────────────────────
+  {
+    path: "/source_codes",
+    Component: lz(
+      () => import("./source_codes/pages/SourceCodes"),
+      "SourceCodesPage",
+    ),
+    requiredPermission: "api:source_code",
+    permissionAction: "read",
+  },
+  {
+    path: "/source_codes/create",
+    Component: lz(
+      () => import("./source_codes/pages/SourceCodeCreate"),
+      "SourceCodeCreatePage",
+    ),
+    requiredPermission: "api:source_code",
+    permissionAction: "write",
+  },
+  {
+    path: "/source_codes/:source_code_id/:tab?",
+    Component: lz(
+      () => import("./source_codes/pages/SourceCode"),
+      "SourceCodePage",
+    ),
+    requiredPermission: "api:source_code",
+    permissionAction: "read",
+  },
+
+  // Source Code Versions
+  {
+    path: "/source_code_versions",
+    Component: lz(
+      () => import("./source_code_versions/pages/SourceCodeVersions"),
+      "SourceCodeVersionsPage",
+    ),
+    requiredPermission: "api:source_code_version",
+    permissionAction: "read",
+  },
+  {
+    path: "/source_code_versions/create",
+    Component: lz(
+      () => import("./source_code_versions/pages/SourceCodeVersionCreate"),
+      "SourceCodeVersionCreatePage",
+    ),
+    requiredPermission: "api:source_code_version",
+    permissionAction: "write",
+  },
+  {
+    path: "/source_code_versions/:source_code_version_id/:tab?",
+    Component: lz(
+      () => import("./source_code_versions/pages/SourceCodeVersion"),
+      "SourceCodeVersionPage",
+    ),
+    requiredPermission: "api:source_code_version",
+    permissionAction: "read",
+  },
+  // ── Storages ──────────────────────────────────────────────────────────────────
+  {
+    path: "/storages",
+    Component: lz(() => import("./storages/pages/Storages"), "StoragesPage"),
+    requiredPermission: "api:storage",
+    permissionAction: "read",
+  },
+  {
+    path: "/storages/create",
+    Component: lz(
+      () => import("./storages/pages/StorageCreate"),
+      "StorageCreatePage",
+    ),
+    requiredPermission: "api:storage",
+    permissionAction: "write",
+  },
+  {
+    path: "/storages/:storage_id/:tab?",
+    Component: lz(() => import("./storages/pages/Storage"), "StoragePage"),
+    requiredPermission: "api:storage",
+    permissionAction: "read",
+  },
+
+  // ── Tasks ─────────────────────────────────────────────────────────────────────
+  {
+    path: "/tasks",
+    Component: lz(() => import("./tasks/pages/Tasks"), "TasksPage"),
+    requiredPermission: "api:task",
+    permissionAction: "read",
+  },
+
+  // ── Projects ──────────────────────────────────────────────────────────────────
+  {
+    path: "/projects",
+    Component: lz(() => import("./projects/pages/Projects"), "ProjectsPage"),
+    requiredPermission: "api:project",
+    permissionAction: "read",
+  },
+  {
+    path: "/projects/create",
+    Component: lz(
+      () => import("./projects/pages/ProjectCreate"),
+      "ProjectCreatePage",
+    ),
+    requiredPermission: "api:project",
+    permissionAction: "write",
+  },
+  {
+    path: "/projects/:project_id/:tab?",
+    Component: lz(() => import("./projects/pages/Project"), "ProjectPage"),
+    requiredPermission: "api:project",
+    permissionAction: "read",
+  },
+
+  // ── Services ──────────────────────────────────────────────────────────────────
+  {
+    path: "/services",
+    Component: lz(() => import("./services/pages/Services"), "ServicesPage"),
+    requiredPermission: "api:service",
+    permissionAction: "read",
+    featureFlag: "services",
+  },
+  {
+    path: "/services/create",
+    Component: lz(
+      () => import("./services/pages/ServiceCreate"),
+      "ServiceCreatePage",
+    ),
+    requiredPermission: "api:service",
+    permissionAction: "write",
+    featureFlag: "services",
+  },
+  {
+    path: "/services/:service_id/:tab?",
+    Component: lz(() => import("./services/pages/Service"), "ServicePage"),
+    requiredPermission: "api:service",
+    permissionAction: "read",
+    featureFlag: "services",
+  },
+
+  // ── Templates ─────────────────────────────────────────────────────────────────
+  {
+    path: "/templates",
+    Component: lz(() => import("./templates/pages/Templates"), "TemplatesPage"),
+    requiredPermission: "api:template",
+    permissionAction: "read",
+  },
+  {
+    path: "/templates/import",
+    Component: lz(
+      () => import("./templates/pages/TemplateImport"),
+      "TemplateImportPage",
+    ),
+    requiredPermission: "api:template",
+    permissionAction: "write",
+  },
+  {
+    path: "/templates/create",
+    Component: lz(
+      () => import("./templates/pages/TemplateCreate"),
+      "TemplateCreatePage",
+    ),
+    requiredPermission: "api:template",
+    permissionAction: "write",
+  },
+  {
+    path: "/templates/:template_id/:tab?",
+    Component: lz(() => import("./templates/pages/Template"), "TemplatePage"),
+    requiredPermission: "api:template",
+    permissionAction: "read",
+  },
+
+  // ── Users ─────────────────────────────────────────────────────────────────────
+  {
+    path: "/users",
+    Component: lz(() => import("./users/pages/Users"), "UsersPage"),
+    requiredPermission: "api:user",
+    permissionAction: "read",
+  },
+  {
+    path: "/users/create",
+    Component: lz(() => import("./users/pages/UserCreate"), "UserCreatePage"),
+    requiredPermission: "api:user",
+    permissionAction: "write",
+  },
+  {
+    path: "/users/:user_id/:tab?",
+    Component: lz(() => import("./users/pages/User"), "UserPage"),
+    requiredPermission: "api:user",
+    permissionAction: "read",
+  },
+
+  // ── Workers ───────────────────────────────────────────────────────────────────
+  {
+    path: "/workers",
+    Component: lazy(() => import("./workers/pages/Workers")),
+    requiredPermission: "api:worker",
+    permissionAction: "read",
+  },
+
+  // ── Workflows ─────────────────────────────────────────────────────────────────
+  {
+    path: "/workflows",
+    Component: lz(() => import("./workflows/pages/Workflows"), "WorkflowsPage"),
+    requiredPermission: "api:workflow",
+    permissionAction: "read",
+  },
+  {
+    path: "/workflows/:workflow_id/edit",
+    Component: lz(
+      () => import("./workflows/pages/WorkflowEdit"),
+      "WorkflowEditPage",
+    ),
+    requiredPermission: "api:workflow",
+    permissionAction: "write",
+  },
+  {
+    path: "/workflows/:workflow_id/:tab?",
+    Component: lz(() => import("./workflows/pages/Workflow"), "WorkflowPage"),
+    requiredPermission: "api:workflow",
+    permissionAction: "read",
+  },
+
+  // ── Workspaces ────────────────────────────────────────────────────────────────
+  {
+    path: "/workspaces",
+    Component: lz(
+      () => import("./workspaces/pages/Workspaces"),
+      "WorkspacesPage",
+    ),
+    requiredPermission: "api:workspace",
+    permissionAction: "read",
+  },
+  {
+    path: "/workspaces/create",
+    Component: lz(
+      () => import("./workspaces/pages/WorkspaceCreate"),
+      "WorkspaceCreatePage",
+    ),
+    requiredPermission: "api:workspace",
+    permissionAction: "write",
+  },
+  {
+    path: "/workspaces/:workspace_id/:tab?",
+    Component: lz(
+      () => import("./workspaces/pages/Workspace"),
+      "WorkspacePage",
+    ),
+    requiredPermission: "api:workspace",
+    permissionAction: "read",
+  },
+];
+
+const DashboardPageLazy = lz(
+  () => import("./dashboard/pages/Dashboard"),
+  "DashboardPage",
+);
+
+// Every signed-in user has a notification inbox, so the page needs no permission
+const NotificationsPageLazy = lz(
+  () => import("./notifications/pages/Notifications"),
+  "NotificationsPage",
+);
+
+export const useFilteredProtectedRoutes = (): RouteObject[] => {
+  const { permissions } = usePermissionProvider();
+  const { globalConfig } = useConfig();
+
+  return React.useMemo(() => {
+    const checkActionPermission = (
+      resource: string,
+      action: string,
+    ): boolean => {
+      if (permissions["*"] === "admin") {
+        return true;
+      }
+
+      const userPermission = permissions[resource];
+
+      if (!userPermission) {
+        return false;
+      }
+
+      if (action === "read") {
+        return true;
+      }
+
+      if (action === "write") {
+        return userPermission === "write" || userPermission === "admin";
+      }
+
+      if (action === "admin") {
+        return userPermission === "admin";
+      }
+
+      return false;
+    };
+
+    const accessibleRoutes = allRoutes.filter((route) => {
+      if (route.featureFlag && !globalConfig?.[route.featureFlag]) {
+        return false;
+      }
+      if (route.requiredPermission && route.permissionAction) {
+        return checkActionPermission(
+          route.requiredPermission,
+          route.permissionAction,
+        );
+      }
+      return false;
+    });
+
+    return [
+      ...accessibleRoutes,
+      { path: "/", Component: DashboardPageLazy },
+      { path: "/notifications", Component: NotificationsPageLazy },
+      { path: "*", Component: NotFoundPage },
+    ];
+    // `loading` is included so consumers re-run once permissions resolve.
+  }, [permissions, globalConfig]);
+};

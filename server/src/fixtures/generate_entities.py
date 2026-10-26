@@ -23,6 +23,7 @@ from core.database import engine
 
 from fixtures.auth_providers import create_auth_provider
 from fixtures.batch_operations import insert_batch_operations
+from fixtures.blueprints import insert_blueprints
 from fixtures.executors import insert_executors
 from fixtures.insert_secrets import insert_secrets
 from fixtures.integrations import insert_env_integrations, insert_integrations
@@ -115,6 +116,7 @@ async def create_fixtures(drop_tables: bool = False):
         await insert_templates(session, user)
         await insert_source_code_version(session, user)
         await insert_validation_rules(session, user)
+        await insert_blueprints(session, user)
         for env in envs:
             await insert_env_integrations(session, env, user)
             await insert_storages(session, env, user)

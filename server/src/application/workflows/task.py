@@ -1,3 +1,4 @@
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 import logging
 from typing import Any
@@ -6,12 +7,13 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
 
+from application.common.schema import DependencyConfig
 from application.resources.schema import ResourceCreate, Variables
 from application.resources.service import ResourceService
 from application.source_code_versions.service import SourceCodeVersionService
 from application.templates.service import TemplateService
 from application.workflows.model import Workflow, WorkflowStep
-from application.workflows.schema import WorkflowResponse, WorkflowStepResponse
+from application.workflows.schema import WiringRule, WorkflowResponse, WorkflowStepResponse
 from application.workflows.service import WorkflowService
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions, ModelState, ModelStatus, WorkflowAction
@@ -37,6 +39,7 @@ class WorkflowTask:
         event_sender: EventSender,
         action: ModelActions,
         step_id: str | None = None,
+        step_status: str | None = None,
     ) -> None:
         self.session: AsyncSession = session
         self.workflow_service: WorkflowService = workflow_service
@@ -50,6 +53,8 @@ class WorkflowTask:
         self.user: UserDTO = user
         self.action: ModelActions = action
         self.step_id: str | None = step_id
+        # Result reported by a resource task that leaves the resource status untouched (dry run)
+        self.step_status: str | None = step_status
 
     # workflow states
     async def start_pipeline(self):
@@ -57,10 +62,15 @@ class WorkflowTask:
         self.resource_service.audit_log_handler.trace_id = str(self.workflow_pydantic.id)
         match self.action:
             case ModelActions.EXECUTE:
-                if self.workflow_instance.action == WorkflowAction.DESTROY:
-                    await self.destroy_entity()
-                else:
-                    await self.execute_entity()
+                match self.workflow_instance.action:
+                    case WorkflowAction.DESTROY:
+                        await self.destroy_entity()
+                    case WorkflowAction.PLAN:
+                        await self.run_resource_steps(self.manage_plan_step, continue_on_error=True, rerunnable=True)
+                    case WorkflowAction.APPLY:
+                        await self.run_resource_steps(self.manage_apply_step, rerunnable=True)
+                    case _:
+                        await self.execute_entity()
             case _:
                 raise CannotProceed(f"Unknown action: {self.action}")
 
@@ -77,21 +87,31 @@ class WorkflowTask:
             if not template.configuration.naming_convention:
                 raise CannotProceed(f"Template {template.id} does not have a naming convention defined")
 
+            # Parents outside the workflow are selected explicitly, the others are created by earlier steps
             parent_resources = [r.id for r in step.parent_resource_ids]
-            if not parent_resources and template.parents:
-                parent_resources = [
-                    stp.resource_id
-                    for stp in self.workflow_instance.steps
-                    if stp.template_id in [parent.id for parent in template.parents] and stp.resource_id is not None
-                ]
+            selected_parent_templates = {r.template_id for r in step.parent_resource_ids}
+            parent_resources += [
+                stp.resource_id
+                for stp in self.workflow_instance.steps
+                if stp.template_id in [parent.id for parent in template.parents]
+                and stp.template_id not in selected_parent_templates
+                and stp.resource_id is not None
+            ]
 
-            # Resolve wired variables from completed upstream resources
-            wired_vars = await self._resolve_wired_variables(step)
+            # Resolve wired variables and dependency config from upstream resources
+            wired_vars, wired_config = await self._resolve_wired_variables(step)
             if wired_vars:
                 step.resolved_variables = {**step.resolved_variables, **wired_vars}
                 flag_modified(step, "resolved_variables")
                 self.logger.info(f"Resolved wired variables for step {step.id}: {list(wired_vars.keys())}")
+            if wired_config:
+                step.resolved_dependency_config = {**(step.resolved_dependency_config or {}), **wired_config}
+                flag_modified(step, "resolved_dependency_config")
+                self.logger.info(f"Resolved wired dependency config for step {step.id}: {list(wired_config.keys())}")
 
+            storage_path = (
+                f"service-catalog/{template.template}/{template.configuration.naming_convention}/terraform.tfstate"
+            )
             resource = ResourceCreate(
                 name=template.configuration.naming_convention,
                 template_id=step.template_id,
@@ -100,10 +120,15 @@ class WorkflowTask:
                 integration_ids=[i.id for i in step.integration_ids],
                 secret_ids=[s.id for s in step.secret_ids],
                 variables=[Variables(name=k, value=v) for k, v in step.resolved_variables.items()],
-                dependency_config=[],
+                dependency_config=[
+                    DependencyConfig(name=k, value=str(v), inherited_by_children=True)
+                    for k, v in (step.resolved_dependency_config or {}).items()
+                    if v is not None
+                ],
                 dependency_tags=[],
-                storage_id=step.storage_id,
-                storage_path=f"service-catalog/{template.template}/{template.configuration.naming_convention}/terraform.tfstate",
+                # Abstract resources have no tf state
+                storage_id=None if template.abstract else step.storage_id,
+                storage_path=None if template.abstract else storage_path,
                 workspace_id=None,
             )
             created_resource = await self.resource_service.create(
@@ -339,80 +364,133 @@ class WorkflowTask:
                 delay_seconds=0,
             )
             self.logger.info(f"Sent task to process step {step.id}")
+        # The commit above already flushed; write what was buffered after it now
+        await self.event_sender.flush()
 
-    async def _resolve_wired_variables(self, step: WorkflowStep) -> dict[str, Any]:
+    def _external_parent_resource_id(self, template_id: UUID) -> UUID | None:
+        """The resource selected as parent from outside the workflow for ``template_id``, if any."""
+        for stp in self.workflow_instance.steps:
+            for parent in stp.parent_resource_ids:
+                if parent.template_id == template_id:
+                    return parent.id
+        return None
+
+    async def _source_value(self, resource_id: UUID, rule: WiringRule) -> tuple[bool, Any]:
+        """Value of the wired output or dependency config of a resource, and whether it was found."""
+        resource = await self.resource_service.get_by_id(resource_id)
+        if not resource:
+            self.logger.warning(f"Resource {resource_id} not found for wire {rule.source_output}")
+            return False, None
+
+        entries = resource.dependency_config if rule.source_type == "dependency_config" else resource.outputs
+        for entry in entries:
+            if entry.name == rule.source_output:
+                return True, entry.value
+        self.logger.warning(f"{rule.source_type} '{rule.source_output}' not found in resource {resource_id}")
+        return False, None
+
+    async def _resolve_wired_variables(self, step: WorkflowStep) -> tuple[dict[str, Any], dict[str, Any]]:
         """
-        Resolve wired variables from completed upstream resources and constant blocks.
+        Resolve the wires targeting this step's template into input variables and dependency config.
 
-        For each wiring rule targeting this step's template:
-        - If source is a completed step with a resource:
-          - Regular outputs → use the source resource's output value
-        - If source has no step (constant/external block):
-          - Infer the constant value from another completed step that received
-            the same constant output via wiring
+        The source of a wire is an output or a dependency config value of:
+        - a completed step of the workflow, read from its resource;
+        - a template outside the workflow, read from the parent resource selected for it;
+        - otherwise a constant block: the value is inferred from a completed step that
+          received the same constant through another wire.
         """
         wired_vars: dict[str, Any] = {}
+        wired_config: dict[str, Any] = {}
         template_id_str = step.template_id
-        step_by_template: dict[UUID, WorkflowStepResponse] = {s.template_id: s for s in self.workflow_pydantic.steps}
+        # workflow_pydantic is a snapshot from the task start, so an upstream step completed
+        # earlier in this same task would still look unfinished there; use the current state
+        workflow = WorkflowResponse.model_validate(self.workflow_instance)
+        step_by_template: dict[UUID, WorkflowStepResponse] = {s.template_id: s for s in workflow.steps}
 
-        for rule in self.workflow_pydantic.wiring_snapshot:
-            source_tid = rule.source_template_id
-            target_tid = rule.target_template_id
-
-            if target_tid != template_id_str:
+        for rule in workflow.wiring_snapshot:
+            if rule.target_template_id != template_id_str:
                 continue
 
-            source_output: str = rule.source_output
-            target_variable: str = rule.target_variable
-            source_step = step_by_template.get(source_tid)
+            target = wired_config if rule.target_type == "dependency_config" else wired_vars
+            source_step = step_by_template.get(rule.source_template_id)
 
-            if source_step and source_step.resource_id and source_step.status == ModelStatus.DONE:
-                # Fetch resource (cached)
-                rid = source_step.resource_id
-                resource = await self.resource_service.get_by_id(rid)
-                if not resource:
-                    self.logger.warning(f"Resource {rid} not found for completed step {source_step.id}")
-                    continue
+            if source_step:
+                if source_step.resource_id and source_step.status == ModelStatus.DONE:
+                    found, value = await self._source_value(source_step.resource_id, rule)
+                    if found:
+                        target[rule.target_variable] = value
+                continue
 
-                for o in resource.outputs:
-                    if o.name == source_output:
-                        wired_vars[target_variable] = o.value
-                        break
-                else:
-                    self.logger.warning(f"Output '{source_output}' not found in resource {rid}")
+            if external_resource_id := self._external_parent_resource_id(rule.source_template_id):
+                found, value = await self._source_value(external_resource_id, rule)
+                if found:
+                    target[rule.target_variable] = value
+                continue
 
-            elif not source_step:
-                # Constant/external block without a workflow step.
-                # Infer the value from a completed step that also received
-                # the same output from this constant via another wiring rule.
-                for other_rule in self.workflow_pydantic.wiring_snapshot:
-                    if (
-                        other_rule.source_template_id == source_tid
-                        and other_rule.source_output == source_output
-                        and other_rule.target_template_id != template_id_str
-                    ):
-                        other_step = step_by_template.get(other_rule.target_template_id)
-                        if other_step and other_step.status == ModelStatus.DONE:
-                            other_var = other_rule.target_variable
-                            if other_var in other_step.resolved_variables:
-                                wired_vars[target_variable] = other_step.resolved_variables[other_var]
-                                break
-                else:
-                    if target_variable not in wired_vars:
-                        self.logger.warning(
-                            f"Could not resolve constant wire {source_tid}:{source_output} → {target_variable}"
+            # Constant block: infer the value from another completed step it is wired to
+            for other_rule in workflow.wiring_snapshot:
+                if (
+                    other_rule.source_template_id == rule.source_template_id
+                    and other_rule.source_output == rule.source_output
+                    and other_rule.target_template_id != template_id_str
+                ):
+                    other_step = step_by_template.get(other_rule.target_template_id)
+                    if other_step and other_step.status == ModelStatus.DONE:
+                        other_values = (
+                            other_step.resolved_dependency_config
+                            if other_rule.target_type == "dependency_config"
+                            else other_step.resolved_variables
                         )
+                        if other_rule.target_variable in other_values:
+                            target[rule.target_variable] = other_values[other_rule.target_variable]
+                            break
+            else:
+                self.logger.warning(
+                    f"Could not resolve wire {rule.source_template_id}:{rule.source_output} → {rule.target_variable}"
+                )
 
-        return wired_vars
+        return wired_vars, wired_config
 
     async def make_failed(self) -> None:
         await self.change_entity_status(new_status=ModelStatus.ERROR)
 
     async def destroy_entity(self):
-        self.logger.info(f"Destroying workflow {self.workflow_pydantic.id}")
+        await self.run_resource_steps(self.manage_destroy_step)
+
+    async def run_resource_steps(
+        self,
+        handler: Callable[[WorkflowStep], Awaitable[None]],
+        continue_on_error: bool = False,
+        rerunnable: bool = False,
+    ):
+        """
+        Drive a workflow whose steps act on existing resources (destroy, plan, apply).
+
+        Steps run level by level in position order. With continue_on_error a
+        failed step does not stop the next levels; the workflow ends in ERROR
+        once every step has finished. A rerunnable workflow that is DONE runs
+        every step again when the user starts it.
+        """
+        self.logger.info(f"Running {self.workflow_instance.action} workflow {self.workflow_pydantic.id}")
+
+        if rerunnable and not self.step_id and self.workflow_instance.status == ModelStatus.DONE:
+            for step in self.workflow_instance.steps:
+                step.status = ModelStatus.PENDING
+                step.error_message = None
+                step.started_at = None
+                step.completed_at = None
+            self.workflow_instance.status = ModelStatus.PENDING
+            self.workflow_instance.completed_at = None
 
         if self.workflow_instance.status == ModelStatus.PENDING:
             self.workflow_instance.started_at = datetime.now(UTC)
+
+        if continue_on_error and not self.step_id and self.workflow_instance.status == ModelStatus.ERROR:
+            # A re-run of a finished workflow retries the steps that failed last time
+            for step in self.workflow_instance.steps:
+                if step.status == ModelStatus.ERROR:
+                    step.status = ModelStatus.PENDING
+                    step.error_message = None
 
         await self.change_entity_status(new_status=ModelStatus.IN_PROGRESS)
 
@@ -421,60 +499,72 @@ class WorkflowTask:
             if target_step and target_step.status == ModelStatus.PENDING:
                 target_step.started_at = datetime.now(UTC)
 
-            if target_step and target_step.status != ModelStatus.DONE:
-                self.logger.info(f"Processing targeted destroy step {self.step_id}")
+            finished = self._finished_statuses(continue_on_error)
+            if target_step and target_step.status not in finished:
+                self.logger.info(f"Processing targeted step {self.step_id}")
                 try:
-                    await self.manage_destroy_step(target_step)
+                    await handler(target_step)
                 except Exception as exc:
                     await self.change_step_status(
                         target_step,
                         new_status=ModelStatus.ERROR,
                         error_message=str(exc),
                     )
+
+                if target_step.status == ModelStatus.ERROR and not continue_on_error:
                     await self.change_entity_status(new_status=ModelStatus.ERROR)
                     return
 
-                if target_step.status == ModelStatus.DONE:
-                    await self._launch_ready_destroy_steps()
-            return
+                if target_step.status in finished:
+                    await self._launch_ready_level(handler, continue_on_error)
+                return
 
-        await self._launch_ready_destroy_steps()
+        await self._launch_ready_level(handler, continue_on_error)
 
-    async def _launch_ready_destroy_steps(self):
-        """Find and launch all destroy steps at the current lowest pending position."""
+    @staticmethod
+    def _finished_statuses(continue_on_error: bool) -> tuple[str, ...]:
+        if continue_on_error:
+            return (ModelStatus.DONE, ModelStatus.ERROR)
+        return (ModelStatus.DONE,)
+
+    async def _launch_ready_level(
+        self,
+        handler: Callable[[WorkflowStep], Awaitable[None]],
+        continue_on_error: bool,
+    ):
+        """Find and launch all steps at the current lowest unfinished position."""
+        finished = self._finished_statuses(continue_on_error)
         steps = self.workflow_instance.steps
 
         current_position: int | None = None
         for step in steps:
-            if step.status != ModelStatus.DONE:
+            if step.status not in finished:
                 current_position = step.position
                 break
 
         if current_position is None:
-            self.logger.info("All destroy workflow steps completed")
+            failed = any(s.status == ModelStatus.ERROR for s in steps)
+            self.logger.info(f"All workflow steps finished{' with errors' if failed else ''}")
             self.workflow_instance.completed_at = datetime.now(UTC)
-            await self.change_entity_status(new_status=ModelStatus.DONE)
+            await self.change_entity_status(new_status=ModelStatus.ERROR if failed else ModelStatus.DONE)
             return
 
         for step in steps:
-            if step.position < current_position and step.status != ModelStatus.DONE:
-                self.logger.warning(f"Destroy step {step.id} at position {step.position} is not done, cannot proceed")
+            if step.position < current_position and step.status not in finished:
+                self.logger.warning(f"Step {step.id} at position {step.position} is not finished, cannot proceed")
                 return
 
         current_steps = [s for s in steps if s.position == current_position]
 
-        if all(s.status == ModelStatus.IN_PROGRESS for s in current_steps):
-            return
-
         has_error = False
         for step in current_steps:
-            if step.status == ModelStatus.DONE:
-                continue
-            if step.status == ModelStatus.IN_PROGRESS:
+            if step.status in finished or step.status == ModelStatus.IN_PROGRESS:
                 continue
 
+            if step.status == ModelStatus.PENDING:
+                step.started_at = datetime.now(UTC)
             try:
-                await self.manage_destroy_step(step)
+                await handler(step)
             except Exception as exc:
                 await self.session.rollback()
                 has_error = True
@@ -484,13 +574,122 @@ class WorkflowTask:
                     error_message=str(exc),
                 )
 
-        if has_error:
+        if has_error and not continue_on_error:
             await self.change_entity_status(new_status=ModelStatus.ERROR)
             return
 
-        all_current_done = all(s.status == ModelStatus.DONE for s in current_steps)
-        if all_current_done:
-            await self._launch_ready_destroy_steps()
+        if all(s.status in finished for s in current_steps):
+            await self._launch_ready_level(handler, continue_on_error)
+
+    async def manage_plan_step(self, step: WorkflowStep):
+        """
+        Drive a single plan step.
+
+          PENDING     → issue DRYRUN with trace_id → IN_PROGRESS
+          IN_PROGRESS → the dry run reports its result in step_status → DONE / ERROR
+
+        A dry run never changes the resource status, so the result can only come
+        from the callback.
+        """
+        if step.resource_id is None:
+            raise CannotProceed(f"Plan step {step.id} has no resource_id")
+
+        if step.status == ModelStatus.PENDING:
+            resource = await self.resource_service.get_by_id(step.resource_id)
+            if not resource:
+                raise CannotProceed(f"Resource {step.resource_id} not found for plan step {step.id}")
+
+            if resource.abstract:
+                step.completed_at = datetime.now(UTC)
+                await self.change_step_status(step, new_status=ModelStatus.DONE)
+                return
+
+            await self.resource_service.patch_action(
+                step.resource_id,
+                PatchBodyModel(action=ModelActions.DRYRUN),
+                requester=self.user,
+                trace_id=str(self.workflow_pydantic.id),
+            )
+            # Commits the resource's audit log along with the step
+            await self.change_step_status(step, new_status=ModelStatus.IN_PROGRESS)
+            return
+
+        if self.step_status == ModelStatus.DONE:
+            step.completed_at = datetime.now(UTC)
+            await self.change_step_status(step, new_status=ModelStatus.DONE)
+        elif self.step_status == ModelStatus.ERROR:
+            await self.change_step_status(
+                step, new_status=ModelStatus.ERROR, error_message="Plan failed, see the workflow logs"
+            )
+        else:
+            # Only a lost worker reports back without a result
+            await self.change_step_status(step, new_status=ModelStatus.ERROR, error_message="Plan did not finish")
+
+    async def manage_apply_step(self, step: WorkflowStep):
+        """
+        Drive a single apply step. Approvals are never given here: a resource
+        that needs one fails the step, and the user re-runs the workflow after
+        approving it.
+
+          PENDING / ERROR → issue EXECUTE with trace_id → IN_PROGRESS
+          IN_PROGRESS     → resource DONE → DONE, resource ERROR → ERROR
+        """
+        if step.resource_id is None:
+            raise CannotProceed(f"Apply step {step.id} has no resource_id")
+
+        resource = await self.resource_service.get_by_id(step.resource_id)
+        if not resource:
+            raise CannotProceed(f"Resource {step.resource_id} not found for apply step {step.id}")
+
+        if step.status == ModelStatus.ERROR and self.step_id:
+            # Late callback for a failed step, e.g. a retried run that finished after all.
+            # Failed applies are only re-run when the user runs the workflow again.
+            if resource.status == ModelStatus.DONE:
+                step.completed_at = datetime.now(UTC)
+                await self.change_step_status(step, new_status=ModelStatus.DONE)
+            return
+
+        if step.status in (ModelStatus.PENDING, ModelStatus.ERROR):
+            if resource.abstract:
+                step.completed_at = datetime.now(UTC)
+                await self.change_step_status(step, new_status=ModelStatus.DONE)
+                return
+
+            self._ensure_can_apply(resource)
+            await self.resource_service.patch_action(
+                step.resource_id,
+                PatchBodyModel(action=ModelActions.EXECUTE),
+                requester=self.user,
+                trace_id=str(self.workflow_pydantic.id),
+            )
+            # Commits the resource's audit log along with the step
+            await self.change_step_status(step, new_status=ModelStatus.IN_PROGRESS)
+            return
+
+        # Callback from the resource task: apply only queues it, so the status
+        # seen here is the result of the run
+        if self.step_status == ModelStatus.ERROR:
+            raise CannotProceed(f"Apply failed for resource {resource.name}")
+        if resource.status == ModelStatus.DONE:
+            step.completed_at = datetime.now(UTC)
+            await self.change_step_status(step, new_status=ModelStatus.DONE)
+        elif resource.status == ModelStatus.ERROR:
+            raise CannotProceed(f"Apply failed for resource {resource.name}")
+        elif resource.status in (ModelStatus.QUEUED, ModelStatus.IN_PROGRESS):
+            self.logger.debug(f"Apply step {step.id} resource {step.resource_id} still running, waiting for callback")
+        else:
+            raise CannotProceed(f"Resource {resource.name} has unexpected status {resource.status} after apply")
+
+    @staticmethod
+    def _ensure_can_apply(resource: Any) -> None:
+        if resource.status == ModelStatus.APPROVAL_PENDING:
+            raise CannotProceed(f"Resource {resource.name} is waiting for approval, approve it and run again")
+        if resource.status == ModelStatus.REJECTED:
+            raise CannotProceed(f"Resource {resource.name} changes were rejected")
+        if resource.status in (ModelStatus.QUEUED, ModelStatus.IN_PROGRESS):
+            raise CannotProceed(f"Resource {resource.name} is already running")
+        if resource.state not in (ModelState.PROVISION, ModelState.PROVISIONED):
+            raise CannotProceed(f"Resource {resource.name} cannot be applied in state {resource.state}")
 
     async def manage_destroy_step(self, step: WorkflowStep):
         """

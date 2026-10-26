@@ -26,8 +26,29 @@ def setup_service_environment():
         _ = load_dotenv(".env_local", override=True)
 
 
+# Publicly known JWT keys: the Settings default and the placeholder committed in server/.env
+INSECURE_JWT_KEYS = {"supersecret", "CHANGE_ME"}
+MIN_JWT_KEY_LENGTH = 32
+
+
+def validate_jwt_key() -> None:
+    """Refuse to serve with a JWT signing key anyone could know or brute force.
+
+    Tokens are trusted without a database lookup, so whoever holds the key can
+    mint a token for any user, super admins included.
+    """
+    jwt_key = Settings().JWT_KEY
+    if not jwt_key or jwt_key in INSECURE_JWT_KEYS or len(jwt_key) < MIN_JWT_KEY_LENGTH:
+        raise RuntimeError(
+            f"JWT_KEY must be a random secret of at least {MIN_JWT_KEY_LENGTH} characters. "
+            "Generate one with `python generate_encryption_key.py` or `openssl rand -base64 32`."
+        )
+
+
 class Settings(BaseSettings):
     INFRAKITCHEN_URL: str = ""  # e.g. https://infrakitchen.io
+    # Comma-separated browser origins allowed to call the API cross-origin; empty keeps CORS off
+    CORS_ALLOW_ORIGINS: str = ""
     # Database settings
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: str = "5432"
@@ -39,7 +60,6 @@ class Settings(BaseSettings):
     CACHE_DISABLED: str = "false"
     JWT_KEY: str = "supersecret"
     SESSION_EXPIRATION: str = "3600"
-    MCP_ENABLED: bool = False
     OTEL_METRICS_ENABLED: bool = True
     OTEL_SERVICE_NAME: str = "infrakitchen"
     OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://localhost:4318/v1/metrics"
@@ -55,6 +75,7 @@ class Settings(BaseSettings):
     TASK_QUEUE_CANCEL_DELAY_SECONDS: int = 5  # user actions wait this long in the queue so they can be cancelled
     NOTIFICATION_DISPATCHERS: int = 4  # notification outbox items routed concurrently per API process
     NOTIFICATION_LEASE_SECONDS: int = 120  # a claimed outbox item is retried by another dispatcher after this
+    NOTIFICATION_RETENTION_DAYS: int = 30  # in-app notifications older than this are purged
 
     class ConfigDict:
         env_file = ".env"
@@ -74,6 +95,7 @@ class InfrakitchenConfig(metaclass=SingletonMeta):
     demo_mode: bool = False
     websocket: bool = True
     services: bool = False
+    mcp: bool = False
     server_version: str = BUILD_INFO["version"]
     git_commit: str = BUILD_INFO["git_commit"]
     git_commit_short: str = BUILD_INFO["git_commit_short"]

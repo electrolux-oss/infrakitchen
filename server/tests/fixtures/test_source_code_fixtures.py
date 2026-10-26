@@ -24,6 +24,7 @@ def mock_source_code_crud():
     crud.patch = AsyncMock()
     crud.delete = AsyncMock()
     crud.get_dependencies = AsyncMock()
+    crud.get_users_by_emails = AsyncMock(return_value={})
     return crud
 
 

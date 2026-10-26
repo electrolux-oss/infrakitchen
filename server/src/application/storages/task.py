@@ -169,6 +169,7 @@ class StorageTask:
 
     async def sync_state(self):
         make_in_progress(self.storage_instance)
+        self.logger.add_result(operation="sync")
         await self.change_entity_status(event_type=ModelActions.SYNC)
         await self.init_cloud_backend_provider()
         await self.create()
@@ -178,6 +179,7 @@ class StorageTask:
 
     async def destroy_state(self):
         make_in_progress(self.storage_instance)
+        self.logger.add_result(operation="destroy")
         await self.change_entity_status(event_type=ModelActions.DESTROY)
         await self.init_cloud_backend_provider()
         await self.destroy()

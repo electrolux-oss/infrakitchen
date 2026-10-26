@@ -160,6 +160,11 @@ class ResourceTask:
             if not self.source_code_instance:
                 raise CannotProceed("Source Code is not defined")
 
+        self.logger.add_result(
+            source_code_version=self.source_code_version_instance.source_code_version
+            or self.source_code_version_instance.source_code_branch
+        )
+
         integrations = self.resource_instance.integration_ids
 
         # get integrations and set environment variables
@@ -305,6 +310,7 @@ class ResourceTask:
         if self.tf_client is None and code_language == "opentofu":
             tool = await self.get_tool()
             self.logger.info(f"Initiating {tool.label}...")
+            self.logger.add_result(tool=tool.label)
             assert self.resource_instance.storage_path is not None, "Storage path is not defined"
             assert self.resource_instance.storage_id is not None, "Storage ID is not defined"
             storage = await self.session.get(Storage, self.resource_instance.storage_id)
@@ -386,6 +392,7 @@ class ResourceTask:
                     )
                 )
             self.resource_instance.outputs = [output.model_dump() for output in outputs]
+            self.logger.add_result(outputs=len(outputs))
 
     async def post_destroy_task_run(self):
         assert self.source_code_instance is not None, "Source Code instance is not defined"
@@ -465,19 +472,26 @@ class ResourceTask:
         if self.resource_instance.status in (ModelStatus.DONE, ModelStatus.ERROR):
             await self._notify_workflow_callback()
 
-    async def _notify_workflow_callback(self) -> None:
+    async def _notify_workflow_callback(self, step_status: ModelStatus | None = None) -> None:
         """If this resource was created by a workflow (trace_id = workflow_id),
-        send a workflow task so the pipeline resumes without polling."""
+        send a workflow task so the pipeline resumes without polling.
+
+        A dry run leaves the resource status untouched, so it passes its
+        result to the workflow as ``step_status``.
+        """
         workflow_id = getattr(self.logger, "trace_id", None)
         if not workflow_id:
             return
+        extra_metadata = {"resource_id": str(self.resource_instance.id)}
+        if step_status:
+            extra_metadata["step_status"] = str(step_status)
         try:
             workflow_sender = EventSender(entity_name="workflow")
             await workflow_sender.send_task(
                 entity_id=workflow_id,
                 requester=self.user,
                 action=ModelActions.EXECUTE,
-                extra_metadata={"resource_id": str(self.resource_instance.id)},
+                extra_metadata=extra_metadata,
                 delay_seconds=0,
             )
             await workflow_sender.flush()
@@ -524,6 +538,7 @@ class ResourceTask:
 
     async def create_state(self):
         make_in_progress(self.resource_instance)
+        self.logger.add_result(operation="create")
         await self.change_entity_status(event_type=ModelActions.CREATE)
         await self.init_workspace()
         await self.init_provision_tool()
@@ -535,6 +550,7 @@ class ResourceTask:
 
     async def update_state(self):
         make_in_progress(self.resource_instance)
+        self.logger.add_result(operation="update")
         await self.change_entity_status(event_type=ModelActions.UPDATE)
         await self.init_workspace()
         await self.init_provision_tool()
@@ -547,6 +563,7 @@ class ResourceTask:
 
     async def destroy_state(self):
         make_in_progress(self.resource_instance)
+        self.logger.add_result(operation="destroy")
         await self.change_entity_status(event_type=ModelActions.DESTROY)
         await self.init_workspace()
         await self.init_provision_tool()
@@ -557,6 +574,9 @@ class ResourceTask:
         await self.clean_workspace()
 
     async def dry_run(self):
+        self.logger.add_result(
+            operation="destroy_plan" if self.resource_instance.state == ModelState.DESTROY else "plan",
+        )
         # dry run should not change the state of the resource
         if hasattr(self.logger, "add_dry_run"):
             self.logger.add_dry_run()
@@ -587,7 +607,10 @@ class ResourceTask:
             if not isinstance(e, (CloudWrongCredentials, CloudExecutionError)):
                 logger.exception(f"Dry run failed for resource {self.resource_instance.id}")
             await self.clean_workspace()
+            await self._notify_workflow_callback(step_status=ModelStatus.ERROR)
             raise ExitWithoutSave(e) from e
+
+        await self._notify_workflow_callback(step_status=ModelStatus.DONE)
 
     async def create_makefile(self):
         assert self.workspace_path is not None, "Workspace path is not defined"

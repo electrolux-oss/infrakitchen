@@ -35,6 +35,8 @@ class ModelActions(StrEnum):
     ENABLE = "enable"
     DOWNLOAD = "download"
     CASCADE_DESTROY = "cascade_destroy"
+    CASCADE_DRYRUN = "cascade_dryrun"
+    CASCADE_EXECUTE = "cascade_execute"
 
 
 @unique
@@ -65,12 +67,16 @@ class ModelState(StrEnum):
 class WorkflowAction(StrEnum):
     CREATE = "create"
     DESTROY = "destroy"
+    PLAN = "plan"
+    APPLY = "apply"
 
 
 @unique
 class EventType(StrEnum):
     UPDATE = "update"
     EXECUTE = "execute"
+    APPROVAL_REQUIRED = "approval_required"
+    APPROVAL_RESULT = "approval_result"
 
 
 @unique

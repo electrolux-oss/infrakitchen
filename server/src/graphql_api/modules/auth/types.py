@@ -33,6 +33,7 @@ class PersonalAccessTokenType:
     __exclude__ = ["user_id", "user", "token_hash"]
 
     id: uuid.UUID = strawberry.UNSET
+    scopes: list[str] | None = None
 
 
 @pt_mapper.type(PersonalAccessToken)
@@ -40,6 +41,7 @@ class PersonalAccessTokenCreateType:
     __exclude__ = ["user_id", "user", "token_hash"]
 
     id: uuid.UUID = strawberry.UNSET
+    scopes: list[str] | None = None
     expires_at: datetime.datetime | None = None
     last_used_at: datetime.datetime | None = None
     revoked_at: datetime.datetime | None = None

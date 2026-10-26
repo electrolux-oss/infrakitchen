@@ -8,13 +8,22 @@ class TestToolDownloadRequest:
     def test_strips_v_prefix(self):
         request = ToolDownloadRequest(name="opentofu", version="v1.8.0")
         assert request.version == "1.8.0"
-        assert request.os == "linux"
+        assert request.os is None
         assert request.arch is None
 
     @pytest.mark.parametrize("version", ["latest", "1.8", "1.8.0/../../etc", ""])
     def test_invalid_version(self, version):
         with pytest.raises(ValidationError):
             _ = ToolDownloadRequest(name="opentofu", version=version)
+
+    @pytest.mark.parametrize("os", ["linux", "darwin", "windows"])
+    def test_supported_os(self, os):
+        request = ToolDownloadRequest(name="opentofu", version="1.8.0", os=os)
+        assert request.os == os
+
+    def test_unsupported_os(self):
+        with pytest.raises(ValidationError):
+            _ = ToolDownloadRequest(name="opentofu", version="1.8.0", os="freebsd")  # pyright: ignore[reportArgumentType]
 
     def test_unsupported_tool(self):
         with pytest.raises(ValidationError):

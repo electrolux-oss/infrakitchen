@@ -17,7 +17,7 @@
 
 InfraKitchen is an open source Developer Platform that brings Platform Engineering practices to infrastructure management. It enables platform teams to create and continuously maintain reusable infrastructure templates (the "golden path"), while empowering developers to provision and manage their own cloud resources. Developers can adopt new template versions as the platform team evolves best practices, ensuring infrastructure stays secure, compliant, and aligned with organizational standards.
 
-![ik_template_demo](https://github.com/user-attachments/assets/195ed8d2-fc83-4412-96a8-4d4ac8836dad)
+![InfraKitchen](./docs/images/ik-main.png)
 
 InfraKitchen enables seamless collaboration across different roles throughout the infrastructure lifecycle:
 
