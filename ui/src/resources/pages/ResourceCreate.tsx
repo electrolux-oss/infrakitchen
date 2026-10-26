@@ -88,6 +88,7 @@ const ResourceCreatePageInner = () => {
     formState: { errors },
     watch,
     setValue,
+    getValues,
     handleSubmit,
   } = useFormContext<ResourceCreate>();
 
@@ -237,7 +238,6 @@ const ResourceCreatePageInner = () => {
   const watchedStorage = watch("storageId");
   const watchedParentIds = watch("parents");
   const watchedProjectId = watch("projectId");
-  const watchedWorkspaceId = watch("workspaceId");
   const watchedSourceCodeVersionId = watch("sourceCodeVersionId");
   const hasDocs = Boolean(watchedTemplate?.documentation);
   const sourceCodeVersionOptions = useMemo(
@@ -454,6 +454,7 @@ const ResourceCreatePageInner = () => {
 
   const lastAppliedParentIdRef = useRef<string | null>(null);
   const lastAppliedProjectWorkspaceIdRef = useRef<string | null>(null);
+  const lastHandledProjectIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (!resolvedLastParent) {
       lastAppliedParentIdRef.current = null;
@@ -493,28 +494,30 @@ const ResourceCreatePageInner = () => {
     }
   }, [resolvedLastParent, inherited, setValue]);
 
+  // Prefill the workspace from the project only when the project changes,
+  // so the user can still clear or replace it afterwards.
   useEffect(() => {
+    const projectId = selectedProject?.id ?? null;
+    if (projectId === lastHandledProjectIdRef.current) return;
+    lastHandledProjectIdRef.current = projectId;
+
     const projectWorkspaceId =
       selectedProject?.workspace?.id || selectedProject?.workspaceId || null;
 
-    if (inherited.workspace) {
+    if (inherited.workspace || !projectWorkspaceId) {
       lastAppliedProjectWorkspaceIdRef.current = null;
       return;
     }
 
-    if (!projectWorkspaceId) {
-      lastAppliedProjectWorkspaceIdRef.current = null;
-      return;
-    }
-
+    const currentWorkspaceId = getValues("workspaceId");
     if (
-      !watchedWorkspaceId ||
-      watchedWorkspaceId === lastAppliedProjectWorkspaceIdRef.current
+      !currentWorkspaceId ||
+      currentWorkspaceId === lastAppliedProjectWorkspaceIdRef.current
     ) {
       setValue("workspaceId", projectWorkspaceId);
       lastAppliedProjectWorkspaceIdRef.current = projectWorkspaceId;
     }
-  }, [inherited.workspace, selectedProject, setValue, watchedWorkspaceId]);
+  }, [inherited.workspace, selectedProject, setValue, getValues]);
 
   useEffect(() => {
     if (watchedSourceCodeVersionId) {

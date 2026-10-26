@@ -16,7 +16,7 @@ from core.utils.model_tools import is_valid_uuid
 from core.users.model import User
 from core.workers.model import Worker
 
-from .enqueue import NOTIFY_STATEMENT
+from .enqueue import NOTIFY_STATEMENT, notify_queue_changed, queue_item_event
 from .query_options import build_task_queue_query_options
 from .model import FINISHED_STATUSES, TaskQueueItem, TaskQueueStatus
 
@@ -90,6 +90,10 @@ class TaskQueueCRUD:
     async def notify(self) -> None:
         """Wake up listening workers. Delivered by Postgres when the transaction commits."""
         _ = await self.session.execute(NOTIFY_STATEMENT)
+
+    async def notify_changed(self, item: TaskQueueItem) -> None:
+        """Publish the item's new state on the event stream. Delivered when the transaction commits."""
+        await notify_queue_changed(self.session, [queue_item_event(item)])
 
     async def claim(self, worker_id: UUID, lease_seconds: int) -> TaskQueueItem | None:
         """Atomically take the next claimable task and lease it to ``worker_id``.
@@ -170,16 +174,21 @@ class TaskQueueCRUD:
             TaskQueueItem.status == TaskQueueStatus.RUNNING,
         )
 
-    async def finish(self, task_id: UUID, worker_id: UUID, status: TaskQueueStatus, error: str | None = None) -> bool:
+    async def finish(
+        self, task_id: UUID, worker_id: UUID, status: TaskQueueStatus, error: str | None = None
+    ) -> TaskQueueItem | None:
+        """Returns the finished item, or None when ``worker_id`` no longer owns the task."""
         statement = (
             update(TaskQueueItem)
             .where(*self._owned_by(task_id, worker_id))
             .values(status=status, error=error, finished_at=func.now(), locked_until=None)
+            .returning(TaskQueueItem)
         )
         result = await self.session.execute(statement)
-        return (getattr(result, "rowcount", 0) or 0) > 0
+        return result.scalar_one_or_none()
 
-    async def requeue(self, task_id: UUID, worker_id: UUID, delay_seconds: float) -> bool:
+    async def requeue(self, task_id: UUID, worker_id: UUID, delay_seconds: float) -> TaskQueueItem | None:
+        """Returns the re-queued item, or None when ``worker_id`` no longer owns the task."""
         statement = (
             update(TaskQueueItem)
             .where(*self._owned_by(task_id, worker_id))
@@ -190,9 +199,10 @@ class TaskQueueCRUD:
                 worker_id=None,
                 locked_until=None,
             )
+            .returning(TaskQueueItem)
         )
         result = await self.session.execute(statement)
-        return (getattr(result, "rowcount", 0) or 0) > 0
+        return result.scalar_one_or_none()
 
     async def cancel_queued(self, task_id: UUID, reason: str) -> TaskQueueItem | None:
         """Cancel a task only while no worker has claimed it."""

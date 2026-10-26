@@ -131,6 +131,59 @@ async def test_event_stream_respects_agent_token_scopes(monkeypatch, mock_user_d
 
 
 @pytest.mark.asyncio
+async def test_event_stream_sends_queue_items_to_readers_of_their_entity(monkeypatch, mock_user_dto):
+    """Without task access, a user still gets queue items of entities they can read (workspace -> resource)."""
+    from core.task_queue.enqueue import queue_item_event
+    from graphql_api.modules.event import subscriptions as event_module
+
+    def _item(task_id: str, entity: str) -> dict[str, Any]:
+        event = queue_item_event(SimpleNamespace(id=task_id, entity=entity, entity_id="e1", status="queued"))
+        return {**event, "_metadata": dict(event["_metadata"])}
+
+    hub = _FakeHub([_item("t1", "resource"), _item("t2", "workspace"), _item("t3", "storage")])
+    monkeypatch.setattr(event_module.pubsub, "hub", hub)
+    monkeypatch.setattr(event_module, "_authenticate_subscription", AsyncMock(return_value=mock_user_dto))
+
+    async def _has_access(user, api, action):
+        return api == "resource"
+
+    monkeypatch.setattr(event_module, "user_has_access_to_api", _has_access)
+
+    result = await schema.subscribe(
+        "subscription { eventStream { event entityId payload } }",
+        context_value={"user": None},
+    )
+    messages = await _collect(result)
+
+    assert [m.data["eventStream"]["payload"]["task_queue_item"]["id"] for m in messages] == ["t1", "t2"]
+    # The item is nested, so entity views never take it for their own entity
+    assert all(m.data["eventStream"]["entityId"] is None for m in messages)
+    assert messages[0].data["eventStream"]["event"] == "task_queue_item"
+
+
+@pytest.mark.asyncio
+async def test_event_stream_forwards_resync_to_everyone(monkeypatch, mock_user_dto):
+    """After the pubsub listener reconnects, every subscriber is told to reload its live data."""
+    from core import pubsub
+    from graphql_api.modules.event import subscriptions as event_module
+
+    hub = _FakeHub([{"_metadata": {"event": pubsub.EVENTS_RESYNC}}])
+    monkeypatch.setattr(event_module.pubsub, "hub", hub)
+    monkeypatch.setattr(event_module, "_authenticate_subscription", AsyncMock(return_value=mock_user_dto))
+    monkeypatch.setattr(event_module, "user_has_access_to_api", AsyncMock(return_value=False))
+
+    result = await schema.subscribe(
+        "subscription { eventStream { event entityName payload } }",
+        context_value={"user": None},
+    )
+    messages = await _collect(result)
+
+    assert [m.data["eventStream"] for m in messages] == [
+        {"event": pubsub.EVENTS_RESYNC, "entityName": None, "payload": {}}
+    ]
+
+
+@pytest.mark.asyncio
 async def test_log_stream_requires_log_read_permission(monkeypatch, mock_user_dto):
     from graphql_api.modules.log import subscriptions as log_module
 

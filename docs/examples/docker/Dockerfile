@@ -35,9 +35,9 @@ ENV UV_COMPILE_BYTECODE=1 \
   UV_PROJECT_ENVIRONMENT=/app/.venv
 
 RUN pip install --no-cache-dir uv && \
-  cd server && uv sync --no-dev --frozen
+  cd server && uv sync --no-dev --frozen --no-install-project
 
-RUN uv run --project server /app/server/generate_build_info.py
+RUN python /app/server/generate_build_info.py
 
 # aws_config is optional; COPY alone would fail when it's missing
 RUN mkdir -p /aws-home && \

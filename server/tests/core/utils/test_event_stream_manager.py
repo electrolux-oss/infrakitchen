@@ -36,3 +36,18 @@ class TestConsumeEvents:
         _ = await asyncio.gather(task, return_exceptions=True)
 
         assert [call.args[0] for call in handler.await_args_list] == ["reload_policies", "reload_scheduler_jobs"]
+
+
+class TestHandleReloadEvent:
+    async def test_resync_reloads_flags_and_policies(self, monkeypatch):
+        """A reload signal may have been lost while the pubsub listener was down."""
+        reload_flags = AsyncMock()
+        load_policy = AsyncMock()
+        enforcer = type("Enforcer", (), {"enforcer": type("E", (), {"load_policy": load_policy})()})
+        monkeypatch.setattr(event_stream_manager, "reload_feature_flags_configs", reload_flags)
+        monkeypatch.setattr(event_stream_manager, "CasbinEnforcer", lambda: enforcer)
+
+        await event_stream_manager.handle_reload_event(event_stream_manager.pubsub.EVENTS_RESYNC)
+
+        reload_flags.assert_awaited_once()
+        load_policy.assert_awaited_once()

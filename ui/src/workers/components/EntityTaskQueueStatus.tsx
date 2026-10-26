@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 
 import { getDateValue } from "../../common/components/fields/CommonField";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
@@ -8,6 +8,11 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import { useNow } from "../../common/hooks/useNow";
 import { formatTimeUntil } from "../../common/utils";
 import { HeroClockIcon } from "../../icons";
+import {
+  useTaskQueue,
+  WorkerAvailability,
+} from "../../tasks/context/TaskQueueContext";
+import { QueueTask } from "../../tasks/graphql";
 import { Alert, AlertTitle, Button, Label } from "../../ui";
 import {
   CANCEL_QUEUED_TASK_MUTATION,
@@ -141,26 +146,109 @@ const QueuedTaskRow = ({
   );
 };
 
+const isLater = (date: string | null, now: number) =>
+  !!date && new Date(date).getTime() > now;
+
+/**
+ * Why a queued task still waits, from what the browser knows: the time-based and
+ * per-entity reasons are exact, worker availability is from the last entity query.
+ */
+const waitingReason = (
+  task: QueueTask,
+  all: QueueTask[],
+  workers: WorkerAvailability | null,
+  now: number,
+): TaskWaitingReason => {
+  const delayed = isLater(task.availableAt, now);
+  if (delayed && task.retries === 0) return "cancel_window";
+  const entityBusy = all.some(
+    (other) =>
+      other.id !== task.id &&
+      other.status === "running" &&
+      other.entity === task.entity &&
+      other.entityId === task.entityId,
+  );
+  if (entityBusy) return "entity_busy";
+  if (delayed) return "retry_delay";
+  if (workers?.workersOnline === 0) return "no_workers";
+  if (workers?.workersFree === 0) return "workers_busy";
+  return "pending_pickup";
+};
+
+const toQueuedTask = (
+  task: QueueTask,
+  all: QueueTask[],
+  workers: WorkerAvailability | null,
+  now: number,
+  currentUser: { id: string; identifier: string } | null,
+): GqlQueuedTask => ({
+  id: task.id,
+  entity: task.entity,
+  action: task.action,
+  status: task.status,
+  createdAt: task.createdAt,
+  availableAt: task.availableAt,
+  startedAt: task.startedAt,
+  retries: task.retries,
+  maxRetries: task.maxRetries,
+  position: task.position ?? null,
+  workerHost: task.workerHost ?? null,
+  creatorId: task.createdBy,
+  creatorName:
+    task.creatorName ??
+    (currentUser && task.createdBy === currentUser.id
+      ? currentUser.identifier
+      : null),
+  waitingReason:
+    task.status === "queued" ? waitingReason(task, all, workers, now) : null,
+});
+
 /**
  * Shows the entity's queued and running worker tasks on its overview page.
- * Reads `taskQueueStatus`, which entity pages fetch together with the entity.
+ * Starts from `taskQueueStatus`, which entity pages fetch together with the
+ * entity, and follows the task queue store from there.
  * A queued task can be cancelled by its requester or an admin until a worker
  * picks it up; the server re-checks both.
  */
 export const EntityTaskQueueStatus = () => {
-  const { entity, entity_name, userEntityPermissions, refreshEntity } =
+  const { entity, entity_name, userEntityPermissions, fetchedAt } =
     useEntityProvider();
   const { currentUser, bootstrapPermissions } = useConfig();
-  const status = entity?.taskQueueStatus as GqlEntityQueueStatus | null;
+  const { tasks: queueTasks, seedEntity, removeTask, workers } = useTaskQueue();
+  const now = useNow();
+  const entityId: string | undefined = entity?.id;
+  const status = entity?.taskQueueStatus as GqlEntityQueueStatus | undefined;
 
-  if (!status || status.tasks.length === 0) {
+  // Each entity query brings the queue state; events keep it current in between
+  useEffect(() => {
+    if (entityId && status !== undefined) {
+      seedEntity(entityId, status, fetchedAt);
+    }
+    // fetchedAt changes together with status
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entityId, status, seedEntity]);
+
+  const tasks = useMemo(
+    () =>
+      queueTasks
+        .filter((task) => entityId && task.entityId === entityId)
+        .sort((a, b) =>
+          a.status === b.status ? 0 : a.status === "running" ? -1 : 1,
+        )
+        .map((task) =>
+          toQueuedTask(task, queueTasks, workers, now, currentUser),
+        ),
+    [queueTasks, entityId, workers, now, currentUser],
+  );
+
+  if (tasks.length === 0) {
     return null;
   }
 
   const isAdmin =
     userEntityPermissions.includes("admin") ||
     bootstrapPermissions?.["*"] === "admin";
-  const queued = status.tasks.filter((task) => task.status === "queued");
+  const queued = tasks.filter((task) => task.status === "queued");
   const noWorkers = queued.some((task) => task.waitingReason === "no_workers");
   const title =
     queued.length === 0
@@ -177,7 +265,7 @@ export const EntityTaskQueueStatus = () => {
     >
       <AlertTitle>{title}</AlertTitle>
       <div className="flex flex-col gap-2">
-        {status.tasks.map((task) => (
+        {tasks.map((task) => (
           <QueuedTaskRow
             key={task.id}
             task={task}
@@ -186,7 +274,7 @@ export const EntityTaskQueueStatus = () => {
               isAdmin ||
               (!!currentUser?.id && task.creatorId === currentUser.id)
             }
-            onCancelled={() => refreshEntity?.()}
+            onCancelled={() => removeTask(task.id)}
           />
         ))}
       </div>

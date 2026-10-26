@@ -26,6 +26,7 @@ import {
   LocalStorageProvider,
   RouterSnackbarWrapper,
   PermissionProvider,
+  TaskQueueProvider,
   usePermissionProvider,
   useFilteredProtectedRoutes,
 } from "@/index";
@@ -114,9 +115,11 @@ const AuthGate = ({ dataProvider }: { dataProvider: any }) => {
       <ConfigProvider initialIkApi={dataProvider}>
         <PermissionProvider>
           <EventProvider>
-            <NotificationProvider>
-              <InfrakitchenApp />
-            </NotificationProvider>
+            <TaskQueueProvider>
+              <NotificationProvider>
+                <InfrakitchenApp />
+              </NotificationProvider>
+            </TaskQueueProvider>
           </EventProvider>
         </PermissionProvider>
       </ConfigProvider>

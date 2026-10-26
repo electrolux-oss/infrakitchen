@@ -26,6 +26,34 @@ export interface GqlTaskQueueItem {
   availableAt: string | null;
   retries: number;
   maxRetries: number;
+  createdBy: string | null;
+  workerId: string | null;
   workerHost: string | null;
   creator: { id: string; identifier: string } | null;
+}
+
+export type ActiveTaskStatus = "queued" | "running";
+
+/**
+ * A queued or running task as kept by the task queue store. Events carry the
+ * queue columns; the optional details come from queries and are kept across events.
+ */
+export interface QueueTask {
+  id: string;
+  entity: string;
+  entityId: string | null;
+  action: string | null;
+  status: ActiveTaskStatus;
+  createdAt: string;
+  availableAt: string | null;
+  startedAt: string | null;
+  retries: number;
+  maxRetries: number;
+  createdBy: string | null;
+  workerId: string | null;
+  entityData?: Record<string, any> | null;
+  creatorName?: string | null;
+  workerHost?: string | null;
+  /** Place among queued tasks; only known right after a query. */
+  position?: number | null;
 }

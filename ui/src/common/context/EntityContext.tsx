@@ -27,6 +27,26 @@ const snakeToCamel = (s: string): string => {
   return camel.charAt(0).toLowerCase() + camel.slice(1);
 };
 
+// Fields holding user data (GraphQL JSON scalars): their contents keep the
+// original keys, e.g. Terraform variable values or tags.
+const RAW_JSON_FIELDS = new Set([
+  "value",
+  "default",
+  "configuration",
+  "dependency_tags",
+  "dependency_config",
+  "dependency_config_overrides",
+  "default_variables",
+  "resolved_variables",
+  "resolved_dependency_config",
+  "variable_overrides",
+  "source_code_version_overrides",
+  "parent_overrides",
+  "wiring",
+  "payload",
+  "host_metadata",
+]);
+
 export const camelizeKeys = (obj: any): any => {
   if (Array.isArray(obj)) {
     return obj.map(camelizeKeys);
@@ -36,7 +56,7 @@ export const camelizeKeys = (obj: any): any => {
     return Object.fromEntries(
       Object.entries(obj).map(([key, value]) => [
         snakeToCamel(key),
-        camelizeKeys(value),
+        RAW_JSON_FIELDS.has(key) ? value : camelizeKeys(value),
       ]),
     );
   }
@@ -50,6 +70,8 @@ interface EntityContextType {
   entity_name: string;
   entity_id: string;
   refreshVersion: number;
+  /** When the query that loaded `entity` was sent (ms); events after it are newer. */
+  fetchedAt: number;
   loading: boolean;
   error?: string | null;
   notFound: boolean;
@@ -96,17 +118,19 @@ export const EntityProvider = ({
   const [notFound, setNotFound] = useState<boolean>(false);
   const { ikApi } = useConfig();
 
-  const { event } = useEventProvider();
+  const [fetchedAt, setFetchedAt] = useState<number>(0);
+  const { event, resyncVersion } = useEventProvider();
 
-  // Pages that show the entity's task queue refetch silently on status events:
-  // events carry the entity fields only, so the queue section would go stale.
-  const tracksTaskQueue = !!entityFields?.includes("taskQueueStatus");
-  const entityStatusRef = useRef<string | undefined>(undefined);
+  // The entity's task queue section follows queue events on its own (TaskQueueProvider)
   const [silentRefresh, setSilentRefresh] = useState<number>(0);
 
+  // Events may have been lost, so the merged entity may be behind
+  const handledResyncRef = useRef(resyncVersion);
   useEffect(() => {
-    entityStatusRef.current = entity?.status;
-  }, [entity]);
+    if (resyncVersion === handledResyncRef.current) return;
+    handledResyncRef.current = resyncVersion;
+    setSilentRefresh((prev) => prev + 1);
+  }, [resyncVersion]);
 
   useEffect(() => {
     if (event && event.id === entity_id) {
@@ -114,17 +138,15 @@ export const EntityProvider = ({
         setSilentRefresh((prev) => prev + 1);
         return;
       }
-      const statusChanged =
-        event.status !== undefined && event.status !== entityStatusRef.current;
       // Events too big for the live stream keep only small top-level fields,
       // the rest has to be refetched
       const truncated = !!event._metadata?.truncated;
       setEntity((prev) => ({ ...prev, ...camelizeKeys(event) }));
-      if (truncated || (tracksTaskQueue && statusChanged)) {
+      if (truncated) {
         setSilentRefresh((prev) => prev + 1);
       }
     }
-  }, [event, entity_id, tracksTaskQueue, refetchOnEvent]);
+  }, [event, entity_id, refetchOnEvent]);
 
   // Events can trigger refetches in quick succession; only the latest response is applied
   const latestFetchRef = useRef(0);
@@ -135,6 +157,7 @@ export const EntityProvider = ({
       if (!silent) setLoading(true);
       const fetchId = ++latestFetchRef.current;
       const isStale = () => fetchId !== latestFetchRef.current;
+      const startedAt = Date.now();
       try {
         await ikApi
           .graphqlRequest(
@@ -169,6 +192,7 @@ export const EntityProvider = ({
           .then((response: any) => {
             if (isStale()) return;
             setEntity(response);
+            setFetchedAt(startedAt);
             setNotFound(false);
             setError(null);
           });
@@ -257,6 +281,7 @@ export const EntityProvider = ({
     entity_name,
     entity_id,
     refreshVersion: refresh,
+    fetchedAt,
     loading,
     error,
     notFound,

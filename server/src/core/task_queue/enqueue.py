@@ -1,11 +1,13 @@
 import logging
 import uuid
+from collections.abc import Iterable
 from datetime import timedelta
 from typing import Any
 
 from sqlalchemy import ColumnElement, func, literal, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import core.pubsub as pubsub
 from core.db_engine import engine
 
 from .model import TASK_QUEUE_CHANNEL, SupersededTask, TaskQueueItem, TaskQueueStatus
@@ -15,6 +17,38 @@ logger = logging.getLogger(__name__)
 
 # Delivered by Postgres when the surrounding transaction commits
 NOTIFY_STATEMENT = text(f"SELECT pg_notify('{TASK_QUEUE_CHANNEL}', '')")
+
+QUEUE_ITEM_EVENT = "task_queue_item"
+# What the UI needs to keep its queue list current; the task payload stays on the server
+QUEUE_ITEM_FIELDS = (
+    "id",
+    "entity",
+    "entity_id",
+    "action",
+    "status",
+    "created_at",
+    "available_at",
+    "started_at",
+    "retries",
+    "max_retries",
+    "created_by",
+    "worker_id",
+)
+
+
+def queue_item_event(item: Any, **overrides: Any) -> dict[str, Any]:
+    """Event stream message with the current state of one queue item.
+
+    The item sits under its own key, not at the top level: entity views match events
+    on a top-level ``id`` and must not mistake a queue item for their entity.
+    """
+    data = {field: getattr(item, field, None) for field in QUEUE_ITEM_FIELDS} | overrides
+    return {"_entity_name": "task", "_metadata": {"event": QUEUE_ITEM_EVENT}, QUEUE_ITEM_EVENT: data}
+
+
+async def notify_queue_changed(session: AsyncSession, events: Iterable[dict[str, Any]]) -> None:
+    """Publish queue item events on the event stream. Delivered when the transaction commits."""
+    await pubsub.notify_in(session, [(pubsub.EVENTS_TOPIC, event) for event in events])
 
 
 def task_target(payload: dict[str, Any]) -> str:
@@ -125,8 +159,24 @@ async def enqueue_tasks(items: list[dict[str, Any]]) -> None:
             _ = await session.execute(select(func.pg_advisory_xact_lock(func.hashtextextended(key, 0))))
         for item in items:
             superseded.extend(await cancel_queued(session, item))
-        session.add_all([to_row(item) for item in items])
+        rows = [to_row(item) for item in items]
+        session.add_all(rows)
+        await session.flush()
+        # Reload the rows for their database defaults (created_at, available_at)
+        inserted = (
+            await session.execute(
+                select(TaskQueueItem)
+                .where(TaskQueueItem.id.in_([row.id for row in rows]))
+                .order_by(TaskQueueItem.seq)
+                .execution_options(populate_existing=True)
+            )
+        ).scalars()
         _ = await session.execute(NOTIFY_STATEMENT)
+        await notify_queue_changed(
+            session,
+            [queue_item_event(task, status=TaskQueueStatus.CANCELLED) for task in superseded]
+            + [queue_item_event(row) for row in inserted],
+        )
         await session.commit()
 
     for task in superseded:

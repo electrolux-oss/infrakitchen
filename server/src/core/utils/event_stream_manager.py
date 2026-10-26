@@ -40,7 +40,12 @@ async def consume_events(handler: EventHandler, name: str, restart_delay: float 
 
 
 async def handle_reload_event(event: str) -> None:
-    if event == "reload_feature_flags_configs":
+    # A reload signal may have been lost while the listener was down: reload both
+    if event == pubsub.EVENTS_RESYNC:
+        logger.info("Pubsub listener reconnected, reloading Feature Flag configs and policies")
+        await handle_reload_event("reload_feature_flags_configs")
+        await handle_reload_event("reload_policies")
+    elif event == "reload_feature_flags_configs":
         logger.debug('Got "reload all Feature Flag configs" event')
         await reload_feature_flags_configs()
     elif event == "reload_policies":

@@ -31,6 +31,8 @@ interface UseEventStreamSubscriptionOptions {
   enabled: boolean;
   onMessage: (data: EventStreamMessage) => void;
   onError?: (error: unknown) => void;
+  /** Called on every connect, including each reconnect. */
+  onConnected?: () => void;
 }
 
 export function useEventStreamSubscription({
@@ -38,6 +40,7 @@ export function useEventStreamSubscription({
   enabled,
   onMessage,
   onError,
+  onConnected,
 }: UseEventStreamSubscriptionOptions): void {
   const clientRef = useRef<Client | null>(null);
   const unsubscribeRef = useRef<(() => void) | null>(null);
@@ -46,6 +49,8 @@ export function useEventStreamSubscription({
   onMessageRef.current = onMessage;
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
+  const onConnectedRef = useRef(onConnected);
+  onConnectedRef.current = onConnected;
 
   const cleanup = useCallback(() => {
     unsubscribeRef.current?.();
@@ -77,7 +82,7 @@ export function useEventStreamSubscription({
       lazy: false,
       on: {
         connected: () => {
-          // Connection established.
+          onConnectedRef.current?.();
         },
       },
     });
