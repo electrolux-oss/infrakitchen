@@ -1465,7 +1465,7 @@ requires-dist = [
     { name = "casbin", specifier = ">=1.43.0" },
     { name = "casbin-async-sqlalchemy-adapter", specifier = ">=1.17.0" },
     { name = "cryptography", specifier = ">=49.0.0" },
-    { name = "fastapi", specifier = ">=0.139.0" },
+    { name = "fastapi", specifier = ">=0.161.1" },
     { name = "fastapi-sso", specifier = ">=0.21.1" },
     { name = "fastmcp", specifier = ">=3.4.2" },
     { name = "google-cloud-resource-manager", specifier = ">=1.18.0" },

@@ -12,6 +12,7 @@ processors:
 exporters:
   prometheus:
     endpoint: 0.0.0.0:9464
+  debug: {}
 
 service:
   pipelines:
@@ -19,3 +20,11 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [prometheus]
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]

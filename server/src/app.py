@@ -25,7 +25,7 @@ from application.init_app import init_app
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import Settings, setup_service_environment, validate_jwt_key
-from core.telemetry import get_meter, init_metrics
+from core.telemetry import get_meter, init_api_telemetry
 from application.views import main_router
 from application.oidc import oidc_router
 from graphql_api.error_handling import integrity_error_message
@@ -86,14 +86,14 @@ async def lifespan(app: FastAPI):
     await pubsub.hub.close()
 
 
+setup_service_environment()
+
 app = FastAPI(
     title="InfraKitchen API",
     summary="InfraKitchen API for managing infrastructure",
     lifespan=lifespan,
+    telemetry=init_api_telemetry(service_name=f"{Settings().OTEL_SERVICE_NAME}-api"),
 )
-
-setup_service_environment()
-init_metrics(service_name=f"{Settings().OTEL_SERVICE_NAME}-api")
 
 meter = get_meter("infrakitchen.api")
 http_request_counter = meter.create_counter(
@@ -105,6 +105,7 @@ http_request_duration = meter.create_histogram(
     name="infrakitchen.http.server.request.duration",
     description="Duration of HTTP requests handled by InfraKitchen API",
     unit="s",
+    explicit_bucket_boundaries_advisory=[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
 )
 
 
@@ -129,7 +130,8 @@ async def add_process_time_header(request: Request, call_next):
     response = await call_next(request)
     process_time = time.perf_counter() - start_time
     route = request.scope.get("route")
-    route_path = getattr(route, "path", None) or request.url.path
+    # Constant for unmatched requests (404s, scanners) to keep http.route cardinality bounded.
+    route_path = getattr(route, "path", None) or "unmatched"
     metric_attributes = {
         "http.request.method": request.method,
         "http.route": route_path,

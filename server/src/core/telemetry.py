@@ -3,11 +3,14 @@ import os
 import socket
 from urllib.parse import unquote, urlsplit
 
-from opentelemetry import metrics
+from opentelemetry import _logs, metrics, trace
+from fastapi.telemetry import TelemetryConfig
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import SERVICE_INSTANCE_ID, SERVICE_NAME, Resource
+from opentelemetry.sdk.trace import TracerProvider
 
 from core.config import Settings
 
@@ -50,16 +53,25 @@ def _resource_attributes(service_name: str, raw_attributes: str) -> dict[str, st
     return attributes
 
 
-def _normalize_protocol(protocol: str) -> str:
-    normalized = protocol.strip().lower()
-    if normalized in {"http/protobuf", "http"}:
-        return "http/protobuf"
-    logger.warning("Unsupported OTLP protocol '%s'. Falling back to http/protobuf.", protocol)
-    return "http/protobuf"
+def _validate_protocol(protocol: str) -> None:
+    if protocol.strip().lower() in {"http/protobuf", "http"}:
+        return
+    raise ValueError(
+        f"Unsupported OTEL_EXPORTER_OTLP_PROTOCOL '{protocol}': only 'http/protobuf' is supported. "
+        "Point OTEL_EXPORTER_OTLP_ENDPOINT at the OTLP/HTTP port (usually 4318), not gRPC (4317)."
+    )
 
 
-def init_metrics(service_name: str) -> MeterProvider | None:
-    """Initialize OpenTelemetry metrics provider once per process."""
+def _build_resource(service_name: str, settings: Settings) -> Resource:
+    return Resource.create(_resource_attributes(service_name, settings.OTEL_RESOURCE_ATTRIBUTES))
+
+
+def init_metrics(service_name: str, with_exporter: bool = True) -> MeterProvider | None:
+    """Initialize OpenTelemetry metrics provider once per process.
+
+    Pass `with_exporter=False` when another component (FastAPI auto-configuration)
+    attaches the OTLP exporter to this provider.
+    """
     global _meter_provider
 
     if _meter_provider is not None:
@@ -70,15 +82,15 @@ def init_metrics(service_name: str) -> MeterProvider | None:
         logger.info("OpenTelemetry metrics are disabled")
         return None
 
-    protocol = _normalize_protocol(settings.OTEL_EXPORTER_OTLP_PROTOCOL)
-    if protocol != "http/protobuf":
-        return None
+    _validate_protocol(settings.OTEL_EXPORTER_OTLP_PROTOCOL)
 
-    resource = Resource.create(_resource_attributes(service_name, settings.OTEL_RESOURCE_ATTRIBUTES))
+    resource = _build_resource(service_name, settings)
 
-    exporter = OTLPMetricExporter(endpoint=_metrics_endpoint(settings.OTEL_EXPORTER_OTLP_ENDPOINT))
-    reader = PeriodicExportingMetricReader(exporter)
-    provider = MeterProvider(resource=resource, metric_readers=[reader])
+    readers = []
+    if with_exporter:
+        exporter = OTLPMetricExporter(endpoint=_metrics_endpoint(settings.OTEL_EXPORTER_OTLP_ENDPOINT))
+        readers.append(PeriodicExportingMetricReader(exporter))
+    provider = MeterProvider(resource=resource, metric_readers=readers)
     metrics.set_meter_provider(provider)
     _meter_provider = provider
     logger.info("OpenTelemetry metrics initialized for service '%s'", service_name)
@@ -87,3 +99,37 @@ def init_metrics(service_name: str) -> MeterProvider | None:
 
 def get_meter(name: str):
     return metrics.get_meter(name)
+
+
+def init_api_telemetry(service_name: str) -> TelemetryConfig:
+    """Set up the API's providers and return the `telemetry` config for `FastAPI()`.
+
+    With FASTAPI_OTEL_AUTO_CONFIGURE, FastAPI attaches the OTLP exporters for metrics,
+    traces and logs (endpoints read from os.environ) to these providers at startup,
+    so every signal carries our resource. Otherwise only metrics are exported, by us.
+    """
+    settings = Settings()
+    auto_configure = settings.FASTAPI_OTEL_AUTO_CONFIGURE
+    _ = init_metrics(service_name, with_exporter=not auto_configure)
+    telemetry_config: TelemetryConfig = {
+        "auto_configure": auto_configure,
+        "metrics": settings.OTEL_METRICS_ENABLED,
+    }
+    if not auto_configure:
+        return telemetry_config
+
+    _validate_protocol(settings.OTEL_EXPORTER_OTLP_PROTOCOL)
+    endpoint = settings.OTEL_EXPORTER_OTLP_ENDPOINT.strip()
+    if urlsplit(endpoint).path not in ("", "/"):
+        logger.warning(
+            "OTEL_EXPORTER_OTLP_ENDPOINT '%s' has a path; FastAPI appends /v1/<signal> to it. "
+            "Use the base URL (e.g. http://localhost:4318).",
+            endpoint,
+        )
+    _ = os.environ.setdefault("OTEL_EXPORTER_OTLP_ENDPOINT", endpoint)
+
+    resource = _build_resource(service_name, settings)
+    trace.set_tracer_provider(TracerProvider(resource=resource))
+    _logs.set_logger_provider(LoggerProvider(resource=resource))
+    logger.info("FastAPI OpenTelemetry auto-configuration enabled for service '%s'", service_name)
+    return telemetry_config
