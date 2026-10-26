@@ -35,9 +35,9 @@ Configure metrics with these environment variables:
 
 - `OTEL_METRICS_ENABLED` (`true`/`false`)
 - `OTEL_SERVICE_NAME` (base service name, API/worker suffixes are appended)
-- `OTEL_EXPORTER_OTLP_ENDPOINT` (default: `http://localhost:4318/v1/metrics`)
+- `OTEL_EXPORTER_OTLP_ENDPOINT` (default: `http://localhost:4318/v1/metrics`; a base URL such as `http://datadog-agent:4318` gets `/v1/metrics` appended)
 - `OTEL_EXPORTER_OTLP_PROTOCOL` (default: `http/protobuf`)
-- `OTEL_RESOURCE_ATTRIBUTES` (optional resource attributes)
+- `OTEL_RESOURCE_ATTRIBUTES` (optional, e.g. `deployment.environment=prod,service.version=1.2.3`; `service.instance.id` defaults to `<hostname>-<pid>`)
 
 By default, InfraKitchen no longer exposes a Prometheus scrape endpoint. Metrics are exported directly to an OTLP collector.
 

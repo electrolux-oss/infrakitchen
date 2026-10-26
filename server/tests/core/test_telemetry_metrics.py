@@ -4,7 +4,12 @@ from starlette.responses import Response
 from unittest.mock import Mock
 
 import app as app_module
-from core.telemetry import init_metrics
+from core.telemetry import (
+    _metrics_endpoint,
+    _parse_resource_attributes,
+    _resource_attributes,
+    init_metrics,
+)
 
 
 @pytest.mark.asyncio
@@ -96,3 +101,38 @@ def test_init_metrics_is_idempotent():
     first = init_metrics("infrakitchen-test")
     second = init_metrics("infrakitchen-test")
     assert first is second
+
+
+@pytest.mark.parametrize(
+    ("configured", "expected"),
+    [
+        ("", "http://localhost:4318/v1/metrics"),
+        ("http://datadog-agent:4318", "http://datadog-agent:4318/v1/metrics"),
+        ("http://otel-collector:4318/", "http://otel-collector:4318/v1/metrics"),
+        ("http://otel-collector:4318/v1/metrics", "http://otel-collector:4318/v1/metrics"),
+        ("https://gateway.example.com/otlp/v1/metrics", "https://gateway.example.com/otlp/v1/metrics"),
+    ],
+)
+def test_metrics_endpoint(configured, expected):
+    assert _metrics_endpoint(configured) == expected
+
+
+def test_parse_resource_attributes():
+    raw = "deployment.environment=prod, service.version=1.2.3,team=platform%20eng,malformed,=x"
+    assert _parse_resource_attributes(raw) == {
+        "deployment.environment": "prod",
+        "service.version": "1.2.3",
+        "team": "platform eng",
+    }
+
+
+def test_resource_attributes_sets_instance_id_and_keeps_service_name():
+    attributes = _resource_attributes("infrakitchen-api", "service.name=other,deployment.environment=dev")
+    assert attributes["service.name"] == "infrakitchen-api"
+    assert attributes["deployment.environment"] == "dev"
+    assert attributes["service.instance.id"]
+
+
+def test_resource_attributes_allows_instance_id_override():
+    attributes = _resource_attributes("infrakitchen-worker", "service.instance.id=pod-abc")
+    assert attributes["service.instance.id"] == "pod-abc"
