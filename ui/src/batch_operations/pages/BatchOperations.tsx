@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router";
 
 import { PermissionWrapper, useConfig } from "../../common";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
 import { HeroPlusCircleIcon } from "../../icons";
@@ -15,6 +16,7 @@ export const BatchOperationsPage = () => {
   return (
     <PageContainer
       title="Batch Operations"
+      icon={entityIcons.batch_operation}
       description="Run one action — such as previewing or applying changes — across multiple resources or executors at once."
       actions={
         <PermissionWrapper

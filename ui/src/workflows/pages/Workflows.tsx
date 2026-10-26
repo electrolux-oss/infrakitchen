@@ -1,3 +1,4 @@
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
 import { workflowColumns } from "../components/workflowTableConfig";
@@ -7,6 +8,7 @@ export const WorkflowsPage = () => {
   return (
     <PageContainer
       title="Workflows"
+      icon={entityIcons.workflow}
       description="Orchestrated runs that execute multiple resources in dependency order."
     >
       <EntityFetchTable

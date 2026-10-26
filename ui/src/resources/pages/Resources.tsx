@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { useNavigate, useLocation } from "react-router";
 
 import { useConfig, PermissionWrapper } from "../../common";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
 import { HeroPlusCircleIcon } from "../../icons";
@@ -28,6 +29,7 @@ export const ResourcesPage = () => {
   return (
     <PageContainer
       title="Resources"
+      icon={entityIcons.resource}
       description="Infrastructure provisioned from your templates and managed end to end."
       actions={
         <PermissionWrapper

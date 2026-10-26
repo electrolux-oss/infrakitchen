@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { PermissionWrapper, useConfig } from "../../common";
 import { CommonDialog } from "../../common/components/dialogs";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import {
   EntityFetchTable,
   EntityFetchTableRef,
@@ -208,6 +209,7 @@ export const ToolsPage = () => {
   return (
     <PageContainer
       title="IaC Tools"
+      icon={entityIcons.tool}
       description={`${defaultToolLabel(defaultTool)}. Used by resources and executors without a selected tool.`}
       actions={
         <PermissionWrapper requiredPermission="*" permissionAction="admin">

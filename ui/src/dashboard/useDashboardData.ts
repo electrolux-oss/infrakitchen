@@ -28,6 +28,12 @@ const AUDIT_LOG_FIELDS = `
       }
 `;
 
+// Recent Activities only lists real activity; permission denials stay in Audit Logs.
+const ACTIVITY_FILTER = {
+  model: ["resource", "executor"],
+  exclude_denied: true,
+};
+
 // Fetches just the next page of audit logs, used by the Recent Activities
 // widget's "Load more" button.
 const AUDIT_LOGS_QUERY = `
@@ -128,7 +134,7 @@ export const useDashboardData = () => {
       const response = await ikApi.graphqlRequest<DashboardResponse>(
         DASHBOARD_QUERY,
         {
-          auditFilter: { model: ["resource", "executor"] },
+          auditFilter: ACTIVITY_FILTER,
           auditSort: ["created_at", "DESC"],
           auditRange: [0, 10],
         },
@@ -198,7 +204,7 @@ export const useDashboardData = () => {
       const response = await ikApi.graphqlRequest<{ auditLogs: GqlAuditLog[] }>(
         AUDIT_LOGS_QUERY,
         {
-          auditFilter: { model: ["resource", "executor"] },
+          auditFilter: ACTIVITY_FILTER,
           auditSort: ["created_at", "DESC"],
           auditRange: [current, current + PAGE_SIZE],
         },

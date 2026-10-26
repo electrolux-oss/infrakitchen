@@ -1,3 +1,4 @@
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
 import { TaskQueueButton } from "../components/TaskQueueDialog";
@@ -13,6 +14,7 @@ export const TasksPage = () => {
   return (
     <PageContainer
       title="Tasks"
+      icon={entityIcons.task}
       description="Background operations running against your entities, such as plans, applies, and syncs."
       actions={<TaskQueueButton />}
     >

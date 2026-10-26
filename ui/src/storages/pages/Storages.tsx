@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { useNavigate } from "react-router";
 
 import { PermissionWrapper, useConfig } from "../../common";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import PageContainer from "../../common/PageContainer";
@@ -25,7 +26,8 @@ export const StoragesPage = () => {
 
   return (
     <PageContainer
-      title="Storages"
+      title="Storage"
+      icon={entityIcons.storage}
       description="Backends that hold Terraform or OpenTofu state for your resources and executors."
       actions={
         <PermissionWrapper

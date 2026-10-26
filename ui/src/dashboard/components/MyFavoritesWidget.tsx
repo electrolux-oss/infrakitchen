@@ -1,4 +1,4 @@
-import { HeroHeartSolidIcon } from "../../icons";
+import { HeroHeartIcon } from "../../icons";
 import { Divider, Spinner } from "../../ui";
 import { FavoriteResource } from "../types";
 
@@ -16,7 +16,7 @@ export const MyFavoritesWidget = ({
   return (
     <div className="w-full">
       <div className="mb-3 flex items-center gap-2">
-        <HeroHeartSolidIcon className="text-[20px] text-primary" />
+        <HeroHeartIcon className="text-[20px] text-primary" />
         <h6 className="m-0 text-subtitle1 font-semibold text-grey-500">
           My Favorites
         </h6>
@@ -35,7 +35,7 @@ export const MyFavoritesWidget = ({
           </div>
         ) : favorites.length === 0 ? (
           <div className="flex flex-col items-center py-8 text-fg-muted">
-            <HeroHeartSolidIcon className="mb-2 text-[32px] text-primary opacity-50" />
+            <HeroHeartIcon className="mb-2 text-[32px] text-primary opacity-50" />
             <p className="m-0 text-body2">No favorites yet.</p>
             <span className="text-caption">
               Pin resources for quick access.

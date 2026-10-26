@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import (
@@ -12,8 +12,28 @@ from core.database import (
 )
 from core.utils.model_tools import is_valid_uuid
 
+from .functions import DENIED_OUTCOME
 from .model import AuditLog
 from .query_options import build_audit_log_query_options
+
+
+EXCLUDE_DENIED_FILTER = "exclude_denied"
+
+
+def _apply_filters(statement: Select[Any], filter: dict[str, Any] | None) -> Select[Any]:
+    """Apply generic filters plus the audit-specific ``exclude_denied`` flag.
+
+    ``exclude_denied: true`` hides permission-denial rows (``metadata.denied == "true"``).
+    """
+    if filter is None:
+        return statement
+    filter = dict(filter)
+    exclude_denied = filter.pop(EXCLUDE_DENIED_FILTER, False)
+    statement = evaluate_sqlalchemy_filters(AuditLog, statement, filter)
+    if exclude_denied is True:
+        denied = AuditLog.action_metadata[DENIED_OUTCOME].as_string()
+        statement = statement.where(func.coalesce(denied, "") != "true")
+    return statement
 
 
 class AuditLogCRUD:
@@ -41,7 +61,7 @@ class AuditLogCRUD:
         fields: FieldSpec | None = None,
     ) -> list[AuditLog]:
         statement = select(AuditLog)
-        statement = evaluate_sqlalchemy_filters(AuditLog, statement, filter)
+        statement = _apply_filters(statement, filter)
         statement = evaluate_sqlalchemy_sorting(AuditLog, statement, sort)
         statement = evaluate_sqlalchemy_pagination(statement, range)
         statement = statement.options(*build_audit_log_query_options(fields))
@@ -50,7 +70,7 @@ class AuditLogCRUD:
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         statement = select(func.count()).select_from(AuditLog)
-        statement = evaluate_sqlalchemy_filters(AuditLog, statement, filter)
+        statement = _apply_filters(statement, filter)
         result = await self.session.execute(statement)
         return result.scalar_one() or 0
 

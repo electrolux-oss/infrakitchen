@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 
 import { FilterProvider, PermissionWrapper } from "../../common";
 import { EntityCard } from "../../common/components/cards/EntityCard";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
@@ -200,7 +201,11 @@ const IntegrationsPage = () => {
 
   if (error) {
     return (
-      <PageContainer title="Integrations" actions={actions}>
+      <PageContainer
+        title="Integrations"
+        icon={entityIcons.integration}
+        actions={actions}
+      >
         <div className="w-full py-8">
           <Alert className="mb-4" severity="error">
             {error}
@@ -214,6 +219,7 @@ const IntegrationsPage = () => {
   return (
     <PageContainer
       title="Integrations"
+      icon={entityIcons.integration}
       description={
         <>
           Manage your Git and Cloud{" "}

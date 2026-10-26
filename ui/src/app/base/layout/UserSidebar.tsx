@@ -10,7 +10,7 @@ import {
   Divider,
   ListItemIcon,
   ListItemText,
-  HeroArrowLeftOnRectangleIcon,
+  HeroArrowRightStartOnRectangleIcon,
   Menu,
   MenuItem,
   HeroUserIcon,
@@ -92,7 +92,7 @@ export default function UserSidebar() {
 
         <MenuItem className="my-0.5 py-1" onClick={logout}>
           <ListItemIcon className="mr-3">
-            <HeroArrowLeftOnRectangleIcon fontSize="small" />
+            <HeroArrowRightStartOnRectangleIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText primaryClassName="font-normal">Log Out</ListItemText>
         </MenuItem>

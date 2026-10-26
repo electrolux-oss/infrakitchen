@@ -8,9 +8,9 @@ import heroArchiveBoxData from "@iconify-icons/heroicons/archive-box";
 import heroArrowDownData from "@iconify-icons/heroicons/arrow-down";
 import heroArrowDownCircleData from "@iconify-icons/heroicons/arrow-down-circle";
 import heroArrowDownTrayData from "@iconify-icons/heroicons/arrow-down-tray";
-import heroArrowLeftOnRectangleData from "@iconify-icons/heroicons/arrow-left-on-rectangle";
 import heroArrowPathData from "@iconify-icons/heroicons/arrow-path";
 import heroArrowPathRoundedSquareData from "@iconify-icons/heroicons/arrow-path-rounded-square";
+import heroArrowRightStartOnRectangleData from "@iconify-icons/heroicons/arrow-right-start-on-rectangle";
 import heroArrowTopRightOnSquareData from "@iconify-icons/heroicons/arrow-top-right-on-square";
 import heroArrowUpData from "@iconify-icons/heroicons/arrow-up";
 import heroArrowUturnLeftData from "@iconify-icons/heroicons/arrow-uturn-left";
@@ -23,6 +23,7 @@ import heroBars3BottomLeftData from "@iconify-icons/heroicons/bars-3-bottom-left
 import heroBellData from "@iconify-icons/heroicons/bell";
 import heroBellAlertData from "@iconify-icons/heroicons/bell-alert";
 import heroBellSlashData from "@iconify-icons/heroicons/bell-slash";
+import heroBoltData from "@iconify-icons/heroicons/bolt";
 import heroBookOpenData from "@iconify-icons/heroicons/book-open";
 import heroBugAntData from "@iconify-icons/heroicons/bug-ant";
 import heroChartBarData from "@iconify-icons/heroicons/chart-bar";
@@ -273,9 +274,9 @@ export const HeroArrowDownTrayIcon = /* @__PURE__ */ createIcon(
   heroArrowDownTrayData,
   "HeroArrowDownTray",
 );
-export const HeroArrowLeftOnRectangleIcon = /* @__PURE__ */ createIcon(
-  heroArrowLeftOnRectangleData,
-  "HeroArrowLeftOnRectangle",
+export const HeroArrowRightStartOnRectangleIcon = /* @__PURE__ */ createIcon(
+  heroArrowRightStartOnRectangleData,
+  "HeroArrowRightStartOnRectangle",
 );
 export const HeroArrowTopRightOnSquareIcon = /* @__PURE__ */ createIcon(
   heroArrowTopRightOnSquareData,
@@ -292,6 +293,10 @@ export const HeroBars3Icon = /* @__PURE__ */ createIcon(
 export const HeroBars3BottomLeftIcon = /* @__PURE__ */ createIcon(
   heroBars3BottomLeftData,
   "HeroBars3BottomLeft",
+);
+export const HeroBoltIcon = /* @__PURE__ */ createIcon(
+  heroBoltData,
+  "HeroBolt",
 );
 export const HeroBellIcon = /* @__PURE__ */ createIcon(
   heroBellData,

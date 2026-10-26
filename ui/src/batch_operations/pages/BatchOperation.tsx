@@ -3,7 +3,7 @@ import { useParams } from "react-router";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
-import { HeroQueueListIcon } from "../../icons";
+import { HeroBoltIcon } from "../../icons";
 import { BatchOperationContent } from "../components/BatchOperationContent";
 import { BATCH_OPERATION_FIELDS } from "../graphql";
 
@@ -17,7 +17,7 @@ export const BatchOperationPage = () => {
       entityFields={BATCH_OPERATION_FIELDS}
     >
       <EntityContainer
-        titleIcon={<HeroQueueListIcon />}
+        titleIcon={<HeroBoltIcon />}
         actions={<EntityRefreshButton />}
       >
         <BatchOperationContent />

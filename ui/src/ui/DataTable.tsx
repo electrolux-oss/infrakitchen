@@ -605,6 +605,7 @@ export function DataTable<R extends RowData = any>({
                       : undefined
                   }
                   className={cn(
+                    "group/row",
                     compact ? "h-9" : "h-[52px]",
                     onRowClick
                       ? "cursor-pointer hover:bg-primary/8"

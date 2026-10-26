@@ -20,7 +20,7 @@ import {
   HeroCodeBracketSquareIcon,
   HeroCodeBracketIcon,
   HeroWrenchScrewdriverIcon,
-  HeroSquares2X2Icon,
+  HeroChartBarIcon,
   HeroTagIcon,
   HeroServerStackIcon,
   HeroCogIcon,
@@ -36,9 +36,9 @@ import {
   HeroUsersIcon,
   HeroClipboardDocumentCheckIcon,
   HeroClipboardDocumentListIcon,
-  HeroQueueListIcon,
   HeroCircleStackIcon,
   HeroCommandLineIcon,
+  HeroBoltIcon,
 } from "@/index";
 import { cn } from "@/index";
 import { useConfig } from "@/index";
@@ -195,7 +195,7 @@ export default function DashboardSidebar({
             <DashboardSidebarPageItem
               id="dashboard"
               title="Dashboard"
-              icon={<HeroSquares2X2Icon />}
+              icon={<HeroChartBarIcon />}
               href="/"
               selected={pathname === "/"}
             />
@@ -265,7 +265,7 @@ export default function DashboardSidebar({
             <DashboardSidebarPageItem
               id="batch_operations"
               title="Batch Operations"
-              icon={<HeroQueueListIcon />}
+              icon={<HeroBoltIcon />}
               href="/batch_operations"
               selected={!!matchPath("/batch_operations/*", pathname)}
               permissionKey="batch_operation"

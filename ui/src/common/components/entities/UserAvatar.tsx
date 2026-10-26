@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { CSSProperties, useCallback } from "react";
 
 import { useNavigate } from "react-router";
 
@@ -18,14 +18,14 @@ const getInitials = (identifier: string): string => {
     .join("");
 };
 
-// Derives a deterministic background color from the user identifier using a hash-to-HSL mapping.
-const getAvatarColor = (identifier: string): string => {
+// Derives a deterministic hue from the user identifier; the tinted background
+// and text colors (Label-style) are built from it in the component.
+const getAvatarHue = (identifier: string): number => {
   let hash = 0;
   for (let i = 0; i < identifier.length; i++) {
     hash = identifier.charCodeAt(i) + ((hash << 5) - hash);
   }
-  const hue = Math.abs(hash) % 360;
-  return `hsl(${hue}, 55%, 45%)`;
+  return Math.abs(hash) % 360;
 };
 
 export const UserAvatar = ({
@@ -58,11 +58,13 @@ export const UserAvatar = ({
       <Avatar
         className={cn(
           "size-[1.5em] shrink-0 cursor-pointer text-[length:inherit]",
+          "bg-[hsl(var(--avatar-hue)_70%_85%)] text-[hsl(var(--avatar-hue)_60%_28%)]",
+          "dark:bg-[hsl(var(--avatar-hue)_75%_18%)] dark:text-[hsl(var(--avatar-hue)_65%_77%)]",
           className,
         )}
-        style={{ backgroundColor: getAvatarColor(identifier) }}
+        style={{ "--avatar-hue": getAvatarHue(identifier) } as CSSProperties}
       >
-        <span className="text-[0.8em] font-normal">
+        <span className="text-[0.8em] font-semibold">
           {getInitials(identifier)}
         </span>
       </Avatar>

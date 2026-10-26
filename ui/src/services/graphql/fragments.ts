@@ -1,4 +1,5 @@
 import {
+  GraphqlFieldMap,
   buildSelection,
   buildNestedSelection,
 } from "../../common/graphql/buildGraphqlFields";
@@ -54,6 +55,18 @@ const PROJECT_SHORT_FIELDS = `
   id
   name
 `;
+
+/** Maps snake_case table column fields to their GraphQL selection strings. */
+export const SERVICE_FIELD_MAP: GraphqlFieldMap = {
+  project: buildNestedSelection(
+    SERVICE_GRAPHQL_FIELDS.relations.project,
+    `
+      id
+      name
+      entityName
+    `,
+  ),
+};
 
 export const SERVICE_DETAIL_FIELDS = `
   ${buildSelection(SERVICE_GRAPHQL_FIELDS.detail)}

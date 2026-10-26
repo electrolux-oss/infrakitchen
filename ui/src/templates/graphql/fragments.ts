@@ -1,4 +1,5 @@
 import {
+  GraphqlFieldMap,
   buildSelection,
   buildNestedSelection,
 } from "../../common/graphql/buildGraphqlFields";
@@ -64,6 +65,14 @@ export const TEMPLATE_SHORT_FIELDS = `
 export const TEMPLATE_LIST_FIELDS = `
   ${buildSelection(TEMPLATE_GRAPHQL_FIELDS.list)}
 `;
+
+/** Maps snake_case table column fields to their GraphQL selection strings. */
+export const TEMPLATE_FIELD_MAP: GraphqlFieldMap = {
+  creator: buildNestedSelection(
+    TEMPLATE_GRAPHQL_FIELDS.relations.creator,
+    USER_SHORT_FIELDS,
+  ),
+};
 
 export const TEMPLATE_DETAIL_FIELDS = `
   ${buildSelection(TEMPLATE_GRAPHQL_FIELDS.detail)}

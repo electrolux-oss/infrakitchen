@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router";
 
 import { PermissionWrapper, useConfig } from "../../common";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
 import { HeroArrowDownCircleIcon } from "../../icons";
@@ -32,6 +33,7 @@ export const SourceCodesPage = () => {
   return (
     <PageContainer
       title="Code Repositories"
+      icon={entityIcons.source_code}
       description="Register Git repositories containing Terraform or OpenTofu modules used by your templates and executors."
       actions={actions}
     >
