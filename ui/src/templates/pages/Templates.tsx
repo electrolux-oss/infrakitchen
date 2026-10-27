@@ -1,9 +1,19 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import { FilterProvider, PermissionWrapper } from "../../common";
+import {
+  FilterProvider,
+  PermissionWrapper,
+  useLocalStorage,
+} from "../../common";
 import { EntityCard } from "../../common/components/cards/EntityCard";
+import { entityIcons } from "../../common/components/entities/entityIcons";
+import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
+import {
+  EntityListView,
+  ViewToggle,
+} from "../../common/components/entity_table/ViewToggle";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
@@ -12,13 +22,19 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { ENTITY_CARD_GRID_CLASSES } from "../../common/utils/entityCardGrid";
-import { HeroPlusCircleIcon } from "../../icons";
-import { HeroArrowDownCircleIcon } from "../../icons";
+import { HeroArrowDownCircleIcon, HeroPlusCircleIcon } from "../../icons";
 import { Alert, Spinner, Button, Link } from "../../ui";
 import { cn } from "../../utils/cn";
 import { ENTITY_STATUS } from "../../utils/constants";
 import { templateColumns } from "../components/templateFilterConfig";
-import { GqlTemplate, TEMPLATE_LIST_FIELDS } from "../graphql";
+import { buildTemplateTableColumns } from "../components/templateTableConfig";
+import {
+  GqlTemplate,
+  TEMPLATE_FIELD_MAP,
+  TEMPLATE_LIST_FIELDS,
+} from "../graphql";
+
+const VIEW_STORAGE_KEY = "templates_view";
 
 export const TemplatesPage = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -28,10 +44,30 @@ export const TemplatesPage = () => {
   const [filterValues, setFilterValues] = useState<Record<string, any>>({});
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const navigate = useNavigate();
+  const { get, setKey } = useLocalStorage<Record<string, any>>();
+  const [view, setView] = useState<EntityListView>(
+    get(VIEW_STORAGE_KEY)?.view === "table" ? "table" : "grid",
+  );
+
+  const tableColumns = useMemo(
+    () =>
+      buildTemplateTableColumns((templateId) =>
+        navigate(`${linkPrefix}resources/create`, {
+          state: { template_id: templateId },
+        }),
+      ),
+    [navigate, linkPrefix],
+  );
+
+  const changeView = (next: EntityListView) => {
+    setView(next);
+    setKey(VIEW_STORAGE_KEY, { view: next });
+  };
 
   const entityName = "template";
 
   const fetchTemplates = useCallback(async () => {
+    if (view !== "grid") return;
     const apiFilters = buildAdvancedApiFilters(filterValues);
 
     if (isInitialLoad) {
@@ -62,7 +98,7 @@ export const TemplatesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [ikApi, filterValues, isInitialLoad]);
+  }, [ikApi, filterValues, isInitialLoad, view]);
 
   const handleFilterChange = useCallback(
     (newFilterValues: Record<string, any>) => {
@@ -98,6 +134,10 @@ export const TemplatesPage = () => {
     </div>
   );
 
+  const viewToggle = (
+    <ViewToggle value={view} onChange={changeView} ariaLabel="Templates view" />
+  );
+
   const templateCardFields = (template: GqlTemplate) => {
     return (
       <>
@@ -113,9 +153,14 @@ export const TemplatesPage = () => {
     );
   };
 
-  if (error) {
+  if (error && view === "grid") {
     return (
-      <PageContainer title="Templates" actions={actions}>
+      <PageContainer
+        title="Templates"
+        icon={entityIcons.template}
+        actions={actions}
+      >
+        {viewToggle}
         <div className="w-full py-8">
           <Alert className="mb-4" severity="error">
             {error}
@@ -129,6 +174,7 @@ export const TemplatesPage = () => {
   return (
     <PageContainer
       title="Templates"
+      icon={entityIcons.template}
       description={
         <>
           <Link
@@ -146,59 +192,74 @@ export const TemplatesPage = () => {
       }
       actions={actions}
     >
-      <div className="w-full">
-        <FilterProvider
-          columns={templateColumns}
-          storageKey={`filter_${entityName}s`}
-          onFilterChange={handleFilterChange}
-          syncToUrl
-        >
-          <FilterPanel />
-        </FilterProvider>
-        {loading ? (
-          <div className="flex h-[50vh] items-center justify-center">
-            <Spinner />
-          </div>
-        ) : templates.length === 0 ? (
-          <div className="py-8 text-center">
-            <p className="m-0 text-h5">No templates available</p>
-          </div>
-        ) : (
-          <div className={cn(ENTITY_CARD_GRID_CLASSES, "mt-6")}>
-            {templates.map((template) => {
-              // The API serializes status with its display casing (e.g.
-              // "DISABLED"); normalize before comparing against the lowercase
-              // constant so disabled templates don't keep their CTA.
-              const enabled =
-                String(template.status ?? "").toLocaleLowerCase() !==
-                ENTITY_STATUS.DISABLED;
+      {viewToggle}
+      {view === "table" ? (
+        <EntityFetchTable
+          title="Templates"
+          entityName="template"
+          columns={tableColumns}
+          entityFieldMap={TEMPLATE_FIELD_MAP}
+          buildApiFilters={buildAdvancedApiFilters}
+          defaultSort={{ field: "name", sort: "asc" }}
+          syncFiltersToUrl
+        />
+      ) : (
+        <div className="w-full">
+          <FilterProvider
+            columns={templateColumns}
+            storageKey={`filter_${entityName}s`}
+            onFilterChange={handleFilterChange}
+            syncToUrl
+          >
+            <FilterPanel />
+          </FilterProvider>
+          {loading ? (
+            <div className="flex h-[50vh] items-center justify-center">
+              <Spinner />
+            </div>
+          ) : templates.length === 0 ? (
+            <div className="py-8 text-center">
+              <p className="m-0 text-h5">No templates available</p>
+            </div>
+          ) : (
+            <div className={cn(ENTITY_CARD_GRID_CLASSES, "mt-6")}>
+              {templates.map((template) => {
+                // The API serializes status with its display casing (e.g.
+                // "DISABLED"); normalize before comparing against the lowercase
+                // constant so disabled templates don't keep their CTA.
+                const enabled =
+                  String(template.status ?? "").toLocaleLowerCase() !==
+                  ENTITY_STATUS.DISABLED;
 
-              return (
-                <EntityCard
-                  key={template.id}
-                  entity_name="template"
-                  name={template.name}
-                  description={template.description ?? ""}
-                  status={template.status}
-                  detailsUrl={`${linkPrefix}templates/${template.id}`}
-                  {...(enabled && {
-                    onCreateClick: () =>
-                      navigate(`${linkPrefix}resources/create`, {
-                        state: { template_id: template.id },
-                      }),
-                  })}
-                  {...(enabled ? { createButtonName: "Create Resource" } : {})}
-                  labels={template.labels || []}
-                  labelsMax={5}
-                  chip={template.abstract ? "Abstract" : undefined}
-                  lastUpdated={template.updatedAt}
-                  entityFields={templateCardFields(template)}
-                />
-              );
-            })}
-          </div>
-        )}
-      </div>
+                return (
+                  <EntityCard
+                    key={template.id}
+                    entity_name="template"
+                    name={template.name}
+                    description={template.description ?? ""}
+                    status={template.status}
+                    detailsUrl={`${linkPrefix}templates/${template.id}`}
+                    {...(enabled && {
+                      onCreateClick: () =>
+                        navigate(`${linkPrefix}resources/create`, {
+                          state: { template_id: template.id },
+                        }),
+                    })}
+                    {...(enabled
+                      ? { createButtonName: "Create Resource" }
+                      : {})}
+                    labels={template.labels || []}
+                    labelsMax={5}
+                    chip={template.abstract ? "Abstract" : undefined}
+                    lastUpdated={template.updatedAt}
+                    entityFields={templateCardFields(template)}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </PageContainer>
   );
 };

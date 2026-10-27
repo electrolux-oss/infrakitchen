@@ -288,7 +288,7 @@ export const RecentActivityWidget = ({
         valueGetter: (_value, row) =>
           row.creator?.displayName ?? row.creator?.identifier ?? "System",
         renderCell: (params: RenderCellParams<ActivityLogEntry>) => (
-          <div className="flex w-full items-center justify-end gap-3">
+          <div className="flex w-full items-center justify-end gap-1.5">
             <RelativeTime
               className="flex"
               date={params.row.createdAt}

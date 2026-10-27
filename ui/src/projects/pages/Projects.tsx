@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 
 import { FilterProvider, PermissionWrapper } from "../../common";
 import { EntityCard } from "../../common/components/cards/EntityCard";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
@@ -121,7 +122,11 @@ export const ProjectsPage = () => {
 
   if (error) {
     return (
-      <PageContainer title="Projects" actions={actions}>
+      <PageContainer
+        title="Projects"
+        icon={entityIcons.project}
+        actions={actions}
+      >
         <div className="w-full py-8">
           <Alert className="mb-4" severity="error">
             {error}
@@ -135,6 +140,7 @@ export const ProjectsPage = () => {
   return (
     <PageContainer
       title="Projects"
+      icon={entityIcons.project}
       description={
         <>
           <Link

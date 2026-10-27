@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import { Entity } from "../../common/components/entities/Entity";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
@@ -155,6 +156,7 @@ export default function WorkerList() {
   return (
     <PageContainer
       title="Workers"
+      icon={entityIcons.worker}
       description="The processes that pick up and execute infrastructure tasks."
       actions={
         // The queue is task data, so it needs task read access on top of worker access

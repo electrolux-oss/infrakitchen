@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { PermissionWrapper, useConfig } from "../../common";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
-import { HeroPlusCircleIcon } from "../../icons";
+import { HeroPlusCircleIcon, HeroUserGroupIcon } from "../../icons";
 import { Button } from "../../ui";
 import { roleColumns } from "../components/roleTableConfig";
 
@@ -15,6 +15,7 @@ export const RolesPage = () => {
   return (
     <PageContainer
       title="Roles"
+      icon={<HeroUserGroupIcon />}
       description="Access roles that control what users and service accounts can do."
       actions={
         <PermissionWrapper

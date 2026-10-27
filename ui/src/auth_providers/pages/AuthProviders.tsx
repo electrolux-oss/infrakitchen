@@ -6,14 +6,10 @@ import { PermissionWrapper, useConfig } from "../../common";
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import type { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
-import {
-  RELATIVE_TIME_COLUMN_WIDTH,
-  userColumn,
-} from "../../common/components/entity_table/tableColumns";
+import { createdByColumn } from "../../common/components/entity_table/tableColumns";
 import { getProviderValue } from "../../common/components/fields/CommonField";
-import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import PageContainer from "../../common/PageContainer";
-import { HeroPlusCircleIcon } from "../../icons";
+import { HeroFingerPrintIcon, HeroPlusCircleIcon } from "../../icons";
 import { Switch, Button, Tooltip } from "../../ui";
 import { RenderCellParams } from "../../ui";
 import { AUTH_PROVIDER_FIELD_MAP } from "../graphql";
@@ -61,18 +57,7 @@ export const AuthProvidersPage = () => {
           </Tooltip>
         ),
       },
-      {
-        field: "createdAt",
-        headerName: "Created",
-        width: RELATIVE_TIME_COLUMN_WIDTH,
-        align: "right",
-        headerAlign: "right",
-        sortField: "created_at",
-        renderCell: (params: RenderCellParams) => (
-          <RelativeTime date={params.value} compact />
-        ),
-      },
-      userColumn({ disableFilter: true }),
+      createdByColumn({ createdSortField: "created_at" }),
     ],
     [],
   );
@@ -80,6 +65,7 @@ export const AuthProvidersPage = () => {
   return (
     <PageContainer
       title="Auth Providers"
+      icon={<HeroFingerPrintIcon />}
       description="Sign-in methods you can enable for your users."
       actions={
         <PermissionWrapper
@@ -99,6 +85,7 @@ export const AuthProvidersPage = () => {
         title="Auth Providers"
         entityName="authProvider"
         columns={columns}
+        defaultSort={{ field: "name", sort: "asc" }}
         entityFieldMap={AUTH_PROVIDER_FIELD_MAP}
       />
     </PageContainer>

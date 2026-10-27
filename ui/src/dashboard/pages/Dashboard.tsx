@@ -1,6 +1,6 @@
 import PageContainer from "../../common/PageContainer";
 import { GoldenStateWidget } from "../../golden_state/GoldenStateWidget";
-import { HeroArrowPathIcon } from "../../icons";
+import { HeroArrowPathIcon, HeroChartBarIcon } from "../../icons";
 import { Spinner, IconButton, Tooltip } from "../../ui";
 import { GettingStartedContent } from "../components/GettingStarted";
 import { MyFavoritesWidget } from "../components/MyFavoritesWidget";
@@ -34,11 +34,8 @@ export const DashboardPage = () => {
 
   return (
     <PageContainer
-      title={
-        <>
-          <h1 className="m-0 text-h5 font-semibold text-primary">Dashboard</h1>
-        </>
-      }
+      title="Dashboard"
+      icon={<HeroChartBarIcon />}
       description="A quick overview of your infrastructure and recent activities"
       actions={
         <Tooltip title="Refresh">

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { PermissionWrapper, useConfig } from "../../common";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
-import { HeroPlusCircleIcon } from "../../icons";
+import { HeroPlusCircleIcon, HeroUsersIcon } from "../../icons";
 import { Button } from "../../ui";
 import {
   userColumns,
@@ -19,6 +19,7 @@ export const UsersPage = () => {
   return (
     <PageContainer
       title="Users"
+      icon={<HeroUsersIcon />}
       description="People and service accounts with access to InfraKitchen."
       actions={
         <PermissionWrapper

@@ -14,8 +14,11 @@ import { EntityLink } from "./EntityLink";
 import { UserAvatar } from "./UserAvatar";
 
 export interface EntityRecord {
+  /** Unique entity ID, used to build detail links. */
   id?: string;
+  /** Display name of the entity. */
   name?: string;
+  /** Human-readable identifier, shown as a fallback when no name is set. */
   identifier?: string;
   /** Entity type in snake_case, e.g. ``"source_code"``. */
   entityType?: string;
@@ -23,14 +26,20 @@ export interface EntityRecord {
   entityName?: string;
   /** Provider route segment used by integration detail links. */
   integrationProvider?: string;
-  /** Nullable: the GraphQL layer returns `null` for the unused ref kind. */
+  /** Source code version (tag or ref). */
   sourceCodeVersion?: string | null;
+  /** Git branch of the source code. */
   sourceCodeBranch?: string | null;
+  /** Lifecycle state of the entity (e.g. of a template version). */
   lifecycleState?: string | null;
+  /** Description of breaking changes introduced by this version. */
   breakingChanges?: string | null;
+  /** Template the entity was created from. */
   template?: { name?: string } | null;
   /** Populated for code repositories (``entityType === "source_code"``). */
+  /** Repository URL. */
   sourceCodeUrl?: string;
+  /** Git hosting provider of the repository. */
   sourceCodeProvider?: string;
   /** Populated for workspaces (``entityType === "workspace"``). */
   workspaceProvider?: string;
@@ -262,7 +271,11 @@ export const Entity = ({
         className="Entity-typeLabel"
         size="small"
         label={tagLabel}
-        icon={entityIcons[entityType ?? ""]}
+        icon={
+          entity.template?.name
+            ? entityIcons.template
+            : entityIcons[entityType ?? ""]
+        }
       />
     ) : null;
   const contentRow = "flex min-w-0 items-center gap-1.5";

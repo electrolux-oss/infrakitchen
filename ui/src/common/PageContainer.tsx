@@ -8,6 +8,8 @@ import { useDocumentTitle } from "./hooks/useDocumentTitle";
 export interface PageContainerProps {
   children?: React.ReactNode;
   title?: React.ReactNode;
+  /** Icon rendered before the title, styled by the container */
+  icon?: React.ReactNode;
   description?: React.ReactNode;
   /** Browser tab title; defaults to `title` when it is a string */
   documentTitle?: string;
@@ -27,6 +29,7 @@ export default function PageContainer(props: PageContainerProps) {
   const {
     children,
     title,
+    icon,
     description,
     documentTitle,
     titleAdornment = null,
@@ -51,9 +54,14 @@ export default function PageContainer(props: PageContainerProps) {
                 <h1
                   className={cn(
                     "m-0 text-h5 font-semibold",
-                    titleAdornment && "flex items-center gap-3",
+                    (icon || titleAdornment) && "flex items-center gap-2",
                   )}
                 >
+                  {icon ? (
+                    <span className="inline-flex shrink-0 text-[1.25em] text-primary">
+                      {icon}
+                    </span>
+                  ) : null}
                   <span className="min-w-0">{title}</span>
                   {titleAdornment}
                 </h1>

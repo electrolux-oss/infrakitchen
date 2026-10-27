@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router";
 
 import { PermissionWrapper, useConfig } from "../../common";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
 import { HeroPlusCircleIcon } from "../../icons";
@@ -19,6 +20,7 @@ export const SecretsPage = () => {
   return (
     <PageContainer
       title="Secrets"
+      icon={entityIcons.secret}
       description="Securely manage credentials, API keys, and other sensitive values for your infrastructure."
       actions={
         <PermissionWrapper

@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router";
 
 import { useConfig } from "../../common";
 import PageContainer from "../../common/PageContainer";
+import { HeroCog6ToothIcon } from "../../icons";
 import { Tab, Tabs } from "../../ui";
 import {
   FeatureFlagSection,
@@ -47,6 +48,7 @@ export const AdminPage = () => {
   return (
     <PageContainer
       title="Settings"
+      icon={<HeroCog6ToothIcon />}
       description="Manage permissions, feature flags, and scheduled jobs."
     >
       <div className="w-full">
