@@ -26,6 +26,11 @@ interface FilterContextValue {
   filterValues: FilterState;
   setFilterValue: (filterId: string, value: any) => void;
   setFilterValues: (values: FilterState) => void;
+  resetFilters: () => void;
+  resetFilter: (filterId: string) => void;
+  hasActiveFilters: boolean;
+  hasUnsavedFilters: boolean;
+  saveFilters?: () => void;
   syncToUrl: boolean;
   hasFilters: boolean;
 }
@@ -96,6 +101,11 @@ export function FilterProvider(props: FilterProviderProps) {
       filterValues: filterState.filterValues,
       setFilterValue: filterState.setFilterValue,
       setFilterValues: filterState.setFilterValues,
+      resetFilters: filterState.resetFilters,
+      resetFilter: filterState.resetFilter,
+      hasActiveFilters: filterState.hasActiveFilters,
+      hasUnsavedFilters: filterState.hasUnsavedFilters,
+      saveFilters: filterState.saveFilters,
       syncToUrl,
       hasFilters,
     }),
@@ -104,6 +114,11 @@ export function FilterProvider(props: FilterProviderProps) {
       filterState.filterValues,
       filterState.setFilterValue,
       filterState.setFilterValues,
+      filterState.resetFilters,
+      filterState.resetFilter,
+      filterState.hasActiveFilters,
+      filterState.hasUnsavedFilters,
+      filterState.saveFilters,
       syncToUrl,
       hasFilters,
     ],
