@@ -31,6 +31,10 @@ interface FilterContextValue {
   hasActiveFilters: boolean;
   hasUnsavedFilters: boolean;
   saveFilters?: () => void;
+  hasSavedFilters: boolean;
+  isSavedView: boolean;
+  applySavedFilters?: () => void;
+  clearSavedFilters?: () => void;
   syncToUrl: boolean;
   hasFilters: boolean;
 }
@@ -106,6 +110,10 @@ export function FilterProvider(props: FilterProviderProps) {
       hasActiveFilters: filterState.hasActiveFilters,
       hasUnsavedFilters: filterState.hasUnsavedFilters,
       saveFilters: filterState.saveFilters,
+      hasSavedFilters: filterState.hasSavedFilters,
+      isSavedView: filterState.isSavedView,
+      applySavedFilters: filterState.applySavedFilters,
+      clearSavedFilters: filterState.clearSavedFilters,
       syncToUrl,
       hasFilters,
     }),
@@ -119,6 +127,10 @@ export function FilterProvider(props: FilterProviderProps) {
       filterState.hasActiveFilters,
       filterState.hasUnsavedFilters,
       filterState.saveFilters,
+      filterState.hasSavedFilters,
+      filterState.isSavedView,
+      filterState.applySavedFilters,
+      filterState.clearSavedFilters,
       syncToUrl,
       hasFilters,
     ],
