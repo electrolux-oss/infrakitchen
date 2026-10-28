@@ -112,7 +112,7 @@ const allRoutes: LazyRouteDefinition[] = [
       "BlueprintUsePage",
     ),
     requiredPermission: "api:blueprint",
-    permissionAction: "write",
+    permissionAction: "read",
   },
   {
     path: "/blueprints/:blueprint_id/:tab?",
@@ -196,7 +196,7 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/integrations/:provider/:integration_id/:tab?",
+    path: "/integrations/:integration_id/:tab?",
     Component: lz(
       () => import("./integrations/pages/Integration"),
       "IntegrationPage",

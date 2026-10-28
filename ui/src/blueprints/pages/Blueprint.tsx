@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from "react-router";
 
+import { PermissionWrapper } from "../../common";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { entityIcons } from "../../common/components/entities/entityIcons";
@@ -25,15 +26,20 @@ export const BlueprintPage = () => {
         titleIcon={entityIcons.blueprint}
         actions={
           <>
-            <Button
-              size="small"
-              startIcon={<HeroPlayCircleIcon />}
-              onClick={() =>
-                navigate(`${linkPrefix}blueprints/${blueprint_id}/use`)
-              }
+            <PermissionWrapper
+              requiredPermission="api:blueprint"
+              permissionAction="read"
             >
-              Use Blueprint
-            </Button>
+              <Button
+                size="small"
+                startIcon={<HeroPlayCircleIcon />}
+                onClick={() =>
+                  navigate(`${linkPrefix}blueprints/${blueprint_id}/use`)
+                }
+              >
+                Use Blueprint
+              </Button>
+            </PermissionWrapper>
             <EntityRefreshButton />
           </>
         }

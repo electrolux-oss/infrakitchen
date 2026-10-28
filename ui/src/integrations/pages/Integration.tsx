@@ -114,4 +114,4 @@ export const IntegrationPage = () => {
   );
 };
 
-IntegrationPage.path = "/integrations/:provider/:integration_id/:tab?";
+IntegrationPage.path = "/integrations/:integration_id/:tab?";

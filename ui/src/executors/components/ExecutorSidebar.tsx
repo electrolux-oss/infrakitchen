@@ -140,7 +140,6 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
                     entityName="integration"
                     name={parent.name}
                     provider={parent.integrationProvider}
-                    urlProvider={parent.integrationProvider}
                   />
                 ))}
               </div>

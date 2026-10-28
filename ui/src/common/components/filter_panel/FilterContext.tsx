@@ -26,6 +26,15 @@ interface FilterContextValue {
   filterValues: FilterState;
   setFilterValue: (filterId: string, value: any) => void;
   setFilterValues: (values: FilterState) => void;
+  resetFilters: () => void;
+  resetFilter: (filterId: string) => void;
+  hasActiveFilters: boolean;
+  hasUnsavedFilters: boolean;
+  saveFilters?: () => void;
+  hasSavedFilters: boolean;
+  isSavedView: boolean;
+  applySavedFilters?: () => void;
+  clearSavedFilters?: () => void;
   syncToUrl: boolean;
   hasFilters: boolean;
 }
@@ -96,6 +105,15 @@ export function FilterProvider(props: FilterProviderProps) {
       filterValues: filterState.filterValues,
       setFilterValue: filterState.setFilterValue,
       setFilterValues: filterState.setFilterValues,
+      resetFilters: filterState.resetFilters,
+      resetFilter: filterState.resetFilter,
+      hasActiveFilters: filterState.hasActiveFilters,
+      hasUnsavedFilters: filterState.hasUnsavedFilters,
+      saveFilters: filterState.saveFilters,
+      hasSavedFilters: filterState.hasSavedFilters,
+      isSavedView: filterState.isSavedView,
+      applySavedFilters: filterState.applySavedFilters,
+      clearSavedFilters: filterState.clearSavedFilters,
       syncToUrl,
       hasFilters,
     }),
@@ -104,6 +122,15 @@ export function FilterProvider(props: FilterProviderProps) {
       filterState.filterValues,
       filterState.setFilterValue,
       filterState.setFilterValues,
+      filterState.resetFilters,
+      filterState.resetFilter,
+      filterState.hasActiveFilters,
+      filterState.hasUnsavedFilters,
+      filterState.saveFilters,
+      filterState.hasSavedFilters,
+      filterState.isSavedView,
+      filterState.applySavedFilters,
+      filterState.clearSavedFilters,
       syncToUrl,
       hasFilters,
     ],
