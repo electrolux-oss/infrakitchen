@@ -24,6 +24,14 @@ export interface UseFilterStateReturn {
   hasActiveFilters: boolean;
   hasUnsavedFilters: boolean;
   saveFilters?: () => void;
+  /** URL mode: a saved view exists for this page. */
+  hasSavedFilters: boolean;
+  /** URL mode: the current filters are the saved view. */
+  isSavedView: boolean;
+  /** URL mode: applies the saved view. */
+  applySavedFilters?: () => void;
+  /** URL mode: deletes the saved view (current filters stay). */
+  clearSavedFilters?: () => void;
 }
 
 function isClauseValueEmpty(value: any): boolean {
@@ -379,15 +387,15 @@ export function useFilterState(
 
   const resetFilters = useCallback(() => {
     if (syncToUrl) {
+      // Clears the current filters only; the saved view stays the page default.
       hasInteractedRef.current = true;
       setOptimisticUrlFilterValues({});
-      clearSavedUrlFilters();
       setSearchParams(new URLSearchParams(), { replace: true });
       return;
     }
 
     setStoredFilterValues(initialValues);
-  }, [clearSavedUrlFilters, initialValues, setSearchParams, syncToUrl]);
+  }, [initialValues, setSearchParams, syncToUrl]);
 
   const resetFilter = useCallback(
     (filterId: string) => {
@@ -433,6 +441,20 @@ export function useFilterState(
     setKey(storageKey, filterValues);
   }, [filterValues, setKey, storageKey, syncToUrl]);
 
+  const applySavedFilters = useCallback(() => {
+    hasInteractedRef.current = true;
+    setOptimisticUrlFilterValues(savedUrlFilterValues);
+    setSearchParams(
+      filtersToSearchParams(savedUrlFilterValues, filterConfigs),
+      {
+        replace: true,
+      },
+    );
+  }, [filterConfigs, savedUrlFilterValues, setSearchParams]);
+
+  const hasSavedFilters =
+    syncToUrl && computeHasActiveFilters(savedUrlFilterValues);
+
   return {
     filterValues,
     setFilterValue,
@@ -444,5 +466,11 @@ export function useFilterState(
       ? !areFilterStatesEqual(filterValues, savedUrlFilterValues)
       : false,
     saveFilters: syncToUrl ? saveFilters : undefined,
+    hasSavedFilters,
+    isSavedView:
+      hasSavedFilters &&
+      areFilterStatesEqual(filterValues, savedUrlFilterValues),
+    applySavedFilters: syncToUrl ? applySavedFilters : undefined,
+    clearSavedFilters: syncToUrl ? clearSavedUrlFilters : undefined,
   };
 }
