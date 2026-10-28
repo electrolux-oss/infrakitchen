@@ -9,24 +9,24 @@ import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { copyToClipboard } from "../../common/utils/clipboard";
 import {
-  HeroArrowPathIcon,
-  HeroCheckIcon,
   HeroDocumentDuplicateIcon,
+  HeroExclamationTriangleIcon,
   HeroShieldCheckIcon,
-  HeroXMarkIcon,
 } from "../../icons";
 import { HeroPlusCircleIcon } from "../../icons";
 import { HeroTrashIcon } from "../../icons";
 import {
   Alert,
-  Checkbox,
-  FormControlLabel,
+  MenuItem,
+  Select,
   Button,
   IconButton,
   Tooltip,
   TextField,
+  Switch,
 } from "../../ui";
 import { Label } from "../../ui/Label";
+import { cn } from "../../utils/cn";
 import { GqlUser } from "../graphql";
 import {
   CREATE_PERSONAL_ACCESS_TOKEN_MUTATION,
@@ -52,10 +52,70 @@ const formatDateTimeLocal = (value: Date) => {
 // carry admin authority.
 const SCOPE_ACTIONS = ["read", "write"] as const;
 
+// Only entities reachable from the sidebar menu are offered, labelled as in the
+// menu. Internal entities (not listed here) are never shown to the user.
+// Grouped and ordered as in the menu.
+const SCOPE_GROUPS: { title: string; entities: [string, string][] }[] = [
+  {
+    title: "General",
+    entities: [
+      ["project", "Projects"],
+      ["service", "Services"],
+      ["template", "Templates"],
+      ["source_code_version", "Template Versions"],
+      ["resource", "Resources"],
+      ["batch_operation", "Batch Operations"],
+      ["executor", "Executors"],
+      ["blueprint", "Blueprints"],
+    ],
+  },
+  {
+    title: "Configurations",
+    entities: [
+      ["integration", "Integrations"],
+      ["source_code", "Code Repositories"],
+      ["workspace", "Workspaces"],
+      ["storage", "Storage"],
+      ["secret", "Secrets"],
+      ["tool", "IaC Tools"],
+    ],
+  },
+  {
+    title: "Operations",
+    entities: [
+      ["task", "Tasks"],
+      ["workflow", "Workflows"],
+      ["worker", "Workers"],
+    ],
+  },
+  {
+    title: "Management",
+    entities: [
+      ["user", "Users"],
+      ["permission", "Roles"],
+      ["audit_log", "Audit Logs"],
+    ],
+  },
+];
+
+const SCOPE_ENTITY_LABELS: Record<string, string> = Object.fromEntries(
+  SCOPE_GROUPS.flatMap((group) => group.entities),
+);
+const SCOPE_ENTITY_GROUP: Record<string, string> = Object.fromEntries(
+  SCOPE_GROUPS.flatMap((group) =>
+    group.entities.map(([entity]) => [entity, group.title]),
+  ),
+);
+const SCOPE_ENTITY_ORDER = SCOPE_GROUPS.flatMap((group) =>
+  group.entities.map(([entity]) => entity),
+);
+const byMenuOrder = (a: string, b: string) =>
+  SCOPE_ENTITY_ORDER.indexOf(a) - SCOPE_ENTITY_ORDER.indexOf(b);
+
 const normalizeAction = (action: string | undefined) => {
   // "admin" implies both read and write for scoping purposes.
   if (action === "admin") return SCOPE_ACTIONS;
-  if (action === "write") return ["write"];
+  if (action === "write") return SCOPE_ACTIONS;
   if (action === "read") return ["read"];
   return [];
 };
@@ -76,7 +136,9 @@ const TokenDialog = ({
   const { bootstrapPermissions, entities } = useConfig();
   const [name, setName] = useState("");
   const [selectedScopes, setSelectedScopes] = useState<Set<string>>(new Set());
-  const [expiresAt, setExpiresAt] = useState("");
+  // "never", a number of days, or "custom" (uses the date picker value).
+  const [expiryChoice, setExpiryChoice] = useState("7");
+  const [customExpiresAt, setCustomExpiresAt] = useState("");
   const minExpiresAt = formatDateTimeLocal(new Date());
   const expirationOptions = [7, 30, 90, 180];
 
@@ -96,7 +158,8 @@ const TokenDialog = ({
         ...(entities ?? []),
       ]);
       return Array.from(entityNames)
-        .sort((a, b) => a.localeCompare(b))
+        .filter((entity) => entity in SCOPE_ENTITY_LABELS)
+        .sort(byMenuOrder)
         .map((entity) => ({
           entity,
           actions: SCOPE_ACTIONS.slice() as string[],
@@ -105,19 +168,69 @@ const TokenDialog = ({
 
     return Object.entries(bootstrapPermissions)
       .filter(([key]) => key !== "*")
-      .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, action]) => ({
         entity: stripApiPrefix(key),
         actions: normalizeAction(action).slice(),
-      }));
+      }))
+      .filter(({ entity }) => entity in SCOPE_ENTITY_LABELS)
+      .sort((a, b) => byMenuOrder(a.entity, b.entity));
   }, [bootstrapPermissions, entities]);
 
   useEffect(() => {
     if (!open) return;
     setName("");
     setSelectedScopes(new Set());
-    setExpiresAt("");
+    setExpiryChoice("7");
+    setCustomExpiresAt("");
   }, [open]);
+
+  // Sets every entity in a group to the given level (capped at what the owner
+  // may grant), leaving other groups untouched.
+  const readOnlyScopes = availableScopes
+    .filter(({ actions }) => actions.includes("read"))
+    .map(({ entity }) => `read:${entity}`);
+  const readWriteScopes = availableScopes.flatMap(({ entity, actions }) =>
+    actions.map((action) => `${action}:${entity}`),
+  );
+  const matchesSelection = (scopes: string[]) =>
+    scopes.length > 0 &&
+    scopes.length === selectedScopes.size &&
+    scopes.every((scope) => selectedScopes.has(scope));
+  const readOnlyActive = matchesSelection(readOnlyScopes);
+  const readWriteActive = matchesSelection(readWriteScopes);
+  const groupLevel = (group: string) => {
+    const levels = new Set(
+      availableScopes
+        .filter(({ entity }) => SCOPE_ENTITY_GROUP[entity] === group)
+        .map(({ entity }) =>
+          selectedScopes.has(`write:${entity}`)
+            ? "write"
+            : selectedScopes.has(`read:${entity}`)
+              ? "read"
+              : "none",
+        ),
+    );
+    return levels.size === 1 ? Array.from(levels)[0] : "mixed";
+  };
+
+  const selectGroup = (group: string, level: "none" | "read" | "write") => {
+    setSelectedScopes((previous) => {
+      const updated = new Set(previous);
+      availableScopes
+        .filter(({ entity }) => SCOPE_ENTITY_GROUP[entity] === group)
+        .forEach(({ entity, actions }) => {
+          updated.delete(`read:${entity}`);
+          updated.delete(`write:${entity}`);
+          if (level !== "none" && actions.includes("read")) {
+            updated.add(`read:${entity}`);
+          }
+          if (level === "write" && actions.includes("write")) {
+            updated.add(`write:${entity}`);
+          }
+        });
+      return updated;
+    });
+  };
 
   const handleSave = async () => {
     const trimmedName = name.trim();
@@ -126,16 +239,28 @@ const TokenDialog = ({
       return;
     }
 
-    if (expiresAt && new Date(expiresAt).getTime() <= Date.now()) {
-      notifyError(new Error("Expiration must be in the future."));
-      return;
+    let expiresAt: string | null = null;
+    if (expiryChoice === "custom") {
+      if (!customExpiresAt) {
+        notifyError(new Error("Select an expiration date."));
+        return;
+      }
+      if (new Date(customExpiresAt).getTime() <= Date.now()) {
+        notifyError(new Error("Expiration must be in the future."));
+        return;
+      }
+      expiresAt = new Date(customExpiresAt).toISOString();
+    } else if (expiryChoice !== "never") {
+      expiresAt = new Date(
+        Date.now() + Number(expiryChoice) * 24 * 60 * 60 * 1000,
+      ).toISOString();
     }
 
     const input: PersonalAccessTokenInput = {
       name: trimmedName,
       scopes:
         selectedScopes.size > 0 ? Array.from(selectedScopes).sort() : null,
-      expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+      expiresAt,
     };
 
     await onSave(input);
@@ -160,105 +285,172 @@ const TokenDialog = ({
             onChange={(event) => setName(event.target.value)}
             fullWidth
             autoFocus
-            helperText="Use a descriptive label so you can tell tokens apart later."
+            helperText="Name the token after what will use it, e.g. “Claude agent” or “Local script”."
           />
+          <div className="flex flex-row items-start gap-3">
+            <TextField
+              select
+              label="Expiration"
+              value={expiryChoice}
+              onChange={(event) => setExpiryChoice(event.target.value)}
+              className="w-48 shrink-0"
+              helperText={
+                expiryChoice === "never"
+                  ? "This token will not expire."
+                  : undefined
+              }
+            >
+              {expirationOptions.map((days) => (
+                <MenuItem key={days} value={String(days)}>
+                  {`${days} days`}
+                </MenuItem>
+              ))}
+              <MenuItem value="custom">Custom</MenuItem>
+              <MenuItem value="never">No expiration</MenuItem>
+            </TextField>
+            {expiryChoice === "custom" && (
+              <TextField
+                label="Expires at"
+                type="datetime-local"
+                value={customExpiresAt}
+                onChange={(event) => setCustomExpiresAt(event.target.value)}
+                className="w-60"
+                inputProps={{ min: minExpiresAt }}
+              />
+            )}
+          </div>
           {availableScopes.length > 0 && (
             <div>
-              <span className="mb-1 block text-caption text-fg-muted">
-                Permissions
-              </span>
-              <div className="max-h-55 overflow-y-auto rounded-surface border border-divider p-2">
-                {availableScopes.map(({ entity, actions }) => (
-                  <div
-                    className="flex flex-row items-center gap-4 px-2"
-                    key={entity}
-                  >
-                    <p className="m-0 min-w-27.5 text-body2">{entity}</p>
-                    {SCOPE_ACTIONS.map((action) => {
-                      const scope = `${action}:${entity}`;
-                      const allowed = actions.includes(action);
-                      const checked = selectedScopes.has(scope);
-                      const checkbox = (
-                        <Checkbox
+              <div className="flex items-center justify-between">
+                <span className="text-caption text-fg-muted">Permissions</span>
+                <div className="flex items-center gap-3">
+                  {(
+                    [
+                      [
+                        "All read only",
+                        readOnlyActive || readWriteActive,
+                        readOnlyScopes,
+                      ],
+                      ["All read and write", readWriteActive, readWriteScopes],
+                    ] as const
+                  ).map(([label, active, scopes]) => (
+                    <label
+                      key={label}
+                      className="flex cursor-pointer items-center gap-1 text-body2"
+                    >
+                      <Switch
+                        checked={active}
+                        disabled={label === "All read only" && readWriteActive}
+                        onChange={() =>
+                          setSelectedScopes(new Set(active ? [] : scopes))
+                        }
+                        inputProps={{ "aria-label": label }}
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <p
+                className={cn(
+                  "mt-0.5 mb-2 text-caption",
+                  selectedScopes.size > 0
+                    ? "text-fg-muted"
+                    : "font-semibold text-tint-orange-500 dark:text-tint-orange-300",
+                )}
+              >
+                {selectedScopes.size > 0
+                  ? "This token is limited to the access chosen below."
+                  : "No restrictions chosen: the token has the same access as your account."}
+              </p>
+              <div className="max-h-[40vh] overflow-y-auto rounded-surface border border-divider">
+                {availableScopes.map(({ entity, actions }, index) => (
+                  <div key={entity}>
+                    {(index === 0 ||
+                      SCOPE_ENTITY_GROUP[entity] !==
+                        SCOPE_ENTITY_GROUP[
+                          availableScopes[index - 1].entity
+                        ]) && (
+                      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-divider bg-canvas px-3 py-0.5">
+                        <span className="text-caption font-semibold tracking-wide text-fg-muted uppercase">
+                          {SCOPE_ENTITY_GROUP[entity]}
+                        </span>
+                        <Select<string>
                           size="small"
-                          disabled={!allowed}
-                          checked={checked}
-                          onChange={(_, next) => {
-                            setSelectedScopes((previous) => {
-                              const updated = new Set(previous);
-                              if (next) {
-                                updated.add(scope);
-                              } else {
-                                updated.delete(scope);
-                              }
-                              return updated;
-                            });
-                          }}
-                        />
-                      );
-                      return (
-                        <FormControlLabel
-                          className="ml-0"
-                          key={scope}
-                          // Disabled here too: FormControlLabel keys its
-                          // cursor:default + greyed label off this prop, not
-                          // off the inner Checkbox's.
-                          disabled={!allowed}
-                          control={
-                            allowed ? (
-                              checkbox
-                            ) : (
-                              <Tooltip
-                                title={`You don't have ${action} permission on ${entity}.`}
-                                placement="top"
-                              >
-                                <span>{checkbox}</span>
-                              </Tooltip>
+                          className="w-40 shrink-0"
+                          aria-label={`${SCOPE_ENTITY_GROUP[entity]} access`}
+                          value={groupLevel(SCOPE_ENTITY_GROUP[entity])}
+                          onChange={(event) =>
+                            selectGroup(
+                              SCOPE_ENTITY_GROUP[entity],
+                              event.target.value as "none" | "read" | "write",
                             )
                           }
-                          label={action}
-                        />
-                      );
-                    })}
+                        >
+                          <MenuItem value="mixed" disabled className="hidden">
+                            Mixed
+                          </MenuItem>
+                          <MenuItem value="none">-- Select --</MenuItem>
+                          <MenuItem value="read">Read only</MenuItem>
+                          <MenuItem value="write">Read and write</MenuItem>
+                        </Select>
+                      </div>
+                    )}
+                    <div className="flex flex-row items-center justify-between gap-4 px-3 py-1">
+                      <p className="m-0 text-body2">
+                        {SCOPE_ENTITY_LABELS[entity]}
+                      </p>
+                      <Select<string>
+                        size="small"
+                        className="w-40 shrink-0"
+                        aria-label={`${SCOPE_ENTITY_LABELS[entity]} access`}
+                        value={
+                          selectedScopes.has(`write:${entity}`)
+                            ? "write"
+                            : selectedScopes.has(`read:${entity}`)
+                              ? "read"
+                              : "none"
+                        }
+                        onChange={(event) => {
+                          const level = event.target.value;
+                          setSelectedScopes((previous) => {
+                            const updated = new Set(previous);
+                            updated.delete(`read:${entity}`);
+                            updated.delete(`write:${entity}`);
+                            if (level === "read" || level === "write") {
+                              updated.add(`read:${entity}`);
+                            }
+                            if (level === "write") {
+                              updated.add(`write:${entity}`);
+                            }
+                            return updated;
+                          });
+                        }}
+                      >
+                        <MenuItem value="none">-- Select --</MenuItem>
+                        <MenuItem
+                          value="read"
+                          disabled={!actions.includes("read")}
+                        >
+                          Read only
+                        </MenuItem>
+                        <MenuItem
+                          value="write"
+                          disabled={!actions.includes("write")}
+                        >
+                          Read and write
+                        </MenuItem>
+                      </Select>
+                    </div>
                   </div>
                 ))}
               </div>
               <Alert className="mt-2" severity="info" variant="outlined">
-                Optionally restrict this token to specific permissions — it
-                cannot exceed your own.
+                A token cannot have more access than you do, so options above
+                your own permission level cannot be selected.
               </Alert>
             </div>
           )}
-          <TextField
-            label="Expiration"
-            type="datetime-local"
-            value={expiresAt}
-            onChange={(event) => setExpiresAt(event.target.value)}
-            fullWidth
-            inputProps={{ min: minExpiresAt }}
-            helperText={
-              selectedScopes.size > 0
-                ? "Scoped personal access token — leave blank to never expire."
-                : "Leave blank for a token that does not expire."
-            }
-          />
-          <div className="flex flex-row flex-wrap gap-2">
-            {expirationOptions.map((hours) => (
-              <Button
-                key={hours}
-                disabled={isLoading}
-                onClick={() =>
-                  setExpiresAt(
-                    formatDateTimeLocal(
-                      new Date(Date.now() + hours * 24 * 60 * 60 * 1000),
-                    ),
-                  )
-                }
-              >
-                {`${hours} days`}
-              </Button>
-            ))}
-          </div>
         </div>
       }
       actions={
@@ -364,12 +556,15 @@ const DeleteTokenButton = ({
 }) => {
   const [isConfirming, setIsConfirming] = useState(false);
 
-  // Two-step confirm lives in a compact menu-style popover row to the left of
-  // the shared delete icon button, so it doesn't stretch the card row.
-  if (!isConfirming) {
-    return (
+  const handleConfirm = async () => {
+    await onDelete(token.id);
+    setIsConfirming(false);
+  };
+
+  return (
+    <>
       <IconButton
-        title={"Delete Token"}
+        title="Delete Token"
         aria-label="Delete token"
         size="small"
         onClick={() => setIsConfirming(true)}
@@ -378,32 +573,29 @@ const DeleteTokenButton = ({
       >
         <HeroTrashIcon fontSize="small" />
       </IconButton>
-    );
-  }
-
-  return (
-    <div className="flex flex-row items-center gap-1">
-      <IconButton
-        className="border-0 bg-transparent text-error"
-        title="Confirm delete"
-        aria-label="Confirm delete token"
-        size="small"
-        disabled={isLoading}
-        onClick={() => onDelete(token.id)}
-      >
-        <HeroCheckIcon fontSize="small" />
-      </IconButton>
-      <IconButton
-        title="Cancel"
-        aria-label="Cancel delete"
-        size="small"
-        disabled={isLoading}
-        onClick={() => setIsConfirming(false)}
-        className={deleteIconButtonClass}
-      >
-        <HeroXMarkIcon fontSize="small" />
-      </IconButton>
-    </div>
+      <CommonDialog
+        open={isConfirming}
+        onClose={() => setIsConfirming(false)}
+        title="Delete token?"
+        maxWidth="xs"
+        content={
+          <p className="m-0 text-body2">
+            Delete <strong>{token.name}</strong>? Anything using this token will
+            immediately lose access. This cannot be undone.
+          </p>
+        }
+        actions={
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleConfirm}
+            disabled={isLoading}
+          >
+            Delete
+          </Button>
+        }
+      />
+    </>
   );
 };
 
@@ -484,7 +676,7 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
     <>
       <BaseCard
         name="Personal Access Tokens"
-        description="Create and delete tokens for CLI and API access on your account."
+        description="Tokens give automation and AI agents access to InfraKitchen on your behalf. Limit each token to the access it needs and set an expiration."
         actions={
           <div className="flex flex-row items-center gap-2">
             <Button
@@ -494,16 +686,6 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
             >
               Create Token
             </Button>
-            <Tooltip title="Refresh">
-              <IconButton
-                size="small"
-                aria-label="Refresh"
-                onClick={loadTokens}
-                disabled={isLoading}
-              >
-                <HeroArrowPathIcon />
-              </IconButton>
-            </Tooltip>
           </div>
         }
       >
@@ -529,12 +711,24 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
                       {token.scopes ? (
                         <Label tone="info" label="Scoped" />
                       ) : (
-                        <Label tone="warning" label="Full access" />
+                        <Label
+                          tone="warning"
+                          label="Full access"
+                          icon={<HeroExclamationTriangleIcon />}
+                        />
                       )}
                       {isExpired(token.expiresAt) ? (
-                        <Label label="Expired" tone="error" />
+                        <Label
+                          label="Expired"
+                          tone="warning"
+                          icon={<HeroExclamationTriangleIcon />}
+                        />
                       ) : token.expiresAt ? null : (
-                        <Label label="Never expires" tone="error" />
+                        <Label
+                          label="Never expires"
+                          tone="error"
+                          icon={<HeroExclamationTriangleIcon />}
+                        />
                       )}
                     </div>
                     <p className="m-0 text-body2 text-fg-muted">
