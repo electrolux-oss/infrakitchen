@@ -196,10 +196,20 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/integrations/:provider/:integration_id/:tab?",
+    path: "/integrations/:integration_id/:tab?",
     Component: lz(
       () => import("./integrations/pages/Integration"),
       "IntegrationPage",
+    ),
+    requiredPermission: "api:integration",
+    permissionAction: "read",
+  },
+  {
+    // Old URLs carried a provider slug: /integrations/<provider>/<id>/<tab>
+    path: "/integrations/:provider/:integration_id/:tab",
+    Component: lz(
+      () => import("./integrations/pages/Integration"),
+      "LegacyIntegrationRedirect",
     ),
     requiredPermission: "api:integration",
     permissionAction: "read",

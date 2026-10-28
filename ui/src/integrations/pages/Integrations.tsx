@@ -306,7 +306,7 @@ const IntegrationsPage = () => {
                   name={integration.name}
                   description={integration.description || ""}
                   status={integration.status}
-                  detailsUrl={`${linkPrefix}integrations/${provider?.slug}/${integration.id}`}
+                  detailsUrl={`${linkPrefix}integrations/${integration.id}`}
                   lastUpdated={integration.updatedAt}
                   labels={integration.labels || []}
                   icon={

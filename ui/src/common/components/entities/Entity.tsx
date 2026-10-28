@@ -195,9 +195,6 @@ export const Entity = ({
       <EntityLink
         id={entity.id}
         entityName={entityType}
-        urlProvider={
-          entityType === "integration" ? entity.integrationProvider : undefined
-        }
         name={displayText}
         identifier={entity.identifier}
         className={linkClassName}

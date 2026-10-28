@@ -123,7 +123,6 @@ export const SourceCodeSidebar = ({ sourceCode }: SourceCodeSidebarProps) => {
                 entityName="integration"
                 name={sourceCode.integration.name}
                 provider={sourceCode.integration.integrationProvider}
-                urlProvider={sourceCode.integration.integrationProvider}
               />
             ) : null
           }

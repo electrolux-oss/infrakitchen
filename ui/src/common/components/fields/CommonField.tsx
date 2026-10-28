@@ -41,8 +41,6 @@ export const EntityReference: FC<
     tone?: React.ComponentProps<typeof Label>["tone"];
     /** Shows the provider's brand icon instead of the entity icon. */
     provider?: string;
-    /** Provider route segment, as used by integration detail pages. */
-    urlProvider?: string;
   }
 > = ({
   id,
@@ -53,15 +51,11 @@ export const EntityReference: FC<
   icon,
   tone,
   provider,
-  urlProvider,
 }) => {
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
 
-  const basePath = `${linkPrefix}${entityName}s`;
-  const fullPath = urlProvider
-    ? `${basePath}/${urlProvider}/${id}`
-    : `${basePath}/${id}`;
+  const fullPath = `${linkPrefix}${entityName}s/${id}`;
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLElement>) => {

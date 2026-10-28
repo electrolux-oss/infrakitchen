@@ -103,8 +103,9 @@ const IntegrationCreatePage = () => {
           },
         });
 
-        if (response.createIntegrationWithStorage.id) {
-          navigate(`${linkPrefix}integrations`);
+        const createdId = response.createIntegrationWithStorage.id;
+        if (createdId) {
+          navigate(`${linkPrefix}integrations/${createdId}`);
           notify("Integration created successfully!", "success");
         }
       } catch (error: any) {

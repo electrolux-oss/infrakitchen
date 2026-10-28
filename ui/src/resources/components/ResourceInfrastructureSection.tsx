@@ -179,7 +179,6 @@ export const ResourceInfrastructureSection = ({
                   entityName="integration"
                   name={integration.name}
                   provider={integration.integrationProvider}
-                  urlProvider={integration.integrationProvider}
                 />
               ))}
             </div>
