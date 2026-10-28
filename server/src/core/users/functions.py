@@ -9,18 +9,25 @@ from core.constants.model import ModelActions
 from core.errors import AccessDenied
 
 
+from ..users.accounts import primary_user_id
 from ..users.model import UserDTO
 
 
-def _resolve_subject_id(user: UserDTO) -> str | UUID:
-    """Casbin subject id for a user: the primary account when linked. Rejects deactivated accounts."""
+# actions that satisfy a requested access level (higher levels imply lower ones)
+ENTITY_ACCESS_ACTIONS: dict[str, tuple[str, ...]] = {
+    "read": ("read", "write", "admin"),
+    "write": ("write", "admin"),
+    "admin": ("admin",),
+}
+
+
+def _resolve_subject_id(user: UserDTO) -> UUID:
+    """Casbin subject id for a user (see `primary_user_id`). Rejects deactivated accounts."""
     if user.deactivated is True:
         raise AccessDenied("User account is deactivated")
-    if user.primary_account:
-        if user.primary_account[0].deactivated is True:
-            raise AccessDenied("Primary account is deactivated")
-        return user.primary_account[0].id
-    return user.id
+    if user.primary_account and user.primary_account[0].deactivated is True:
+        raise AccessDenied("Primary account is deactivated")
+    return primary_user_id(user)
 
 
 async def user_has_access_to_entity(
@@ -31,21 +38,10 @@ async def user_has_access_to_entity(
 
     user_id = _resolve_subject_id(user)
 
-    casbin_enforcer = CasbinEnforcer()
-    if casbin_enforcer.enforcer is None:
-        _ = await casbin_enforcer.get_enforcer()
+    enforcer = await _get_casbin_enforcer()
 
-    if casbin_enforcer.enforcer is None:
-        raise RuntimeError("Casbin enforcer is not initialized")
-
-    act_mapping = {
-        "write": ["write", "admin"],
-        "read": ["read", "write", "admin"],
-        "admin": ["admin"],
-    }
-
-    for act in act_mapping[action]:
-        if casbin_enforcer.enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", act) is True:
+    for act in ENTITY_ACCESS_ACTIONS[action]:
+        if enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", act) is True:
             return True
 
     return False
@@ -57,21 +53,10 @@ async def user_has_access_to_api(user: UserDTO | None, api: str, action: str) ->
 
     user_id = _resolve_subject_id(user)
 
-    casbin_enforcer = CasbinEnforcer()
-    if casbin_enforcer.enforcer is None:
-        _ = await casbin_enforcer.get_enforcer()
+    enforcer = await _get_casbin_enforcer()
 
-    if casbin_enforcer.enforcer is None:
-        raise RuntimeError("Casbin enforcer is not initialized")
-
-    act_mapping = {
-        "write": ["write", "admin"],
-        "read": ["read", "write", "admin"],
-        "admin": ["admin"],
-    }
-
-    for act in act_mapping[action]:
-        if casbin_enforcer.enforcer.enforce(f"user:{user_id}", f"api:{api}", act) is True:
+    for act in ENTITY_ACCESS_ACTIONS[action]:
+        if enforcer.enforce(f"user:{user_id}", f"api:{api}", act) is True:
             return True
 
     return False
@@ -108,12 +93,8 @@ async def user_apis_permissions(user: UserDTO | None) -> dict[str, str]:
 
     user_id = _resolve_subject_id(user)
 
-    casbin_enforcer = CasbinEnforcer()
-    if casbin_enforcer.enforcer is None:
-        _ = await casbin_enforcer.get_enforcer()
-    if not casbin_enforcer.enforcer:
-        raise RuntimeError("Casbin enforcer is not initialized")
-    policies = await casbin_enforcer.enforcer.get_implicit_permissions_for_user(f"user:{user_id}")
+    enforcer = await _get_casbin_enforcer()
+    policies = await enforcer.get_implicit_permissions_for_user(f"user:{user_id}")
     return filter_policies(policies)
 
 
@@ -134,19 +115,15 @@ async def user_entity_permissions(user: UserDTO | None, entity_id: str | UUID, e
 
     user_id = _resolve_subject_id(user)
 
-    casbin_enforcer = CasbinEnforcer()
-    if casbin_enforcer.enforcer is None:
-        _ = await casbin_enforcer.get_enforcer()
-    if casbin_enforcer.enforcer is None:
-        raise RuntimeError("Casbin enforcer is not initialized")
+    enforcer = await _get_casbin_enforcer()
 
-    if casbin_enforcer.enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", "admin") is True:
+    if enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", "admin") is True:
         return ["read", "write", "admin"]
 
-    if casbin_enforcer.enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", "write") is True:
+    if enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", "write") is True:
         return ["read", "write"]
 
-    if casbin_enforcer.enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", "read") is True:
+    if enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", "read") is True:
         return ["read"]
 
     return []
@@ -165,13 +142,6 @@ async def require_entity_write_access(
         permissions = await user_entity_permissions(user, entity_id, entity_name)
         if "write" not in permissions and "admin" not in permissions:
             raise AccessDenied(f"You don't have write access to {entity_name} {entity_id}")
-
-
-ENTITY_ACCESS_ACTIONS: dict[str, tuple[str, ...]] = {
-    "read": ("read", "write", "admin"),
-    "write": ("write", "admin"),
-    "admin": ("admin",),
-}
 
 
 async def user_entity_ids(user: UserDTO | None, entity_name: str, action: str) -> set[str] | None:

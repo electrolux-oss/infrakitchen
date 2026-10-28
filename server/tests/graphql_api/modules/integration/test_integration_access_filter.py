@@ -7,7 +7,7 @@ import pytest
 from graphql_api.schema import schema
 
 INTEGRATIONS_QUERY = """
-    query Integrations($access: String, $includeIds: [UUID!]) {
+    query Integrations($access: EntityAccess, $includeIds: [UUID!]) {
         integrations(access: $access, includeIds: $includeIds) { id }
         integrationsCount(access: $access, includeIds: $includeIds)
     }
@@ -40,7 +40,7 @@ async def test_write_access_restricts_list_and_count(get_service, user_entity_id
 
     result = await schema.execute(
         INTEGRATIONS_QUERY,
-        variable_values={"access": "write", "includeIds": [INHERITED]},
+        variable_values={"access": "WRITE", "includeIds": [INHERITED]},
         context_value=make_context(SimpleNamespace(id=uuid4(), deactivated=False)),
     )
 
@@ -60,7 +60,7 @@ async def test_wildcard_access_is_unrestricted(get_service, user_entity_ids):
 
     result = await schema.execute(
         INTEGRATIONS_QUERY,
-        variable_values={"access": "write"},
+        variable_values={"access": "WRITE"},
         context_value=make_context(SimpleNamespace(id=uuid4(), deactivated=False)),
     )
 
@@ -92,9 +92,9 @@ async def test_invalid_access_level_is_rejected(get_service):
 
     result = await schema.execute(
         INTEGRATIONS_QUERY,
-        variable_values={"access": "delete"},
+        variable_values={"access": "DELETE"},
         context_value=make_context(SimpleNamespace(id=uuid4(), deactivated=False)),
     )
 
     assert result.errors is not None
-    assert "Invalid access level" in result.errors[0].message
+    assert "EntityAccess" in result.errors[0].message

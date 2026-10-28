@@ -210,6 +210,7 @@ class TestPatch:
         mock_user_permissions(
             ["read", "write", "admin"], monkeypatch, "application.resources.service.user_entity_permissions"
         )
+        mock_user_permissions(["read", "write", "admin"], monkeypatch, "core.users.functions.user_entity_permissions")
 
         result = await mock_resource_service.update_resource(
             resource_id=str(resource_id), resource=resource_patch, requester=mocked_user_response
@@ -251,6 +252,7 @@ class TestPatch:
         mock_user_permissions(
             ["read", "write", "admin"], monkeypatch, "application.resources.service.user_entity_permissions"
         )
+        mock_user_permissions(["read", "write", "admin"], monkeypatch, "core.users.functions.user_entity_permissions")
 
         resource_patch = ResourceUpdate(description=mocked_resource.description)
         await mock_resource_service.update_resource(
@@ -285,6 +287,7 @@ class TestPatch:
         mock_user_permissions(
             ["read", "write", "admin"], monkeypatch, "application.resources.service.user_entity_permissions"
         )
+        mock_user_permissions(["read", "write", "admin"], monkeypatch, "core.users.functions.user_entity_permissions")
 
         # labels=[] is the field default, so it is dropped from the change body
         resource_patch = ResourceUpdate(labels=[])
@@ -320,6 +323,7 @@ class TestPatch:
         mock_user_permissions(
             ["read", "write", "admin"], monkeypatch, "application.resources.service.user_entity_permissions"
         )
+        mock_user_permissions(["read", "write", "admin"], monkeypatch, "core.users.functions.user_entity_permissions")
 
         resource_patch = ResourceUpdate(description=mocked_resource.description, labels=["changed-label"])
         await mock_resource_service.update_resource(

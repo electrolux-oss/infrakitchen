@@ -393,7 +393,7 @@ class TestCreate:
         mock_template_crud.get_by_id.return_value = mocked_template
         mock_integration_crud.get_all.return_value = [mocked_integration]
         mock_source_code_version_crud.get_by_id.return_value = source_code_version_response
-        mock_user_permissions(["read", "write"], monkeypatch, "application.resources.service.user_entity_permissions")
+        mock_user_permissions(["read", "write"], monkeypatch, "core.users.functions.user_entity_permissions")
 
         with pytest.raises(
             EntityWrongState,
@@ -470,7 +470,7 @@ class TestCreate:
         mock_resource_crud.create.return_value = mocked_resource
         mock_resource_crud.get_by_id.return_value = mocked_resource
         mock_resource_service.get_variable_schema = AsyncMock(return_value=[])
-        mock_user_permissions(["read", "write"], monkeypatch, "application.resources.service.user_entity_permissions")
+        mock_user_permissions(["read", "write"], monkeypatch, "core.users.functions.user_entity_permissions")
 
         await mock_resource_service.create(resource_create, requester)
         mock_integration_crud.get_all.assert_awaited_once()
@@ -509,7 +509,7 @@ class TestCreate:
         mock_storage_crud.get_by_id.return_value = mocked_storage
         mock_integration_crud.get_all.return_value = [mocked_integration, pg_integration]
         mock_source_code_version_crud.get_by_id.return_value = source_code_version
-        mock_user_permissions(["read", "write"], monkeypatch, "application.resources.service.user_entity_permissions")
+        mock_user_permissions(["read", "write"], monkeypatch, "core.users.functions.user_entity_permissions")
 
         with patch(
             "application.integrations.service.IntegrationDTO.model_validate",
@@ -551,7 +551,7 @@ class TestCreate:
         mock_source_code_version_crud.get_by_id.return_value = source_code_version
         mock_resource_crud.create.return_value = mocked_resource
         mock_resource_crud.get_by_id.return_value = mocked_resource
-        mock_user_permissions(["read", "write"], monkeypatch, "application.resources.service.user_entity_permissions")
+        mock_user_permissions(["read", "write"], monkeypatch, "core.users.functions.user_entity_permissions")
 
         with pytest.raises(
             ValueError,
@@ -592,7 +592,7 @@ class TestCreate:
         mock_source_code_version_crud.get_by_id.return_value = source_code_version
         mock_resource_crud.create.return_value = mocked_resource
         mock_resource_crud.get_resource_by_template_and_integrations.return_value = [mocked_resource]
-        mock_user_permissions(["read", "write"], monkeypatch, "application.resources.service.user_entity_permissions")
+        mock_user_permissions(["read", "write"], monkeypatch, "core.users.functions.user_entity_permissions")
 
         with pytest.raises(
             DependencyError,
@@ -780,7 +780,7 @@ class TestCreate:
         mock_template_crud.get_by_id.return_value = mocked_template
         mock_integration_crud.get_all.return_value = [mocked_integration]
         mock_source_code_version_crud.get_by_id.return_value = source_code_version_response
-        mock_user_permissions(["read"], monkeypatch, "application.resources.service.user_entity_permissions")
+        mock_user_permissions(["read"], monkeypatch, "core.users.functions.user_entity_permissions")
 
         with pytest.raises(
             AccessDenied,
@@ -840,9 +840,7 @@ class TestCreate:
         mock_storage_crud.get_by_id.return_value = mocked_storage
         monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=resource_response))
         monkeypatch.setattr(ResourceService, "get_variable_schema", AsyncMock(return_value=[]))
-        permissions_mock = mock_user_permissions(
-            ["read"], monkeypatch, "application.resources.functions.user_entity_permissions"
-        )
+        permissions_mock = mock_user_permissions(["read"], monkeypatch, "core.users.functions.user_entity_permissions")
 
         await mock_resource_service.create(resource_create, requester)
 
@@ -885,7 +883,7 @@ class TestCreate:
         mock_resource_crud.get_by_id.return_value = mocked_resource
         monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=resource_response))
         monkeypatch.setattr(ResourceService, "get_variable_schema", AsyncMock(return_value=[]))
-        mock_user_permissions(["read"], monkeypatch, "application.resources.service.user_entity_permissions")
+        mock_user_permissions(["read"], monkeypatch, "core.users.functions.user_entity_permissions")
 
         with pytest.raises(
             AccessDenied,
@@ -918,25 +916,10 @@ class TestCreate:
         )
         mock_template_crud.get_by_id.return_value = template_response
         mock_resource_crud.get_all.return_value = []
-        mock_user_permissions(["read"], monkeypatch, "application.resources.service.user_entity_permissions")
+        mock_user_permissions(["read"], monkeypatch, "core.users.functions.user_entity_permissions")
 
         with pytest.raises(AccessDenied, match=f"You don't have write access to secret {secret_id}"):
             await mock_resource_service.create(resource_create, mocked_user_response)
-
-    @pytest.mark.asyncio
-    async def test_require_secret_write_access_skips_exempt(
-        self, mock_resource_service, mocked_user, mock_user_permissions, monkeypatch
-    ):
-        inherited_id, writable_id = uuid4(), uuid4()
-        permissions_mock = mock_user_permissions(
-            ["write"], monkeypatch, "application.resources.service.user_entity_permissions"
-        )
-
-        await mock_resource_service._require_secret_write_access(
-            mocked_user, [inherited_id, writable_id], exempt_ids={str(inherited_id)}
-        )
-
-        assert [call.args[1] for call in permissions_mock.await_args_list] == [writable_id]
 
     @pytest.mark.asyncio
     async def test_create_inherited_workspace_is_exempt(
@@ -986,9 +969,7 @@ class TestCreate:
         mock_storage_crud.get_by_id.return_value = mocked_storage
         monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=resource_response))
         monkeypatch.setattr(ResourceService, "get_variable_schema", AsyncMock(return_value=[]))
-        permissions_mock = mock_user_permissions(
-            ["read"], monkeypatch, "application.resources.service.user_entity_permissions"
-        )
+        permissions_mock = mock_user_permissions(["read"], monkeypatch, "core.users.functions.user_entity_permissions")
 
         await mock_resource_service.create(resource_create, mocked_user)
 
@@ -1053,7 +1034,7 @@ class TestPatch:
         monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=existing_pydantic))
 
         resource_patch = ResourceUpdate(integration_ids=[new_integration_id])
-        mock_user_permissions(["read"], monkeypatch, "application.resources.service.user_entity_permissions")
+        mock_user_permissions(["read"], monkeypatch, "core.users.functions.user_entity_permissions")
 
         with pytest.raises(
             AccessDenied,
@@ -1103,9 +1084,7 @@ class TestPatch:
         )
 
         resource_patch = ResourceUpdate(integration_ids=[mocked_integration.id])
-        permissions_mock = mock_user_permissions(
-            ["read"], monkeypatch, "application.resources.functions.user_entity_permissions"
-        )
+        permissions_mock = mock_user_permissions(["read"], monkeypatch, "core.users.functions.user_entity_permissions")
 
         await mock_resource_service.update_resource(existing_resource.id, resource_patch, mocked_user)
 
@@ -1145,9 +1124,7 @@ class TestPatch:
         )
 
         resource_patch = ResourceUpdate(integration_ids=[existing_integration_id])
-        permissions_mock = mock_user_permissions(
-            ["read"], monkeypatch, "application.resources.functions.user_entity_permissions"
-        )
+        permissions_mock = mock_user_permissions(["read"], monkeypatch, "core.users.functions.user_entity_permissions")
 
         await mock_resource_service.update_resource(mocked_resource.id, resource_patch, mocked_user)
 
@@ -1231,7 +1208,7 @@ class TestPatch:
         mock_resource_service.integration_service.get_all_dto = AsyncMock(return_value=[])
 
         resource_patch = ResourceUpdate(workspace_id=new_workspace_id)
-        mock_user_permissions(["read"], monkeypatch, "application.resources.service.user_entity_permissions")
+        mock_user_permissions(["read"], monkeypatch, "core.users.functions.user_entity_permissions")
 
         with pytest.raises(
             AccessDenied,

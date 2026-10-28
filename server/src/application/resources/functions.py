@@ -28,6 +28,7 @@ from core.errors import EntityExistsError
 from core.notifications.service import SubscriptionService
 from core.permissions.schema import ActionLiteral, EntityPolicyCreate
 from core.permissions.service import PermissionService
+from core.users.accounts import primary_user_id
 from core.users.functions import get_entity_admin_user_ids, user_entity_permissions
 from core.users.model import UserDTO
 from application.types import STATE_BACKEND_INTEGRATION_PROVIDERS
@@ -46,16 +47,6 @@ def validate_not_state_backend_integrations(integrations: Sequence[IntegrationDT
                 f"Integration {integration.id} has provider {integration.integration_provider} "
                 "which can be used only for TF state storage and cannot be assigned to resource"
             )
-
-
-def requester_is_creator(requester: UserDTO, created_by: str | UUID | None) -> bool:
-    """True when the requester (or the primary account it is linked to) created the entity."""
-    if created_by is None:
-        return False
-    requester_ids = {str(requester.id)}
-    if requester.primary_account:
-        requester_ids.add(str(requester.primary_account[0].id))
-    return str(created_by) in requester_ids
 
 
 async def get_resource_actions(
@@ -80,7 +71,11 @@ async def get_resource_actions(
 
     requester_permissions = await user_entity_permissions(requester, resource_id, "resource")
 
-    if state == ModelState.PROVISION and requester_is_creator(requester, created_by):
+    requester_is_creator = created_by is not None and str(created_by) in {
+        str(requester.id),
+        str(primary_user_id(requester)),
+    }
+    if state == ModelState.PROVISION and requester_is_creator:
         requester_permissions = [*requester_permissions, "write"]
 
     # If resource has a project, also check project-level / owner permissions and merge

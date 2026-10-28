@@ -39,7 +39,7 @@ from core.config import InfrakitchenConfig
 from core.constants import ModelStatus, ModelState
 from core.constants.model import EventType, ModelActions
 from core.database import FieldSpec, to_dict
-from core.errors import AccessDenied, DependencyError, EntityExistsError, EntityNotFound, EntityWrongState
+from core.errors import DependencyError, EntityExistsError, EntityNotFound, EntityWrongState
 from core.logs.service import LogService
 from core.permissions.model import Permission
 from core.permissions.schema import EntityPolicyCreate
@@ -50,7 +50,7 @@ from application.favorites.service import FavoriteService
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
 from core.users.accounts import primary_user_id
-from core.users.functions import user_entity_permissions
+from core.users.functions import require_entity_write_access, user_entity_permissions
 from core.users.model import UserDTO
 from core.utils.entity_state_handler import (
     delete_entity,
@@ -204,16 +204,6 @@ class ResourceService:
             created_by=resource.created_by,
         )
 
-    async def _require_secret_write_access(
-        self, requester: UserDTO, secret_ids: list[UUID] | None, exempt_ids: set[str]
-    ) -> None:
-        for secret_id in secret_ids or []:
-            if str(secret_id) in exempt_ids:
-                continue
-            secret_permissions = await user_entity_permissions(requester, secret_id, "secret")
-            if "write" not in secret_permissions and "admin" not in secret_permissions:
-                raise AccessDenied(f"You don't have write access to secret {secret_id}")
-
     async def create_resource(
         self,
         resource: ResourceCreate,
@@ -254,10 +244,11 @@ class ResourceService:
 
         if resource.secret_ids:
             # secrets inherited from a parent are exempt (read on the parent is enough)
-            await self._require_secret_write_access(
+            await require_entity_write_access(
                 requester,
+                "secret",
                 resource.secret_ids,
-                exempt_ids={str(s.id) for parent in parent_resources for s in parent.secret_ids or []},
+                {str(s.id) for parent in parent_resources for s in parent.secret_ids or []},
             )
 
         # Validate required_configuration_variables, abstract templates usually provide the configuration
@@ -287,16 +278,12 @@ class ResourceService:
             if resource.integration_ids:
                 # require write access to every integration the user explicitly chose;
                 # integrations inherited from a parent are exempt (read on the parent is enough)
-                inherited_integration_ids: set[str] = set()
-                for parent in parent_resources:
-                    for parent_integration in parent.integration_ids or []:
-                        inherited_integration_ids.add(str(parent_integration.id))
-                for integration_id in resource.integration_ids:
-                    if str(integration_id) in inherited_integration_ids:
-                        continue
-                    integration_permissions = await user_entity_permissions(requester, integration_id, "integration")
-                    if "write" not in integration_permissions and "admin" not in integration_permissions:
-                        raise AccessDenied(f"You don't have write access to integration {integration_id}")
+                await require_entity_write_access(
+                    requester,
+                    "integration",
+                    resource.integration_ids,
+                    {str(i.id) for parent in parent_resources for i in parent.integration_ids or []},
+                )
 
                 integrations = await self.integration_service.get_all_dto(
                     filter={"id": [i for i in resource.integration_ids]}
@@ -355,11 +342,13 @@ class ResourceService:
 
             # Validate if user has write permission to linked workspace;
             # a workspace inherited from a parent is exempt (read on the parent is enough)
-            parent_workspace_ids = {str(parent.workspace_id) for parent in parent_resources if parent.workspace_id}
-            if resource.workspace_id is not None and str(resource.workspace_id) not in parent_workspace_ids:
-                workspace_permissions = await user_entity_permissions(requester, resource.workspace_id, "workspace")
-                if "write" not in workspace_permissions and "admin" not in workspace_permissions:
-                    raise AccessDenied(f"You don't have write access to workspace {resource.workspace_id}")
+            if resource.workspace_id is not None:
+                await require_entity_write_access(
+                    requester,
+                    "workspace",
+                    [resource.workspace_id],
+                    {str(parent.workspace_id) for parent in parent_resources if parent.workspace_id},
+                )
 
             # validate configuration variables
             if source_code_version_id := resource.source_code_version_id:
@@ -591,27 +580,25 @@ class ResourceService:
 
             if resource.secret_ids:
                 # exempt secrets already on the resource and secrets inherited from parents
-                exempt_secret_ids = {str(s.id) for s in existing_resource.secret_ids or []}
-                for parent in existing_resource.parents or []:
-                    exempt_secret_ids.update(str(s.id) for s in parent.secret_ids or [])
-                await self._require_secret_write_access(requester, resource.secret_ids, exempt_secret_ids)
+                await require_entity_write_access(
+                    requester,
+                    "secret",
+                    resource.secret_ids,
+                    {str(s.id) for s in existing_resource.secret_ids or []}
+                    | {str(s.id) for parent in existing_resource.parents or [] for s in parent.secret_ids or []},
+                )
 
             # validate that integrations are allowed for the template and are enabled
             if resource.integration_ids is not None:
                 # require write access for any integration newly added by this patch;
                 # exempt integrations already on the resource and integrations inherited from parents
-                exempt_integration_ids: set[str] = {
-                    str(i.id) for i in (existing_resource_pydantic.integration_ids or [])
-                }
-                for parent in existing_resource.parents or []:
-                    for parent_integration in parent.integration_ids or []:
-                        exempt_integration_ids.add(str(parent_integration.id))
-                for integration_id in resource.integration_ids:
-                    if str(integration_id) in exempt_integration_ids:
-                        continue
-                    integration_permissions = await user_entity_permissions(requester, integration_id, "integration")
-                    if "write" not in integration_permissions and "admin" not in integration_permissions:
-                        raise AccessDenied(f"You don't have write access to integration {integration_id}")
+                await require_entity_write_access(
+                    requester,
+                    "integration",
+                    resource.integration_ids,
+                    {str(i.id) for i in existing_resource_pydantic.integration_ids or []}
+                    | {str(i.id) for parent in existing_resource.parents or [] for i in parent.integration_ids or []},
+                )
 
                 if template := await self.template_service.get_by_id(existing_resource_pydantic.template.id):
                     if template.configuration.allowed_provider_integration_types:
@@ -648,16 +635,15 @@ class ResourceService:
                 else:
                     raise EntityNotFound("Template not found")
 
-            if (
-                "workspace_id" in resource.model_fields_set
-                and resource.workspace_id is not None
-                and str(resource.workspace_id) != str(existing_resource.workspace_id or "")
-                and str(resource.workspace_id)
-                not in {str(parent.workspace_id) for parent in existing_resource.parents or [] if parent.workspace_id}
-            ):
-                workspace_permissions = await user_entity_permissions(requester, resource.workspace_id, "workspace")
-                if "write" not in workspace_permissions and "admin" not in workspace_permissions:
-                    raise AccessDenied(f"You don't have write access to workspace {resource.workspace_id}")
+            if "workspace_id" in resource.model_fields_set and resource.workspace_id is not None:
+                # exempt the current workspace and workspaces inherited from parents
+                await require_entity_write_access(
+                    requester,
+                    "workspace",
+                    [resource.workspace_id],
+                    {str(existing_resource.workspace_id)}
+                    | {str(parent.workspace_id) for parent in existing_resource.parents or [] if parent.workspace_id},
+                )
 
         # a disabled tool stays valid for entities already using it
         if (

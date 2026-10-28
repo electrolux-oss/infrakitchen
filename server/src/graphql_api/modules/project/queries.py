@@ -8,6 +8,7 @@ from strawberry.types import Info
 from application.projects.service import ProjectService
 from application.projects.dependencies import get_project_service
 from graphql_api.helpers import (
+    EntityAccess,
     IsAuthenticated,
     build_field_spec,
     check_api_permission,
@@ -41,7 +42,7 @@ class ProjectQuery:
         filter: JSON | None = None,
         sort: list[str] | None = None,
         range: list[int] | None = None,
-        access: str | None = None,
+        access: EntityAccess | None = None,
         include_ids: list[uuid.UUID] | None = None,
     ) -> list[ProjectType]:
         await check_api_permission(info, "project", ["read"])
@@ -62,7 +63,7 @@ class ProjectQuery:
         self,
         info: Info,
         filter: JSON | None = None,
-        access: str | None = None,
+        access: EntityAccess | None = None,
         include_ids: list[uuid.UUID] | None = None,
     ) -> int:
         await check_api_permission(info, "project", ["read"])

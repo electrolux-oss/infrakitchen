@@ -196,7 +196,9 @@ class TestCreate:
 
         result = await mock_secret_service.create_secret(secret_create, mocked_user)
 
-        policy = mock_secret_service.permission_service.create_entity_policy.await_args.args[0]
+        await_args = mock_secret_service.permission_service.create_entity_policy.await_args
+        assert await_args is not None
+        policy = await_args.args[0]
         assert (policy.entity_name, policy.action, policy.user_id) == ("secret", "admin", mocked_user.id)
 
         mock_secret_crud.create.assert_awaited_once_with(expected_secret_body)

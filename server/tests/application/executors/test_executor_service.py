@@ -1255,13 +1255,15 @@ class TestEntityAccess:
         mocked_user_response,
     ):
         mock_user_permissions(["read"], monkeypatch, "core.users.functions.user_entity_permissions")
-        executor_create = ExecutorCreate(
-            name="executor",
-            source_code_id=mocked_source_code.id,
-            source_code_version="v1.0.0",
-            storage_id=storage_response.id,
-            storage_path="path/to/storage",
-            **{field: [uuid4()]},
+        executor_create = ExecutorCreate.model_validate(
+            {
+                "name": "executor",
+                "source_code_id": mocked_source_code.id,
+                "source_code_version": "v1.0.0",
+                "storage_id": storage_response.id,
+                "storage_path": "path/to/storage",
+                field: [uuid4()],
+            }
         )
 
         with pytest.raises(AccessDenied, match="write access"):

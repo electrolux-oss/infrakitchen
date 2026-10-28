@@ -9,7 +9,7 @@ import pytest
 
 import core.casbin.enforcer as enforcer_module
 from core.errors import AccessDenied
-from core.users.functions import user_entity_ids
+from core.users.functions import require_entity_write_access, user_entity_ids
 
 MODEL_PATH = os.path.join(os.path.dirname(enforcer_module.__file__), "model.conf")
 
@@ -118,3 +118,22 @@ async def test_deactivated_user_is_rejected(enforcer):
 async def test_unknown_action_is_rejected(enforcer):
     with pytest.raises(ValueError):
         await user_entity_ids(make_user(), "integration", "delete")
+
+
+@pytest.mark.asyncio
+async def test_require_write_access_skips_exempt_ids(enforcer):
+    user = make_user()
+    await enforcer.add_policy(f"user:{user.id}", f"integration:{CLOUD_1}", "read")
+    await enforcer.add_policy(f"user:{user.id}", f"integration:{CLOUD_2}", "write")
+
+    # CLOUD_1 is only readable but exempt (e.g. inherited from a parent)
+    await require_entity_write_access(user, "integration", [CLOUD_1, CLOUD_2], {CLOUD_1})
+
+
+@pytest.mark.asyncio
+async def test_require_write_access_denies_read_only(enforcer):
+    user = make_user()
+    await enforcer.add_policy(f"user:{user.id}", f"integration:{CLOUD_1}", "read")
+
+    with pytest.raises(AccessDenied, match=f"integration {CLOUD_1}"):
+        await require_entity_write_access(user, "integration", [CLOUD_1])

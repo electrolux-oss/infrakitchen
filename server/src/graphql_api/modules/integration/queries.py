@@ -16,6 +16,7 @@ from application.integrations.dependencies import get_integration_service
 from application.providers.gcp import gcp_oidc
 from core.errors import EntityNotFound, EntityWrongState
 from graphql_api.helpers import (
+    EntityAccess,
     IsAuthenticated,
     build_field_spec,
     check_api_permission,
@@ -49,7 +50,7 @@ class IntegrationQuery:
         filter: JSON | None = None,
         sort: list[str] | None = None,
         range: list[int] | None = None,
-        access: str | None = None,
+        access: EntityAccess | None = None,
         include_ids: list[uuid.UUID] | None = None,
     ) -> list[IntegrationType]:
         await check_api_permission(info, "integration", ["read"])
@@ -70,7 +71,7 @@ class IntegrationQuery:
         self,
         info: Info,
         filter: JSON | None = None,
-        access: str | None = None,
+        access: EntityAccess | None = None,
         include_ids: list[uuid.UUID] | None = None,
     ) -> int:
         await check_api_permission(info, "integration", ["read"])

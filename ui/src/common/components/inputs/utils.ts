@@ -56,8 +56,12 @@ export const buildAccessQueryParts = (
 ) =>
   access
     ? {
-        varDefs: ", $access: String, $includeIds: [UUID!]",
+        varDefs: ", $access: EntityAccess, $includeIds: [UUID!]",
         args: ", access: $access, includeIds: $includeIds",
-        variables: { access, includeIds: includeIds ?? [] },
+        // GraphQL enum values are upper case (EntityAccess.WRITE)
+        variables: {
+          access: access.toUpperCase(),
+          includeIds: includeIds ?? [],
+        },
       }
     : { varDefs: "", args: "", variables: {} };
