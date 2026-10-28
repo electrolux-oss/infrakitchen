@@ -23,6 +23,7 @@ import {
   IconButton,
   Tooltip,
   TextField,
+  Switch,
 } from "../../ui";
 import { Label } from "../../ui/Label";
 import { cn } from "../../utils/cn";
@@ -183,6 +184,54 @@ const TokenDialog = ({
     setCustomExpiresAt("");
   }, [open]);
 
+  // Sets every entity in a group to the given level (capped at what the owner
+  // may grant), leaving other groups untouched.
+  const readOnlyScopes = availableScopes
+    .filter(({ actions }) => actions.includes("read"))
+    .map(({ entity }) => `read:${entity}`);
+  const readWriteScopes = availableScopes.flatMap(({ entity, actions }) =>
+    actions.map((action) => `${action}:${entity}`),
+  );
+  const matchesSelection = (scopes: string[]) =>
+    scopes.length > 0 &&
+    scopes.length === selectedScopes.size &&
+    scopes.every((scope) => selectedScopes.has(scope));
+  const readOnlyActive = matchesSelection(readOnlyScopes);
+  const readWriteActive = matchesSelection(readWriteScopes);
+  const groupLevel = (group: string) => {
+    const levels = new Set(
+      availableScopes
+        .filter(({ entity }) => SCOPE_ENTITY_GROUP[entity] === group)
+        .map(({ entity }) =>
+          selectedScopes.has(`write:${entity}`)
+            ? "write"
+            : selectedScopes.has(`read:${entity}`)
+              ? "read"
+              : "none",
+        ),
+    );
+    return levels.size === 1 ? Array.from(levels)[0] : "mixed";
+  };
+
+  const selectGroup = (group: string, level: "none" | "read" | "write") => {
+    setSelectedScopes((previous) => {
+      const updated = new Set(previous);
+      availableScopes
+        .filter(({ entity }) => SCOPE_ENTITY_GROUP[entity] === group)
+        .forEach(({ entity, actions }) => {
+          updated.delete(`read:${entity}`);
+          updated.delete(`write:${entity}`);
+          if (level !== "none" && actions.includes("read")) {
+            updated.add(`read:${entity}`);
+          }
+          if (level === "write" && actions.includes("write")) {
+            updated.add(`write:${entity}`);
+          }
+        });
+      return updated;
+    });
+  };
+
   const handleSave = async () => {
     const trimmedName = name.trim();
     if (!trimmedName) {
@@ -272,9 +321,36 @@ const TokenDialog = ({
           </div>
           {availableScopes.length > 0 && (
             <div>
-              <span className="block text-caption text-fg-muted">
-                Permissions
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-caption text-fg-muted">Permissions</span>
+                <div className="flex items-center gap-3">
+                  {(
+                    [
+                      [
+                        "All read only",
+                        readOnlyActive || readWriteActive,
+                        readOnlyScopes,
+                      ],
+                      ["All read and write", readWriteActive, readWriteScopes],
+                    ] as const
+                  ).map(([label, active, scopes]) => (
+                    <label
+                      key={label}
+                      className="flex cursor-pointer items-center gap-1 text-body2"
+                    >
+                      <Switch
+                        checked={active}
+                        disabled={label === "All read only" && readWriteActive}
+                        onChange={() =>
+                          setSelectedScopes(new Set(active ? [] : scopes))
+                        }
+                        inputProps={{ "aria-label": label }}
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
               <p
                 className={cn(
                   "mt-0.5 mb-2 text-caption",
@@ -295,9 +371,34 @@ const TokenDialog = ({
                         SCOPE_ENTITY_GROUP[
                           availableScopes[index - 1].entity
                         ]) && (
-                      <span className="sticky top-0 z-10 block border-b border-divider bg-canvas px-3 py-1.5 text-caption font-semibold tracking-wide text-fg-muted uppercase">
-                        {SCOPE_ENTITY_GROUP[entity]}
-                      </span>
+                      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-divider bg-canvas px-3 py-0.5">
+                        <span className="text-caption font-semibold tracking-wide text-fg-muted uppercase">
+                          {SCOPE_ENTITY_GROUP[entity]}
+                        </span>
+                        <Select<string>
+                          size="small"
+                          className="w-40 shrink-0"
+                          aria-label={`${SCOPE_ENTITY_GROUP[entity]} access`}
+                          value={groupLevel(SCOPE_ENTITY_GROUP[entity])}
+                          onChange={(event) =>
+                            selectGroup(
+                              SCOPE_ENTITY_GROUP[entity],
+                              event.target.value as "none" | "read" | "write",
+                            )
+                          }
+                        >
+                          <MenuItem
+                            value="mixed"
+                            disabled
+                            sx={{ display: "none" }}
+                          >
+                            Mixed
+                          </MenuItem>
+                          <MenuItem value="none">-- Select --</MenuItem>
+                          <MenuItem value="read">Read only</MenuItem>
+                          <MenuItem value="write">Read and write</MenuItem>
+                        </Select>
+                      </div>
                     )}
                     <div className="flex flex-row items-center justify-between gap-4 px-3 py-1">
                       <p className="m-0 text-body2">
@@ -330,7 +431,7 @@ const TokenDialog = ({
                           });
                         }}
                       >
-                        <MenuItem value="none">No access</MenuItem>
+                        <MenuItem value="none">-- Select --</MenuItem>
                         <MenuItem
                           value="read"
                           disabled={!actions.includes("read")}
