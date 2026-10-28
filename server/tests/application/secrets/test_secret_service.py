@@ -1,6 +1,6 @@
 from datetime import datetime
 import pytest
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
 from pydantic import PydanticUserError
 from uuid import uuid4
@@ -141,7 +141,7 @@ class TestCount:
 
         assert result == 1
 
-        mock_secret_crud.count.assert_awaited_once_with(filter={"key": "value"})
+        mock_secret_crud.count.assert_awaited_once_with(filter={"key": "value"}, restrict_ids=None)
 
     @pytest.mark.asyncio
     async def test_count_error(self, mock_secret_service, mock_secret_crud):
@@ -152,7 +152,7 @@ class TestCount:
             await mock_secret_service.count(filter={"key": "value"})
 
         assert exc.value is error
-        mock_secret_crud.count.assert_awaited_once_with(filter={"key": "value"})
+        mock_secret_crud.count.assert_awaited_once_with(filter={"key": "value"}, restrict_ids=None)
 
 
 class TestCreate:
@@ -191,8 +191,13 @@ class TestCreate:
 
         mock_secret_crud.create.return_value = mocked_secret
         mock_secret_crud.get_by_id.return_value = mocked_secret
+        mock_secret_service.permission_service.create_entity_policy = AsyncMock()
+        mock_secret_service.permission_service.casbin_enforcer.send_reload_event = AsyncMock()
 
         result = await mock_secret_service.create_secret(secret_create, mocked_user)
+
+        policy = mock_secret_service.permission_service.create_entity_policy.await_args.args[0]
+        assert (policy.entity_name, policy.action, policy.user_id) == ("secret", "admin", mocked_user.id)
 
         mock_secret_crud.create.assert_awaited_once_with(expected_secret_body)
 
@@ -403,11 +408,15 @@ class TestDelete:
             state=ModelState.DESTROYED,
         )
         mock_secret_crud.get_by_id.return_value = existing_secret
+        mock_secret_service.permission_service.delete_entity_permissions = AsyncMock()
 
         await mock_secret_service.delete(secret_id=existing_secret.id, requester=mock_user_dto)
 
         mock_secret_crud.get_by_id.assert_awaited_once_with(existing_secret.id)
         mock_secret_crud.delete.assert_awaited_once_with(existing_secret)
+        mock_secret_service.permission_service.delete_entity_permissions.assert_awaited_once_with(
+            "secret", existing_secret.id
+        )
         mock_audit_log_handler.create_log.assert_awaited_once_with(
             existing_secret.id, mock_user_dto.id, ModelActions.DELETE
         )

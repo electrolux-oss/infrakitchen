@@ -894,6 +894,51 @@ class TestCreate:
             await mock_resource_service.create(resource_create, mocked_user_response)
 
     @pytest.mark.asyncio
+    async def test_create_denies_secret_without_write_access(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mock_template_crud,
+        template_response,
+        mocked_resource,
+        source_code_version_response,
+        storage_response,
+        mocked_user_response,
+        mock_user_permissions,
+        monkeypatch,
+    ):
+        secret_id = uuid4()
+        resource_create = ResourceCreate(
+            name=mocked_resource.name,
+            template_id=template_response.id,
+            source_code_version_id=source_code_version_response.id,
+            storage_id=storage_response.id,
+            storage_path="path/to/storage",
+            secret_ids=[secret_id],
+        )
+        mock_template_crud.get_by_id.return_value = template_response
+        mock_resource_crud.get_all.return_value = []
+        mock_user_permissions(["read"], monkeypatch, "application.resources.service.user_entity_permissions")
+
+        with pytest.raises(AccessDenied, match=f"You don't have write access to secret {secret_id}"):
+            await mock_resource_service.create(resource_create, mocked_user_response)
+
+    @pytest.mark.asyncio
+    async def test_require_secret_write_access_skips_exempt(
+        self, mock_resource_service, mocked_user, mock_user_permissions, monkeypatch
+    ):
+        inherited_id, writable_id = uuid4(), uuid4()
+        permissions_mock = mock_user_permissions(
+            ["write"], monkeypatch, "application.resources.service.user_entity_permissions"
+        )
+
+        await mock_resource_service._require_secret_write_access(
+            mocked_user, [inherited_id, writable_id], exempt_ids={str(inherited_id)}
+        )
+
+        assert [call.args[1] for call in permissions_mock.await_args_list] == [writable_id]
+
+    @pytest.mark.asyncio
     async def test_create_inherited_workspace_is_exempt(
         self,
         mock_resource_service,

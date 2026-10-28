@@ -204,6 +204,16 @@ class ResourceService:
             created_by=resource.created_by,
         )
 
+    async def _require_secret_write_access(
+        self, requester: UserDTO, secret_ids: list[UUID] | None, exempt_ids: set[str]
+    ) -> None:
+        for secret_id in secret_ids or []:
+            if str(secret_id) in exempt_ids:
+                continue
+            secret_permissions = await user_entity_permissions(requester, secret_id, "secret")
+            if "write" not in secret_permissions and "admin" not in secret_permissions:
+                raise AccessDenied(f"You don't have write access to secret {secret_id}")
+
     async def create_resource(
         self,
         resource: ResourceCreate,
@@ -241,6 +251,14 @@ class ResourceService:
         for parent in parent_resources:
             if parent.state not in allowed_parent_states:
                 raise EntityWrongState(f"Parent resource {parent.template} ID: {parent.id} has {parent.state} state.")
+
+        if resource.secret_ids:
+            # secrets inherited from a parent are exempt (read on the parent is enough)
+            await self._require_secret_write_access(
+                requester,
+                resource.secret_ids,
+                exempt_ids={str(s.id) for parent in parent_resources for s in parent.secret_ids or []},
+            )
 
         # Validate required_configuration_variables, abstract templates usually provide the configuration
         if template.configuration.required_configuration_variables:
@@ -570,6 +588,13 @@ class ResourceService:
                     patched_resource=resource,
                     allow_frozen_variable_changes=existing_resource.state == ModelState.PROVISION,
                 )
+
+            if resource.secret_ids:
+                # exempt secrets already on the resource and secrets inherited from parents
+                exempt_secret_ids = {str(s.id) for s in existing_resource.secret_ids or []}
+                for parent in existing_resource.parents or []:
+                    exempt_secret_ids.update(str(s.id) for s in parent.secret_ids or [])
+                await self._require_secret_write_access(requester, resource.secret_ids, exempt_secret_ids)
 
             # validate that integrations are allowed for the template and are enabled
             if resource.integration_ids is not None:

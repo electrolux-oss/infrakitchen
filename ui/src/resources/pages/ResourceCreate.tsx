@@ -403,31 +403,38 @@ const ResourceCreatePageInner = () => {
     );
   }, [watchedParentIds, parentCandidates]);
 
-  // Integrations and workspaces of every selected parent can be picked without
-  // write access (the backend exempts them), so they stay visible in the pickers.
-  const { parentIntegrationIds, parentWorkspaceIds } = useMemo(() => {
-    const selected = new Set(watchedParentIds.map(String));
-    const integrationIds = new Set<string>();
-    const workspaceIds = new Set<string>();
-    for (const parent of parentCandidates as Array<
-      IkEntity & {
-        integrationIds?: Array<{ id: string }>;
-        workspace?: { id: string } | null;
+  // Integrations, workspaces and secrets of every selected parent can be picked
+  // without write access (the backend exempts them), so they stay visible in the pickers.
+  const { parentIntegrationIds, parentWorkspaceIds, parentSecretIds } =
+    useMemo(() => {
+      const selected = new Set(watchedParentIds.map(String));
+      const integrationIds = new Set<string>();
+      const workspaceIds = new Set<string>();
+      const secretIds = new Set<string>();
+      for (const parent of parentCandidates as Array<
+        IkEntity & {
+          integrationIds?: Array<{ id: string }>;
+          workspace?: { id: string } | null;
+          secretIds?: Array<{ id: string }>;
+        }
+      >) {
+        if (!selected.has(String(parent.id))) continue;
+        for (const integration of parent.integrationIds ?? []) {
+          integrationIds.add(String(integration.id));
+        }
+        if (parent.workspace?.id) {
+          workspaceIds.add(String(parent.workspace.id));
+        }
+        for (const secret of parent.secretIds ?? []) {
+          secretIds.add(String(secret.id));
+        }
       }
-    >) {
-      if (!selected.has(String(parent.id))) continue;
-      for (const integration of parent.integrationIds ?? []) {
-        integrationIds.add(String(integration.id));
-      }
-      if (parent.workspace?.id) {
-        workspaceIds.add(String(parent.workspace.id));
-      }
-    }
-    return {
-      parentIntegrationIds: [...integrationIds],
-      parentWorkspaceIds: [...workspaceIds],
-    };
-  }, [watchedParentIds, parentCandidates]);
+      return {
+        parentIntegrationIds: [...integrationIds],
+        parentWorkspaceIds: [...workspaceIds],
+        parentSecretIds: [...secretIds],
+      };
+    }, [watchedParentIds, parentCandidates]);
 
   const inherited = useMemo(() => {
     const parent = resolvedLastParent as
@@ -1072,10 +1079,14 @@ const ResourceCreatePageInner = () => {
                         buffer={buffer}
                         setBuffer={setBuffer}
                         error={!!errors.secretIds}
+                        access="write"
+                        includeIds={parentSecretIds}
                         helpertext={
                           errors.secretIds
                             ? (errors.secretIds as any).message
-                            : "Select Secrets"
+                            : parentSecretIds.length > 0
+                              ? "Secrets of the selected parents are available, plus others you have write access to."
+                              : "Only secrets you have write access to are shown"
                         }
                         value={field.value}
                         label="Select Secrets"

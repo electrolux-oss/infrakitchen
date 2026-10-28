@@ -66,6 +66,10 @@ export const ResourceInfrastructureSection = ({
     () => resource.integrationIds?.map((i) => String(i.id)) ?? [],
     [resource.integrationIds],
   );
+  const attachedSecretIds = useMemo(
+    () => resource.secretIds?.map((s) => String(s.id)) ?? [],
+    [resource.secretIds],
+  );
   const workspaceId = resource.workspace?.id;
   const attachedWorkspaceIds = useMemo(
     () => (workspaceId ? [String(workspaceId)] : []),
@@ -227,6 +231,8 @@ export const ResourceInfrastructureSection = ({
             buffer={buffer}
             setBuffer={setBuffer}
             entity_name="secrets"
+            access="write"
+            includeIds={attachedSecretIds}
             value={value}
             onChange={onChange}
             ariaLabel="Secrets"

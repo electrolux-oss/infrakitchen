@@ -10,6 +10,7 @@ from application.resources.model import Resource
 from core.database import (
     FieldSpec,
     evaluate_sqlalchemy_filters,
+    restrict_ids_to,
     evaluate_sqlalchemy_pagination,
     evaluate_sqlalchemy_sorting,
 )
@@ -42,9 +43,11 @@ class SecretCRUD:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
         fields: FieldSpec | None = None,
+        restrict_ids: set[str] | None = None,
     ) -> list[Secret]:
         statement = select(Secret)
         statement = evaluate_sqlalchemy_filters(Secret, statement, filter)
+        statement = restrict_ids_to(Secret, statement, restrict_ids)
         statement = evaluate_sqlalchemy_sorting(Secret, statement, sort)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
@@ -52,9 +55,10 @@ class SecretCRUD:
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 
-    async def count(self, filter: dict[str, Any] | None = None) -> int:
+    async def count(self, filter: dict[str, Any] | None = None, restrict_ids: set[str] | None = None) -> int:
         statement = select(func.count()).select_from(Secret)
         statement = evaluate_sqlalchemy_filters(Secret, statement, filter)
+        statement = restrict_ids_to(Secret, statement, restrict_ids)
         result = await self.session.execute(statement)
         return result.scalar_one() or 0
 

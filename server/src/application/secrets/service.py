@@ -11,6 +11,8 @@ from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions
 from core.base_models import PatchBodyModel
 from core.database import FieldSpec, to_dict
+from core.permissions.schema import EntityPolicyCreate
+from core.permissions.service import PermissionService
 from core.errors import CloudWrongCredentials, DependencyError, EntityNotFound, EntityWrongState
 from core.revisions.handler import RevisionHandler
 from core.utils.event_sender import EventSender
@@ -38,12 +40,14 @@ class SecretService:
         revision_handler: RevisionHandler,
         event_sender: EventSender,
         audit_log_handler: AuditLogHandler,
+        permission_service: PermissionService,
     ):
         self.crud: SecretCRUD = crud
         self.integration_service: IntegrationService = integration_service
         self.revision_handler: RevisionHandler = revision_handler
         self.event_sender: EventSender = event_sender
         self.audit_log_handler: AuditLogHandler = audit_log_handler
+        self.permission_service: PermissionService = permission_service
 
     async def get_by_id(self, secret_id: str) -> SecretResponse | None:
         secret = await self.crud.get_by_id(secret_id)
@@ -55,8 +59,8 @@ class SecretService:
         secrets = await self.crud.get_all(**kwargs)
         return [SecretResponse.model_validate(secret) for secret in secrets]
 
-    async def count(self, filter: dict[str, Any] | None = None) -> int:
-        return await self.crud.count(filter=filter)
+    async def count(self, filter: dict[str, Any] | None = None, restrict_ids: set[str] | None = None) -> int:
+        return await self.crud.count(filter=filter, restrict_ids=restrict_ids)
 
     async def query_by_id(self, secret_id: str | UUID, fields: FieldSpec | None = None) -> Secret | None:
         """Return the ORM model directly, with optimized loading based on requested fields."""
@@ -68,9 +72,10 @@ class SecretService:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
         fields: FieldSpec | None = None,
+        restrict_ids: set[str] | None = None,
     ) -> list[Secret]:
         """Return ORM models directly, with optimized loading based on requested fields."""
-        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
+        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields, restrict_ids=restrict_ids)
 
     async def get_actions(self, secret_id: str | UUID, requester: UserDTO) -> list[str]:
         secret = await self.crud.get_by_id(secret_id, fields={"status": None})
@@ -120,6 +125,17 @@ class SecretService:
         )
         response = SecretResponse.model_validate(result)
         await self.event_sender.send_event(response, ModelActions.CREATE)
+        await self.permission_service.create_entity_policy(
+            EntityPolicyCreate(
+                user_id=requester.id,
+                entity_id=new_secret.id,
+                entity_name="secret",
+                action="admin",
+            ),
+            requester=requester,
+            reload_permission=False,
+        )
+        await self.permission_service.casbin_enforcer.send_reload_event()
         return result
 
     async def update_secret(self, secret_id: str, secret: SecretUpdate, requester: UserDTO) -> Secret:
@@ -213,6 +229,7 @@ class SecretService:
 
         await self.audit_log_handler.create_log(secret_id, requester.id, ModelActions.DELETE)
         await self.revision_handler.delete_revisions(secret_id)
+        await self.permission_service.delete_entity_permissions("secret", secret_id)
         await self.crud.delete(existing_secret)
 
     def validate_configuration(self, secret_update: SecretUpdate, existing_secret: Secret) -> None:
