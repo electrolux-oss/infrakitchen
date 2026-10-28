@@ -112,7 +112,7 @@ const allRoutes: LazyRouteDefinition[] = [
       "BlueprintUsePage",
     ),
     requiredPermission: "api:blueprint",
-    permissionAction: "write",
+    permissionAction: "read",
   },
   {
     path: "/blueprints/:blueprint_id/:tab?",

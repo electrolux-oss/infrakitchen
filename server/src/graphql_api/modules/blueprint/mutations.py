@@ -12,7 +12,7 @@ from application.workflows.schema import WorkflowRequest
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
 from core.errors import AccessDenied
-from graphql_api.helpers import IsAuthenticated
+from graphql_api.helpers import IsAuthenticated, check_api_permission
 from graphql_api.modules.blueprint.types import BlueprintType
 from graphql_api.modules.workflow.types import WorkflowType
 
@@ -140,6 +140,7 @@ class BlueprintMutation:
         id: uuid.UUID,
         input: BlueprintWorkflowCreateInput,
     ) -> WorkflowType:
+        await check_api_permission(info, "blueprint", ["read"])
         session = info.context["session"]
         requester = info.context["request"].state.user
         service = get_blueprint_service(session)
