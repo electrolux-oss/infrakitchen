@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-import { Navigate, useParams } from "react-router";
+import { useParams } from "react-router";
 
 import { LogLiveTail, PermissionWrapper, useConfig } from "../../common";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
@@ -40,24 +40,9 @@ export const IntegrationHeaderTypeLabel = () => {
   );
 };
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** Redirects old /integrations/<provider>/<id>/<tab> URLs to /integrations/<id>/<tab>. */
-export const LegacyIntegrationRedirect = () => {
-  const { integration_id, tab } = useParams();
-  const { linkPrefix } = useConfig();
-  return (
-    <Navigate
-      replace
-      to={`${linkPrefix}integrations/${integration_id}/${tab}`}
-    />
-  );
-};
-
 export const IntegrationPage = () => {
-  const { integration_id, tab } = useParams();
-  const { ikApi, linkPrefix } = useConfig();
+  const { integration_id } = useParams();
+  const { ikApi } = useConfig();
   const [loading, setLoading] = useState(false);
 
   const handleValidation = useCallback(async () => {
@@ -88,11 +73,6 @@ export const IntegrationPage = () => {
       setLoading(false);
     }
   }, [ikApi, integration_id]);
-
-  // Old /integrations/<provider>/<id> URL: the id landed in the tab slot.
-  if (tab && UUID_RE.test(tab)) {
-    return <Navigate replace to={`${linkPrefix}integrations/${tab}`} />;
-  }
 
   return (
     <EntityProvider
