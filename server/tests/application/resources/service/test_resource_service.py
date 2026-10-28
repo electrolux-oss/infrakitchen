@@ -894,6 +894,63 @@ class TestCreate:
             await mock_resource_service.create(resource_create, mocked_user_response)
 
     @pytest.mark.asyncio
+    async def test_create_inherited_workspace_is_exempt(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_user,
+        mocked_resource,
+        template_response,
+        resource_response,
+        source_code_version_response,
+        mock_source_code_version_crud,
+        mock_user_permissions,
+        mock_storage_crud,
+        mocked_storage,
+        monkeypatch,
+    ):
+        # parent resource already linked to the workspace the user can only read
+        workspace_id = uuid4()
+        parent_template_id = uuid4()
+        template_response.id = source_code_version_response.template.id
+        template_response.parents = [parent_template_id]
+
+        parent_resource = Mock(
+            id=uuid4(),
+            template=Mock(id=parent_template_id),
+            state=ModelState.PROVISIONED,
+            integration_ids=[],
+            workspace_id=workspace_id,
+        )
+
+        resource_create = ResourceCreate(
+            name=mocked_resource.name,
+            template_id=template_response.id,
+            source_code_version_id=source_code_version_response.id,
+            storage_id=mocked_storage.id,
+            storage_path="path/to/storage",
+            parents=[parent_resource.id],
+            workspace_id=workspace_id,
+        )
+
+        mock_resource_service.template_service.get_by_id = AsyncMock(return_value=template_response)
+        mock_resource_crud.get_all.return_value = [parent_resource]
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version_response
+        mock_resource_crud.create.return_value = mocked_resource
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        mock_storage_crud.get_by_id.return_value = mocked_storage
+        monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=resource_response))
+        monkeypatch.setattr(ResourceService, "get_variable_schema", AsyncMock(return_value=[]))
+        permissions_mock = mock_user_permissions(
+            ["read"], monkeypatch, "application.resources.service.user_entity_permissions"
+        )
+
+        await mock_resource_service.create(resource_create, mocked_user)
+
+        for call in permissions_mock.await_args_list:
+            assert call.args[1] != workspace_id, "user_entity_permissions should not be called for inherited workspace"
+
+    @pytest.mark.asyncio
     @pytest.mark.parametrize("scv_status", [ModelStatus.IN_PROGRESS, ModelStatus.ERROR, ModelStatus.READY])
     async def test_create_scv_not_done(
         self,

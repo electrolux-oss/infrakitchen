@@ -86,12 +86,13 @@ class IntegrationService:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
         fields: FieldSpec | None = None,
+        restrict_ids: set[str] | None = None,
     ) -> list[Integration]:
         """Return ORM models directly, with optimized loading based on requested fields."""
-        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
+        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields, restrict_ids=restrict_ids)
 
-    async def count(self, filter: dict[str, Any] | None = None) -> int:
-        return await self.crud.count(filter=filter)
+    async def count(self, filter: dict[str, Any] | None = None, restrict_ids: set[str] | None = None) -> int:
+        return await self.crud.count(filter=filter, restrict_ids=restrict_ids)
 
     async def create_integration(self, integration: IntegrationCreate, requester: UserDTO) -> Integration:
         """

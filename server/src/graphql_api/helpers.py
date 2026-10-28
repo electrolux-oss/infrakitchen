@@ -10,7 +10,7 @@ from strawberry.types.nodes import SelectedField, Selection
 
 from core.audit_logs.functions import audit_permission_denial
 from core.personal_access_tokens.scopes import get_current_token_scopes, scope_allows
-from core.users.functions import user_has_access_to_api, user_is_super_admin
+from core.users.functions import ENTITY_ACCESS_ACTIONS, user_entity_ids, user_has_access_to_api, user_is_super_admin
 from core.users.model import UserDTO
 
 
@@ -90,6 +90,30 @@ async def check_api_permission(info: Info, entity_name: str, policies: list[str]
         limited_by=limited_by,
     )
     raise AccessDenied(f"Access denied. You do not have permission to {', '.join(policies)} {entity_name}.")
+
+
+async def resolve_access_restriction(
+    info: Info,
+    entity_name: str,
+    access: str | None,
+    include_ids: list[Any] | None = None,
+) -> set[str] | None:
+    """Ids a list query must be limited to for the requested `access` level.
+
+    None means no restriction (no `access` requested, or the user has wildcard access).
+    `include_ids` are always kept (e.g. entities already attached or inherited from a parent).
+    """
+    if access is None:
+        return None
+    if access not in ENTITY_ACCESS_ACTIONS:
+        raise ValueError(f"Invalid access level: {access}. Expected one of {', '.join(ENTITY_ACCESS_ACTIONS)}")
+    user: UserDTO | None = info.context.get("user")
+    if user is None:
+        raise AccessUnauthorized("Not authenticated.")
+    ids = await user_entity_ids(user, entity_name, access)
+    if ids is None:
+        return None
+    return ids | {str(entity_id) for entity_id in include_ids or []}
 
 
 # --- Field introspection ---

@@ -43,3 +43,32 @@ async def test_no_cascades_in_destroy_state(mock_user_dto, monkeypatch, mock_use
     actions = await _actions(mock_user_dto, monkeypatch, mock_user_permissions, ModelState.DESTROY, ModelStatus.READY)
     assert ModelActions.EXECUTE in actions
     assert not CASCADES & actions
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status", [ModelStatus.READY, ModelStatus.APPROVAL_PENDING, ModelStatus.ERROR])
+async def test_creator_can_edit_in_provision_state(mock_user_dto, monkeypatch, mock_user_permissions, status):
+    mock_user_permissions([], monkeypatch, "application.resources.functions.user_entity_permissions")
+    actions = await get_resource_actions(
+        mock_user_dto, uuid4(), status, ModelState.PROVISION, False, created_by=mock_user_dto.id
+    )
+    assert ModelActions.EDIT in actions
+    assert ModelActions.APPROVE not in actions
+
+
+@pytest.mark.asyncio
+async def test_creator_has_no_access_after_provisioning(mock_user_dto, monkeypatch, mock_user_permissions):
+    mock_user_permissions([], monkeypatch, "application.resources.functions.user_entity_permissions")
+    actions = await get_resource_actions(
+        mock_user_dto, uuid4(), ModelStatus.DONE, ModelState.PROVISIONED, False, created_by=mock_user_dto.id
+    )
+    assert actions == []
+
+
+@pytest.mark.asyncio
+async def test_non_creator_without_permissions_cannot_edit(mock_user_dto, monkeypatch, mock_user_permissions):
+    mock_user_permissions([], monkeypatch, "application.resources.functions.user_entity_permissions")
+    actions = await get_resource_actions(
+        mock_user_dto, uuid4(), ModelStatus.READY, ModelState.PROVISION, False, created_by=uuid4()
+    )
+    assert actions == []

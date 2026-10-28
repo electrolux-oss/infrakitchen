@@ -48,6 +48,16 @@ def validate_not_state_backend_integrations(integrations: Sequence[IntegrationDT
             )
 
 
+def requester_is_creator(requester: UserDTO, created_by: str | UUID | None) -> bool:
+    """True when the requester (or the primary account it is linked to) created the entity."""
+    if created_by is None:
+        return False
+    requester_ids = {str(requester.id)}
+    if requester.primary_account:
+        requester_ids.add(str(requester.primary_account[0].id))
+    return str(created_by) in requester_ids
+
+
 async def get_resource_actions(
     requester: UserDTO,
     resource_id: str | UUID,
@@ -56,16 +66,22 @@ async def get_resource_actions(
     temp_state_exists: bool,
     project: Project | None = None,
     has_children: bool = False,
+    created_by: str | UUID | None = None,
 ) -> list[str]:
     """
     Get all actions available for the resource.
     Permissions are calculated from both resource-level and project-level policies.
+    The creator has write access while the resource is still in PROVISION state.
     :param resource_id: ID of the resource
     :param project_id: ID of the project the resource belongs to (optional)
+    :param created_by: ID of the user who created the resource (optional)
     :return: List of actions
     """
 
     requester_permissions = await user_entity_permissions(requester, resource_id, "resource")
+
+    if state == ModelState.PROVISION and requester_is_creator(requester, created_by):
+        requester_permissions = [*requester_permissions, "write"]
 
     # If resource has a project, also check project-level / owner permissions and merge
     if project and ("write" not in requester_permissions and "admin" not in requester_permissions):

@@ -60,8 +60,8 @@ class ProjectService:
         projects = await self.crud.get_all(**kwargs)
         return [ProjectResponse.model_validate(project) for project in projects]
 
-    async def count(self, filter: dict[str, Any] | None = None) -> int:
-        return await self.crud.count(filter=filter)
+    async def count(self, filter: dict[str, Any] | None = None, restrict_ids: set[str] | None = None) -> int:
+        return await self.crud.count(filter=filter, restrict_ids=restrict_ids)
 
     async def query_by_id(self, project_id: str | UUID, fields: FieldSpec | None = None) -> Project | None:
         """Return the ORM model directly, with optimized loading based on requested fields."""
@@ -73,9 +73,10 @@ class ProjectService:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
         fields: FieldSpec | None = None,
+        restrict_ids: set[str] | None = None,
     ) -> list[Project]:
         """Return ORM models directly, with optimized loading based on requested fields."""
-        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
+        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields, restrict_ids=restrict_ids)
 
     async def create_project(self, project: ProjectCreate, requester: UserDTO) -> Project:
         """

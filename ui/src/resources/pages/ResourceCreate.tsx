@@ -24,10 +24,8 @@ import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceIn
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { MarkdownViewer } from "../../common/components/viewers/MarkdownViewer";
 import { useConfig } from "../../common/context/ConfigContext";
-import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import { makeWriteAccessFilter } from "../../common/utils";
 import { HeroLockClosedIcon, HeroLockOpenIcon } from "../../icons";
 import { GqlTemplateShort } from "../../templates/graphql";
 import { ToolSelect } from "../../tools";
@@ -82,7 +80,6 @@ const toCloneDefaults = (source: GqlResource): Partial<ResourceCreate> => ({
 
 const ResourceCreatePageInner = () => {
   const { ikApi, linkPrefix } = useConfig();
-  const { permissions } = usePermissionProvider();
   const {
     control,
     formState: { errors },
@@ -301,22 +298,6 @@ const ResourceCreatePageInner = () => {
 
   const watchedName = watch("name");
 
-  const integrationWriteFilter = useMemo(
-    () => (_option: IkEntity) => {
-      // TOODO: add integration validation
-      // if (permissions["*"] === "admin") return true;
-      // const p = permissions[`integration:${option.id}`];
-      // return p === "write" || p === "admin";
-      return true;
-    },
-    [],
-  );
-
-  const workspaceWriteFilter = useMemo(
-    () => makeWriteAccessFilter(permissions, "workspace"),
-    [permissions],
-  );
-
   useEffect(() => {
     const templateNamingConvention =
       watchedTemplate?.configuration?.naming_convention;
@@ -401,20 +382,52 @@ const ResourceCreatePageInner = () => {
     }
   }, [watchedName, watchedTemplate, setValue]);
 
+  const parentCandidates = useMemo(
+    () =>
+      watchedTemplate?.parents
+        ? watchedTemplate.parents.flatMap(
+            (parent: IkEntity) =>
+              (buffer[String(parent.id)] as IkEntity[]) || [],
+          )
+        : [],
+    [watchedTemplate, buffer],
+  );
+
   const resolvedLastParent = useMemo(() => {
     if (watchedParentIds.length === 0) return null;
-    const parentCandidates = watchedTemplate?.parents
-      ? watchedTemplate.parents.flatMap(
-          (parent: IkEntity) => (buffer[String(parent.id)] as IkEntity[]) || [],
-        )
-      : [];
     const primaryParentId = watchedParentIds.at(-1);
     return (
       parentCandidates.find(
         (e: GqlResource) => String(e.id) === String(primaryParentId),
       ) || null
     );
-  }, [watchedParentIds, watchedTemplate, buffer]);
+  }, [watchedParentIds, parentCandidates]);
+
+  // Integrations and workspaces of every selected parent can be picked without
+  // write access (the backend exempts them), so they stay visible in the pickers.
+  const { parentIntegrationIds, parentWorkspaceIds } = useMemo(() => {
+    const selected = new Set(watchedParentIds.map(String));
+    const integrationIds = new Set<string>();
+    const workspaceIds = new Set<string>();
+    for (const parent of parentCandidates as Array<
+      IkEntity & {
+        integrationIds?: Array<{ id: string }>;
+        workspace?: { id: string } | null;
+      }
+    >) {
+      if (!selected.has(String(parent.id))) continue;
+      for (const integration of parent.integrationIds ?? []) {
+        integrationIds.add(String(integration.id));
+      }
+      if (parent.workspace?.id) {
+        workspaceIds.add(String(parent.workspace.id));
+      }
+    }
+    return {
+      parentIntegrationIds: [...integrationIds],
+      parentWorkspaceIds: [...workspaceIds],
+    };
+  }, [watchedParentIds, parentCandidates]);
 
   const inherited = useMemo(() => {
     const parent = resolvedLastParent as
@@ -494,17 +507,31 @@ const ResourceCreatePageInner = () => {
     }
   }, [resolvedLastParent, inherited, setValue]);
 
+  // undefined until the workspace picker has loaded its options
+  const availableWorkspaces = buffer.workspaces as IkEntity[] | undefined;
+
   // Prefill the workspace from the project only when the project changes,
   // so the user can still clear or replace it afterwards.
   useEffect(() => {
     const projectId = selectedProject?.id ?? null;
     if (projectId === lastHandledProjectIdRef.current) return;
+    if (!availableWorkspaces) return;
     lastHandledProjectIdRef.current = projectId;
 
     const projectWorkspaceId =
       selectedProject?.workspace?.id || selectedProject?.workspaceId || null;
+    // The picker only lists workspaces the user can write to (or inherited from
+    // a parent); prefilling one outside that list would be submitted but
+    // render as an empty field.
+    const projectWorkspaceAvailable = availableWorkspaces.some(
+      (workspace) => String(workspace.id) === String(projectWorkspaceId),
+    );
 
-    if (inherited.workspace || !projectWorkspaceId) {
+    if (
+      inherited.workspace ||
+      !projectWorkspaceId ||
+      !projectWorkspaceAvailable
+    ) {
       lastAppliedProjectWorkspaceIdRef.current = null;
       return;
     }
@@ -517,7 +544,13 @@ const ResourceCreatePageInner = () => {
       setValue("workspaceId", projectWorkspaceId);
       lastAppliedProjectWorkspaceIdRef.current = projectWorkspaceId;
     }
-  }, [inherited.workspace, selectedProject, setValue, getValues]);
+  }, [
+    inherited.workspace,
+    selectedProject,
+    availableWorkspaces,
+    setValue,
+    getValues,
+  ]);
 
   useEffect(() => {
     if (watchedSourceCodeVersionId) {
@@ -1005,20 +1038,13 @@ const ResourceCreatePageInner = () => {
                         buffer={buffer}
                         setBuffer={setBuffer}
                         error={!!errors.integrationIds}
-                        optionFilter={(option: IkEntity) => {
-                          if (
-                            inherited.integration &&
-                            inherited.integrationIds.includes(option.id)
-                          ) {
-                            return true;
-                          }
-                          return integrationWriteFilter(option);
-                        }}
+                        access="write"
+                        includeIds={parentIntegrationIds}
                         helpertext={
                           errors.integrationIds
                             ? (errors.integrationIds as any).message
-                            : inherited.integration
-                              ? "Pre-filled from parent. You can remove inherited integrations or add others you have write access to."
+                            : parentIntegrationIds.length > 0
+                              ? "Integrations of the selected parents are available, plus others you have write access to."
                               : "Only integrations you have write access to are shown"
                         }
                         value={field.value}
@@ -1166,11 +1192,14 @@ const ResourceCreatePageInner = () => {
                         showFields={["name", "workspaceProvider"]}
                         setBuffer={setBuffer}
                         error={!!errors.workspaceId}
-                        optionFilter={workspaceWriteFilter}
+                        access="write"
+                        includeIds={parentWorkspaceIds}
                         helpertext={
                           errors.workspaceId
                             ? errors.workspaceId.message
-                            : "Only workspaces you have write access to are shown"
+                            : parentWorkspaceIds.length > 0
+                              ? "Workspaces of the selected parents are available, plus others you have write access to."
+                              : "Only workspaces you have write access to are shown"
                         }
                         value={field.value}
                         label="Select Workspace"

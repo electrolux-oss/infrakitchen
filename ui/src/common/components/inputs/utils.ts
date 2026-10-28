@@ -42,3 +42,22 @@ export const getOptionLabel = (
 
   return primaryLabel;
 };
+
+export type ReferenceAccess = "write" | "admin";
+
+/**
+ * GraphQL pieces for limiting a reference list to entities the user can act on.
+ * The server filters by permission; `includeIds` stay visible regardless
+ * (e.g. already attached or inherited from a parent).
+ */
+export const buildAccessQueryParts = (
+  access?: ReferenceAccess,
+  includeIds?: string[],
+) =>
+  access
+    ? {
+        varDefs: ", $access: String, $includeIds: [UUID!]",
+        args: ", access: $access, includeIds: $includeIds",
+        variables: { access, includeIds: includeIds ?? [] },
+      }
+    : { varDefs: "", args: "", variables: {} };

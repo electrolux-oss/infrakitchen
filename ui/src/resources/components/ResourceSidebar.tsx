@@ -26,9 +26,7 @@ import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { CountLabel, StatusLabel } from "../../common/components/labels";
 import { Labels } from "../../common/components/labels/Labels";
 import { useConfig } from "../../common/context";
-import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { usePendingScheduledAction } from "../../common/hooks/usePendingScheduledAction";
-import { makeWriteAccessFilter } from "../../common/utils";
 import { ToolSelect, toolLabel } from "../../tools";
 import { IkEntity } from "../../types";
 import { GqlResource } from "../graphql";
@@ -73,7 +71,6 @@ export const ResourceSidebar = ({
   onSubscriptionChange,
 }: ResourceSidebarProps) => {
   const { ikApi } = useConfig();
-  const { permissions } = usePermissionProvider();
   const { canEdit, saveField, withPendingChange } =
     useResourceFieldEditor(resource);
   const { loading, isSubscribed, handleSubscribe, handleUnsubscribe } =
@@ -87,14 +84,9 @@ export const ResourceSidebar = ({
   );
 
   const projectId = resource.project?.id;
-  const projectOptionFilter = useMemo(
-    () =>
-      makeWriteAccessFilter(
-        permissions,
-        "project",
-        new Set(projectId ? [String(projectId)] : []),
-      ),
-    [projectId, permissions],
+  const attachedProjectIds = useMemo(
+    () => (projectId ? [String(projectId)] : []),
+    [projectId],
   );
 
   const projectOwners = resource.project?.owners ?? [];
@@ -194,7 +186,8 @@ export const ResourceSidebar = ({
               setBuffer={setBuffer}
               entity_name="projects"
               showFields={["name"]}
-              optionFilter={projectOptionFilter}
+              access="write"
+              includeIds={attachedProjectIds}
               value={value}
               onChange={onChange}
               ariaLabel="Project"

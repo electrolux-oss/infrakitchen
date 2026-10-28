@@ -134,7 +134,7 @@ class TestCount:
 
         assert result == 1
 
-        mock_workspace_crud.count.assert_awaited_once_with(filter={"key": "value"})
+        mock_workspace_crud.count.assert_awaited_once_with(filter={"key": "value"}, restrict_ids=None)
 
     @pytest.mark.asyncio
     async def test_count_error(self, mock_workspace_service, mock_workspace_crud):
@@ -145,7 +145,7 @@ class TestCount:
             await mock_workspace_service.count(filter={"key": "value"})
 
         assert exc.value is error
-        mock_workspace_crud.count.assert_awaited_once_with(filter={"key": "value"})
+        mock_workspace_crud.count.assert_awaited_once_with(filter={"key": "value"}, restrict_ids=None)
 
 
 class TestCreate:

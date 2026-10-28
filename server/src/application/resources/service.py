@@ -182,7 +182,13 @@ class ResourceService:
 
     async def get_actions(self, resource_id: str | UUID, requester: UserDTO, include_cascade: bool = True) -> list[str]:
         resource = await self.crud.get_by_id(
-            resource_id, fields={"status": None, "state": None, "project": {"id": None, "owners": {"id": None}}}
+            resource_id,
+            fields={
+                "status": None,
+                "state": None,
+                "created_by": None,
+                "project": {"id": None, "owners": {"id": None}},
+            },
         )
         if not resource:
             raise EntityNotFound("Resource not found")
@@ -195,6 +201,7 @@ class ResourceService:
             resource_temp_state is not None,
             project=getattr(resource, "project", None),
             has_children=include_cascade and await self.crud.has_children(resource.id),
+            created_by=resource.created_by,
         )
 
     async def create_resource(
@@ -328,8 +335,10 @@ class ResourceService:
                                 ],
                             )
 
-            # Validate if user has write permission to linked workspace
-            if resource.workspace_id is not None:
+            # Validate if user has write permission to linked workspace;
+            # a workspace inherited from a parent is exempt (read on the parent is enough)
+            parent_workspace_ids = {str(parent.workspace_id) for parent in parent_resources if parent.workspace_id}
+            if resource.workspace_id is not None and str(resource.workspace_id) not in parent_workspace_ids:
                 workspace_permissions = await user_entity_permissions(requester, resource.workspace_id, "workspace")
                 if "write" not in workspace_permissions and "admin" not in workspace_permissions:
                     raise AccessDenied(f"You don't have write access to workspace {resource.workspace_id}")
@@ -618,6 +627,8 @@ class ResourceService:
                 "workspace_id" in resource.model_fields_set
                 and resource.workspace_id is not None
                 and str(resource.workspace_id) != str(existing_resource.workspace_id or "")
+                and str(resource.workspace_id)
+                not in {str(parent.workspace_id) for parent in existing_resource.parents or [] if parent.workspace_id}
             ):
                 workspace_permissions = await user_entity_permissions(requester, resource.workspace_id, "workspace")
                 if "write" not in workspace_permissions and "admin" not in workspace_permissions:

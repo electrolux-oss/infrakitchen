@@ -12,7 +12,11 @@ import { buildGraphqlFields } from "../../graphql/buildGraphqlFields";
 import { notifyError } from "../../hooks/useNotification";
 
 import { getReferenceQueryFields, ReferenceContent } from "./referenceContent";
-import { getOptionLabel } from "./utils";
+import {
+  buildAccessQueryParts,
+  getOptionLabel,
+  ReferenceAccess,
+} from "./utils";
 
 const SNAKE_TO_CAMEL_RE = /_([a-z])/g;
 
@@ -39,6 +43,10 @@ interface ArrayReferenceInputProps {
   error?: boolean;
   setBuffer: (selectedEntity: any) => void;
   optionFilter?: (option: IkEntity) => boolean;
+  /** Only list entities the user has this access level on (filtered server-side). */
+  access?: ReferenceAccess;
+  /** Entity ids kept in the list even without `access` (e.g. already attached). */
+  includeIds?: string[];
   renderOptionContent?: (option: IkEntity) => React.ReactNode;
   tooltip?: string;
   options?: IkEntity[];
@@ -63,6 +71,8 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
       singleLine,
       value,
       optionFilter,
+      access,
+      includeIds,
       renderOptionContent,
       tooltip,
       options: externalOptions,
@@ -97,6 +107,8 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
       ? (buffer[resolvedBufferKey] || []).filter(optionFilter)
       : buffer[resolvedBufferKey] || [];
 
+    const includeIdsKey = JSON.stringify(includeIds ?? []);
+
     useEffect(() => {
       if (externalOptions) {
         setBuffer((prev: Record<string, IkEntity[]>) => ({
@@ -105,18 +117,20 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
         }));
         return;
       }
+      const accessQuery = buildAccessQueryParts(access, includeIds);
       ikApi
         .graphqlRequest(
-          `query ArrayReferenceInput($filter: JSON, $sort: [String!], $range: [Int!]) {
-                  ${graphqlEntityName}(filter: $filter, sort: $sort, range: $range) {
+          `query ArrayReferenceInput($filter: JSON, $sort: [String!], $range: [Int!]${accessQuery.varDefs}) {
+                  ${graphqlEntityName}(filter: $filter, sort: $sort, range: $range${accessQuery.args}) {
                     ${buildGraphqlFields(["id", "status", ...queryFields])}
                   }
-                  ${graphqlCountName}(filter: $filter)
+                  ${graphqlCountName}(filter: $filter${accessQuery.args})
                 }`,
           {
             filter,
             sort: ["name", "ASC"],
             range: [0, 1000],
+            ...accessQuery.variables,
           },
         )
         .then((response: { [key: string]: IkEntity[] | number }) => {
@@ -133,6 +147,8 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
     }, [
       // eslint-disable-next-line react-hooks/exhaustive-deps
       JSON.stringify(filter),
+      access,
+      includeIdsKey,
       ikApi,
       entity_name,
       setBuffer,

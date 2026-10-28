@@ -11,20 +11,24 @@ from core.errors import AccessDenied
 from ..users.model import UserDTO
 
 
+def _resolve_subject_id(user: UserDTO) -> str | UUID:
+    """Casbin subject id for a user: the primary account when linked. Rejects deactivated accounts."""
+    if user.deactivated is True:
+        raise AccessDenied("User account is deactivated")
+    if user.primary_account:
+        if user.primary_account[0].deactivated is True:
+            raise AccessDenied("Primary account is deactivated")
+        return user.primary_account[0].id
+    return user.id
+
+
 async def user_has_access_to_entity(
     user: UserDTO | None, entity_id: str | UUID, action: str, entity_name: str | None = "resource"
 ) -> bool:
     if user is None:
         return False
 
-    user_id = user.id
-    if user.primary_account:
-        user_id = user.primary_account[0].id if user.primary_account else user.id
-    if user.deactivated is True:
-        raise AccessDenied("User account is deactivated")
-    if user.primary_account:
-        if user.primary_account[0].deactivated is True:
-            raise AccessDenied("Primary account is deactivated")
+    user_id = _resolve_subject_id(user)
 
     casbin_enforcer = CasbinEnforcer()
     if casbin_enforcer.enforcer is None:
@@ -50,14 +54,7 @@ async def user_has_access_to_api(user: UserDTO | None, api: str, action: str) ->
     if user is None:
         return False
 
-    user_id = user.id
-    if user.primary_account:
-        user_id = user.primary_account[0].id if user.primary_account else user.id
-    if user.deactivated is True:
-        raise AccessDenied("User account is deactivated")
-    if user.primary_account:
-        if user.primary_account[0].deactivated is True:
-            raise AccessDenied("Primary account is deactivated")
+    user_id = _resolve_subject_id(user)
 
     casbin_enforcer = CasbinEnforcer()
     if casbin_enforcer.enforcer is None:
@@ -108,14 +105,7 @@ async def user_apis_permissions(user: UserDTO | None) -> dict[str, str]:
     if user is None:
         raise ValueError("User must not be None and must have an ID")
 
-    user_id = user.id
-    if user.primary_account:
-        user_id = user.primary_account[0].id if user.primary_account else user.id
-    if user.deactivated is True:
-        raise AccessDenied("User account is deactivated")
-    if user.primary_account:
-        if user.primary_account[0].deactivated is True:
-            raise AccessDenied("Primary account is deactivated")
+    user_id = _resolve_subject_id(user)
 
     casbin_enforcer = CasbinEnforcer()
     if casbin_enforcer.enforcer is None:
@@ -141,14 +131,7 @@ async def user_entity_permissions(user: UserDTO | None, entity_id: str | UUID, e
     if user is None:
         raise ValueError("User must not be None and must have an ID")
 
-    user_id = user.id
-    if user.primary_account:
-        user_id = user.primary_account[0].id if user.primary_account else user.id
-    if user.deactivated is True:
-        raise AccessDenied("User account is deactivated")
-    if user.primary_account:
-        if user.primary_account[0].deactivated is True:
-            raise AccessDenied("Primary account is deactivated")
+    user_id = _resolve_subject_id(user)
 
     casbin_enforcer = CasbinEnforcer()
     if casbin_enforcer.enforcer is None:
@@ -168,18 +151,50 @@ async def user_entity_permissions(user: UserDTO | None, entity_id: str | UUID, e
     return []
 
 
+ENTITY_ACCESS_ACTIONS: dict[str, tuple[str, ...]] = {
+    "read": ("read", "write", "admin"),
+    "write": ("write", "admin"),
+    "admin": ("admin",),
+}
+
+
+async def user_entity_ids(user: UserDTO | None, entity_name: str, action: str) -> set[str] | None:
+    """IDs of `entity_name` entities the user may perform `action` on.
+
+    Returns None when access is unrestricted (a wildcard policy such as `*` or
+    `integration:*`). Matching follows the Casbin model (roles + keyMatch), so the
+    result agrees with `user_entity_permissions` for every id.
+    """
+    if user is None:
+        raise ValueError("User must not be None and must have an ID")
+    if action not in ENTITY_ACCESS_ACTIONS:
+        raise ValueError(f"Unknown action: {action}")
+
+    user_id = _resolve_subject_id(user)
+    enforcer = await _get_casbin_enforcer()
+    policies = await enforcer.get_implicit_permissions_for_user(f"user:{user_id}")
+
+    allowed_actions = ENTITY_ACCESS_ACTIONS[action]
+    prefix = f"{entity_name}:"
+    ids: set[str] = set()
+    for policy in policies:
+        policy_object, policy_action = policy[1], policy[2]
+        if policy_action not in allowed_actions:
+            continue
+        if "*" in policy_object:
+            if key_match(f"{prefix}any", policy_object):
+                return None
+            continue
+        if policy_object.startswith(prefix):
+            ids.add(policy_object.removeprefix(prefix))
+    return ids
+
+
 async def user_is_super_admin(user: UserDTO | None) -> bool:
     if user is None:
         return False
 
-    user_id = user.id
-    if user.primary_account:
-        user_id = user.primary_account[0].id if user.primary_account else user.id
-    if user.deactivated is True:
-        raise AccessDenied("User account is deactivated")
-    if user.primary_account:
-        if user.primary_account[0].deactivated is True:
-            raise AccessDenied("Primary account is deactivated")
+    user_id = _resolve_subject_id(user)
 
     casbin_enforcer = CasbinEnforcer()
     if casbin_enforcer.enforcer is None:

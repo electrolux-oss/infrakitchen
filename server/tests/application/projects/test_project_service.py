@@ -79,7 +79,7 @@ class TestCount:
         result = await mock_project_service.count(filter={"key": "value"})
 
         assert result == 1
-        mock_project_crud.count.assert_awaited_once_with(filter={"key": "value"})
+        mock_project_crud.count.assert_awaited_once_with(filter={"key": "value"}, restrict_ids=None)
 
 
 class TestCreate:

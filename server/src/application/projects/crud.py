@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import (
     FieldSpec,
     evaluate_sqlalchemy_filters,
+    restrict_ids_to,
     evaluate_sqlalchemy_pagination,
     evaluate_sqlalchemy_sorting,
 )
@@ -40,9 +41,11 @@ class ProjectCRUD:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
         fields: FieldSpec | None = None,
+        restrict_ids: set[str] | None = None,
     ) -> list[Project]:
         statement = select(Project)
         statement = evaluate_sqlalchemy_filters(Project, statement, filter)
+        statement = restrict_ids_to(Project, statement, restrict_ids)
         statement = evaluate_sqlalchemy_sorting(Project, statement, sort)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
@@ -50,9 +53,10 @@ class ProjectCRUD:
         result = await self.session.execute(statement)
         return list(result.scalars().unique().all())
 
-    async def count(self, filter: dict[str, Any] | None = None) -> int:
+    async def count(self, filter: dict[str, Any] | None = None, restrict_ids: set[str] | None = None) -> int:
         statement = select(func.count()).select_from(Project)
         statement = evaluate_sqlalchemy_filters(Project, statement, filter)
+        statement = restrict_ids_to(Project, statement, restrict_ids)
 
         result = await self.session.execute(statement)
         return result.scalar_one() or 0

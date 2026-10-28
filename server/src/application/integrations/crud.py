@@ -13,6 +13,7 @@ from application.storages.model import Storage
 from core.database import (
     FieldSpec,
     evaluate_sqlalchemy_filters,
+    restrict_ids_to,
     evaluate_sqlalchemy_pagination,
     evaluate_sqlalchemy_sorting,
 )
@@ -45,9 +46,11 @@ class IntegrationCRUD:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
         fields: FieldSpec | None = None,
+        restrict_ids: set[str] | None = None,
     ) -> list[Integration]:
         statement = select(Integration)
         statement = evaluate_sqlalchemy_filters(Integration, statement, filter)
+        statement = restrict_ids_to(Integration, statement, restrict_ids)
         statement = evaluate_sqlalchemy_sorting(Integration, statement, sort)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
@@ -55,9 +58,10 @@ class IntegrationCRUD:
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 
-    async def count(self, filter: dict[str, Any] | None = None) -> int:
+    async def count(self, filter: dict[str, Any] | None = None, restrict_ids: set[str] | None = None) -> int:
         statement = select(func.count()).select_from(Integration)
         statement = evaluate_sqlalchemy_filters(Integration, statement, filter)
+        statement = restrict_ids_to(Integration, statement, restrict_ids)
 
         result = await self.session.execute(statement)
         return result.scalar_one() or 0
