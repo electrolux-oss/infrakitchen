@@ -4,6 +4,7 @@ from uuid import UUID
 
 from application.executors.functions import delete_executor_policies, get_executor_actions
 from application.favorites.service import FavoriteService
+from application.integrations.schema import IntegrationShort
 from application.integrations.service import IntegrationService
 from application.executors.model import Executor, ExecutorDTO
 from application.source_code_versions.service import SourceCodeService
@@ -19,7 +20,7 @@ from core.logs.service import LogService
 from core.permissions.service import PermissionService
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
-from core.users.functions import user_entity_permissions
+from core.users.functions import require_entity_write_access, user_entity_permissions
 from core.users.model import UserDTO
 from core.utils.entity_state_handler import (
     delete_entity,
@@ -159,6 +160,10 @@ class ExecutorService:
         if executor.tool_id is not None:
             _ = await self.tool_service.validate_ready(executor.tool_id)
 
+        integration_ids = [i.id if isinstance(i, IntegrationShort) else i for i in executor.integration_ids]
+        await require_entity_write_access(requester, "integration", integration_ids)
+        await require_entity_write_access(requester, "secret", executor.secret_ids)
+
         body = executor.model_dump(exclude_unset=True)
 
         body["created_by"] = requester.id
@@ -226,6 +231,22 @@ class ExecutorService:
                 raise EntityNotFound("Source code not found")
 
         existing_executor_pydantic = ExecutorResponse.model_validate(existing_executor)
+
+        # require write access for integrations and secrets newly added by this patch
+        if executor.integration_ids:
+            await require_entity_write_access(
+                requester,
+                "integration",
+                executor.integration_ids,
+                {str(i.id) for i in existing_executor_pydantic.integration_ids},
+            )
+        if executor.secret_ids:
+            await require_entity_write_access(
+                requester,
+                "secret",
+                executor.secret_ids,
+                {str(s.id) for s in existing_executor_pydantic.secret_ids},
+            )
 
         body = model_db_dump(executor, exclude_defaults=True, exclude_none=True)
         if "tool_id" in executor.model_fields_set:

@@ -415,13 +415,14 @@ const ExecutorCreatePageInner = () => {
                   entity_name="integrations"
                   filter={{ integration_type: "cloud" }}
                   showFields={["integrationProvider", "name"]}
+                  access="write"
                   buffer={buffer}
                   setBuffer={setBuffer}
                   error={!!errors.integrationIds}
                   helpertext={
                     errors.integrationIds
                       ? (errors.integrationIds as any).message
-                      : ""
+                      : "Only integrations you have write access to are shown"
                   }
                   value={field.value}
                   label="Cloud Integration"
@@ -440,13 +441,14 @@ const ExecutorCreatePageInner = () => {
                   ikApi={ikApi}
                   entity_name="secrets"
                   showFields={["name", "secret_provider"]}
+                  access="write"
                   buffer={buffer}
                   setBuffer={setBuffer}
                   error={!!errors.secretIds}
                   helpertext={
                     errors.secretIds
                       ? (errors.secretIds as any).message
-                      : "Select Secrets"
+                      : "Only secrets you have write access to are shown"
                   }
                   value={field.value}
                   label="Select Secrets"

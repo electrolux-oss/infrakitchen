@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
 import {
@@ -76,6 +76,17 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
 
   const storageFilter = { integration_id: selectedIntegrationIds };
 
+  // Pickers list only writable entities (filtered server-side) plus the
+  // ones already attached, so existing bindings stay visible.
+  const attachedIntegrationIds = useMemo(
+    () => executor.integrationIds?.map((i) => String(i.id)) ?? [],
+    [executor.integrationIds],
+  );
+  const attachedSecretIds = useMemo(
+    () => executor.secretIds?.map((s) => String(s.id)) ?? [],
+    [executor.secretIds],
+  );
+
   const saveField = useEntityFieldSaver<ExecutorUpdateFieldInput>(
     EXECUTOR_UPDATE_MUTATION,
     executor.id,
@@ -152,6 +163,8 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
               entity_name="integrations"
               filter={{ integration_type: "cloud" }}
               showFields={["integrationProvider", "name"]}
+              access="write"
+              includeIds={attachedIntegrationIds}
               buffer={buffer}
               setBuffer={setBuffer}
               value={value}
@@ -192,6 +205,8 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
             <ArrayReferenceInput
               ikApi={ikApi}
               entity_name="secrets"
+              access="write"
+              includeIds={attachedSecretIds}
               buffer={buffer}
               setBuffer={setBuffer}
               value={value}
@@ -199,7 +214,7 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
               ariaLabel="Secrets"
               placeholder="Select secrets…"
               singleLine
-              helpertext="Select secrets for the executor"
+              helpertext="Existing secrets are kept; new options are limited to those you have write access to."
               multiple
             />
           )}

@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Any
 from uuid import UUID
 
@@ -149,6 +150,21 @@ async def user_entity_permissions(user: UserDTO | None, entity_id: str | UUID, e
         return ["read"]
 
     return []
+
+
+async def require_entity_write_access(
+    user: UserDTO | None,
+    entity_name: str,
+    entity_ids: Sequence[str | UUID] | None,
+    exempt_ids: set[str] | None = None,
+) -> None:
+    """Raise AccessDenied unless the user has write or admin on every entity not in exempt_ids."""
+    for entity_id in entity_ids or []:
+        if exempt_ids and str(entity_id) in exempt_ids:
+            continue
+        permissions = await user_entity_permissions(user, entity_id, entity_name)
+        if "write" not in permissions and "admin" not in permissions:
+            raise AccessDenied(f"You don't have write access to {entity_name} {entity_id}")
 
 
 ENTITY_ACCESS_ACTIONS: dict[str, tuple[str, ...]] = {
