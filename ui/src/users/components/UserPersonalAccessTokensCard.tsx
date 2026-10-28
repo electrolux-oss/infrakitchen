@@ -387,11 +387,7 @@ const TokenDialog = ({
                             )
                           }
                         >
-                          <MenuItem
-                            value="mixed"
-                            disabled
-                            sx={{ display: "none" }}
-                          >
+                          <MenuItem value="mixed" disabled className="hidden">
                             Mixed
                           </MenuItem>
                           <MenuItem value="none">-- Select --</MenuItem>
