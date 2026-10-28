@@ -43,8 +43,6 @@ Configure metrics with these environment variables:
 - `OTEL_EXPORTER_OTLP_PROTOCOL` (only `http/protobuf` is supported; any other value fails at startup. Use the OTLP/HTTP port `4318`, e.g. `http://$(HOST_IP):4318`, not gRPC `4317`)
 - `OTEL_RESOURCE_ATTRIBUTES` (optional, e.g. `deployment.environment=prod,service.version=1.2.3`; `service.instance.id` defaults to `<hostname>-<pid>`)
 
-By default, InfraKitchen no longer exposes a Prometheus scrape endpoint. Metrics are exported directly to an OTLP collector.
-
 To inspect metrics locally, set `OTEL_METRICS_ENABLED=true` and run a collector with `make otel-collector` (from the repository root). It uses
 `observability/otel-local.yaml`, listens for OTLP on `4317`/`4318`, and re-exposes everything as a Prometheus
 scrape endpoint at <http://localhost:9464/metrics>.
