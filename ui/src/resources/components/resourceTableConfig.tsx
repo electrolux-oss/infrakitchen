@@ -7,7 +7,7 @@ import {
 } from "../../common/components/entity_table/tableColumns";
 import { ColumnFilterSpec } from "../../common/components/filter_panel/FilterConfig";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
-import { StatusLabel } from "../../common/components/labels";
+import { DriftLabel, StatusLabel } from "../../common/components/labels";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
 import { HeroShareIcon, HeroTagIcon } from "../../icons";
 import { GqlIntegrationShort } from "../../integrations/graphql";
@@ -15,6 +15,7 @@ import { GqlSecretShort } from "../../secrets/graphql";
 import { toolColumn } from "../../tools/components/toolColumn";
 import { ColumnVisibilityModel, RenderCellParams } from "../../ui";
 import {
+  DRIFT_STATUS,
   ENTITY_STATE,
   ENTITY_STATUS,
   VERSION_LIFECYCLE_STATE,
@@ -27,6 +28,7 @@ import { hasPendingChanges } from "../utils/pendingChanges";
 export const resourceDefaultColumnVisibilityModel: ColumnVisibilityModel = {
   template: true,
   created_at: false,
+  drift_status: false,
   storage: false,
   tool: true,
   workspace: false,
@@ -347,6 +349,28 @@ export const resourceColumns: EntityTableColumn[] = [
         state={String(params.row.state).toLowerCase()}
         needsReview={hasPendingChanges(params.row)}
       />
+    ),
+  },
+  {
+    field: "drift_status",
+    fetchFields: ["drift.status", "drift.checked_at"],
+    headerName: "Drift",
+    width: 130,
+    filter: {
+      field: "drift__status",
+      label: "Drift",
+      operators: ["eq", "in"],
+      valueType: "select",
+      defaultOperator: "eq",
+      selectOptions: [
+        { label: "In sync", value: DRIFT_STATUS.IN_SYNC },
+        { label: "Drifted", value: DRIFT_STATUS.DRIFTED },
+        { label: "Check failed", value: DRIFT_STATUS.ERROR },
+      ],
+    },
+    valueGetter: (_value: any, row: any) => row.drift?.status,
+    renderCell: (params: RenderCellParams) => (
+      <DriftLabel driftStatus={params.row.drift?.status} />
     ),
   },
   ...createdUpdatedColumns({

@@ -12,6 +12,9 @@ export interface DependencyConfig {
 
 export interface ProjectConfig {
   always_use_workspace: boolean;
+  drift_detection?: boolean;
+  drift_interval_hours?: number | null;
+  drift_batch_size?: number | null;
   allow_unapproved_metadata_edits: ResourceUpdateApprovalBypassField[];
 }
 

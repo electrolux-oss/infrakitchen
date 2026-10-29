@@ -193,13 +193,14 @@ class ResourceService:
         if not resource:
             raise EntityNotFound("Resource not found")
         resource_temp_state = await self.resource_temp_state_handler.get_by_resource_id(resource_id)
+        project = getattr(resource, "project", None)
         return await get_resource_actions(
             requester,
             resource.id,
             resource.status,
             resource.state,
             resource_temp_state is not None,
-            project=getattr(resource, "project", None),
+            project=project,
             has_children=include_cascade and await self.crud.has_children(resource.id),
             created_by=resource.created_by,
         )
@@ -976,6 +977,26 @@ class ResourceService:
                     existing_resource.id,
                     requester=requester,
                     action=ModelActions.DRYRUN,
+                    trace_id=trace_id or self.audit_log_handler.trace_id,
+                    audit_log_id=self.audit_log_handler.audit_log_id,
+                )
+            case ModelActions.CHECK_DRIFT:
+                if existing_resource.abstract is True:
+                    raise ValueError("Drift check action is not allowed for abstract resources")
+
+                if existing_resource.state != ModelState.PROVISIONED or existing_resource.status not in [
+                    ModelStatus.READY,
+                    ModelStatus.ERROR,
+                    ModelStatus.DONE,
+                ]:
+                    raise EntityWrongState(
+                        "Drift check is only allowed for provisioned resources in READY, ERROR, or DONE",
+                    )
+
+                await self.event_sender.send_task(
+                    existing_resource.id,
+                    requester=requester,
+                    action=ModelActions.CHECK_DRIFT,
                     trace_id=trace_id or self.audit_log_handler.trace_id,
                     audit_log_id=self.audit_log_handler.audit_log_id,
                 )

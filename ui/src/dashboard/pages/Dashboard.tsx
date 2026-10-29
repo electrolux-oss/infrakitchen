@@ -1,4 +1,5 @@
 import PageContainer from "../../common/PageContainer";
+import { DriftWidget } from "../../drift/DriftWidget";
 import { GoldenStateWidget } from "../../golden_state/GoldenStateWidget";
 import { HeroArrowPathIcon, HeroChartBarIcon } from "../../icons";
 import { Spinner, IconButton, Tooltip } from "../../ui";
@@ -14,6 +15,7 @@ export const DashboardPage = () => {
     activitiesTotal,
     loadingMore,
     goldenStateReport,
+    driftReport,
     hasResources,
     loading,
     refreshing,
@@ -59,9 +61,13 @@ export const DashboardPage = () => {
       <div className="mb-6 w-full">
         <GoldenStateWidget
           goldenStateReport={goldenStateReport}
+          driftReport={driftReport}
           loading={loading}
           expandable
         />
+      </div>
+      <div className="mb-6 w-full empty:hidden">
+        <DriftWidget driftReport={driftReport} />
       </div>
       <div
         // Stack the widgets on small screens; side by side from md up.

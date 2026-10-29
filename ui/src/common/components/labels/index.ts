@@ -1,4 +1,5 @@
 export * from "./CountLabel";
+export * from "./DriftLabel";
 export * from "./EntityStatusChip";
 export * from "../../../ui/Label";
 export * from "./Labels";

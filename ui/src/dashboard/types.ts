@@ -70,3 +70,19 @@ export interface GoldenStateSummary {
   overallScore: number;
   projects: GoldenStateProjectReport[];
 }
+
+export interface DriftProjectReport {
+  projectId: string | null;
+  projectName: string;
+  score: number;
+  total: number;
+  inSync: number;
+  drifted: number;
+  error: number;
+  unknown: number;
+}
+
+export interface DriftSummary {
+  overallScore: number;
+  projects: DriftProjectReport[];
+}

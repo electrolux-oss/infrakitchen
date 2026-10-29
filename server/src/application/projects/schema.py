@@ -13,6 +13,11 @@ from core.users.schema import UserShort
 
 class ProjectConfig(BaseModel):
     always_use_workspace: bool = Field(default=False)
+    # check the drift of the project resources with the global schedule, even if drift detection is off globally
+    drift_detection: bool = Field(default=False)
+    # overrides of the global drift schedule, empty means the global value
+    drift_interval_hours: int | None = Field(default=None, ge=1, le=8760)
+    drift_batch_size: int | None = Field(default=None, ge=1, le=1000)
     allow_unapproved_metadata_edits: list[str] = Field(default_factory=list)
 
     @field_validator("allow_unapproved_metadata_edits")

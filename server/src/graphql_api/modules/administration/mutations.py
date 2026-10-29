@@ -8,7 +8,9 @@ from core.feature_flags.enforcer import FeatureFlagEnforcer
 from core.feature_flags.model import FeatureFlagDTO
 from core.users.functions import user_is_super_admin
 from graphql_api.helpers import IsSuperAdmin
-from graphql_api.modules.administration.types import FeatureFlagType, SimpleStatusType
+from application.resource_drifts.model import DriftSettingsDTO
+from application.resource_drifts.service import update_drift_settings
+from graphql_api.modules.administration.types import DriftSettingsType, FeatureFlagType, SimpleStatusType
 
 
 @strawberry.input
@@ -18,8 +20,30 @@ class FeatureFlagUpdateInput:
     enabled: bool | None = None
 
 
+@strawberry.input
+class DriftSettingsInput:
+    enabled: bool
+    interval_hours: int
+    batch_size: int
+
+
 @strawberry.type
 class AdministrationMutation:
+    @strawberry.mutation(permission_classes=[IsSuperAdmin])
+    async def update_drift_settings(self, info: Info, input: DriftSettingsInput) -> DriftSettingsType:
+        requester = info.context["request"].state.user
+        if not await user_is_super_admin(requester):
+            raise PermissionError("Access denied")
+
+        session = info.context["session"]
+        updated = await update_drift_settings(
+            session,
+            DriftSettingsDTO(enabled=input.enabled, interval_hours=input.interval_hours, batch_size=input.batch_size),
+            requester.id,
+        )
+        await session.commit()
+        return DriftSettingsType(**updated.model_dump())
+
     @strawberry.mutation(permission_classes=[IsSuperAdmin])
     async def update_feature_flag(self, info: Info, input: FeatureFlagUpdateInput) -> FeatureFlagType:
         requester = info.context["request"].state.user

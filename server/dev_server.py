@@ -16,7 +16,13 @@ from application.logger import change_logger, get_uvicorn_log_config
 from build_info import write_build_info
 from core.config import setup_service_environment
 from core.utils.event_sender import EventSender
-from scheduler import schedule_jobs, schedule_polling_job, schedule_task_queue_cleanup_job, start_reload_consumer
+from scheduler import (
+    schedule_drift_check_job,
+    schedule_jobs,
+    schedule_polling_job,
+    schedule_task_queue_cleanup_job,
+    start_reload_consumer,
+)
 from worker import run_task_worker
 
 from src.app import app
@@ -91,6 +97,7 @@ async def setup_scheduler() -> tuple[AsyncIOScheduler, "asyncio.Task[None]"]:
     await schedule_jobs(scheduler=scheduler, event_sender=event_sender)
     await schedule_polling_job(scheduler=scheduler, event_sender=event_sender)
     schedule_task_queue_cleanup_job(scheduler=scheduler)
+    schedule_drift_check_job(scheduler=scheduler, event_sender=event_sender)
 
     scheduler.start()
 

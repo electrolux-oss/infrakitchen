@@ -20,3 +20,13 @@ export const SCHEDULERS_QUERY = `
     }
   }
 `;
+
+export const DRIFT_SETTINGS_QUERY = `
+  query DriftSettings {
+    driftSettings {
+      enabled
+      intervalHours
+      batchSize
+    }
+  }
+`;

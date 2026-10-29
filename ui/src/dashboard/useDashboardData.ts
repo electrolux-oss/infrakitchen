@@ -10,6 +10,7 @@ import {
   ActivityLogEntry,
   DashboardStats,
   FavoriteResource,
+  DriftSummary,
   GoldenStateSummary,
 } from "./types";
 
@@ -64,6 +65,19 @@ const DASHBOARD_QUERY = `
           auditLogs(filter: $auditFilter, sort: $auditSort, range: $auditRange) {
             ${AUDIT_LOG_FIELDS}
           }
+          driftReport {
+            overallScore
+            projects {
+              projectId
+              projectName
+              score
+              total
+              inSync
+              drifted
+              error
+              unknown
+            }
+          }
           goldenStateReport {
             overallScore
             projects {
@@ -87,6 +101,7 @@ interface DashboardResponse {
   favorites: GqlFavorite[];
   auditLogs: GqlAuditLog[];
   goldenStateReport: GoldenStateSummary | null;
+  driftReport: DriftSummary | null;
 }
 
 function transformFavoriteToResource(
@@ -114,6 +129,7 @@ export const useDashboardData = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [goldenStateReport, setGoldenStateReport] =
     useState<GoldenStateSummary | null>(null);
+  const [driftReport, setDriftReport] = useState<DriftSummary | null>(null);
   const [hasResources, setHasResources] = useState(false);
   const [stats, setStats] = useState<DashboardStats>({
     total: 0,
@@ -148,6 +164,7 @@ export const useDashboardData = () => {
         setActivities([]);
         setActivitiesTotal(0);
         setGoldenStateReport(null);
+        setDriftReport(null);
         setStats({ total: 0, ready: 0, needsUpdate: 0, critical: 0 });
         return;
       }
@@ -163,6 +180,7 @@ export const useDashboardData = () => {
       setActivitiesTotal(response?.auditLogsCount ?? 0);
       const goldenStateReport = response?.goldenStateReport ?? null;
       setGoldenStateReport(goldenStateReport);
+      setDriftReport(response?.driftReport ?? null);
 
       const sumProjects = (key: "compliant" | "updateAvailable" | "critical") =>
         (goldenStateReport?.projects ?? []).reduce(
@@ -231,6 +249,7 @@ export const useDashboardData = () => {
     activitiesTotal,
     loadingMore,
     goldenStateReport,
+    driftReport,
     hasResources,
     stats,
     loading,

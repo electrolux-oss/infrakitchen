@@ -5,6 +5,7 @@ import { Link as RouterLink, useNavigate } from "react-router";
 import { FilterClause } from "../common/components/filter_panel/FilterConfig";
 import { Label } from "../common/components/labels";
 import {
+  DriftSummary,
   GoldenStateProjectReport,
   GoldenStateSummary,
 } from "../dashboard/types";
@@ -19,10 +20,11 @@ import {
 } from "../icons";
 import { Divider, Spinner, IconButton, Tooltip, Link } from "../ui";
 import { cn } from "../utils/cn";
-import { VERSION_LIFECYCLE_STATE } from "../utils/constants";
+import { DRIFT_STATUS, VERSION_LIFECYCLE_STATE } from "../utils/constants";
 
 export interface GoldenStateWidgetProps {
   goldenStateReport: GoldenStateSummary | null;
+  driftReport?: DriftSummary | null;
   loading?: boolean;
   expandable?: boolean;
 }
@@ -80,8 +82,10 @@ function buildProjectPageResourcesUrl(project: GoldenStateProjectReport) {
 
 function ProjectHeatMapTile({
   project,
+  drifted = 0,
 }: {
   project: GoldenStateProjectReport;
+  drifted?: number;
 }) {
   const navigate = useNavigate();
   const comparable = project.total - project.noGolden;
@@ -118,6 +122,15 @@ function ProjectHeatMapTile({
       field: "source_code_version__lifecycle_state",
       operator: "eq",
       value: VERSION_LIFECYCLE_STATE.ARCHIVED,
+    },
+  ]);
+
+  const driftedResourcesUrl = buildProjectResourcesUrl(project, [
+    {
+      id: `gsp-drift-${project.projectId ?? "all"}`,
+      field: "drift__status",
+      operator: "eq",
+      value: DRIFT_STATUS.DRIFTED,
     },
   ]);
 
@@ -198,6 +211,18 @@ function ProjectHeatMapTile({
             className="justify-self-start"
           />
         )}
+        {drifted > 0 && (
+          <Label
+            size="small"
+            tone="warning"
+            icon={<HeroExclamationTriangleIcon />}
+            label={`${drifted} drifted`}
+            component={RouterLink}
+            to={driftedResourcesUrl}
+            onClick={(e: MouseEvent) => e.stopPropagation()}
+            className="justify-self-start"
+          />
+        )}
         {project.noGolden > 0 && (
           <Label
             className="col-[1_/_-1] justify-self-start"
@@ -211,6 +236,7 @@ function ProjectHeatMapTile({
 
 export const GoldenStateWidget = ({
   goldenStateReport,
+  driftReport = null,
   loading = false,
   expandable = false,
 }: GoldenStateWidgetProps) => {
@@ -287,6 +313,11 @@ export const GoldenStateWidget = ({
                 <ProjectHeatMapTile
                   key={project.projectId ?? "__unassigned"}
                   project={project}
+                  drifted={
+                    driftReport?.projects.find(
+                      (drift) => drift.projectId === project.projectId,
+                    )?.drifted
+                  }
                 />
               ))}
             </div>

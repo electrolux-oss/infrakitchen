@@ -2,6 +2,7 @@ import { Label } from "../../../ui/Label";
 import { cn } from "../../../utils/cn";
 import { useEntityProvider } from "../../context/EntityContext";
 
+import { DriftLabel } from "./DriftLabel";
 import { StatusLabel } from "./StatusLabel";
 
 export interface EntityStatusChipProps {
@@ -22,12 +23,17 @@ export const EntityStatusChip = ({
   state,
   className,
 }: EntityStatusChipProps) => {
-  const { pendingChanges } = useEntityProvider();
+  const { entity, pendingChanges } = useEntityProvider();
   const pendingCount = pendingChanges ? Object.keys(pendingChanges).length : 0;
 
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
       <StatusLabel status={status} state={state} size="large" />
+      <DriftLabel
+        driftStatus={entity?.drift?.status}
+        checkedAt={entity?.drift?.checkedAt}
+        size="large"
+      />
       {pendingCount > 0 && (
         <Label
           size="large"

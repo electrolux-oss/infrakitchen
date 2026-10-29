@@ -7,10 +7,17 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger
+from sqlalchemy import String, case, cast, exists, func, or_, select, true
 
 from application.logger import change_logger
 
-from core.constants.model import ModelState, ModelStatus
+from application.projects.model import Project
+from application.resource_drifts.model import ResourceDrift
+from application.resource_drifts.service import get_drift_settings
+from application.resources.model import Resource
+from application.source_code_versions.model import SourceCodeVersion
+from application.source_codes.model import SourceCode
+from core.constants.model import ModelActions, ModelState, ModelStatus
 from core.dependencies import get_async_session
 from core.errors import EntityNotFound
 from core.notifications.dependencies import get_user_notification_service
@@ -19,6 +26,7 @@ from core.scheduler.crud import SchedulerJobCRUD
 from core.scheduler.model import JobType
 from core.config import Settings
 from core.task_queue.functions import task_queue_service
+from core.task_queue.model import TaskQueueItem, TaskQueueStatus
 from core.tasks.crud import TaskEntityCRUD
 from core.tasks.functions import build_cron_trigger, next_cron_run
 from core.tasks.model import TaskEntity
@@ -35,7 +43,14 @@ logger = logging.getLogger("scheduler")
 # never treated as a stale job and removed.
 POLL_JOB_ID = "poll_new_jobs"
 TASK_QUEUE_CLEANUP_JOB_ID = "task_queue_cleanup"
-INTERNAL_JOB_IDS = {POLL_JOB_ID, TASK_QUEUE_CLEANUP_JOB_ID}
+DRIFT_CHECK_JOB_ID = "drift_check"
+INTERNAL_JOB_IDS = {POLL_JOB_ID, TASK_QUEUE_CLEANUP_JOB_ID, DRIFT_CHECK_JOB_ID}
+# How often the drift job looks for resources that are due; the check interval is a drift setting
+DRIFT_CHECK_JOB_MINUTES = 15
+# Scheduled checks run after the tasks users are waiting for (default priority 0), and never more than
+# DRIFT_MAX_ACTIVE_CHECKS are waiting or running, however many projects have their own batch size
+DRIFT_CHECK_PRIORITY = -1
+DRIFT_MAX_ACTIVE_CHECKS = 50
 ENTITY_ACTION_JOB_PREFIX = "entity_action:"
 
 # Serializes reconciliation so the event-driven reload and the periodic poll
@@ -273,6 +288,110 @@ def schedule_task_queue_cleanup_job(scheduler: AsyncIOScheduler):
     )
 
 
+async def enqueue_drift_checks(event_sender: EventSender):
+    """Queue a drift check for the provisioned resources that were not checked within the interval.
+
+    The least recently checked resources go first and only a batch is queued per run, so the checks
+    are spread over the workers instead of planning every resource at once.
+    """
+    async with get_async_session() as session:
+        drift_settings = await get_drift_settings(session)
+        active_checks = await session.scalar(
+            select(func.count()).where(
+                TaskQueueItem.action == ModelActions.CHECK_DRIFT,
+                TaskQueueItem.status.in_([TaskQueueStatus.QUEUED, TaskQueueStatus.RUNNING]),
+            )
+        )
+        free_slots = max(0, DRIFT_MAX_ACTIVE_CHECKS - (active_checks or 0))
+        if free_slots == 0:
+            return
+        project_enabled = Project.configuration["drift_detection"].as_boolean().is_(True)
+        project_interval = Project.configuration["drift_interval_hours"].as_integer()
+        project_batch = Project.configuration["drift_batch_size"].as_integer()
+        interval_hours = func.coalesce(project_interval, drift_settings.interval_hours)
+        # projects with their own batch size get their own quota, all the others share the global one
+        quota_group = case((project_batch.is_(None), None), else_=cast(Project.id, String))
+        candidates = (
+            select(
+                Resource.id.label("id"),
+                Resource.created_by.label("created_by"),
+                func.row_number()
+                .over(partition_by=quota_group, order_by=ResourceDrift.checked_at.asc().nulls_first())
+                .label("position"),
+                func.coalesce(project_batch, drift_settings.batch_size).label("quota"),
+                ResourceDrift.checked_at.label("checked_at"),
+            )
+            .select_from(Resource)
+            .outerjoin(Project, Project.id == Resource.project_id)
+            .outerjoin(ResourceDrift, ResourceDrift.resource_id == Resource.id)
+            .where(
+                Resource.state == ModelState.PROVISIONED,
+                Resource.status.in_([ModelStatus.READY, ModelStatus.DONE, ModelStatus.ERROR]),
+                Resource.abstract.is_(False),
+                # the drift check runs a refresh-only plan, which only OpenTofu code supports
+                Resource.source_code_version_id.in_(
+                    select(SourceCodeVersion.id)
+                    .join(SourceCode, SourceCode.id == SourceCodeVersion.source_code_id)
+                    .where(SourceCode.source_code_language == "opentofu")
+                ),
+                # a task that is still waiting or running would be superseded by a new one, see enqueue_tasks
+                ~exists().where(
+                    TaskQueueItem.entity == "resource",
+                    TaskQueueItem.entity_id == Resource.id,
+                    TaskQueueItem.status.in_([TaskQueueStatus.QUEUED, TaskQueueStatus.RUNNING]),
+                ),
+                # everything when enabled globally, otherwise only the resources of opted-in projects
+                true() if drift_settings.enabled else project_enabled,
+                or_(
+                    ResourceDrift.checked_at.is_(None),
+                    ResourceDrift.checked_at < func.now() - func.make_interval(0, 0, 0, 0, interval_hours),
+                ),
+            )
+            .subquery()
+        )
+        rows = (
+            await session.execute(
+                select(candidates.c.id, candidates.c.created_by)
+                .where(candidates.c.position <= candidates.c.quota)
+                .order_by(candidates.c.checked_at.asc().nulls_first())
+                .limit(free_slots)
+            )
+        ).all()
+
+        user_service = UserService(crud=UserCRUD(session=session))
+        users = {}
+        queued = 0
+        for resource_id, created_by in rows:
+            if created_by not in users:
+                users[created_by] = await user_service.get_dto_by_id(created_by)
+            if users[created_by] is None:
+                logger.warning(f"Skipping drift check of resource {resource_id}: user {created_by} not found")
+                continue
+            await event_sender.send_task(
+                entity_id=resource_id,
+                requester=users[created_by],
+                action=ModelActions.CHECK_DRIFT,
+                extra_metadata={"entity_controller": "resource"},
+                delay_seconds=0,
+                priority=DRIFT_CHECK_PRIORITY,
+            )
+            queued += 1
+
+    await event_sender.flush()
+    logger.info(f"Queued drift checks for {queued} resources")
+
+
+def schedule_drift_check_job(scheduler: AsyncIOScheduler, event_sender: EventSender):
+    """Schedules the job that queues due drift checks; it does nothing while the feature is off."""
+    scheduler.add_job(
+        enqueue_drift_checks,
+        trigger=IntervalTrigger(minutes=DRIFT_CHECK_JOB_MINUTES),
+        kwargs={"event_sender": event_sender},
+        id=DRIFT_CHECK_JOB_ID,
+        replace_existing=True,
+    )
+
+
 async def start_reload_consumer(scheduler: AsyncIOScheduler, event_sender: EventSender):
     """Re-sync jobs whenever a ``reload_scheduler_jobs`` event is broadcast."""
 
@@ -292,6 +411,7 @@ async def start_scheduler():
     await schedule_jobs(scheduler=scheduler, event_sender=event_sender)
     await schedule_polling_job(scheduler=scheduler, event_sender=event_sender)
     schedule_task_queue_cleanup_job(scheduler=scheduler)
+    schedule_drift_check_job(scheduler=scheduler, event_sender=event_sender)
 
     scheduler.start()
     logger.info("Scheduler started")

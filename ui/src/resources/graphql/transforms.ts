@@ -50,7 +50,14 @@ type GqlResourceDetailFieldTypes = {
   entityName: string;
 };
 
+type GqlResourceDrift = {
+  status: string;
+  checkedAt: string;
+  summary: Record<string, any> | null;
+};
+
 type GqlResourceRelationFieldTypes = {
+  drift: GqlResourceDrift | null;
   template: GqlTemplateShort | null;
   sourceCodeVersion: GqlSourceCodeVersionShort | null;
   integrationIds: GqlIntegrationShort[] | null;

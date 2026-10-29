@@ -10,7 +10,7 @@ from core.errors import ShellExecutionError
 
 from core.tools.shell_client import ShellScriptClient
 
-from .tf_summary import parse_apply_summary, parse_plan_summary
+from .tf_summary import MAX_RESOURCES_PER_ACTION, parse_apply_summary, parse_plan_resources, parse_plan_summary
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +129,22 @@ class OtfClient:
         else:
             output = await self._run_command(f"plan {command_args}")
         self.logger.add_result(plan=parse_plan_summary(output))
+
+    async def drift_check(self, command_args: str = "") -> dict[str, Any]:
+        """
+        Compare the real infrastructure with the state using a refresh-only plan, nothing is changed.
+        Drifted objects are reported by tofu as "has changed" / "has been deleted", so the exit code
+        (always 0 without -detailed-exitcode) is not used. The state is not locked, the plan is
+        read-only and a lock would make a concurrent apply of the resource fail.
+        """
+        self.logger.info("Checking Tofu drift...")
+        output = await self._run_command(f"plan -refresh-only -lock=false {command_args}")
+        addresses = parse_plan_resources(output).get("drift", [])
+        result: dict[str, Any] = {"drifted": bool(addresses), "resources": addresses[:MAX_RESOURCES_PER_ACTION]}
+        if len(addresses) > MAX_RESOURCES_PER_ACTION:
+            result["resources_truncated"] = True
+        self.logger.add_result(drift=result)
+        return result
 
     async def get_output(self) -> dict[str, Any]:
         """

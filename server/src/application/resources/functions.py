@@ -127,6 +127,8 @@ async def get_resource_actions(
         actions.append(ModelActions.DOWNLOAD)
         actions.append(ModelActions.EDIT)
         actions.append(ModelActions.DRYRUN)
+        if status in (ModelStatus.DONE, ModelStatus.READY, ModelStatus.ERROR):
+            actions.append(ModelActions.CHECK_DRIFT)
 
         if temp_state_exists and user_is_admin:
             actions.append(ModelActions.APPROVE)

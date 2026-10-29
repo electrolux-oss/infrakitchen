@@ -18,3 +18,7 @@ export const RESOURCE_UPDATE_APPROVAL_BYPASS_FIELD_OPTIONS: Array<{
   { value: "storage_id", label: "Storage" },
   { value: "storage_path", label: "Storage Path" },
 ];
+
+// Defaults suggested when a project overrides the global drift schedule
+export const DEFAULT_DRIFT_INTERVAL_HOURS = 24;
+export const DEFAULT_DRIFT_BATCH_SIZE = 20;

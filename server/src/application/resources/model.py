@@ -9,6 +9,7 @@ from sqlalchemy import Enum as SQLAlchemyEnum
 from application.common.schema import DependencyTag, DependencyConfig
 from application.projects.model import Project
 from application.projects.schema import ProjectResponse
+from application.resource_drifts.model import ResourceDrift
 from application.secrets.model import Secret, SecretDTO
 from application.templates.model import Template, TemplateDTO
 from application.integrations.model import Integration, IntegrationDTO
@@ -112,6 +113,16 @@ class Resource(BaseEntity):
         SQLAlchemyEnum(ModelStatus, name="model_status", native_enum=False),
         nullable=False,
         default=ModelStatus.QUEUED,
+    )
+
+    # last drift check; read-only here, it is written by the drift check task. Never loaded
+    # eagerly, GraphQL reads it through a dataloader and the relation exists for filtering
+    drift: Mapped[ResourceDrift | None] = relationship(
+        "ResourceDrift",
+        uselist=False,
+        viewonly=True,
+        lazy="raise",
+        primaryjoin="Resource.id == ResourceDrift.resource_id",
     )
 
     __table_args__ = (

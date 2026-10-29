@@ -1566,6 +1566,7 @@ class TestGetResourceActions:
                     ModelActions.EXECUTE,
                     ModelActions.DOWNLOAD,
                     ModelActions.DRYRUN,
+                    ModelActions.CHECK_DRIFT,
                 ],
             ),
             (
@@ -1719,6 +1720,7 @@ class TestGetResourceActions:
                     "has_temporary_state",
                     "dryrun_with_temp_state",
                     ModelActions.DRYRUN,
+                    ModelActions.CHECK_DRIFT,
                 ],
             ),
             (
@@ -1751,6 +1753,7 @@ class TestGetResourceActions:
                     ModelActions.APPROVE,
                     ModelActions.REJECT,
                     ModelActions.DRYRUN,
+                    ModelActions.CHECK_DRIFT,
                 ],
             ),
             (

@@ -575,9 +575,13 @@ class TaskWorker:
         await task_controller.logger.save_log()
         await self.send_task_notification(task_controller, action, "failed", reason=error_message)
         # The entity status is untouched, so tell the parent workflow or its step would wait forever.
-        # A failed dry run has already reported its result.
+        # A failed dry run has already reported its result, a drift check never belongs to a workflow.
         notify_workflow = getattr(task_controller, "_notify_workflow_callback", None)
-        if notify_workflow is not None and action not in (ModelActions.DRYRUN, ModelActions.DRYRUN_WITH_TEMP_STATE):
+        if notify_workflow is not None and action not in (
+            ModelActions.DRYRUN,
+            ModelActions.DRYRUN_WITH_TEMP_STATE,
+            ModelActions.CHECK_DRIFT,
+        ):
             await notify_workflow(step_status=ModelStatus.ERROR)
         raise TaskFailure(error_message) from e
 
@@ -598,6 +602,9 @@ class TaskWorker:
         outcome: Literal["succeeded", "failed", "timed out"],
         reason: str | None = None,
     ):
+        # a drift check is reported by the drift label and only a new drift is notified, see ResourceTask.check_drift
+        if action == ModelActions.CHECK_DRIFT:
+            return
         logger.debug(f"Preparing to send notification - entity_id: {task_controller.logger.entity_id}")
         entity_type = task_controller.logger.entity_name
         entity_name = _loaded_entity_name(task_controller)

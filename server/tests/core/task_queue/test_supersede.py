@@ -123,3 +123,16 @@ class TestToRow:
     def test_no_delay_uses_column_default(self):
         assert to_row({**task(), "delay_seconds": 0}).available_at is None
         assert to_row(task()).available_at is None
+
+
+def test_drift_check_has_its_own_supersede_key():
+    entity_id = uuid4()
+    plan = task(entity_id=entity_id, action="dryrun")
+    drift = task(entity_id=entity_id, action="check_drift")
+    assert supersede_key(plan) != supersede_key(drift)
+    assert collapse_batch([plan, drift]) == [plan, drift]
+    assert collapse_batch([drift, dict(drift)]) == [drift]
+
+
+def test_scheduled_drift_check_keeps_priority_in_queue_row():
+    assert to_row({**task(action="check_drift"), "priority": -1}).priority == -1

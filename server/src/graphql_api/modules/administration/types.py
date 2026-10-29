@@ -14,3 +14,10 @@ class FeatureFlagType:
 @strawberry.type
 class SimpleStatusType:
     status: str
+
+
+@strawberry.type
+class DriftSettingsType:
+    enabled: bool
+    interval_hours: int
+    batch_size: int

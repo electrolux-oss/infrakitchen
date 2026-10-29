@@ -1,9 +1,12 @@
 import logging
+from datetime import UTC, datetime
 import os
 import shutil
 import tempfile
+from typing import Any
 
 import aiofiles
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.integrations.model import IntegrationDTO
@@ -26,8 +29,10 @@ from core.adapters.provider_adapters import IntegrationProvider
 from core.tools.functions import ResolvedTool, resolve_tool, resolve_tool_to_run
 from core.config import InfrakitchenConfig
 from core.constants import ModelState, ModelStatus
-from core.constants.model import ModelActions
+from core.constants.model import DriftStatus, EventType, ModelActions
 from core.custom_entity_log_controller import EntityLogger
+from core.notifications.controller import NotificationEvent, publish_notification_event
+from core.notifications.text import entity_reference, notification_message, notification_title
 from core.errors import (
     CannotProceed,
     ChildrenIsNotReady,
@@ -43,10 +48,16 @@ from core.users.model import UserDTO
 from core.utils.entity_state_handler import make_done, make_in_progress
 from core.utils.event_sender import EventSender
 from ..resources.model import Resource, ResourceDTO
+from ..resource_drifts.model import ResourceDrift
+from ..resource_drifts.schema import ResourceDriftResponse
 from ..resources.schema import Outputs, ResourceResponse
 from ..tools import OtfClient, OtfProvider
 
 logger = logging.getLogger(__name__)
+
+
+class ResourceDriftEvent(ResourceResponse):
+    drift: ResourceDriftResponse
 
 
 class ResourceTask:
@@ -97,7 +108,7 @@ class ResourceTask:
             f"Starting pipeline for {self.resource_instance} {self.resource_instance.id} with action {self.action}"
         )
 
-        if self.action == ModelActions.DRYRUN:
+        if self.action in (ModelActions.DRYRUN, ModelActions.CHECK_DRIFT):
             self.logger.make_expired()
 
         if hasattr(self.logger, "add_log_header"):
@@ -116,6 +127,8 @@ class ResourceTask:
                 if not self.resource_temp_state_dto:
                     raise CannotProceed("Temporary state is not found for dry run with temp state")
                 await self.dry_run()
+            case ModelActions.CHECK_DRIFT:
+                await self.check_drift()
             case _:
                 raise CannotProceed(f"Unknown action: {self.action}")
 
@@ -545,6 +558,8 @@ class ResourceTask:
         await self.create()
         make_done(self.resource_instance)
         self.logger.info("Create task is done")
+        # the old drift result is outdated, the resource is checked again by the next scheduler run
+        await self.session.execute(delete(ResourceDrift).where(ResourceDrift.resource_id == self.resource_instance.id))
         await self.change_entity_status()
         await self.clean_workspace()
 
@@ -558,6 +573,8 @@ class ResourceTask:
 
         make_done(self.resource_instance)
         self.logger.info("Update task is done")
+        # the old drift result is outdated, the resource is checked again by the next scheduler run
+        await self.session.execute(delete(ResourceDrift).where(ResourceDrift.resource_id == self.resource_instance.id))
         await self.change_entity_status()
         await self.clean_workspace()
 
@@ -611,6 +628,92 @@ class ResourceTask:
             raise ExitWithoutSave(e) from e
 
         await self._notify_workflow_callback(step_status=ModelStatus.DONE)
+
+    async def check_drift(self):
+        """
+        Compare the real infrastructure with the state using a refresh-only plan.
+        Only the drift fields are saved, the state and status of the resource stay untouched.
+        """
+        self.logger.add_result(operation="drift_check")
+        self.logger.info("Run drift check")
+
+        drift_status = DriftStatus.ERROR
+        drift_result: dict[str, Any] | None = None
+        try:
+            await self.init_workspace()
+            await self.init_provision_tool()
+
+            assert self.workspace_path is not None, "Workspace path is not defined"
+            assert self.source_code_instance is not None, "Source Code instance is not defined"
+
+            if self.source_code_instance.source_code_language != "opentofu":
+                raise CannotProceed("Drift check is supported only for OpenTofu source code")
+            if self.tf_client is None:
+                raise ExitWithoutSave("Tofu client is not defined")
+
+            await self.tf_client.init()
+            drift_result = await self.tf_client.drift_check()
+            drift_status = DriftStatus.DRIFTED if drift_result["drifted"] else DriftStatus.IN_SYNC
+        except Exception as e:
+            # keep tracebacks out of the user-facing entity log; the worker logs the message
+            if not isinstance(e, (CloudWrongCredentials, CloudExecutionError)):
+                logger.exception(f"Drift check failed for resource {self.resource_instance.id}")
+            await self.clean_workspace()
+            await self._save_drift(DriftStatus.ERROR, {"error": str(e)})
+            raise ExitWithoutSave(e) from e
+
+        await self.clean_workspace()
+        previous = await self.session.scalar(
+            select(ResourceDrift.status).where(ResourceDrift.resource_id == self.resource_instance.id)
+        )
+        previous_status = previous or DriftStatus.UNKNOWN
+        await self._save_drift(drift_status, drift_result)
+        # notify only when the resource starts drifting, not on every scheduled check
+        if drift_status == DriftStatus.DRIFTED and previous_status != DriftStatus.DRIFTED:
+            await self._notify_drift_detected(drift_result or {})
+
+    async def _save_drift(self, drift_status: DriftStatus, drift_summary: dict[str, Any] | None) -> None:
+        drift = await self.session.scalar(
+            select(ResourceDrift).where(ResourceDrift.resource_id == self.resource_instance.id)
+        )
+        if drift is None:
+            drift = ResourceDrift(resource_id=self.resource_instance.id)
+            self.session.add(drift)
+        drift.status = drift_status
+        drift.checked_at = datetime.now(UTC)
+        drift.summary = drift_summary
+        if hasattr(self.logger, "save_log"):
+            await self.logger.save_log()
+        await self.session.commit()
+        await self.session.refresh(drift)
+
+        # the drift is nested under its own key, so events of the resource itself don't overwrite it in the UI
+        response_model = ResourceDriftEvent.model_validate(
+            {
+                **ResourceResponse.model_validate(self.resource_instance).model_dump(),
+                "drift": ResourceDriftResponse.model_validate(drift),
+            }
+        )
+        await self.event_sender.send_event(response_model, EventType.UPDATE)
+        await self.event_sender.flush()
+
+    async def _notify_drift_detected(self, drift_result: dict[str, Any]) -> None:
+        resource = self.resource_instance
+        count = len(drift_result.get("resources", []))
+        await publish_notification_event(
+            NotificationEvent(
+                event_type=EventType.DRIFT_DETECTED,
+                entity_type="resource",
+                entity_id=str(resource.id),
+                entity_name=resource.name,
+                title=notification_title("resource", "drift detected"),
+                status="warning",
+                message=notification_message(
+                    f"{entity_reference('resource', resource.name)} has drifted from its state: "
+                    f"{count} object(s) changed outside of InfraKitchen"
+                ),
+            )
+        )
 
     async def create_makefile(self):
         assert self.workspace_path is not None, "Workspace path is not defined"

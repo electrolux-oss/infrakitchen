@@ -10,6 +10,7 @@ from application.executors.model import Executor
 from application.favorites.model import Favorite
 from application.integrations.model import Integration
 from application.projects.model import Project
+from application.resource_drifts.model import ResourceDrift
 from application.resource_temp_state.model import ResourceTempState
 from application.resources.model import Resource
 from application.services.model import Service
@@ -108,6 +109,12 @@ async def _load_resource_temp_states_by_resource(keys: list[str], session: Async
         }
         for row in result.scalars()
     }
+    return [mapping.get(key) for key in keys]
+
+
+async def _load_resource_drifts_by_resource(keys: list[str], session: AsyncSession) -> list[ResourceDrift | None]:
+    stmt = select(ResourceDrift).where(ResourceDrift.resource_id.in_(keys))
+    mapping = {str(row.resource_id): row for row in (await session.execute(stmt)).scalars()}
     return [mapping.get(key) for key in keys]
 
 
@@ -349,6 +356,10 @@ def get_resource_temp_state_loader(info: Info) -> DataLoader[str, dict[str, Any]
     return info.context["loaders"]["resource_temp_state_by_resource"]
 
 
+def get_resource_drift_loader(info: Info) -> DataLoader[str, ResourceDrift | None]:
+    return info.context["loaders"]["resource_drift_by_resource"]
+
+
 def get_scheduled_action_loader(info: Info, entity_type: str) -> DataLoader[str, TaskEntity | None]:
     return info.context["loaders"][f"scheduled_actions_by_{entity_type}"]
 
@@ -381,7 +392,7 @@ def get_task_queue_status_loader(info: Info, entity_type: str) -> DataLoader[str
     return loaders[loader_key]
 
 
-def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, dict[str, Any] | None]]:
+def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, Any]]:
     return {
         "integration": DataLoader[str, dict[str, Any] | None](
             load_fn=lambda keys: _load_integrations(list(keys), session)
@@ -391,6 +402,9 @@ def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, dict[str,
         "resource": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_resources(list(keys), session)),
         "resource_temp_state_by_resource": DataLoader[str, dict[str, Any] | None](
             load_fn=lambda keys: _load_resource_temp_states_by_resource(list(keys), session)
+        ),
+        "resource_drift_by_resource": DataLoader[str, ResourceDrift | None](
+            load_fn=lambda keys: _load_resource_drifts_by_resource(list(keys), session)
         ),
         "scheduled_actions_by_resource": DataLoader[str, dict[str, Any] | None](
             load_fn=lambda keys: _load_scheduled_actions_by_entity(list(keys), session, "resource")

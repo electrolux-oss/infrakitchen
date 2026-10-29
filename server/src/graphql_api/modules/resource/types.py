@@ -11,10 +11,12 @@ from graphql_api.modules.task_queue.types import EntityQueueStatusType, resolve_
 from graphql_api.dataloaders.entity_loaders import (
     get_favorite_status_loader,
     get_scheduled_action_loader,
+    get_resource_drift_loader,
     get_resource_temp_state_loader,
 )
 from graphql_api.modules.tool.types import ToolType
 from graphql_api.modules.integration.types import IntegrationType
+from graphql_api.modules.resource_drift.types import ResourceDriftType
 from graphql_api.modules.resource_temp_state.types import ResourceTempStateType
 from graphql_api.modules.secret.types import SecretType
 from graphql_api.modules.source_code_version.types import SourceCodeVersionType
@@ -47,6 +49,7 @@ class ResourceType:
         "project_id",
         "project",
         "source_code_version_id",
+        "drift",
     ]
 
     id: uuid.UUID = strawberry.UNSET
@@ -87,6 +90,10 @@ class ResourceType:
             return None
 
         return ResourceTempStateType(**temp_state)
+
+    @strawberry.field
+    async def drift(self, info: Info) -> ResourceDriftType | None:
+        return await get_resource_drift_loader(info).load(str(self.id))  # type: ignore[return-value]
 
     @strawberry.field
     async def scheduled_actions(self, info: Info) -> list[TaskType]:

@@ -43,6 +43,7 @@ export const RESOURCE_GRAPHQL_FIELDS = {
     tool: "tool",
     creator: "creator",
     tempState: "tempState",
+    drift: "drift",
     scheduledActions: "scheduledActions",
     parents: "parents",
     children: "children",
@@ -59,6 +60,12 @@ export type ResourceGraphqlRelationKey =
   keyof typeof RESOURCE_GRAPHQL_FIELDS.relations;
 export type ResourceGraphqlRelationField =
   (typeof RESOURCE_GRAPHQL_FIELDS.relations)[ResourceGraphqlRelationKey];
+
+export const RESOURCE_DRIFT_FIELDS = `
+  status
+  checkedAt
+  summary
+`;
 
 export const RESOURCE_SHORT_FIELDS = `
   ${buildSelection(RESOURCE_GRAPHQL_FIELDS.short)}
@@ -98,6 +105,7 @@ export const RESOURCE_DETAIL_FIELDS = `
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.storage, STORAGE_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.tool, TOOL_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.tempState, RESOURCE_TEMP_STATE_FIELDS)}
+  ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.drift, RESOURCE_DRIFT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.scheduledActions, RESOURCE_SCHEDULED_ACTION_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.parents, RESOURCE_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.children, RESOURCE_SHORT_FIELDS)}

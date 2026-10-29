@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
@@ -10,13 +10,16 @@ import {
 import { CountLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { DriftSummary } from "../../dashboard/types";
 import { GoldenStateWidget } from "../../golden_state/GoldenStateWidget";
 import { DependencyConfiguration } from "../../resources/components/DependencyConfiguration";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
 import { ProjectServices } from "../../services/components/ProjectServices";
 import { UPDATE_PROJECT_MUTATION } from "../graphql/mutations";
+import { PROJECT_DRIFT_QUERY } from "../graphql/queries";
 
+import { ProjectDriftSettings } from "./ProjectDriftSettings";
 import { ProjectNotificationSubscribersTable } from "./ProjectNotificationSubscribersTable";
 import { ProjectPermissions } from "./ProjectPermissions";
 import { ProjectSettings } from "./ProjectSettings";
@@ -25,7 +28,19 @@ import { ProjectSidebar } from "./ProjectSidebar";
 export const ProjectContent = () => {
   const [subscribersRefreshKey, setSubscribersRefreshKey] = useState(0);
   const { entity, userEntityPermissions } = useEntityProvider();
-  const { globalConfig } = useConfig();
+  const { globalConfig, ikApi } = useConfig();
+  const [driftReport, setDriftReport] = useState<DriftSummary | null>(null);
+  const projectId = entity?.id;
+
+  useEffect(() => {
+    if (!projectId) return;
+    ikApi
+      .graphqlRequest<{ driftReport: DriftSummary }>(PROJECT_DRIFT_QUERY, {
+        projectId,
+      })
+      .then((result) => setDriftReport(result.driftReport))
+      .catch(() => setDriftReport(null));
+  }, [ikApi, projectId]);
 
   const fixedFilters = useMemo(
     () => ({ project_id: [entity?.id] }),
@@ -39,6 +54,7 @@ export const ProjectContent = () => {
       label: "Golden State",
       content: (
         <GoldenStateWidget
+          driftReport={driftReport}
           goldenStateReport={{
             overallScore: entity.goldenState?.score ?? 100,
             projects: entity.goldenState ? [entity.goldenState] : [],
@@ -111,6 +127,7 @@ export const ProjectContent = () => {
       content: (
         <div className="flex flex-col gap-4">
           <ProjectSettings project={entity} />
+          <ProjectDriftSettings project={entity} />
           <DangerZoneCard />
         </div>
       ),

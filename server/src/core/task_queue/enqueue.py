@@ -8,6 +8,7 @@ from sqlalchemy import ColumnElement, func, literal, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import core.pubsub as pubsub
+from core.constants.model import ModelActions
 from core.db_engine import engine
 
 from .model import TASK_QUEUE_CHANNEL, SupersededTask, TaskQueueItem, TaskQueueStatus
@@ -72,15 +73,17 @@ def task_target_sql() -> ColumnElement[str]:
     return func.coalesce(literal("step:") + step_id, literal("resource:") + resource_id, literal(""))
 
 
-def supersede_key(item: dict[str, Any]) -> tuple[str, uuid.UUID, str] | None:
+def supersede_key(item: dict[str, Any]) -> tuple[str, uuid.UUID, str, bool] | None:
     """Tasks with the same key replace each other while still queued.
 
-    Tasks without an entity (scheduler jobs) are never superseded.
+    Tasks without an entity (scheduler jobs) are never superseded. A drift check only
+    replaces other drift checks, it must not cancel a queued plan or apply, nor the other way round.
     """
     entity_id = item.get("entity_id")
     if entity_id is None:
         return None
-    return item["entity"], entity_id, task_target(item.get("payload") or {})
+    target = task_target(item.get("payload") or {})
+    return item["entity"], entity_id, target, item.get("action") == ModelActions.CHECK_DRIFT
 
 
 def collapse_batch(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -94,7 +97,7 @@ async def cancel_queued(session: AsyncSession, item: dict[str, Any]) -> list[Sup
     key = supersede_key(item)
     if key is None:
         return []
-    entity, entity_id, target = key
+    entity, entity_id, target, is_drift_check = key
     statement = (
         update(TaskQueueItem)
         .where(
@@ -102,6 +105,7 @@ async def cancel_queued(session: AsyncSession, item: dict[str, Any]) -> list[Sup
             TaskQueueItem.entity == entity,
             TaskQueueItem.entity_id == entity_id,
             task_target_sql() == target,
+            (TaskQueueItem.action == ModelActions.CHECK_DRIFT) == is_drift_check,
         )
         .values(
             status=TaskQueueStatus.CANCELLED,

@@ -14,6 +14,7 @@ import { Revision } from "../../revision/Revision";
 import { EntityTaskQueueStatus } from "../../workers/components";
 
 import { DependencyConfiguration } from "./DependencyConfiguration";
+import { ResourceDriftTab } from "./ResourceDriftTab";
 import { ResourceNotificationSubscribersTable } from "./ResourceNotificationSubscribersTable";
 import { ResourcePermissions } from "./ResourcePermissions";
 import { ResourceReviewView } from "./ResourceReviewView";
@@ -55,6 +56,11 @@ export const ResourceContent = () => {
         <TopologyTab entity_id={entity.id} entity_name={entity.entityName} />
       ),
     },
+    // Hidden until the resource was checked, which never happens while drift
+    // detection is off.
+    ...(entity.drift?.status && entity.drift.status.toLowerCase() !== "unknown"
+      ? [{ label: "Drift", content: <ResourceDriftTab /> }]
+      : []),
     {
       label: "Policies",
       content: <ResourcePermissions resource={entity} />,

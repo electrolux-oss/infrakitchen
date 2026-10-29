@@ -36,6 +36,7 @@ export const ProjectCreatePage = () => {
       workspaceId: null,
       configuration: {
         always_use_workspace: false,
+        drift_detection: false,
         allow_unapproved_metadata_edits: [],
       },
       dependencyTags: [],
@@ -197,6 +198,27 @@ export const ProjectCreatePage = () => {
                   <span className="-mt-2 mb-2 block text-caption text-fg-muted">
                     Force resources in this project to use the assigned
                     workspace.
+                  </span>
+                </div>
+              )}
+            />
+            <Controller
+              name="configuration.drift_detection"
+              control={control}
+              render={({ field }) => (
+                <div>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={field.value ?? false}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                      />
+                    }
+                    label="Drift detection"
+                  />
+                  <span className="-mt-2 mb-2 block text-caption text-fg-muted">
+                    Regularly check the resources of this project for drift,
+                    using the schedule from the settings.
                   </span>
                 </div>
               )}
