@@ -354,20 +354,3 @@ export const sameStringSet = (
     [...x].sort().join("\u0000") === [...y].sort().join("\u0000")
   );
 };
-
-/**
- * Option filter for reference pickers: keeps entities already attached (by
- * id) and otherwise only offers those the user can write to.
- */
-export const makeWriteAccessFilter =
-  (
-    permissions: Record<string, string>,
-    entityName: string,
-    existingIds: Set<string> = new Set(),
-  ) =>
-  (option: { id: string | number }) => {
-    if (existingIds.has(String(option.id))) return true;
-    if (permissions["*"] === "admin") return true;
-    const p = permissions[`${entityName}:${option.id}`];
-    return p === "write" || p === "admin";
-  };

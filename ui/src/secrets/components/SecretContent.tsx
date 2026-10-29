@@ -10,6 +10,7 @@ import {
 import { CountLabel } from "../../common/components/labels";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityExecutors } from "../../executors/components/EntityExecutors";
+import { EntityPoliciesTab } from "../../permissions/components/policies/EntityPoliciesTab";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
 
@@ -58,6 +59,15 @@ export const SecretContent = () => {
     {
       label: "Audit",
       content: <Audit entityId={entity.id} />,
+    },
+    {
+      label: "Policies",
+      content: (
+        <EntityPoliciesTab
+          entityId={entity.id}
+          entityName={entity.entityName}
+        />
+      ),
     },
     {
       label: "Revisions",

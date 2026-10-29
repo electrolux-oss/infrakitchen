@@ -28,6 +28,7 @@ from core.errors import EntityExistsError
 from core.notifications.service import SubscriptionService
 from core.permissions.schema import ActionLiteral, EntityPolicyCreate
 from core.permissions.service import PermissionService
+from core.users.accounts import primary_user_id
 from core.users.functions import get_entity_admin_user_ids, user_entity_permissions
 from core.users.model import UserDTO
 from application.types import STATE_BACKEND_INTEGRATION_PROVIDERS
@@ -56,16 +57,26 @@ async def get_resource_actions(
     temp_state_exists: bool,
     project: Project | None = None,
     has_children: bool = False,
+    created_by: str | UUID | None = None,
 ) -> list[str]:
     """
     Get all actions available for the resource.
     Permissions are calculated from both resource-level and project-level policies.
+    The creator has write access while the resource is still in PROVISION state.
     :param resource_id: ID of the resource
     :param project_id: ID of the project the resource belongs to (optional)
+    :param created_by: ID of the user who created the resource (optional)
     :return: List of actions
     """
 
     requester_permissions = await user_entity_permissions(requester, resource_id, "resource")
+
+    requester_is_creator = created_by is not None and str(created_by) in {
+        str(requester.id),
+        str(primary_user_id(requester)),
+    }
+    if state == ModelState.PROVISION and requester_is_creator:
+        requester_permissions = [*requester_permissions, "write"]
 
     # If resource has a project, also check project-level / owner permissions and merge
     if project and ("write" not in requester_permissions and "admin" not in requester_permissions):

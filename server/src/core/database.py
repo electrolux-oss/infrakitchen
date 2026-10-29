@@ -1,5 +1,6 @@
 import json
 import re
+import uuid
 from typing import Any, TypeVar
 
 from sqlalchemy import JSON, BinaryExpression, ColumnElement, and_, cast, func, literal, or_
@@ -187,6 +188,22 @@ def evaluate_sqlalchemy_pagination[*Ts](statement: Select[*Ts], range: tuple[int
         statement = statement.limit(100)  # default limit
 
     return statement
+
+
+def restrict_ids_to[*Ts](model: type, statement: Select[*Ts], ids: set[str] | None) -> Select[*Ts]:
+    """
+    Limits a statement to the given entity ids (an authorization restriction).
+    None means unrestricted; an empty set matches nothing.
+    """
+    if ids is None:
+        return statement
+    valid_ids: list[uuid.UUID] = []
+    for entity_id in ids:
+        try:
+            valid_ids.append(uuid.UUID(str(entity_id)))
+        except ValueError:
+            continue
+    return statement.where(model.id.in_(valid_ids))
 
 
 def evaluate_sqlalchemy_filters[*Ts](model: type, statement: Select[*Ts], body: dict[str, Any] | None) -> Select[*Ts]:

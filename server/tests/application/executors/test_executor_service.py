@@ -12,7 +12,7 @@ from application.executors.schema import (
 )
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions, ModelState, ModelStatus
-from core.errors import EntityNotFound, EntityWrongState
+from core.errors import AccessDenied, EntityNotFound, EntityWrongState
 from core.users.model import UserDTO
 
 EXECUTOR_ID = "abc123"
@@ -1224,3 +1224,90 @@ class TestToolSelection:
     def test_update_without_tool_keeps_it_unset(self):
         update = ExecutorUpdate(description="new")
         assert "tool_id" not in update.model_fields_set
+
+
+class TestEntityAccess:
+    @pytest.fixture
+    def creatable(self, mock_source_code_crud, mock_storage_crud, mocked_source_code, mocked_storage):
+        mock_source_code_crud.get_by_id.return_value = mocked_source_code
+        mock_storage_crud.get_by_id.return_value = mocked_storage
+
+    @pytest.fixture
+    def editable_executor(self, mocked_executor, mock_executor_crud):
+        mocked_executor.state = ModelState.PROVISIONED
+        mocked_executor.status = ModelStatus.DONE
+        mock_executor_crud.get_by_id.return_value = mocked_executor
+        mock_executor_crud.refresh = AsyncMock()
+        return mocked_executor
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("field", ["integration_ids", "secret_ids"])
+    async def test_create_denies_without_write_access(
+        self,
+        field,
+        creatable,
+        mock_executor_service,
+        mock_executor_crud,
+        mock_user_permissions,
+        monkeypatch,
+        mocked_source_code,
+        storage_response,
+        mocked_user_response,
+    ):
+        mock_user_permissions(["read"], monkeypatch, "core.users.functions.user_entity_permissions")
+        executor_create = ExecutorCreate.model_validate(
+            {
+                "name": "executor",
+                "source_code_id": mocked_source_code.id,
+                "source_code_version": "v1.0.0",
+                "storage_id": storage_response.id,
+                "storage_path": "path/to/storage",
+                field: [uuid4()],
+            }
+        )
+
+        with pytest.raises(AccessDenied, match="write access"):
+            _ = await mock_executor_service.create_executor(executor_create, mocked_user_response)
+
+        mock_executor_crud.create.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_update_denies_new_secret_without_write_access(
+        self,
+        mock_executor_service,
+        mock_executor_crud,
+        mock_user_permissions,
+        monkeypatch,
+        editable_executor,
+        mocked_user_response,
+    ):
+        mock_user_permissions(["read"], monkeypatch, "core.users.functions.user_entity_permissions")
+
+        with pytest.raises(AccessDenied, match="write access to secret"):
+            _ = await mock_executor_service.update_executor(
+                str(editable_executor.id), ExecutorUpdate(secret_ids=[uuid4()]), mocked_user_response
+            )
+
+        mock_executor_crud.update.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_update_keeps_attached_integrations_without_write_access(
+        self,
+        mock_executor_service,
+        mock_executor_crud,
+        mock_user_permissions,
+        monkeypatch,
+        editable_executor,
+        mocked_user_response,
+    ):
+        permissions = mock_user_permissions(["read"], monkeypatch, "core.users.functions.user_entity_permissions")
+        attached = [i.id for i in ExecutorResponse.model_validate(editable_executor).integration_ids]
+
+        _ = await mock_executor_service.update_executor(
+            str(editable_executor.id),
+            ExecutorUpdate(integration_ids=attached, description="new"),
+            mocked_user_response,
+        )
+
+        permissions.assert_not_awaited()
+        mock_executor_crud.update.assert_awaited_once()

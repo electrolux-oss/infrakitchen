@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Any
 from uuid import UUID
 
@@ -8,7 +9,25 @@ from core.constants.model import ModelActions
 from core.errors import AccessDenied
 
 
+from ..users.accounts import primary_user_id
 from ..users.model import UserDTO
+
+
+# actions that satisfy a requested access level (higher levels imply lower ones)
+ENTITY_ACCESS_ACTIONS: dict[str, tuple[str, ...]] = {
+    "read": ("read", "write", "admin"),
+    "write": ("write", "admin"),
+    "admin": ("admin",),
+}
+
+
+def _resolve_subject_id(user: UserDTO) -> UUID:
+    """Casbin subject id for a user (see `primary_user_id`). Rejects deactivated accounts."""
+    if user.deactivated is True:
+        raise AccessDenied("User account is deactivated")
+    if user.primary_account and user.primary_account[0].deactivated is True:
+        raise AccessDenied("Primary account is deactivated")
+    return primary_user_id(user)
 
 
 async def user_has_access_to_entity(
@@ -17,30 +36,12 @@ async def user_has_access_to_entity(
     if user is None:
         return False
 
-    user_id = user.id
-    if user.primary_account:
-        user_id = user.primary_account[0].id if user.primary_account else user.id
-    if user.deactivated is True:
-        raise AccessDenied("User account is deactivated")
-    if user.primary_account:
-        if user.primary_account[0].deactivated is True:
-            raise AccessDenied("Primary account is deactivated")
+    user_id = _resolve_subject_id(user)
 
-    casbin_enforcer = CasbinEnforcer()
-    if casbin_enforcer.enforcer is None:
-        _ = await casbin_enforcer.get_enforcer()
+    enforcer = await _get_casbin_enforcer()
 
-    if casbin_enforcer.enforcer is None:
-        raise RuntimeError("Casbin enforcer is not initialized")
-
-    act_mapping = {
-        "write": ["write", "admin"],
-        "read": ["read", "write", "admin"],
-        "admin": ["admin"],
-    }
-
-    for act in act_mapping[action]:
-        if casbin_enforcer.enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", act) is True:
+    for act in ENTITY_ACCESS_ACTIONS[action]:
+        if enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", act) is True:
             return True
 
     return False
@@ -50,30 +51,12 @@ async def user_has_access_to_api(user: UserDTO | None, api: str, action: str) ->
     if user is None:
         return False
 
-    user_id = user.id
-    if user.primary_account:
-        user_id = user.primary_account[0].id if user.primary_account else user.id
-    if user.deactivated is True:
-        raise AccessDenied("User account is deactivated")
-    if user.primary_account:
-        if user.primary_account[0].deactivated is True:
-            raise AccessDenied("Primary account is deactivated")
+    user_id = _resolve_subject_id(user)
 
-    casbin_enforcer = CasbinEnforcer()
-    if casbin_enforcer.enforcer is None:
-        _ = await casbin_enforcer.get_enforcer()
+    enforcer = await _get_casbin_enforcer()
 
-    if casbin_enforcer.enforcer is None:
-        raise RuntimeError("Casbin enforcer is not initialized")
-
-    act_mapping = {
-        "write": ["write", "admin"],
-        "read": ["read", "write", "admin"],
-        "admin": ["admin"],
-    }
-
-    for act in act_mapping[action]:
-        if casbin_enforcer.enforcer.enforce(f"user:{user_id}", f"api:{api}", act) is True:
+    for act in ENTITY_ACCESS_ACTIONS[action]:
+        if enforcer.enforce(f"user:{user_id}", f"api:{api}", act) is True:
             return True
 
     return False
@@ -108,21 +91,10 @@ async def user_apis_permissions(user: UserDTO | None) -> dict[str, str]:
     if user is None:
         raise ValueError("User must not be None and must have an ID")
 
-    user_id = user.id
-    if user.primary_account:
-        user_id = user.primary_account[0].id if user.primary_account else user.id
-    if user.deactivated is True:
-        raise AccessDenied("User account is deactivated")
-    if user.primary_account:
-        if user.primary_account[0].deactivated is True:
-            raise AccessDenied("Primary account is deactivated")
+    user_id = _resolve_subject_id(user)
 
-    casbin_enforcer = CasbinEnforcer()
-    if casbin_enforcer.enforcer is None:
-        _ = await casbin_enforcer.get_enforcer()
-    if not casbin_enforcer.enforcer:
-        raise RuntimeError("Casbin enforcer is not initialized")
-    policies = await casbin_enforcer.enforcer.get_implicit_permissions_for_user(f"user:{user_id}")
+    enforcer = await _get_casbin_enforcer()
+    policies = await enforcer.get_implicit_permissions_for_user(f"user:{user_id}")
     return filter_policies(policies)
 
 
@@ -141,45 +113,74 @@ async def user_entity_permissions(user: UserDTO | None, entity_id: str | UUID, e
     if user is None:
         raise ValueError("User must not be None and must have an ID")
 
-    user_id = user.id
-    if user.primary_account:
-        user_id = user.primary_account[0].id if user.primary_account else user.id
-    if user.deactivated is True:
-        raise AccessDenied("User account is deactivated")
-    if user.primary_account:
-        if user.primary_account[0].deactivated is True:
-            raise AccessDenied("Primary account is deactivated")
+    user_id = _resolve_subject_id(user)
 
-    casbin_enforcer = CasbinEnforcer()
-    if casbin_enforcer.enforcer is None:
-        _ = await casbin_enforcer.get_enforcer()
-    if casbin_enforcer.enforcer is None:
-        raise RuntimeError("Casbin enforcer is not initialized")
+    enforcer = await _get_casbin_enforcer()
 
-    if casbin_enforcer.enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", "admin") is True:
+    if enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", "admin") is True:
         return ["read", "write", "admin"]
 
-    if casbin_enforcer.enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", "write") is True:
+    if enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", "write") is True:
         return ["read", "write"]
 
-    if casbin_enforcer.enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", "read") is True:
+    if enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", "read") is True:
         return ["read"]
 
     return []
+
+
+async def require_entity_write_access(
+    user: UserDTO | None,
+    entity_name: str,
+    entity_ids: Sequence[str | UUID] | None,
+    exempt_ids: set[str] | None = None,
+) -> None:
+    """Raise AccessDenied unless the user has write or admin on every entity not in exempt_ids."""
+    for entity_id in entity_ids or []:
+        if exempt_ids and str(entity_id) in exempt_ids:
+            continue
+        permissions = await user_entity_permissions(user, entity_id, entity_name)
+        if "write" not in permissions and "admin" not in permissions:
+            raise AccessDenied(f"You don't have write access to {entity_name} {entity_id}")
+
+
+async def user_entity_ids(user: UserDTO | None, entity_name: str, action: str) -> set[str] | None:
+    """IDs of `entity_name` entities the user may perform `action` on.
+
+    Returns None when access is unrestricted (a wildcard policy such as `*` or
+    `integration:*`). Matching follows the Casbin model (roles + keyMatch), so the
+    result agrees with `user_entity_permissions` for every id.
+    """
+    if user is None:
+        raise ValueError("User must not be None and must have an ID")
+    if action not in ENTITY_ACCESS_ACTIONS:
+        raise ValueError(f"Unknown action: {action}")
+
+    user_id = _resolve_subject_id(user)
+    enforcer = await _get_casbin_enforcer()
+    policies = await enforcer.get_implicit_permissions_for_user(f"user:{user_id}")
+
+    allowed_actions = ENTITY_ACCESS_ACTIONS[action]
+    prefix = f"{entity_name}:"
+    ids: set[str] = set()
+    for policy in policies:
+        policy_object, policy_action = policy[1], policy[2]
+        if policy_action not in allowed_actions:
+            continue
+        if "*" in policy_object:
+            if key_match(f"{prefix}any", policy_object):
+                return None
+            continue
+        if policy_object.startswith(prefix):
+            ids.add(policy_object.removeprefix(prefix))
+    return ids
 
 
 async def user_is_super_admin(user: UserDTO | None) -> bool:
     if user is None:
         return False
 
-    user_id = user.id
-    if user.primary_account:
-        user_id = user.primary_account[0].id if user.primary_account else user.id
-    if user.deactivated is True:
-        raise AccessDenied("User account is deactivated")
-    if user.primary_account:
-        if user.primary_account[0].deactivated is True:
-            raise AccessDenied("Primary account is deactivated")
+    user_id = _resolve_subject_id(user)
 
     casbin_enforcer = CasbinEnforcer()
     if casbin_enforcer.enforcer is None:

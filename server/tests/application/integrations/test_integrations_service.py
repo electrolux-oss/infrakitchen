@@ -128,7 +128,7 @@ class TestCount:
         result = await mock_integration_service.count(filter={"key": "value"})
 
         assert result == 1
-        mock_integration_crud.count.assert_awaited_once_with(filter={"key": "value"})
+        mock_integration_crud.count.assert_awaited_once_with(filter={"key": "value"}, restrict_ids=None)
 
     @pytest.mark.asyncio
     async def test_count_error(self, mock_integration_service, mock_integration_crud):
@@ -138,7 +138,7 @@ class TestCount:
             await mock_integration_service.count(filter={"key": "value"})
 
         assert str(exc.value) == "DB error"
-        mock_integration_crud.count.assert_awaited_once_with(filter={"key": "value"})
+        mock_integration_crud.count.assert_awaited_once_with(filter={"key": "value"}, restrict_ids=None)
 
 
 class TestCreate:

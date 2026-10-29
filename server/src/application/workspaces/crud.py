@@ -10,6 +10,7 @@ from core.permissions.model import Permission
 from core.database import (
     FieldSpec,
     evaluate_sqlalchemy_filters,
+    restrict_ids_to,
     evaluate_sqlalchemy_pagination,
     evaluate_sqlalchemy_sorting,
 )
@@ -42,9 +43,11 @@ class WorkspaceCRUD:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
         fields: FieldSpec | None = None,
+        restrict_ids: set[str] | None = None,
     ) -> list[Workspace]:
         statement = select(Workspace)
         statement = evaluate_sqlalchemy_filters(Workspace, statement, filter)
+        statement = restrict_ids_to(Workspace, statement, restrict_ids)
         statement = evaluate_sqlalchemy_sorting(Workspace, statement, sort)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
@@ -52,9 +55,10 @@ class WorkspaceCRUD:
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 
-    async def count(self, filter: dict[str, Any] | None = None) -> int:
+    async def count(self, filter: dict[str, Any] | None = None, restrict_ids: set[str] | None = None) -> int:
         statement = select(func.count()).select_from(Workspace)
         statement = evaluate_sqlalchemy_filters(Workspace, statement, filter)
+        statement = restrict_ids_to(Workspace, statement, restrict_ids)
         result = await self.session.execute(statement)
         return result.scalar_one() or 0
 

@@ -13,9 +13,8 @@ import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceIn
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { makeWriteAccessFilter, sameStringSet } from "../../common/utils";
+import { sameStringSet } from "../../common/utils";
 import { HeroArrowPathRoundedSquareIcon } from "../../icons";
 import { IkEntity } from "../../types";
 import { IconButton, Tooltip, TextField } from "../../ui";
@@ -48,7 +47,6 @@ export const ResourceInfrastructureSection = ({
   resource: GqlResource;
 }) => {
   const { ikApi } = useConfig();
-  const { permissions } = usePermissionProvider();
   const { userEntityPermissions } = useEntityProvider();
   const { canEdit, saveField, withPendingChange } =
     useResourceFieldEditor(resource);
@@ -62,25 +60,20 @@ export const ResourceInfrastructureSection = ({
     {},
   );
 
-  const integrationOptionFilter = useMemo(
-    () =>
-      makeWriteAccessFilter(
-        permissions,
-        "integration",
-        new Set(resource.integrationIds?.map((i) => String(i.id))),
-      ),
-    [resource.integrationIds, permissions],
+  // Pickers list only writable entities (filtered server-side) plus the
+  // ones already attached, so existing bindings stay visible.
+  const attachedIntegrationIds = useMemo(
+    () => resource.integrationIds?.map((i) => String(i.id)) ?? [],
+    [resource.integrationIds],
   );
-
+  const attachedSecretIds = useMemo(
+    () => resource.secretIds?.map((s) => String(s.id)) ?? [],
+    [resource.secretIds],
+  );
   const workspaceId = resource.workspace?.id;
-  const workspaceOptionFilter = useMemo(
-    () =>
-      makeWriteAccessFilter(
-        permissions,
-        "workspace",
-        new Set(workspaceId ? [String(workspaceId)] : []),
-      ),
-    [workspaceId, permissions],
+  const attachedWorkspaceIds = useMemo(
+    () => (workspaceId ? [String(workspaceId)] : []),
+    [workspaceId],
   );
 
   // postgresql storages can always be used, cloud storages only with the
@@ -153,7 +146,8 @@ export const ResourceInfrastructureSection = ({
             setBuffer={setBuffer}
             entity_name="workspaces"
             showFields={["name", "workspace_provider"]}
-            optionFilter={workspaceOptionFilter}
+            access="write"
+            includeIds={attachedWorkspaceIds}
             value={value}
             onChange={onChange}
             ariaLabel="Workspace"
@@ -197,7 +191,8 @@ export const ResourceInfrastructureSection = ({
               integration_provider__not_eq: "postgresql",
             }}
             showFields={["integrationProvider", "name"]}
-            optionFilter={integrationOptionFilter}
+            access="write"
+            includeIds={attachedIntegrationIds}
             value={value}
             onChange={onChange}
             ariaLabel="Cloud Integrations"
@@ -236,6 +231,8 @@ export const ResourceInfrastructureSection = ({
             buffer={buffer}
             setBuffer={setBuffer}
             entity_name="secrets"
+            access="write"
+            includeIds={attachedSecretIds}
             value={value}
             onChange={onChange}
             ariaLabel="Secrets"
