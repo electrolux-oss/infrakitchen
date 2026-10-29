@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-from prometheus_async.aio import web
 import uvicorn
 import base64
 from alembic.command import upgrade
@@ -14,7 +13,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from application.logger import change_logger, get_uvicorn_log_config
 from build_info import write_build_info
-from core.config import setup_service_environment
+from core.config import Settings, setup_service_environment
+from core.telemetry import init_metrics
 from core.utils.event_sender import EventSender
 from scheduler import schedule_jobs, schedule_polling_job, schedule_task_queue_cleanup_job, start_reload_consumer
 from worker import run_task_worker
@@ -70,7 +70,7 @@ def dev_worker_count() -> int:
 
 async def start_task_workers(count: int):
     """Runs ``count`` TaskWorkers indefinitely, like separate worker nodes sharing the queue."""
-    await web.start_http_server(port=8001)
+    init_metrics(service_name=f"{Settings().OTEL_SERVICE_NAME}-worker")
     # Workers register by name + host, so each one needs its own name to get its own worker row
     names = ["task_worker"] if count == 1 else [f"task_worker_{i}" for i in range(1, count + 1)]
     logger.info(f"Starting {count} task worker(s): {', '.join(names)}")

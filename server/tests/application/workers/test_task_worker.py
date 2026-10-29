@@ -186,6 +186,27 @@ class TestProcessTask:
             item.id, task_worker.worker_id, "CannotProceed: Action is not defined in task"
         )
 
+    async def test_records_success_metric(self, task_worker, mock_session, mock_task_controller, monkeypatch):
+        mock_counter = Mock()
+        monkeypatch.setattr(tw_mod, "task_executions_counter", mock_counter)
+        monkeypatch.setattr(task_worker, "build_task_controller", AsyncMock(return_value=mock_task_controller))
+        monkeypatch.setattr(task_worker, "_send_success_notification", AsyncMock())
+
+        await task_worker.execute_task(mock_session, make_item(entity="source_code"))
+
+        mock_counter.add.assert_called_once_with(1, {"job_type": "source_code", "status": "success"})
+
+    async def test_records_error_metric(self, task_worker, mock_session, mock_task_controller, monkeypatch):
+        mock_counter = Mock()
+        monkeypatch.setattr(tw_mod, "task_executions_counter", mock_counter)
+        mock_task_controller.start_pipeline = AsyncMock(side_effect=RuntimeError("boom"))
+        monkeypatch.setattr(task_worker, "build_task_controller", AsyncMock(return_value=mock_task_controller))
+        monkeypatch.setattr(task_worker, "handle_exception", AsyncMock())
+
+        await task_worker.execute_task(mock_session, make_item(entity="source_code"))
+
+        mock_counter.add.assert_called_once_with(1, {"job_type": "source_code", "status": "error"})
+
 
 class TestRunOnce:
     async def test_returns_false_when_queue_is_empty(self, task_worker):

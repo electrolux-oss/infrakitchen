@@ -10,7 +10,7 @@ It enables users with super admin access to define and manage jobs using cron-ba
 **Job Management API**
 
 - Create Job: `POST /scheduler/jobs`
-*(Requires super admin access)*
+  _(Requires super admin access)_
 - List Jobs: `GET /scheduler/jobs`
 
 Each scheduler job includes the following fields:
@@ -26,6 +26,26 @@ Each scheduler job includes the following fields:
 ```
 
 Jobs are stored in the `scheduler_jobs` table in the database.
+
+#### OpenTelemetry Metrics
+
+InfraKitchen emits metrics through OpenTelemetry (OTLP HTTP/protobuf).
+
+Configure metrics with these environment variables:
+
+- `OTEL_METRICS_ENABLED` (`true`/`false`)
+- `FASTAPI_OTEL_AUTO_CONFIGURE` (`true`/`false`, default `false`): let FastAPI export the API's metrics, request traces
+  (`/v1/traces`) and unhandled-exception/validation logs (`/v1/logs`). Workers always use InfraKitchen's own exporter.
+  Sampling follows `OTEL_TRACES_SAMPLER`/`OTEL_TRACES_SAMPLER_ARG` (default: every request).
+- `OTEL_SERVICE_NAME` (base service name, API/worker suffixes are appended)
+- `OTEL_EXPORTER_OTLP_ENDPOINT` (default: `http://localhost:4318`). Use the base URL: `/v1/metrics` (and, with FastAPI
+  auto-configuration, `/v1/traces` and `/v1/logs`) is appended
+- `OTEL_EXPORTER_OTLP_PROTOCOL` (only `http/protobuf` is supported; any other value fails at startup. Use the OTLP/HTTP port `4318`, e.g. `http://$(HOST_IP):4318`, not gRPC `4317`)
+- `OTEL_RESOURCE_ATTRIBUTES` (optional, e.g. `deployment.environment=prod,service.version=1.2.3`; `service.instance.id` defaults to `<hostname>-<pid>`)
+
+To inspect metrics locally, set `OTEL_METRICS_ENABLED=true` and run a collector with `make otel-collector` (from the repository root). It uses
+`observability/otel-local.yaml`, listens for OTLP on `4317`/`4318`, and re-exposes everything as a Prometheus
+scrape endpoint at <http://localhost:9464/metrics>.
 
 **How It Works**
 
