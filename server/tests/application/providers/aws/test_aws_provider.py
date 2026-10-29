@@ -20,9 +20,6 @@ async def get_account_session(self):
     )
 
 
-AwsAuthentication.get_account_session = get_account_session
-
-
 class TestIsValid:
     @pytest.mark.asyncio
     async def test_is_valid_success(self, monkeypatch):
@@ -40,6 +37,7 @@ class TestIsValid:
         mock_client_cm.__aenter__.return_value = mock_sts
 
         monkeypatch.setattr(AwsSts, "client", property(lambda self: mock_client_cm))
+        monkeypatch.setattr(AwsAuthentication, "get_account_session", get_account_session)
 
         provider = AwsProvider(configuration=configuration)
         await provider.authenticate()
@@ -69,6 +67,7 @@ class TestIsValid:
         mock_client_cm.__aenter__.return_value = mock_sts
 
         monkeypatch.setattr(AwsSts, "client", property(lambda self: mock_client_cm))
+        monkeypatch.setattr(AwsAuthentication, "get_account_session", get_account_session)
 
         provider = AwsProvider(configuration=configuration)
         await provider.authenticate()
@@ -81,3 +80,48 @@ class TestIsValid:
                 "when calling the GetCallerIdentity operation: Access denied"
             )
             assert str(e.value) == expected_error_message
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("region", "partition", "expected_role_arn"),
+        [
+            ("us-east-1", None, "arn:aws:iam::0123456789012:role/test_role"),
+            ("cn-north-1", "aws-cn", "arn:aws-cn:iam::0123456789012:role/test_role"),
+        ],
+    )
+    async def test_assume_role_uses_configured_partition(self, monkeypatch, region, partition, expected_role_arn):
+        configuration = {
+            "aws_access_key_id": "test_key",
+            "aws_secret_access_key": "test_secret",
+            "aws_account": "0123456789012",
+            "aws_assumed_role_name": "test_role",
+            "aws_default_region": region,
+        }
+
+        mock_sts = Mock()
+        mock_sts.assume_role = AsyncMock(
+            return_value={
+                "Credentials": {
+                    "AccessKeyId": "assumed_key",
+                    "SecretAccessKey": "assumed_secret",
+                    "SessionToken": "assumed_token",
+                }
+            }
+        )
+        mock_client_cm = AsyncMock()
+        mock_client_cm.__aenter__.return_value = mock_sts
+        mock_session = Mock()
+        mock_session.create_client.return_value = mock_client_cm
+        monkeypatch.setattr("application.providers.aws.aws_provider.get_session", lambda: mock_session)
+
+        environment_variables = {"AWS_PARTITION": partition} if partition else {}
+        provider = AwsProvider(configuration=configuration, environment_variables=environment_variables)
+        await provider.get_account_session()
+
+        mock_session.create_client.assert_called_once_with(
+            "sts",
+            aws_access_key_id="test_key",
+            aws_secret_access_key="test_secret",
+        )
+        mock_sts.assume_role.assert_awaited_once()
+        assert mock_sts.assume_role.call_args.kwargs["RoleArn"] == expected_role_arn

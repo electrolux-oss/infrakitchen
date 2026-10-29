@@ -80,9 +80,10 @@ class AwsAuthentication:
                 if self.aws_secret_access_key
                 else None,
             ) as aio_sts_client:
+                partition = self.environment_variables.get("AWS_PARTITION", "aws")
                 assumed_role_object: dict[str, Any] = await aio_sts_client.assume_role(
                     # pyright: ignore[reportGeneralTypeIssues]
-                    RoleArn=f"arn:aws:iam::{self.aws_account}:role/{self.aws_assumed_role_name}",
+                    RoleArn=f"arn:{partition}:iam::{self.aws_account}:role/{self.aws_assumed_role_name}",
                     RoleSessionName="InfraKitchenSession",
                     DurationSeconds=self.aws_session_duration,
                 )
