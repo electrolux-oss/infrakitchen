@@ -354,6 +354,23 @@ export const renderFieldsForProvider = (
             )}
           />
           <Controller
+            name="configuration.aws_partition"
+            control={control}
+            defaultValue=""
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="AWS Partition"
+                placeholder="aws"
+                fullWidth
+                margin="normal"
+                error={!!(errors.configuration as FieldErrors)?.aws_partition}
+                helperText="Optional: partition used to build the assumed role ARN, e.g. aws-cn for AWS China. Defaults to aws if empty"
+                readOnly={readonly}
+              />
+            )}
+          />
+          <Controller
             name="configuration.aws_session_duration"
             control={control}
             defaultValue="3600"

@@ -83,20 +83,24 @@ class TestIsValid:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        ("region", "partition", "expected_role_arn"),
+        ("partition", "expected_role_arn"),
         [
-            ("us-east-1", None, "arn:aws:iam::0123456789012:role/test_role"),
-            ("cn-north-1", "aws-cn", "arn:aws-cn:iam::0123456789012:role/test_role"),
+            ("unset", "arn:aws:iam::0123456789012:role/test_role"),
+            (None, "arn:aws:iam::0123456789012:role/test_role"),
+            ("", "arn:aws:iam::0123456789012:role/test_role"),
+            ("aws-cn", "arn:aws-cn:iam::0123456789012:role/test_role"),
+            ("aws-us-gov", "arn:aws-us-gov:iam::0123456789012:role/test_role"),
         ],
     )
-    async def test_assume_role_uses_configured_partition(self, monkeypatch, region, partition, expected_role_arn):
+    async def test_assume_role_uses_configured_partition(self, monkeypatch, partition, expected_role_arn):
         configuration = {
             "aws_access_key_id": "test_key",
             "aws_secret_access_key": "test_secret",
             "aws_account": "0123456789012",
             "aws_assumed_role_name": "test_role",
-            "aws_default_region": region,
         }
+        if partition != "unset":
+            configuration["aws_partition"] = partition
 
         mock_sts = Mock()
         mock_sts.assume_role = AsyncMock(
@@ -114,8 +118,7 @@ class TestIsValid:
         mock_session.create_client.return_value = mock_client_cm
         monkeypatch.setattr("application.providers.aws.aws_provider.get_session", lambda: mock_session)
 
-        environment_variables = {"AWS_PARTITION": partition} if partition else {}
-        provider = AwsProvider(configuration=configuration, environment_variables=environment_variables)
+        provider = AwsProvider(configuration=configuration)
         await provider.get_account_session()
 
         mock_session.create_client.assert_called_once_with(
