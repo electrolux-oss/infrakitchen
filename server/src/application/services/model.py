@@ -5,6 +5,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from application.projects.model import Project
+from application.resources.model import Resource
+from application.source_codes.model import SourceCode
 from core.base_models import Base, BaseRevision
 from sqlalchemy import UUID, Column, DateTime, ForeignKey, Index, JSON, Table, func
 
@@ -24,8 +26,8 @@ class Service(BaseRevision):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(index=True)
-    display_name: Mapped[str | None] = mapped_column(nullable=True)
     description: Mapped[str | None] = mapped_column()
+    version: Mapped[str | None] = mapped_column(nullable=True)
 
     project_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -34,7 +36,21 @@ class Service(BaseRevision):
     )
     project: Mapped["Project"] = relationship("Project", lazy="joined")
 
-    repository_url: Mapped[str | None] = mapped_column(nullable=True)
+    source_code_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("source_codes.id", name="fk_service_source_code_id"),
+        nullable=True,
+    )
+    source_code: Mapped["SourceCode | None"] = relationship("SourceCode", lazy="joined")
+
+    image_resource_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("resources.id", name="fk_service_image_resource_id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    image_resource: Mapped["Resource | None"] = relationship("Resource", lazy="joined")
+    dockerfile_path: Mapped[str] = mapped_column(default="Dockerfile", server_default="Dockerfile")
+    build_context: Mapped[str] = mapped_column(default=".", server_default=".")
 
     labels: Mapped[list[str]] = mapped_column(JSON, default=list)
 
@@ -58,10 +74,13 @@ class ServiceDTO(BaseModel):
     created_by: UserDTO | uuid.UUID = Field()
 
     name: str = Field(...)
-    display_name: str | None = Field(default=None)
     description: str = Field(default="")
+    version: str | None = Field(default=None)
     project_id: uuid.UUID = Field(...)
-    repository_url: str | None = Field(default=None)
+    source_code_id: uuid.UUID | None = Field(default=None)
+    image_resource_id: uuid.UUID | None = Field(default=None)
+    dockerfile_path: str = Field(default="Dockerfile")
+    build_context: str = Field(default=".")
     owners: list[UserDTO] = Field(default_factory=list)
     labels: list[str] = Field(default_factory=list)
 

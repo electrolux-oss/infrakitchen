@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 from application.integrations.model import Integration, IntegrationDTO
-from application.types import CodeLanguageType, GitProviderType
+from application.types import CodeLanguageType, GitProviderType, SourceCodeRepositoryType
 from core.base_models import Base, BaseRevision
 from sqlalchemy import UUID, DateTime, ForeignKey, Index, JSON, Text, func
 from core.constants.model import ModelStatus
@@ -21,6 +21,7 @@ class SourceCode(BaseRevision):
     source_code_url: Mapped[str] = mapped_column(unique=True, nullable=False, index=True)
     source_code_provider: Mapped[str] = mapped_column()
     source_code_language: Mapped[str] = mapped_column()
+    repository_type: Mapped[str] = mapped_column(default="module_library", server_default="module_library")
     integration_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("integrations.id"), nullable=True)
     integration: Mapped[Integration] = relationship("Integration", lazy="joined")
     git_tags: Mapped[list[str]] = mapped_column(JSON, default=list)
@@ -95,6 +96,7 @@ class SourceCodeDTO(BaseModel):
     )
     source_code_provider: GitProviderType = Field(..., frozen=True)
     source_code_language: CodeLanguageType = Field(..., frozen=True)
+    repository_type: SourceCodeRepositoryType = Field(default="module_library")
     integration_id: uuid.UUID | str | None = Field(default=None, frozen=True)
     integration: IntegrationDTO | None = Field(default=None)
     git_tags: list[str] = Field(default_factory=list)

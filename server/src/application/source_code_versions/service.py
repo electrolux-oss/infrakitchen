@@ -10,6 +10,7 @@ from application.source_code_versions.model import (
     SourceConfigTemplateReference,
     SourceOutputConfig,
 )
+from application.source_codes.functions import ensure_repository_type
 from application.source_codes.service import SourceCodeService
 from application.templates.schema import TemplateResponse
 from application.templates.service import TemplateService
@@ -164,6 +165,8 @@ class SourceCodeVersionService:
 
         if source_code.status == ModelStatus.DISABLED:
             raise EntityWrongState("SourceCode is not enabled")
+
+        ensure_repository_type(source_code.repository_type, "source_code_version")
 
         # Validate that branch or tag exists in source code
         if source_code_version.source_code_branch:

@@ -6,6 +6,8 @@ from core.users.functions import user_api_permission, user_entity_permissions
 from core.users.functions import user_is_super_admin
 from core.users.model import UserDTO
 
+ECR_CLOUD_RESOURCE_TYPE = "aws_ecr"
+
 
 def _requester_id(requester: UserDTO) -> str:
     if requester.primary_account:
@@ -50,7 +52,7 @@ async def get_service_actions(
     if not is_service_admin:
         return []
 
-    return [ModelActions.EDIT, ModelActions.DELETE]
+    return [ModelActions.EDIT, ModelActions.DELETE, ModelActions.BUILD]
 
 
 async def requester_is_service_owner(requester: UserDTO, service: Service | None) -> bool:

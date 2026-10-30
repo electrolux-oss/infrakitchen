@@ -77,6 +77,7 @@ def mocked_source_code(mocked_user):
         labels=["label1", "label2"],
         source_code_provider="github",
         source_code_language="opentofu",
+        repository_type="module_library",
         git_tags=["v1.0", "v1.1"],
         git_branches=["main", "dev"],
         git_folders_map=[

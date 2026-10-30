@@ -57,7 +57,7 @@ class AwsResourceManager(CloudResourceAdapter):
             raise ValueError(f"No valid describe function found for resource schema: {resource_schema}")
         if not resource_data:
             raise ValueError(f"Resource {name} not found in region {region}")
-        return resource_data
+        return json.loads(json.dumps(resource_data, default=str))
 
     @staticmethod
     async def list_resources(

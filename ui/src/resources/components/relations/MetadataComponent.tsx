@@ -5,7 +5,7 @@ import CodeMirror from "@uiw/react-codemirror";
 
 import { useConfig, GradientCircularProgress } from "../../../common";
 import { notifyError } from "../../../common/hooks/useNotification";
-import { Alert } from "../../../ui";
+import { Alert, useColorScheme } from "../../../ui";
 import { GqlResource } from "../../graphql";
 import { RESOURCE_METADATA_QUERY } from "../../graphql";
 
@@ -17,6 +17,7 @@ export function MetadataComponent(props: ResourceMetadataProps) {
   const { entity } = props;
 
   const { ikApi } = useConfig();
+  const { resolvedMode } = useColorScheme();
   const [metadata, setMetadata] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -70,6 +71,7 @@ export function MetadataComponent(props: ResourceMetadataProps) {
       <CodeMirror
         value={JSON.stringify(metadata, null, 2)}
         extensions={[json()]}
+        theme={resolvedMode}
         readOnly={true}
         style={{
           border: "1px solid var(--color-divider)",

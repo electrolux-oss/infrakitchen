@@ -176,7 +176,7 @@ export const ServicesPage = () => {
                 <EntityCard
                   key={service.id}
                   entity_name={entityName}
-                  name={service.displayName || service.name}
+                  name={service.name}
                   description={service.description ?? ""}
                   detailsUrl={`${linkPrefix}services/${service.id}`}
                   labels={service.labels || []}

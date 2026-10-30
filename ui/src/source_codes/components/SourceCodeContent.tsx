@@ -11,10 +11,9 @@ import { Revision } from "../../revision/Revision";
 import { SourceCodeRefSection } from "../../source_code_versions/components/SourceCodeRefSection";
 import { RefType } from "../../source_code_versions/types";
 import { EntityTaskQueueStatus } from "../../workers/components";
-import { GqlSourceCodeTag } from "../graphql";
 import { RefFolders } from "../types";
 
-import { SourceCodeCommits } from "./SourceCodeCommits";
+import { getCommitTags, SourceCodeCommits } from "./SourceCodeCommits";
 import { SourceCodeSidebar } from "./SourceCodeSidebar";
 
 export const SourceCodeContent = () => {
@@ -23,13 +22,6 @@ export const SourceCodeContent = () => {
 
   const getFolders = (ref: string): string[] =>
     entity.gitFoldersMap.find((r: RefFolders) => r.ref === ref)?.folders ?? [];
-
-  const commitTags: GqlSourceCodeTag[] = (entity.gitTags ?? []).flatMap(
-    (name: string) => {
-      const sha = entity.gitTagShas?.[name];
-      return sha ? [{ name, sha }] : [];
-    },
-  );
 
   const tabs: TabDefinition[] = [
     {
@@ -40,7 +32,8 @@ export const SourceCodeContent = () => {
           sourceCodeId={entity.id}
           branch={entity.defaultBranch}
           total={entity.commitCount}
-          tags={commitTags}
+          tags={getCommitTags(entity.gitTags, entity.gitTagShas)}
+          lastSyncedAt={entity.updatedAt}
         />
       ),
     },

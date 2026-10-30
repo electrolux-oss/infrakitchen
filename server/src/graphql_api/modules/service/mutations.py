@@ -7,6 +7,8 @@ from strawberry.experimental import pydantic as strawberry_pydantic
 
 from application.services.dependencies import get_service_service
 from application.services.schema import ServiceCreate, ServiceUpdate
+from application.source_codes.dependencies import get_source_code_service
+from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
 from core.errors import AccessDenied
 from core.users.functions import user_has_access_to_entity, user_is_super_admin
@@ -15,15 +17,17 @@ from graphql_api.modules.notification.types import SubscriptionType
 from graphql_api.modules.permission.mutations import EntityPolicyCreateInput
 from graphql_api.modules.permission.types import PermissionType
 from graphql_api.modules.service.types import ServiceType
+from graphql_api.modules.source_code.types import SourceCodeType
 
 
 @strawberry_pydantic.input(model=ServiceCreate, all_fields=True)
 class ServiceCreateInput:
     name: str = strawberry.UNSET
-    display_name: str | None = None
     description: str = ""
     project_id: uuid.UUID = strawberry.UNSET
+    source_code_id: str | None = None
     repository_url: str | None = None
+    repository_integration_id: uuid.UUID | None = None
     labels: list[str] = strawberry.field(default_factory=list)
     owners: list[uuid.UUID] = strawberry.field(default_factory=list)
 
@@ -31,10 +35,14 @@ class ServiceCreateInput:
 @strawberry_pydantic.input(model=ServiceUpdate, all_fields=False)
 class ServiceUpdateInput:
     name: str | None = None
-    display_name: str | None = None
     description: str | None = None
+    version: str | None = None
     project_id: uuid.UUID | None = None
-    repository_url: str | None = None
+    # An empty string clears version, source_code_id and image_resource_id
+    source_code_id: str | None = None
+    image_resource_id: str | None = None
+    dockerfile_path: str | None = None
+    build_context: str | None = None
     labels: list[str] | None = None
     owners: list[uuid.UUID] | None = None
 
@@ -71,6 +79,25 @@ class ServiceMutation:
             raise AccessDenied(f"Access denied for action {ModelActions.EDIT.value}")
 
         return await service.update_service(service_id=str(id), service=input.to_pydantic(), requester=requester)
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def sync_service_source_code(self, info: Info, id: uuid.UUID) -> SourceCodeType:
+        session = info.context["session"]
+        requester = info.context["request"].state.user
+        service = get_service_service(session)
+
+        if ModelActions.EDIT not in await service.get_actions(service_id=id, requester=requester):
+            raise AccessDenied(f"Access denied for action {ModelActions.SYNC.value}")
+
+        existing = await service.query_by_id(id, fields={"sourceCodeId": None})
+        if not existing or not existing.source_code_id:
+            raise ValueError("The service has no code repository to sync")
+
+        return await get_source_code_service(session=session).patch_action(
+            source_code_id=str(existing.source_code_id),
+            body=PatchBodyModel(action=ModelActions.SYNC),
+            requester=requester,
+        )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def delete_service(self, info: Info, id: uuid.UUID) -> bool:

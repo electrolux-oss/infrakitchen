@@ -18,6 +18,7 @@ type GqlSourceCodeShortFieldTypes = {
   sourceCodeUrl: string;
   sourceCodeProvider: string;
   sourceCodeLanguage: string;
+  repositoryType: string;
   status: string;
   entityName: string;
 };
@@ -34,6 +35,7 @@ type GqlSourceCodeDetailFieldTypes = {
   sourceCodeUrl: string;
   sourceCodeProvider: string;
   sourceCodeLanguage: string;
+  repositoryType: string;
   integrationId: string | null;
   gitTags: string[] | null;
   gitTagMessages: Record<string, string> | null;

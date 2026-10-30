@@ -14,7 +14,7 @@ from core.tasks.service import TaskEntityService
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import has_field_changes, model_db_dump
 from .crud import CommitFilter, SourceCodeCRUD
-from .functions import get_source_code_actions
+from .functions import ALLOWED_REPOSITORY_TYPES, ensure_repository_type, get_source_code_actions
 from .repository import commit_web_url
 from .schema import SourceCodeCommitResponse, SourceCodeCreate, SourceCodeResponse, SourceCodeUpdate
 from core.users.model import UserDTO
@@ -152,6 +152,9 @@ class SourceCodeService:
             raise ValueError("No changes detected; the source code is already up to date.")
         self.revision_handler.original_entity_instance_dump = to_dict(existing_source_code)
 
+        if source_code.repository_type and source_code.repository_type != existing_source_code.repository_type:
+            await self._ensure_dependencies_accept_type(existing_source_code, source_code.repository_type)
+
         if check_critical_fields_changed(existing_source_code, source_code):
             existing_source_code.status = ModelStatus.READY
 
@@ -165,6 +168,24 @@ class SourceCodeService:
         await self.crud.refresh(existing_source_code)
         await self.event_sender.send_event(SourceCodeResponse.model_validate(existing_source_code), ModelActions.UPDATE)
         return existing_source_code
+
+    async def _ensure_dependencies_accept_type(self, source_code: SourceCode, repository_type: str) -> None:
+        dependencies = await self.crud.get_dependencies(source_code)
+        for dependency_type in {dependency.type for dependency in dependencies}:
+            if dependency_type not in ALLOWED_REPOSITORY_TYPES:
+                continue
+            try:
+                ensure_repository_type(repository_type, dependency_type)
+            except ValueError:
+                raise DependencyError(
+                    f"Cannot change the repository type to {repository_type} "
+                    f"while it is used by a {dependency_type.replace('_', ' ')}",
+                    metadata=[
+                        {"id": dependency.id, "name": dependency.name, "entityName": dependency.type}
+                        for dependency in dependencies
+                        if dependency.type == dependency_type
+                    ],
+                ) from None
 
     async def patch_action(self, source_code_id, body: PatchBodyModel, requester: UserDTO) -> SourceCode:
         """

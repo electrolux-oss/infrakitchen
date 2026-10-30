@@ -30,6 +30,7 @@ def _source_code(**kwargs) -> SourceCode:
         "source_code_url": "https://github.com/org/repo",
         "source_code_provider": "github",
         "source_code_language": "opentofu",
+        "repository_type": "module_library",
         "integration_id": None,
         "integration": None,
         "status": ModelStatus.READY,

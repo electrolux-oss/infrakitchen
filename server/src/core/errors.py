@@ -90,3 +90,11 @@ class EntityWrongState(Exception):
 
 class ExitWithoutSave(Exception):
     pass
+
+
+class PollLater(Exception):
+    """The worker requeues the task to run again after ``delay`` seconds."""
+
+    def __init__(self, message: str, delay: float):
+        super().__init__(message)
+        self.delay: float = delay

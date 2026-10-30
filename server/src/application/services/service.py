@@ -4,9 +4,18 @@ from uuid import UUID
 
 from sqlalchemy import select
 
+from application.integrations.model import Integration
 from application.projects.model import Project
+from application.resources.model import Resource
+from application.templates.model import Template
+from application.source_codes.functions import ensure_repository_type
+from application.source_codes.model import SourceCode
+from application.source_codes.repository import is_ssh_url, repository_key, repository_provider
+from application.source_codes.schema import SourceCodeCreate
+from application.source_codes.service import SourceCodeService
 from core.audit_logs.handler import AuditLogHandler
-from core.constants.model import ModelActions
+from core.base_models import PatchBodyModel
+from core.constants.model import ModelActions, ModelStatus
 from core.database import FieldSpec, to_dict
 from core.errors import EntityNotFound
 from core.notifications.model import Subscription
@@ -17,7 +26,7 @@ from core.permissions.service import PermissionService
 from core.revisions.handler import RevisionHandler
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import has_field_changes, model_db_dump, to_json_serializable
-from .functions import get_service_actions
+from .functions import ECR_CLOUD_RESOURCE_TYPE, get_service_actions
 from .crud import ServiceCRUD
 from .model import Service
 from .schema import ServiceCreate, ServiceResponse, ServiceUpdate
@@ -35,8 +44,10 @@ class ServiceService:
         revision_handler: RevisionHandler,
         event_sender: EventSender,
         audit_log_handler: AuditLogHandler,
+        source_code_service: SourceCodeService,
     ):
         self.crud: ServiceCRUD = crud
+        self.source_code_service: SourceCodeService = source_code_service
         self.permission_service: PermissionService = permission_service
         self.subscription_service: SubscriptionService = subscription_service
         self.revision_handler: RevisionHandler = revision_handler
@@ -75,13 +86,133 @@ class ServiceService:
         if project is None:
             raise EntityNotFound(f"Project {project_id} not found")
 
+    async def _assert_application_source_code(self, source_code_id: str | UUID) -> None:
+        repository_type = (
+            await self.crud.session.execute(select(SourceCode.repository_type).where(SourceCode.id == source_code_id))
+        ).scalar_one_or_none()
+        if repository_type is None:
+            raise EntityNotFound(f"Source code {source_code_id} not found")
+        ensure_repository_type(repository_type, "service")
+
+    async def _assert_ecr_resource(self, resource_id: str | UUID) -> None:
+        cloud_resource_types = (
+            await self.crud.session.execute(
+                select(Template.cloud_resource_types)
+                .join(Resource, Resource.template_id == Template.id)
+                .where(Resource.id == resource_id)
+            )
+        ).scalar_one_or_none()
+        if cloud_resource_types is None:
+            raise EntityNotFound(f"Resource {resource_id} not found")
+        if ECR_CLOUD_RESOURCE_TYPE not in cloud_resource_types:
+            raise ValueError(
+                f"The image repository must be a resource whose template has the {ECR_CLOUD_RESOURCE_TYPE} "
+                "cloud resource type"
+            )
+
+    async def _pick_git_integration(self, repository_url: str, integration_id: UUID | None) -> UUID | None:
+        if integration_id:
+            integration_type = (
+                await self.crud.session.execute(
+                    select(Integration.integration_type).where(Integration.id == integration_id)
+                )
+            ).scalar_one_or_none()
+            if integration_type is None:
+                raise EntityNotFound(f"Integration {integration_id} not found")
+            if integration_type != "git":
+                raise ValueError("The repository integration must be a git integration")
+            return integration_id
+
+        provider = repository_provider(repository_url)
+        if provider == "git_public":
+            return None
+        ssh = is_ssh_url(repository_url)
+        integration_provider = f"{provider}_ssh" if ssh else provider
+        rows = (
+            await self.crud.session.execute(
+                select(Integration.id, Integration.name).where(
+                    Integration.integration_type == "git",
+                    Integration.integration_provider == integration_provider,
+                )
+            )
+        ).all()
+        if len(rows) == 1:
+            return rows[0].id
+        if len(rows) > 1:
+            names = ", ".join(sorted(row.name for row in rows))
+            raise ValueError(
+                f"Several {integration_provider} integrations could import the repository ({names}), choose one"
+            )
+        if ssh:
+            raise ValueError(
+                f"No {integration_provider} integration to clone the repository over SSH; add one or use its HTTPS URL"
+            )
+        return None
+
+    async def _link_repository_by_url(
+        self, repository_url: str, integration_id: UUID | None, service_name: str, requester: UserDTO
+    ) -> UUID:
+        key = repository_key(repository_url)
+        repo_name = (key or "").rsplit("/", 1)[-1]
+        candidates = (
+            (
+                await self.crud.session.execute(
+                    select(SourceCode).where(SourceCode.source_code_url.ilike(f"%{repo_name}%"))
+                )
+            )
+            .scalars()
+            .all()
+        )
+        source_code = next((c for c in candidates if repository_key(c.source_code_url) == key), None)
+
+        if source_code is not None:
+            if source_code.repository_type != "application":
+                raise ValueError(
+                    f"{source_code.source_code_url} is already imported as a {source_code.repository_type} "
+                    "repository; change its type to Application to link it to a service"
+                )
+            if not source_code.default_branch and source_code.status in (
+                ModelStatus.READY,
+                ModelStatus.ERROR,
+                ModelStatus.DONE,
+            ):
+                await self.source_code_service.patch_action(
+                    source_code.id, PatchBodyModel(action=ModelActions.SYNC), requester
+                )
+            return source_code.id
+
+        created = await self.source_code_service.create_source_code(
+            SourceCodeCreate(
+                description=f"Code of service {service_name}",
+                source_code_url=repository_url,
+                source_code_provider=repository_provider(repository_url),
+                source_code_language="opentofu",
+                repository_type="application",
+                integration_id=await self._pick_git_integration(repository_url, integration_id),
+            ),
+            requester=requester,
+        )
+        await self.source_code_service.patch_action(created.id, PatchBodyModel(action=ModelActions.SYNC), requester)
+        return created.id
+
     async def create_service(self, service: ServiceCreate, requester: UserDTO) -> Service:
         await self._assert_project_exists(service.project_id)
+        if service.source_code_id and service.repository_url:
+            raise ValueError("Give either a code repository or a repository URL, not both")
 
-        body = to_json_serializable(service.model_dump(exclude_unset=True))
+        body = to_json_serializable(
+            service.model_dump(exclude_unset=True, exclude={"repository_url", "repository_integration_id"})
+        )
         body["created_by"] = requester.id
-        if body.get("repository_url") == "":
-            body["repository_url"] = None
+        if body.get("source_code_id") == "":
+            body["source_code_id"] = None
+        if body.get("source_code_id"):
+            await self._assert_application_source_code(body["source_code_id"])
+        if service.repository_url:
+            source_code_id = await self._link_repository_by_url(
+                service.repository_url, service.repository_integration_id, service.name, requester
+            )
+            body["source_code_id"] = str(source_code_id)
 
         new_service = await self.crud.create(body)
         result = await self.crud.get_by_id(new_service.id)
@@ -104,14 +235,25 @@ class ServiceService:
             raise EntityNotFound("Service not found")
 
         body = model_db_dump(service, exclude_defaults=True, exclude_none=True)
-        if body.get("repository_url") == "":
-            body["repository_url"] = None
+        if body.get("version") == "":
+            body["version"] = None
+        for key in ("source_code_id", "image_resource_id"):
+            if body.get(key) == "":
+                body[key] = None
+            elif body.get(key):
+                body[key] = UUID(body[key])
 
         if not has_field_changes(body, existing_service):
             raise ValueError("No changes detected; the service is already up to date.")
 
         if body.get("project_id"):
             await self._assert_project_exists(body["project_id"])
+
+        if service.source_code_id:
+            await self._assert_application_source_code(service.source_code_id)
+
+        if service.image_resource_id:
+            await self._assert_ecr_resource(service.image_resource_id)
 
         self.revision_handler.original_entity_instance_dump = to_dict(existing_service)
 

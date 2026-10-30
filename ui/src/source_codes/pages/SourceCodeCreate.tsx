@@ -17,7 +17,7 @@ import PageContainer from "../../common/PageContainer";
 import { IkEntity } from "../../types";
 import { Button, TextField, MenuItem } from "../../ui";
 import { CREATE_SOURCE_CODE_MUTATION } from "../graphql";
-import { SourceCodeCreate } from "../types";
+import { SOURCE_CODE_REPOSITORY_TYPES, SourceCodeCreate } from "../types";
 
 const SOURCE_CODE_LANGUAGES = ["opentofu"];
 
@@ -157,6 +157,36 @@ const SourceCodeCreatePageInner = () => {
               )}
             />
             <Controller
+              name="repositoryType"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  select
+                  label="Repository Type"
+                  required
+                  fullWidth
+                  margin="normal"
+                  helperText={
+                    SOURCE_CODE_REPOSITORY_TYPES.find(
+                      (type) => type.value === field.value,
+                    )?.description
+                  }
+                  selectProps={{
+                    inputProps: {
+                      "aria-label": "Repository type",
+                    },
+                  }}
+                >
+                  {SOURCE_CODE_REPOSITORY_TYPES.map((type) => (
+                    <MenuItem key={type.value} value={type.value}>
+                      {type.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+            />
+            <Controller
               name="sourceCodeLanguage"
               control={control}
               render={({ field }) => (
@@ -233,6 +263,7 @@ export const SourceCodeCreatePage = () => {
       sourceCodeUrl: "",
       sourceCodeProvider: "",
       sourceCodeLanguage: "opentofu",
+      repositoryType: "module_library",
       integrationId: null,
       labels: [],
     },

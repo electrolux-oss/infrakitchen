@@ -37,6 +37,7 @@ class ModelActions(StrEnum):
     CASCADE_DESTROY = "cascade_destroy"
     CASCADE_DRYRUN = "cascade_dryrun"
     CASCADE_EXECUTE = "cascade_execute"
+    BUILD = "build"  # build a container image of a service
 
 
 @unique
