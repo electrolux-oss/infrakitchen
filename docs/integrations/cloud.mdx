@@ -60,6 +60,7 @@ For a least-privilege setup, create and attach a custom policy scoped to only th
 ```
 
 - When configured, supply the **AWS Assumed Role Name** (the role's name) in the integration form so InfraKitchen will assume that role at runtime.
+- For AWS China or GovCloud accounts, enter the matching **AWS Partition** (`aws-cn` or `aws-us-gov`) so the role ARN is built correctly, e.g. `arn:aws-cn:iam::ACCOUNT_ID:role/RoleName`. Leave it empty to use `aws`.
 
 ### Generate Access Keys
 
@@ -78,6 +79,7 @@ InfraKitchen path: `/integrations/aws/setup`
 | **AWS Access Key ID** | Paste the generated Access Key ID. | |
 | **AWS Secret Access Key** | Paste the generated Secret Access Key. (Will be stored encrypted). |  |
 | **AWS Assumed Role Name** | (Optional) The role name to assume if role assumption is set up. | E.g., `InfraKitchenRole` |
+| **AWS Partition** | (Optional) The AWS partition of the account, used to build the assumed role ARN. Defaults to `aws` if empty. | E.g., `aws-cn` (China), `aws-us-gov` (GovCloud) |
 | **Automatically create S3 bucket for OpenTofu/Terraform remote state** | Check this to automatically create an S3 bucket for remote state. | Default bucket name: `infrakitchen-<AWS_ACCOUNT_ID>-bucket`. Default region: `us-east-1`. |
 
 ### Test the Connection

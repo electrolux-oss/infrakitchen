@@ -55,6 +55,7 @@ class AwsAuthentication:
         self.aws_secret_access_key: EncryptedSecretStr = configuration.aws_secret_access_key
         self.aws_session_duration: int = configuration.aws_session_duration or 3600
         self.aws_default_region: str = configuration.aws_default_region or "us-east-1"
+        self.aws_partition: str = (configuration.aws_partition or "").strip() or "aws"
         self.environment_variables: dict[str, str | Any] = kwargs.get("environment_variables", {})
         if not (self.aws_access_key_id and self.aws_secret_access_key and self.aws_account):
             raise CloudWrongCredentials("Some AWS configs are missed")
@@ -80,10 +81,11 @@ class AwsAuthentication:
                 if self.aws_secret_access_key
                 else None,
             ) as aio_sts_client:
-                partition = self.environment_variables.get("AWS_PARTITION", "aws")
+                role_arn = f"arn:{self.aws_partition}:iam::{self.aws_account}:role/{self.aws_assumed_role_name}"
+                self.logger.debug(f"Assuming AWS role {role_arn}")
                 assumed_role_object: dict[str, Any] = await aio_sts_client.assume_role(
                     # pyright: ignore[reportGeneralTypeIssues]
-                    RoleArn=f"arn:{partition}:iam::{self.aws_account}:role/{self.aws_assumed_role_name}",
+                    RoleArn=role_arn,
                     RoleSessionName="InfraKitchenSession",
                     DurationSeconds=self.aws_session_duration,
                 )
