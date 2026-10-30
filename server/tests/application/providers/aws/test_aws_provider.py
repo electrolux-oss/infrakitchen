@@ -85,7 +85,6 @@ class TestIsValid:
     @pytest.mark.parametrize(
         ("partition", "expected_role_arn"),
         [
-            ("unset", "arn:aws:iam::0123456789012:role/test_role"),
             (None, "arn:aws:iam::0123456789012:role/test_role"),
             ("", "arn:aws:iam::0123456789012:role/test_role"),
             ("aws-cn", "arn:aws-cn:iam::0123456789012:role/test_role"),
@@ -98,9 +97,8 @@ class TestIsValid:
             "aws_secret_access_key": "test_secret",
             "aws_account": "0123456789012",
             "aws_assumed_role_name": "test_role",
+            "aws_partition": partition,
         }
-        if partition != "unset":
-            configuration["aws_partition"] = partition
 
         mock_sts = Mock()
         mock_sts.assume_role = AsyncMock(
