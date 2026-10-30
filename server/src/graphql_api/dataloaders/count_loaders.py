@@ -1,5 +1,8 @@
+from typing import Any
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import InstrumentedAttribute
 from strawberry.dataloader import DataLoader
 
 from application.resources.model import Resource, resource_integrations, resource_secrets
@@ -158,15 +161,9 @@ async def _count_executors_by_secret(keys: list[str], session: AsyncSession) -> 
     return [mapping.get(key, 0) for key in keys]
 
 
-async def _count_resources_by_tool(keys: list[str], session: AsyncSession) -> list[int]:
-    stmt = select(Resource.tool_id, func.count()).where(Resource.tool_id.in_(keys)).group_by(Resource.tool_id)
-    result = await session.execute(stmt)
-    mapping = {str(row[0]): row[1] for row in result}
-    return [mapping.get(key, 0) for key in keys]
-
-
-async def _count_executors_by_tool(keys: list[str], session: AsyncSession) -> list[int]:
-    stmt = select(Executor.tool_id, func.count()).where(Executor.tool_id.in_(keys)).group_by(Executor.tool_id)
+async def _count_by(column: InstrumentedAttribute[Any], keys: list[str], session: AsyncSession) -> list[int]:
+    """Rows per value of ``column``, in the order of ``keys``."""
+    stmt = select(column, func.count()).where(column.in_(keys)).group_by(column)
     result = await session.execute(stmt)
     mapping = {str(row[0]): row[1] for row in result}
     return [mapping.get(key, 0) for key in keys]
@@ -213,8 +210,18 @@ def count_loaders(session: AsyncSession) -> dict[str, DataLoader[str, int]]:
         "secret_executor_count": DataLoader[str, int](
             load_fn=lambda keys: _count_executors_by_secret(list(keys), session)
         ),
-        "tool_resource_count": DataLoader[str, int](load_fn=lambda keys: _count_resources_by_tool(list(keys), session)),
-        "tool_executor_count": DataLoader[str, int](load_fn=lambda keys: _count_executors_by_tool(list(keys), session)),
+        "tool_resource_count": DataLoader[str, int](
+            load_fn=lambda keys: _count_by(Resource.tool_id, list(keys), session)
+        ),
+        "tool_executor_count": DataLoader[str, int](
+            load_fn=lambda keys: _count_by(Executor.tool_id, list(keys), session)
+        ),
+        "worker_template_resource_count": DataLoader[str, int](
+            load_fn=lambda keys: _count_by(Resource.worker_template_id, list(keys), session)
+        ),
+        "worker_template_executor_count": DataLoader[str, int](
+            load_fn=lambda keys: _count_by(Executor.worker_template_id, list(keys), session)
+        ),
         "project_resource_count": DataLoader[str, int](
             load_fn=lambda keys: _count_resources_by_project(list(keys), session)
         ),

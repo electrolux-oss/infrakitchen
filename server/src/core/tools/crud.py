@@ -1,11 +1,11 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, literal, select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.base_models import Base
 from core.database import (
+    find_referencing_rows,
     FieldSpec,
     evaluate_sqlalchemy_filters,
     evaluate_sqlalchemy_pagination,
@@ -99,39 +99,5 @@ class ToolCRUD:
         await self.session.refresh(tool)
 
     async def get_dependencies(self, existing_tool: Tool) -> list[Any]:
-        """
-        Find rows referencing the tool. Referencing tables are discovered from foreign keys,
-        so entities using tools don't have to be known here.
-        """
-        dependencies: list[Any] = []
-        for table in Base.metadata.sorted_tables:
-            for column in table.columns:
-                if not any(fk.column.table.name == Tool.__tablename__ for fk in column.foreign_keys):
-                    continue
-                name_column = table.c["name"] if "name" in table.c else literal("")
-                entity_name = str(table.name).removesuffix("s")
-                statement = select(
-                    table.c["id"].label("id"),
-                    literal(entity_name).label("type"),
-                    name_column.label("name"),
-                ).where(column == existing_tool.id)
-                result = await self.session.execute(statement)
-                dependencies.extend(result.fetchall())
-
-        # pending (not yet approved) resource changes keep the tool_id in a JSON blob without a foreign key
-        temp_state = Base.metadata.tables.get("resources_temp_state")
-        resources = Base.metadata.tables.get("resources")
-        if temp_state is not None and resources is not None:
-            statement = (
-                select(
-                    resources.c["id"].label("id"),
-                    literal("resource").label("type"),
-                    resources.c["name"].label("name"),
-                )
-                .join(temp_state, temp_state.c["resource_id"] == resources.c["id"])
-                .where(temp_state.c["value"]["tool_id"].as_string() == str(existing_tool.id))
-            )
-            result = await self.session.execute(statement)
-            known = {dependency.id for dependency in dependencies}
-            dependencies.extend(row for row in result.fetchall() if row.id not in known)
-        return dependencies
+        """Rows referencing the tool, including pending resource changes."""
+        return await find_referencing_rows(self.session, Tool.__tablename__, existing_tool.id, "tool_id")

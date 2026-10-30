@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, Mock, call
+from unittest.mock import ANY, AsyncMock, Mock, call
 from uuid import uuid4
 
 import pytest
@@ -1380,6 +1380,85 @@ class TestToolSelection:
         mock_tool_service.validate_ready.assert_not_awaited()
         value = mocked_resource_temp_state_handler.set_resource_temp_state.call_args.kwargs["value"]
         assert value == {"tool_id": None}
+
+    @pytest.mark.asyncio
+    async def test_patch_worker_template_is_validated(
+        self,
+        mock_resource_service,
+        stub_worker_template_service,
+        mocked_resource_temp_state_handler,
+        editable_resource,
+        mocked_user_response,
+    ):
+        worker_template_id = uuid4()
+
+        await mock_resource_service.update_resource(
+            resource_id=editable_resource.id,
+            resource=ResourceUpdate(worker_template_id=worker_template_id),
+            requester=mocked_user_response,
+        )
+
+        stub_worker_template_service.validate_selectable.assert_awaited_once_with(worker_template_id, ANY)
+        # like other changes, the selection waits for approval
+        value = mocked_resource_temp_state_handler.set_resource_temp_state.call_args.kwargs["value"]
+        assert value == {"worker_template_id": worker_template_id}
+
+    @pytest.mark.asyncio
+    async def test_patch_worker_template_disabled(
+        self,
+        mock_resource_service,
+        stub_worker_template_service,
+        mocked_resource_temp_state_handler,
+        editable_resource,
+        mocked_user_response,
+    ):
+        stub_worker_template_service.validate_selectable.side_effect = EntityWrongState("Worker template x is disabled")
+
+        with pytest.raises(EntityWrongState, match="disabled"):
+            await mock_resource_service.update_resource(
+                resource_id=editable_resource.id,
+                resource=ResourceUpdate(worker_template_id=uuid4()),
+                requester=mocked_user_response,
+            )
+
+        mocked_resource_temp_state_handler.set_resource_temp_state.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_patch_reset_worker_template(
+        self,
+        mock_resource_service,
+        stub_worker_template_service,
+        mocked_resource_temp_state_handler,
+        editable_resource,
+        mocked_user_response,
+    ):
+        editable_resource.worker_template_id = uuid4()
+
+        await mock_resource_service.update_resource(
+            resource_id=editable_resource.id,
+            resource=ResourceUpdate(worker_template_id=None),
+            requester=mocked_user_response,
+        )
+
+        stub_worker_template_service.validate_selectable.assert_not_awaited()
+        value = mocked_resource_temp_state_handler.set_resource_temp_state.call_args.kwargs["value"]
+        assert value == {"worker_template_id": None}
+
+    @pytest.mark.asyncio
+    async def test_applied_worker_template_retargets_queued_tasks(
+        self, mock_resource_service, stub_worker_template_service, editable_resource
+    ):
+        await mock_resource_service._update(editable_resource, {"worker_template_id": uuid4()})
+
+        stub_worker_template_service.retarget_tasks.assert_awaited_once_with("resource", editable_resource.id)
+
+    @pytest.mark.asyncio
+    async def test_applied_change_without_worker_template_keeps_routing(
+        self, mock_resource_service, stub_worker_template_service, editable_resource
+    ):
+        await mock_resource_service._update(editable_resource, {"name": "renamed"})
+
+        stub_worker_template_service.retarget_tasks.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_approve_tool_change_requires_execution(

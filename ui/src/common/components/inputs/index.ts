@@ -5,3 +5,4 @@ export * from "./MarkdownEditor";
 export * from "./ReferenceInput";
 export * from "./ReferenceAutocomplete";
 export * from "./AutocompleteSelect";
+export * from "./DefaultableSelect";

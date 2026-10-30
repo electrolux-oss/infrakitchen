@@ -22,6 +22,11 @@ from .blueprints import BlueprintShort
 from .workflows import Workflow
 from .favorites import Favorite
 from .services import ServiceDTO
+from .worker_templates import WorkerTemplateDTO
+from .worker_templates.routing import register_task_router
+
+# Every routed entity's model is imported by now
+register_task_router()
 
 __all__ = [
     "ExecutorDTO",
@@ -49,4 +54,5 @@ __all__ = [
     "Workflow",
     "Favorite",
     "ServiceDTO",
+    "WorkerTemplateDTO",
 ]

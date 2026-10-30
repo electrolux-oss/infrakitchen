@@ -7,7 +7,8 @@ from unittest.mock import Mock, AsyncMock
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from application.workers import TaskWorker
-from core.constants.model import EventType
+from core.config import Settings
+from core.constants.model import EventType, ModelStatus
 from core.notifications.controller import NotificationEvent
 from core.errors import CannotProceed, ExitWithoutSave, ParentIsNotReady
 from core.scheduler.executor import SchedulerExecutor
@@ -154,6 +155,10 @@ class TestProcessTask:
         mock_queue.fail.assert_not_awaited()
         mock_worker_service.increment_tasks_completed.assert_awaited_once()
         assert task_worker.current_task is None
+        # the worker row keeps the finished task as its last one
+        mock_worker_service.set_current_task.assert_awaited_once()
+        assert mock_worker_service.set_current_task.await_args.args[1]["entity_id"] == str(item.entity_id)
+        assert mock_worker_service.change_worker_status.await_args.args[1] == "free"
 
     async def test_not_ready_requeues_with_delay(self, task_worker, mock_queue, mock_task_controller, monkeypatch):
         mock_task_controller.start_pipeline = AsyncMock(side_effect=ParentIsNotReady("parent"))
@@ -200,6 +205,21 @@ class TestRunOnce:
         assert await task_worker.run_once() is True
 
         process_task.assert_awaited_once_with(item)
+        # a static worker claims only tasks routed to no worker template
+        mock_queue.claim.assert_awaited_once_with(
+            task_worker.worker_id, task_worker.settings.WORKER_LEASE_SECONDS, None
+        )
+
+    async def test_on_demand_worker_claims_its_templates_tasks(self, task_worker, mock_queue, monkeypatch):
+        template_id = uuid4()
+        task_worker.settings.WORKER_TEMPLATE_ID = str(template_id)
+        monkeypatch.setattr(task_worker, "template_disabled", AsyncMock(return_value=False))
+
+        assert await task_worker.run_once() is False
+
+        lease = task_worker.settings.WORKER_LEASE_SECONDS
+        mock_queue.claim_expired.assert_awaited_once_with(task_worker.worker_id, lease, template_id)
+        mock_queue.claim.assert_awaited_once_with(task_worker.worker_id, lease, template_id)
 
     async def test_reaps_expired_task_before_claiming(self, task_worker, mock_queue, mock_task_controller, monkeypatch):
         item = make_item()
@@ -212,6 +232,16 @@ class TestRunOnce:
         mock_queue.claim.assert_not_awaited()
         mock_task_controller.make_failed.assert_awaited_once()
         mock_queue.fail.assert_awaited_once_with(item.id, task_worker.worker_id, "Worker lost (lease expired)")
+
+    async def test_worker_of_disabled_template_does_not_claim(self, task_worker, mock_queue, monkeypatch):
+        task_worker.settings.WORKER_TEMPLATE_ID = str(uuid4())
+        monkeypatch.setattr(task_worker, "template_disabled", AsyncMock(return_value=True))
+
+        assert await task_worker.run_once() is False
+
+        # its tasks wait until the template is enabled again
+        mock_queue.claim.assert_not_awaited()
+        assert task_worker._stopping.is_set()
 
     async def test_draining_worker_does_not_claim(self, task_worker, mock_queue):
         task_worker.stop()
@@ -478,3 +508,114 @@ class TestNotifications:
                     event_type=EventType.EXECUTE,
                 )
             )
+
+
+class TestIdleExit:
+    async def test_disabled_by_default(self, task_worker, mock_queue):
+        mock_queue.count_claimable = AsyncMock(return_value=0)
+
+        assert await task_worker.idle_expired(last_work_at=0) is False
+        mock_queue.count_claimable.assert_not_awaited()
+
+    async def test_exits_when_idle_and_queue_is_empty(self, task_worker, mock_queue, mock_worker_service):
+        task_worker.settings.WORKER_IDLE_EXIT_SECONDS = 60
+        mock_queue.count_claimable = AsyncMock(return_value=0)
+
+        assert await task_worker.idle_expired(last_work_at=tw_mod.time.monotonic() - 61) is True
+        # offline before the final check, so the autoscaler spawns for tasks queued meanwhile
+        mock_worker_service.change_worker_status.assert_awaited_once_with(task_worker.worker_id, "offline")
+        assert mock_queue.count_claimable.await_count == 2
+
+    async def test_stays_when_a_task_arrives_while_going_offline(self, task_worker, mock_queue, mock_worker_service):
+        task_worker.settings.WORKER_IDLE_EXIT_SECONDS = 60
+        mock_queue.count_claimable = AsyncMock(side_effect=[0, 1])
+
+        assert await task_worker.idle_expired(last_work_at=tw_mod.time.monotonic() - 61) is False
+        assert [c.args[1] for c in mock_worker_service.change_worker_status.await_args_list] == ["offline", "free"]
+        assert task_worker.worker.status == "free"
+
+    async def test_counts_only_its_own_templates_tasks(self, task_worker, mock_queue):
+        template_id = uuid4()
+        task_worker.settings.WORKER_IDLE_EXIT_SECONDS = 60
+        task_worker.settings.WORKER_TEMPLATE_ID = str(template_id)
+        mock_queue.count_claimable = AsyncMock(return_value=0)
+
+        assert await task_worker.idle_expired(last_work_at=tw_mod.time.monotonic() - 61) is True
+        mock_queue.count_claimable.assert_awaited_with(template_id)
+
+    async def test_stays_while_tasks_are_waiting(self, task_worker, mock_queue, mock_worker_service):
+        task_worker.settings.WORKER_IDLE_EXIT_SECONDS = 60
+        mock_queue.count_claimable = AsyncMock(return_value=2)
+
+        assert await task_worker.idle_expired(last_work_at=tw_mod.time.monotonic() - 61) is False
+        mock_worker_service.change_worker_status.assert_not_awaited()
+
+    async def test_stays_before_timeout(self, task_worker, mock_queue):
+        task_worker.settings.WORKER_IDLE_EXIT_SECONDS = 60
+        mock_queue.count_claimable = AsyncMock(return_value=0)
+
+        assert await task_worker.idle_expired(last_work_at=tw_mod.time.monotonic()) is False
+        mock_queue.count_claimable.assert_not_awaited()
+
+    async def test_run_stops_after_idle_timeout(self, task_worker, mock_queue, mock_worker_service, monkeypatch):
+        task_worker.settings.WORKER_IDLE_EXIT_SECONDS = 1
+        task_worker.settings.WORKER_POLL_INTERVAL = 0.01
+        mock_queue.count_claimable = AsyncMock(return_value=0)
+        mock_worker_service.save_worker = AsyncMock(return_value=task_worker.worker)
+        monkeypatch.setattr(tw_mod, "get_host_metadata", AsyncMock(return_value={}))
+        monkeypatch.setattr(task_worker, "listen_loop", AsyncMock())
+
+        await asyncio.wait_for(task_worker.run(), timeout=5)
+
+        assert task_worker._stopping.is_set()
+        mock_worker_service.change_worker_status.assert_awaited_with(task_worker.worker_id, "offline")
+
+
+class TestDisabledTemplate:
+    async def test_plain_worker_ignores_templates(self, task_worker):
+        assert await task_worker.template_disabled() is False
+
+    @pytest.mark.parametrize(
+        ("status", "expected"),
+        [(ModelStatus.ENABLED, False), (ModelStatus.DISABLED, True), (None, True)],
+    )
+    async def test_status_decides(self, task_worker, monkeypatch, status, expected):
+        task_worker.settings.WORKER_TEMPLATE_ID = str(uuid4())
+        monkeypatch.setattr(
+            tw_mod, "get_worker_template_service", Mock(return_value=Mock(get_status=AsyncMock(return_value=status)))
+        )
+
+        assert await task_worker.template_disabled() is expected
+
+    async def test_check_failure_keeps_working(self, task_worker, monkeypatch):
+        task_worker.settings.WORKER_TEMPLATE_ID = str(uuid4())
+        monkeypatch.setattr(
+            tw_mod,
+            "get_worker_template_service",
+            Mock(return_value=Mock(get_status=AsyncMock(side_effect=RuntimeError("db down")))),
+        )
+
+        assert await task_worker.template_disabled() is False
+
+    async def test_heartbeat_stops_worker_of_disabled_template(self, task_worker, mock_worker_service, monkeypatch):
+        mock_worker_service.save_worker = AsyncMock(return_value=task_worker.worker)
+        monkeypatch.setattr(task_worker, "template_disabled", AsyncMock(return_value=True))
+
+        await task_worker.heartbeat()
+
+        assert task_worker._stopping.is_set()
+
+
+class TestWorkerHost:
+    def test_registers_with_worker_host_when_set(self):
+        settings = Settings()
+        settings.WORKER_HOST = "ik-worker-abc"
+
+        assert TaskWorker(name="w", settings=settings).worker.host == "ik-worker-abc"
+
+    def test_falls_back_to_hostname(self, monkeypatch):
+        settings = Settings()
+        settings.WORKER_HOST = ""
+        monkeypatch.setattr(tw_mod.socket, "gethostname", lambda: "node-1")
+
+        assert TaskWorker(name="w", settings=settings).worker.host == "node-1"

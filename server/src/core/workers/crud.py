@@ -1,7 +1,8 @@
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import (
@@ -12,7 +13,7 @@ from core.database import (
 )
 from core.utils.model_tools import is_valid_uuid
 
-from .model import Worker
+from .model import POOL_METADATA_KEY, Worker, worker_alive
 from .query_options import build_worker_query_options
 
 
@@ -67,6 +68,46 @@ class WorkerCRUD:
             setattr(existing_worker, key, value)
 
         return existing_worker
+
+    async def get_by_hosts(self, hosts: list[str]) -> list[Worker]:
+        """Workers registered on ``hosts``, oldest update first."""
+        if not hosts:
+            return []
+        statement = select(Worker).where(Worker.host.in_(hosts)).order_by(Worker.updated_at)
+        return list((await self.session.execute(statement)).scalars().all())
+
+    async def get_live_hosts(self, alive_since: datetime) -> set[str]:
+        """Hosts with a worker that sent a heartbeat since ``alive_since`` and is not offline."""
+        statement = select(Worker.host).where(worker_alive(alive_since))
+        return set((await self.session.execute(statement)).scalars().all())
+
+    async def get_hosts_with_prefix(self, prefix: str) -> set[str]:
+        statement = select(Worker.host).where(Worker.host.startswith(prefix)).distinct()
+        return set((await self.session.execute(statement)).scalars().all())
+
+    async def delete_by_hosts(self, hosts: list[str]) -> int:
+        if not hosts:
+            return 0
+        result = await self.session.execute(delete(Worker).where(Worker.host.in_(hosts)))
+        return getattr(result, "rowcount", 0) or 0
+
+    async def delete_gone(self, pool_id: str, keep_hosts: set[str], alive_since: datetime) -> int:
+        statement = delete(Worker).where(
+            Worker.host_metadata[POOL_METADATA_KEY].as_string() == pool_id,
+            Worker.host.not_in(keep_hosts),
+            ~worker_alive(alive_since),
+        )
+        result = await self.session.execute(statement)
+        return getattr(result, "rowcount", 0) or 0
+
+    async def mark_stale_offline(self, cutoff: datetime) -> int:
+        result = await self.session.execute(
+            update(Worker)
+            .where(Worker.status != "offline", Worker.updated_at < cutoff)
+            .values(status="offline")
+            .execution_options(synchronize_session=False)
+        )
+        return getattr(result, "rowcount", 0) or 0
 
     async def commit(self) -> None:
         await self.session.commit()

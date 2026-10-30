@@ -1,6 +1,9 @@
 import { GraphqlFieldMap } from "../../common/graphql/buildGraphqlFields";
 
-export const WORKER_FIELD_MAP: GraphqlFieldMap = {};
+export const WORKER_FIELD_MAP: GraphqlFieldMap = {
+  // Display-only column (logs button): its fields come from the column's fetchFields
+  logs: "id",
+};
 
 /**
  * Selection for the queued/running tasks of an entity. Entity pages append it to
@@ -22,9 +25,12 @@ export const TASK_QUEUE_STATUS_SELECTION = `
       maxRetries
       position
       workerHost
+      workerTemplateId
+      workerTemplateName
       creatorId
       creatorName
       waitingReason
+      poolReason
     }
   }
 `;

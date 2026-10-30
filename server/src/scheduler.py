@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -9,6 +10,7 @@ from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
 from application.logger import change_logger
+from application.worker_templates.autoscaler import listen_for_queued_tasks, reconcile_workers
 
 from core.constants.model import ModelState, ModelStatus
 from core.dependencies import get_async_session
@@ -19,9 +21,12 @@ from core.scheduler.crud import SchedulerJobCRUD
 from core.scheduler.model import JobType
 from core.config import Settings
 from core.task_queue.functions import task_queue_service
+from core.task_queue.service import worker_alive_seconds
 from core.tasks.crud import TaskEntityCRUD
 from core.tasks.functions import build_cron_trigger, next_cron_run
 from core.tasks.model import TaskEntity
+from core.workers.crud import WorkerCRUD
+from core.workers.service import WorkerService
 from core.users.crud import UserCRUD
 from core.users.service import UserService
 from core.utils.event_sender import EventSender
@@ -35,7 +40,9 @@ logger = logging.getLogger("scheduler")
 # never treated as a stale job and removed.
 POLL_JOB_ID = "poll_new_jobs"
 TASK_QUEUE_CLEANUP_JOB_ID = "task_queue_cleanup"
-INTERNAL_JOB_IDS = {POLL_JOB_ID, TASK_QUEUE_CLEANUP_JOB_ID}
+WORKER_AUTOSCALER_JOB_ID = "worker_autoscaler"
+WORKER_OFFLINE_JOB_ID = "worker_offline_check"
+INTERNAL_JOB_IDS = {POLL_JOB_ID, TASK_QUEUE_CLEANUP_JOB_ID, WORKER_AUTOSCALER_JOB_ID, WORKER_OFFLINE_JOB_ID}
 ENTITY_ACTION_JOB_PREFIX = "entity_action:"
 
 # Serializes reconciliation so the event-driven reload and the periodic poll
@@ -273,6 +280,59 @@ def schedule_task_queue_cleanup_job(scheduler: AsyncIOScheduler):
     )
 
 
+async def mark_stale_workers_offline():
+    # Same threshold the task queue and the autoscaler use to tell live workers apart
+    stale_after = worker_alive_seconds()
+    async with get_async_session() as session:
+        updated = await WorkerService(WorkerCRUD(session)).mark_stale_offline(stale_after)
+    if updated:
+        logger.info(f"Marked {updated} worker(s) offline: no heartbeat for {stale_after}s")
+
+
+def schedule_worker_offline_job(scheduler: AsyncIOScheduler):
+    """Schedules the job that sets workers without a recent heartbeat to offline."""
+    scheduler.add_job(
+        mark_stale_workers_offline,
+        trigger=IntervalTrigger(seconds=Settings().WORKER_HEARTBEAT_SECONDS),
+        id=WORKER_OFFLINE_JOB_ID,
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+    )
+
+
+def schedule_worker_autoscaler_job(scheduler: AsyncIOScheduler):
+    """Schedules the job that spawns on-demand workers from worker templates and removes idle ones."""
+    settings = Settings()
+    # Always scheduled: it only acts on enabled worker templates, so without them it does nothing
+    scheduler.add_job(
+        reconcile_workers,
+        trigger=IntervalTrigger(seconds=settings.WORKER_AUTOSCALER_INTERVAL_SECONDS),
+        id=WORKER_AUTOSCALER_JOB_ID,
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+    )
+
+
+async def start_worker_autoscaler_listener(scheduler: AsyncIOScheduler):
+    """Run the worker autoscaler soon after tasks are enqueued instead of waiting for its interval."""
+    settings = Settings()
+    # New tasks only become claimable after the cancel window
+    delay = timedelta(seconds=settings.TASK_QUEUE_CANCEL_DELAY_SECONDS + 1)
+
+    def on_task_queued() -> None:
+        job = scheduler.get_job(WORKER_AUTOSCALER_JOB_ID)
+        if job is None:
+            return
+        run_at = datetime.now(UTC) + delay
+        # Never postpone an earlier run, so a steady stream of tasks cannot starve the autoscaler
+        if job.next_run_time is None or job.next_run_time > run_at:
+            _ = job.modify(next_run_time=run_at)
+
+    await listen_for_queued_tasks(on_task_queued)
+
+
 async def start_reload_consumer(scheduler: AsyncIOScheduler, event_sender: EventSender):
     """Re-sync jobs whenever a ``reload_scheduler_jobs`` event is broadcast."""
 
@@ -285,27 +345,53 @@ async def start_reload_consumer(scheduler: AsyncIOScheduler, event_sender: Event
     await consume_events(on_event, name="Scheduler reload consumer")
 
 
-async def start_scheduler():
+def _log_consumer_exit(task: "asyncio.Task[None]") -> None:
+    if not task.cancelled() and (error := task.exception()) is not None:
+        logger.error(f"Scheduler consumer {task.get_name()} stopped: {error}", exc_info=error)
+
+
+def start_consumers(scheduler: AsyncIOScheduler, event_sender: EventSender) -> list["asyncio.Task[None]"]:
+    """Run the event consumers of the scheduler as independent tasks, so one crashing is logged
+    and does not take the other down."""
+    consumers = {
+        "reload": start_reload_consumer(scheduler=scheduler, event_sender=event_sender),
+        "worker_autoscaler": start_worker_autoscaler_listener(scheduler=scheduler),
+    }
+    tasks = [asyncio.create_task(coro, name=name) for name, coro in consumers.items()]
+    for task in tasks:
+        task.add_done_callback(_log_consumer_exit)
+    return tasks
+
+
+async def stop_consumers(tasks: list["asyncio.Task[None]"]) -> None:
+    for task in tasks:
+        _ = task.cancel()
+    _ = await asyncio.gather(*tasks, return_exceptions=True)
+
+
+async def setup_scheduler() -> tuple[AsyncIOScheduler, list["asyncio.Task[None]"]]:
+    """Schedule all jobs, start the scheduler and its consumers; stop them with ``stop_consumers``."""
     scheduler = AsyncIOScheduler()
     event_sender = EventSender("scheduler_job")
 
     await schedule_jobs(scheduler=scheduler, event_sender=event_sender)
     await schedule_polling_job(scheduler=scheduler, event_sender=event_sender)
     schedule_task_queue_cleanup_job(scheduler=scheduler)
+    schedule_worker_autoscaler_job(scheduler=scheduler)
+    schedule_worker_offline_job(scheduler=scheduler)
 
     scheduler.start()
     logger.info("Scheduler started")
 
-    reload_task = asyncio.create_task(start_reload_consumer(scheduler=scheduler, event_sender=event_sender))
+    return scheduler, start_consumers(scheduler, event_sender)
 
+
+async def start_scheduler():
+    _, consumers = await setup_scheduler()
     try:
         await asyncio.Event().wait()
     finally:
-        reload_task.cancel()
-        try:
-            await reload_task
-        except (asyncio.CancelledError, Exception):
-            pass
+        await stop_consumers(consumers)
 
 
 if __name__ == "__main__":

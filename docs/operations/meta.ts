@@ -6,6 +6,7 @@ export default defineMeta({
   order: 9,
   pages: [
     "kubernetes",
+    "on_demand_workers",
     "activity",
     "mcp",
     "notifications",
