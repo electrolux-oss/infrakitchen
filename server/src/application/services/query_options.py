@@ -3,6 +3,8 @@ from typing import Any
 from sqlalchemy.orm import joinedload, raiseload, selectinload
 
 from application.projects.query_options import build_project_query_options
+from application.resources.query_options import build_resource_query_options
+from application.source_codes.query_options import build_source_code_query_options
 from core.database import FieldSpec, build_load_only
 from core.users.query_options import build_user_query_options
 
@@ -13,6 +15,8 @@ def build_service_query_options(fields: FieldSpec | None = None) -> list[Any]:
     if fields is None:
         return [
             joinedload(Service.project),
+            joinedload(Service.source_code),
+            joinedload(Service.image_resource),
             joinedload(Service.creator),
             selectinload(Service.owners),
         ]
@@ -24,6 +28,18 @@ def build_service_query_options(fields: FieldSpec | None = None) -> list[Any]:
         opts.append(joinedload(Service.project).options(*build_project_query_options(nested)))
     else:
         opts.append(raiseload(Service.project))
+
+    if "sourceCode" in fields:
+        nested = fields["sourceCode"]
+        opts.append(joinedload(Service.source_code).options(*build_source_code_query_options(nested)))
+    else:
+        opts.append(raiseload(Service.source_code))
+
+    if "imageResource" in fields:
+        nested = fields["imageResource"]
+        opts.append(joinedload(Service.image_resource).options(*build_resource_query_options(nested)))
+    else:
+        opts.append(raiseload(Service.image_resource))
 
     if "creator" in fields:
         nested = fields["creator"]

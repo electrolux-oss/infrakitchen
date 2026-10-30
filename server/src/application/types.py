@@ -3,6 +3,7 @@ from typing import Literal
 
 type GitProviderType = Literal["github", "gitlab", "bitbucket", "azure_devops", "git_public"]
 type CodeLanguageType = Literal["opentofu"]
+type SourceCodeRepositoryType = Literal["module_library", "iac", "application"]
 type StorageProviderType = Literal["aws", "azurerm", "gcp", "postgresql"]
 type IacToolType = Literal["tofu"]
 type IntegrationType = Literal["git", "cloud", "notification"]

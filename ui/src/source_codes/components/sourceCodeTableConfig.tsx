@@ -9,6 +9,7 @@ import {
 import { StatusLabel } from "../../common/components/labels";
 import { ColumnVisibilityModel, RenderCellParams } from "../../ui";
 import { ENTITY_STATUS } from "../../utils/constants";
+import { getRepositoryTypeLabel, SOURCE_CODE_REPOSITORY_TYPES } from "../types";
 
 export const sourceCodeDefaultColumnVisibilityModel: ColumnVisibilityModel = {
   description: false,
@@ -39,6 +40,23 @@ export const sourceCodeColumns: EntityTableColumn[] = [
     headerName: "Description",
   },
   labelsColumn("source_code"),
+  {
+    field: "repositoryType",
+    headerName: "Type",
+    flex: 1,
+    filter: {
+      field: "repository_type",
+      operators: ["eq", "in"],
+      valueType: "select",
+      defaultOperator: "eq",
+      selectOptions: SOURCE_CODE_REPOSITORY_TYPES.map(({ value, label }) => ({
+        label,
+        value,
+      })),
+    },
+    valueGetter: (_value: any, row: any) =>
+      getRepositoryTypeLabel(row.repositoryType),
+  },
   {
     field: "status",
     headerName: "Status",

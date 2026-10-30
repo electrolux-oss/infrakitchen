@@ -22,6 +22,7 @@ from .blueprints import BlueprintShort
 from .workflows import Workflow
 from .favorites import Favorite
 from .services import ServiceDTO
+from .service_builds import ServiceBuild
 
 __all__ = [
     "ExecutorDTO",
@@ -49,4 +50,5 @@ __all__ = [
     "Workflow",
     "Favorite",
     "ServiceDTO",
+    "ServiceBuild",
 ]

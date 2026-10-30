@@ -101,7 +101,7 @@ export const ProjectServices = ({ projectId }: ProjectServicesProps) => {
             <EntityCard
               key={service.id}
               entity_name="service"
-              name={service.displayName || service.name}
+              name={service.name}
               description={service.description ?? ""}
               detailsUrl={`${linkPrefix}services/${service.id}`}
               labels={service.labels || []}

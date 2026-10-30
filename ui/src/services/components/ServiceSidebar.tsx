@@ -15,14 +15,16 @@ import {
   CommonField,
   EntityReference,
 } from "../../common/components/fields/CommonField";
+import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import { notifyError } from "../../common/hooks/useNotification";
 import { SubscribeNotificationButton } from "../../resources/components/notifications/SubscribeNotificationButton";
-import { TextField, Link } from "../../ui";
+import { IkEntity } from "../../types";
+import { TextField } from "../../ui";
 import { GqlUserShort, USERS_SHORT_QUERY } from "../../users/graphql";
-import { GqlService } from "../graphql";
+import { getImageRepositoryUrl, GqlService } from "../graphql";
 import {
   ServiceUpdateFieldInput,
   UPDATE_SERVICE_MUTATION,
@@ -30,6 +32,14 @@ import {
 import { useServiceNotificationDialog } from "../hooks";
 
 type UserOption = GqlUserShort & { displayName?: string | null };
+
+const ECR_TEMPLATES_QUERY = `
+  query EcrTemplates($filter: JSON, $range: [Int!]) {
+    templates(filter: $filter, range: $range) {
+      id
+    }
+  }
+`;
 
 const getUserLabel = (user: UserOption) => user.displayName || user.identifier;
 
@@ -83,6 +93,9 @@ export const ServiceSidebar = ({
     });
 
   const [users, setUsers] = useState<UserOption[]>([]);
+  const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
+    {},
+  );
   const ownersLoadedRef = useRef(false);
 
   const loadUsers = useCallback(async () => {
@@ -106,6 +119,24 @@ export const ServiceSidebar = ({
       notifyError(error);
     }
   }, [ikApi]);
+
+  const [ecrTemplateIds, setEcrTemplateIds] = useState<string[] | null>(null);
+  const loadEcrTemplates = useCallback(async () => {
+    if (ecrTemplateIds !== null) return;
+    try {
+      const response = await ikApi.graphqlRequest<{
+        templates: { id: string }[];
+      }>(ECR_TEMPLATES_QUERY, {
+        filter: { cloud_resource_types__contains_all: ["aws_ecr"] },
+        range: [0, 999],
+      });
+      setEcrTemplateIds((response.templates || []).map((t) => t.id));
+    } catch (error) {
+      notifyError(error);
+    }
+  }, [ikApi, ecrTemplateIds]);
+
+  const imageRepositoryUrl = getImageRepositoryUrl(service.imageResource);
 
   const saveField = useEntityFieldSaver<ServiceUpdateFieldInput>(
     UPDATE_SERVICE_MUTATION,
@@ -146,29 +177,35 @@ export const ServiceSidebar = ({
           canEdit={canEdit}
           onSave={(value) => saveField({ name: value })}
         />
-        <CommonEditableField<string | null>
-          name={"Display Name"}
+        <EditableDescriptionField
+          value={service.description}
           canEdit={canEdit}
-          value={service.displayName}
-          ariaLabel="Edit display name"
-          display={service.displayName || undefined}
-          onSave={(value) => saveField({ displayName: value })}
+          onSave={(value) => saveField({ description: value })}
+        />
+        <CommonEditableField<string>
+          name={"Version"}
+          canEdit={canEdit}
+          value={service.version ?? ""}
+          ariaLabel="Edit version"
+          display={
+            service.version || (
+              <span className="text-body2 text-fg-muted">Not set</span>
+            )
+          }
+          onSave={(value) => saveField({ version: value.trim() })}
           renderEditor={({ value, onChange }) => (
             <TextField
-              value={value ?? ""}
+              value={value}
               onChange={(e) => onChange(e.target.value)}
-              aria-label="Display Name"
+              placeholder="1.0.0"
+              helperText="Each build also pushes this as an image tag, once per version. Leave empty to clear."
+              aria-label="Version"
               fullWidth
               margin="normal"
               autoFocus
             />
           )}
           span="full"
-        />
-        <EditableDescriptionField
-          value={service.description}
-          canEdit={canEdit}
-          onSave={(value) => saveField({ description: value })}
         />
         <EditableTagsField
           value={service.labels || []}
@@ -211,39 +248,135 @@ export const ServiceSidebar = ({
           )}
           span="full"
         />
-        <CommonEditableField<string>
-          name={"Repository"}
+        <CommonEditableField<string | null>
+          name={"Code Repository"}
           canEdit={canEdit}
-          value={service.repositoryUrl ?? ""}
-          ariaLabel="Edit repository URL"
+          value={service.sourceCodeId}
+          ariaLabel="Edit code repository"
           display={
-            service.repositoryUrl ? (
-              <Link
-                className="break-all"
-                href={service.repositoryUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {service.repositoryUrl}
-              </Link>
+            service.sourceCode ? (
+              <EntityReference
+                id={service.sourceCode.id}
+                entityName="source_code"
+                name={service.sourceCode.identifier}
+                provider={service.sourceCode.sourceCodeProvider}
+                urlProvider={service.sourceCode.sourceCodeProvider}
+              />
             ) : null
           }
-          onSave={async (value) => {
-            const trimmed = value.trim();
-            if (trimmed && !/^https?:\/\/\S+$/.test(trimmed)) {
-              notifyError(
-                new Error("Repository URL must start with https:// or http://"),
-              );
-              throw new Error("Invalid repository URL");
-            }
-            await saveField({ repositoryUrl: trimmed });
-          }}
+          onSave={(value) => saveField({ sourceCodeId: value ?? "" })}
+          renderEditor={({ value, onChange }) => (
+            <ReferenceInput
+              ikApi={ikApi}
+              buffer={buffer}
+              setBuffer={setBuffer}
+              entity_name="source_codes"
+              filter={{ repository_type: "application" }}
+              sort={["source_code_url", "ASC"]}
+              showFields={["identifier"]}
+              value={value}
+              onChange={onChange}
+              ariaLabel="Code repository"
+              placeholder="Select repository…"
+              helpertext="Application repository with this service's code"
+            />
+          )}
+          span="full"
+        />
+      </SidebarSection>
+
+      <SidebarSection title="Image Build">
+        <CommonEditableField<string | null>
+          name={"Image Repository"}
+          canEdit={canEdit}
+          value={service.imageResourceId}
+          ariaLabel="Edit image repository"
+          display={
+            service.imageResource ? (
+              <div className="flex min-w-0 flex-col gap-1">
+                <EntityReference
+                  id={service.imageResource.id}
+                  entityName="resource"
+                  name={service.imageResource.name}
+                />
+                {imageRepositoryUrl ? (
+                  <span className="text-body2 break-all text-fg-muted">
+                    {imageRepositoryUrl}
+                  </span>
+                ) : (
+                  <span className="text-body2 text-fg-muted">
+                    No repository_url output yet
+                  </span>
+                )}
+              </div>
+            ) : null
+          }
+          onSave={(value) => saveField({ imageResourceId: value ?? "" })}
+          onEditStart={loadEcrTemplates}
+          renderEditor={({ value, onChange }) =>
+            ecrTemplateIds === null ? (
+              <TextField
+                value=""
+                disabled
+                placeholder="Loading…"
+                aria-label="Image repository"
+                fullWidth
+                margin="normal"
+              />
+            ) : (
+              <ReferenceInput
+                ikApi={ikApi}
+                buffer={buffer}
+                setBuffer={setBuffer}
+                entity_name="resources"
+                filter={{ template_id: ecrTemplateIds }}
+                value={value}
+                onChange={onChange}
+                ariaLabel="Image repository"
+                placeholder="Select ECR resource…"
+                helpertext={
+                  ecrTemplateIds.length > 0
+                    ? "ECR resource the images are pushed to, with its AWS integration"
+                    : "No template has the aws_ecr cloud resource type yet"
+                }
+              />
+            )
+          }
+          span="full"
+        />
+        <CommonEditableField<string>
+          name={"Dockerfile"}
+          canEdit={canEdit}
+          value={service.dockerfilePath}
+          ariaLabel="Edit Dockerfile path"
+          display={service.dockerfilePath}
+          onSave={(value) => saveField({ dockerfilePath: value.trim() })}
           renderEditor={({ value, onChange }) => (
             <TextField
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              placeholder="https://github.com/org/repo"
-              aria-label="Repository URL"
+              helperText="Path from the repository root"
+              aria-label="Dockerfile path"
+              fullWidth
+              margin="normal"
+              autoFocus
+            />
+          )}
+          span="full"
+        />
+        <CommonEditableField<string>
+          name={"Build Context"}
+          canEdit={canEdit}
+          value={service.buildContext}
+          ariaLabel="Edit build context"
+          display={service.buildContext}
+          onSave={(value) => saveField({ buildContext: value.trim() })}
+          renderEditor={({ value, onChange }) => (
+            <TextField
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              helperText="Directory from the repository root, . for the root"
+              aria-label="Build context"
               fullWidth
               margin="normal"
               autoFocus

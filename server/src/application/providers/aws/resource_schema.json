@@ -75,5 +75,16 @@
       "name"
     ],
     "list_function": "list_clusters"
+  },
+  "aws_ecr": {
+    "region_type": "regional",
+    "api_type": "ecr",
+    "cloud_id": "repositoryName",
+    "multiple": "repositories",
+    "single": "repository",
+    "ResourceType": "ecr",
+    "create_function": "create_repository",
+    "delete_function": "delete_repository",
+    "list_function": "describe_repositories"
   }
 }

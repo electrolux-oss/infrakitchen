@@ -28,10 +28,9 @@ const ServicePageContent = () => {
   const { entity } = useEntityProvider();
 
   return (
-    // Services are headed by their display name, as the overview card was.
     <EntityContainer
       titleIcon={entityIcons.service}
-      title={entity?.displayName || undefined}
+      title={entity?.name}
       actions={<EntityRefreshButton />}
     >
       <ServiceContent />

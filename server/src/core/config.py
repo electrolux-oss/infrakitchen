@@ -71,6 +71,13 @@ class Settings(BaseSettings):
     NOTIFICATION_DISPATCHERS: int = 4  # notification outbox items routed concurrently per API process
     NOTIFICATION_LEASE_SECONDS: int = 120  # a claimed outbox item is retried by another dispatcher after this
     NOTIFICATION_RETENTION_DAYS: int = 30  # in-app notifications older than this are purged
+    IMAGE_BUILD_NAMESPACE: str = ""  # empty means the worker pod's namespace
+    IMAGE_BUILD_BUILDKIT_IMAGE: str = "moby/buildkit:v0.23.2-rootless"
+    IMAGE_BUILD_GIT_IMAGE: str = "alpine/git:2.49.1"
+    IMAGE_BUILD_TIMEOUT_SECONDS: int = 3600
+    IMAGE_BUILD_POLL_SECONDS: int = 10
+    IMAGE_BUILD_START_TIMEOUT_SECONDS: int = 600  # a build pod not started after this is failed
+    IMAGE_BUILD_FAILED_RETENTION_SECONDS: int = 3600  # failed build Jobs are kept this long for their logs
 
     class ConfigDict:
         env_file = ".env"

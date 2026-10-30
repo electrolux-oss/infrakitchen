@@ -1,5 +1,7 @@
 import re
 
+from application.types import GitProviderType
+
 
 _SCP_LIKE_URL = re.compile(r"^(?:[^@/]+@)?(?P<host>[^:/]+):(?P<path>[^/].*)$")
 
@@ -29,6 +31,32 @@ def repository_web_url(repository_url: str) -> str | None:
         return f"https://dev.azure.com/{org}/{project}/_git/{repo}"
 
     return f"{scheme}://{host}/{path}"
+
+
+def repository_key(repository_url: str) -> str | None:
+    web_url = repository_web_url(repository_url)
+    if web_url is None:
+        return None
+    return web_url.split("://", 1)[1].lower()
+
+
+def is_ssh_url(repository_url: str) -> bool:
+    url = repository_url.strip()
+    return url.startswith("ssh://") or (not url.startswith(("https://", "http://")) and "@" in url.split(":", 1)[0])
+
+
+def repository_provider(repository_url: str) -> GitProviderType:
+    key = repository_key(repository_url) or ""
+    host = key.split("/", 1)[0]
+    if host == "github.com":
+        return "github"
+    if "gitlab" in host:
+        return "gitlab"
+    if "bitbucket" in host:
+        return "bitbucket"
+    if host == "dev.azure.com" or host.endswith("visualstudio.com"):
+        return "azure_devops"
+    return "git_public"
 
 
 def commit_web_url(repository_url: str, sha: str) -> str | None:
