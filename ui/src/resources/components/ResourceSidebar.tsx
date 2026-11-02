@@ -29,6 +29,8 @@ import { useConfig } from "../../common/context";
 import { usePendingScheduledAction } from "../../common/hooks/usePendingScheduledAction";
 import { ToolSelect, toolLabel } from "../../tools";
 import { IkEntity } from "../../types";
+import { WorkerTemplateSelect } from "../../worker_templates/components/WorkerTemplateSelect";
+import { useCanSelectWorkerTemplate } from "../../worker_templates/hooks/useCanSelectWorkerTemplate";
 import { GqlResource } from "../graphql";
 import { useResourceFieldEditor } from "../hooks/useResourceFieldEditor";
 import { useResourceNotificationDialog } from "../hooks/useResourceNotificationDialog";
@@ -71,6 +73,7 @@ export const ResourceSidebar = ({
   onSubscriptionChange,
 }: ResourceSidebarProps) => {
   const { ikApi } = useConfig();
+  const canSelectWorkerTemplate = useCanSelectWorkerTemplate();
   const { canEdit, saveField, withPendingChange } =
     useResourceFieldEditor(resource);
   const { loading, isSubscribed, handleSubscribe, handleUnsubscribe } =
@@ -270,6 +273,31 @@ export const ResourceSidebar = ({
             onSave={(value) => saveField({ toolId: value })}
             renderEditor={({ value, onChange }) => (
               <ToolSelect value={value} onChange={onChange} />
+            )}
+            span="full"
+          />
+        )}
+        {resource.storage && (
+          <CommonEditableField<string | null>
+            name="Worker Template"
+            canEdit={canEdit && canSelectWorkerTemplate}
+            value={resource.workerTemplate?.id ?? null}
+            ariaLabel="Edit worker template"
+            display={withPendingChange(
+              resource.workerTemplate ? (
+                <EntityReference
+                  id={resource.workerTemplate.id}
+                  entityName="worker_template"
+                  display_name={resource.workerTemplate.name}
+                />
+              ) : (
+                <span>Global default</span>
+              ),
+              "worker_template_id",
+            )}
+            onSave={(value) => saveField({ workerTemplateId: value })}
+            renderEditor={({ value, onChange }) => (
+              <WorkerTemplateSelect value={value} onChange={onChange} />
             )}
             span="full"
           />

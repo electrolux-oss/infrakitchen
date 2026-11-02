@@ -7,6 +7,7 @@ from application.integrations.query_options import build_integration_query_optio
 from application.secrets.query_options import build_secret_query_options
 from application.source_codes.query_options import build_source_code_query_options
 from application.storages.query_options import build_storage_query_options
+from application.worker_templates.query_options import build_worker_template_query_options
 from core.tools.query_options import build_tool_query_options
 from core.database import FieldSpec, build_load_only
 from core.users.query_options import build_user_query_options
@@ -21,6 +22,7 @@ def build_executor_query_options(fields: FieldSpec | None = None) -> list[Any]:
             joinedload(Executor.source_code),
             joinedload(Executor.storage),
             joinedload(Executor.tool),
+            joinedload(Executor.worker_template),
             joinedload(Executor.creator),
         ]
 
@@ -55,6 +57,12 @@ def build_executor_query_options(fields: FieldSpec | None = None) -> list[Any]:
         opts.append(joinedload(Executor.tool).options(*build_tool_query_options(nested)))
     else:
         opts.append(raiseload(Executor.tool))
+
+    if "workerTemplate" in fields or "worker_template" in fields:
+        nested = fields.get("workerTemplate") or fields.get("worker_template")
+        opts.append(joinedload(Executor.worker_template).options(*build_worker_template_query_options(nested)))
+    else:
+        opts.append(raiseload(Executor.worker_template))
 
     if "creator" in fields:
         nested = fields["creator"]

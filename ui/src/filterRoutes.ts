@@ -86,6 +86,35 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "read",
   },
 
+  // ── Worker Templates ─────────────────────────────────────────────────────────
+  {
+    path: "/worker_templates",
+    Component: lz(
+      () => import("./worker_templates/pages/WorkerTemplates"),
+      "WorkerTemplatesPage",
+    ),
+    requiredPermission: "api:worker_template",
+    permissionAction: "read",
+  },
+  {
+    path: "/worker_templates/create",
+    Component: lz(
+      () => import("./worker_templates/pages/WorkerTemplateCreate"),
+      "WorkerTemplateCreatePage",
+    ),
+    requiredPermission: "api:worker_template",
+    permissionAction: "admin",
+  },
+  {
+    path: "/worker_templates/:worker_template_id/:tab?",
+    Component: lz(
+      () => import("./worker_templates/pages/WorkerTemplate"),
+      "WorkerTemplatePage",
+    ),
+    requiredPermission: "api:worker_template",
+    permissionAction: "read",
+  },
+
   // ── Blueprints ───────────────────────────────────────────────────────────────
   {
     path: "/blueprints",

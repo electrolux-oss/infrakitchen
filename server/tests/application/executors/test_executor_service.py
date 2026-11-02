@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import ANY, AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
@@ -1177,6 +1177,68 @@ class TestToolSelection:
 
         mock_tool_service.validate_ready.assert_not_awaited()
         assert mock_executor_crud.update.call_args.args[1] == {"tool_id": None}
+
+    @pytest.mark.asyncio
+    async def test_update_sets_worker_template(
+        self,
+        mock_executor_service,
+        mock_executor_crud,
+        stub_worker_template_service,
+        editable_executor,
+        mocked_user_response,
+    ):
+        worker_template_id = uuid4()
+
+        _ = await mock_executor_service.update_executor(
+            str(editable_executor.id), ExecutorUpdate(worker_template_id=worker_template_id), mocked_user_response
+        )
+
+        stub_worker_template_service.validate_selectable.assert_awaited_once_with(worker_template_id, ANY)
+        assert mock_executor_crud.update.call_args.args[1] == {"worker_template_id": worker_template_id}
+        # tasks queued before the change move to the newly selected workers
+        stub_worker_template_service.retarget_tasks.assert_awaited_once_with("executor", editable_executor.id)
+
+    @pytest.mark.asyncio
+    async def test_update_resets_worker_template(
+        self,
+        mock_executor_service,
+        mock_executor_crud,
+        stub_worker_template_service,
+        editable_executor,
+        mocked_user_response,
+    ):
+        editable_executor.worker_template_id = uuid4()
+
+        _ = await mock_executor_service.update_executor(
+            str(editable_executor.id), ExecutorUpdate(worker_template_id=None), mocked_user_response
+        )
+
+        stub_worker_template_service.validate_selectable.assert_not_awaited()
+        assert mock_executor_crud.update.call_args.args[1] == {"worker_template_id": None}
+
+    @pytest.mark.asyncio
+    async def test_create_with_disabled_worker_template(
+        self,
+        mock_executor_service,
+        mock_executor_crud,
+        stub_worker_template_service,
+        mock_source_code_crud,
+        mock_storage_crud,
+        mocked_source_code,
+        mocked_storage,
+        mocked_user_response,
+        executor_create,
+    ):
+        mock_source_code_crud.get_by_id.return_value = mocked_source_code
+        mock_storage_crud.get_by_id.return_value = mocked_storage
+        stub_worker_template_service.validate_selectable.side_effect = EntityWrongState("Worker template x is disabled")
+        executor = executor_create(None)
+        executor.worker_template_id = uuid4()
+
+        with pytest.raises(EntityWrongState, match="disabled"):
+            _ = await mock_executor_service.create_executor(executor, mocked_user_response)
+
+        mock_executor_crud.create.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_update_source_code_folder_as_admin(

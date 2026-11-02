@@ -19,6 +19,7 @@ import {
   ENTITY_STATUS,
   VERSION_LIFECYCLE_STATE,
 } from "../../utils/constants";
+import { workerTemplateColumn } from "../../worker_templates/components/workerTemplateColumn";
 import { GqlResourceShort } from "../graphql";
 import { hasPendingChanges } from "../utils/pendingChanges";
 
@@ -378,6 +379,7 @@ export const resourceColumns: EntityTableColumn[] = [
     },
   },
   toolColumn(),
+  workerTemplateColumn(),
   {
     field: "workspace",
     headerName: "Workspace",

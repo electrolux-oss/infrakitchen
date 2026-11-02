@@ -38,6 +38,7 @@ DEFAULT_ENTITIES = [
 
 ADMIN_ENTITIES = [
     "auth_provider",
+    "worker_template",
 ]
 
 INFRA_ENTITIES = [

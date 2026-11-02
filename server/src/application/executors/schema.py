@@ -10,6 +10,7 @@ from application.secrets.schema import SecretShort
 from application.source_codes.schema import SourceCodeShort
 from application.integrations.schema import IntegrationShort
 from application.types import IacToolType
+from application.worker_templates.schema import WorkerTemplateShort
 from core.tools.schema import ToolShort
 from core.constants.model import ModelState, ModelStatus
 from core.users.schema import UserShort
@@ -83,6 +84,7 @@ class ExecutorResponse(BaseModel):
         default=None,
     )
     tool: ToolShort | None = Field(default=None)
+    worker_template: WorkerTemplateShort | None = Field(default=None)
     labels: list[str] = Field(default_factory=list)
     revision_number: int = Field(default=1)
 
@@ -124,6 +126,7 @@ class ExecutorCreate(BaseModel):
         default=None,
     )
     tool_id: uuid.UUID | None = Field(default=None)
+    worker_template_id: uuid.UUID | None = Field(default=None)
     labels: list[str] = Field(default_factory=list)
 
 
@@ -152,6 +155,9 @@ class ExecutorUpdate(BaseModel):
     tool_id: OptionalUUID = Field(
         default=cast(Any, MISSING),
     )
+    worker_template_id: OptionalUUID = Field(
+        default=cast(Any, MISSING),
+    )
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -162,7 +168,7 @@ class ExecutorUpdate(BaseModel):
     def at_least_one_field_present(cls, values):
         if not isinstance(values, dict):
             return values
-        if "tool_id" in values:
+        if "tool_id" in values or "worker_template_id" in values:
             return values
         if not any(values.get(field) not in (None, [], "") for field in ExecutorUpdate.model_fields):
             raise ValueError("At least one field must be provided in Executor update.")

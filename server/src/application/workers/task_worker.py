@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import socket
+import time
 from collections.abc import AsyncIterator, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from datetime import datetime, UTC
@@ -25,13 +26,13 @@ from application.workers.utils import (
     get_resource_task,
     get_workspace_task,
 )
+from application.worker_templates.dependencies import get_worker_template_service
 from application.workflows.task import WorkflowTask
 from application.workspaces.task import WorkspaceTask
 from core.audit_logs.handler import set_audit_log_execution
 from core.tools.task import ToolTask, get_tool_task
 from core.config import Settings
 from core.constants.model import EventType, ModelActions, ModelStatus
-from core.db_engine import engine
 from core.dependencies import get_async_session
 from core.utils.event_sender import flush_all_pending_senders
 from core.notifications.controller import NotificationEvent, publish_notification_event
@@ -48,13 +49,14 @@ from core.errors import (
 )
 from core.scheduler.executor import SchedulerExecutor
 from core.task_queue.crud import TaskQueueCRUD
-from core.task_queue.model import TASK_QUEUE_CHANNEL, TaskQueueItemDTO, TaskQueueKind
+from core.task_queue.listener import listen_task_queue
+from core.task_queue.model import TaskQueueItemDTO, TaskQueueKind
 from core.task_queue.service import TaskQueueService
 from core.users.dependencies import get_user_service
 from core.users.model import UserDTO
 from core.workers.crud import WorkerCRUD
 from core.workers.functions import get_host_metadata
-from core.workers.model import WorkerDTO
+from core.workers.model import POOL_METADATA_KEY, WorkerDTO
 from core.workers.service import WorkerService
 from prometheus_client import Counter
 
@@ -112,7 +114,7 @@ class TaskWorker:
         self.name: str = name
         self.session_factory: SessionFactory = session_factory
         self.settings: Settings = settings or Settings()
-        self.worker: WorkerDTO = WorkerDTO(name=name, host=socket.gethostname())
+        self.worker: WorkerDTO = WorkerDTO(name=name, host=self.settings.WORKER_HOST or socket.gethostname())
         self.current_task: TaskQueueItemDTO | None = None
         # The running task's execution, so a lost lease can abort it
         self._execution: asyncio.Task[None] | None = None
@@ -125,6 +127,12 @@ class TaskWorker:
         if self.worker.id is None:
             raise ValueError("Worker ID is not set. Make sure to register the worker before processing tasks.")
         return self.worker.id
+
+    @property
+    def worker_template_id(self) -> UUID | None:
+        """The template an on-demand worker was spawned from; it only runs tasks routed to it.
+        None for static workers, which run tasks routed to no template."""
+        return UUID(self.settings.WORKER_TEMPLATE_ID) if self.settings.WORKER_TEMPLATE_ID else None
 
     @asynccontextmanager
     async def queue(self) -> AsyncIterator[TaskQueueService]:
@@ -140,6 +148,8 @@ class TaskWorker:
 
     async def register(self) -> None:
         self.worker.host_metadata = await get_host_metadata()
+        if self.settings.WORKER_TEMPLATE_ID:
+            self.worker.host_metadata[POOL_METADATA_KEY] = self.settings.WORKER_TEMPLATE_ID
         async with self.workers() as worker_service:
             self.worker = await worker_service.save_worker(self.worker)
 
@@ -150,6 +160,7 @@ class TaskWorker:
             asyncio.create_task(self.heartbeat_loop()),
             asyncio.create_task(self.listen_loop()),
         ]
+        last_work_at = time.monotonic()
         try:
             while not self._stopping.is_set():
                 try:
@@ -159,7 +170,11 @@ class TaskWorker:
                 except Exception as e:
                     logger.error(f"Worker loop error: {e}", exc_info=True)
                     did_work = False
-                if not did_work:
+                if did_work:
+                    last_work_at = time.monotonic()
+                elif await self.idle_expired(last_work_at):
+                    self.stop(f"idle for {self.settings.WORKER_IDLE_EXIT_SECONDS}s")
+                else:
                     await self.wait_for_work()
         finally:
             for task in background:
@@ -167,9 +182,30 @@ class TaskWorker:
             await self.set_status("offline")
             logger.info(f"Worker {self.name} stopped")
 
-    def stop(self) -> None:
+    async def idle_expired(self, last_work_at: float) -> bool:
+        """On-demand workers exit once idle long enough and no task is waiting for a worker."""
+        idle_exit_seconds = self.settings.WORKER_IDLE_EXIT_SECONDS
+        if idle_exit_seconds <= 0 or time.monotonic() - last_work_at < idle_exit_seconds:
+            return False
+        try:
+            async with self.queue() as queue:
+                if await queue.count_claimable(self.worker_template_id):
+                    return False
+            # Offline before the final check: the autoscaler stops counting this worker as free,
+            # so a task queued from now on gets a new worker instead of waiting for this one
+            await self.set_status("offline")
+            async with self.queue() as queue:
+                if await queue.count_claimable(self.worker_template_id) == 0:
+                    return True
+        except Exception as e:
+            logger.error(f"Failed to check the task queue before idle exit: {e}")
+        if self.worker.status == "offline":
+            await self.set_status("free")
+        return False
+
+    def stop(self, reason: str = "draining") -> None:
         """Stop claiming new tasks; the current task is finished first."""
-        logger.info(f"Worker {self.name} is draining")
+        logger.info(f"Worker {self.name} stops claiming tasks: {reason}")
         self._stopping.set()
         self._wakeup.set()
 
@@ -191,6 +227,9 @@ class TaskWorker:
     async def heartbeat(self) -> None:
         async with self.workers() as worker_service:
             self.worker = await worker_service.save_worker(self.worker)
+        # Lets idle workers of a disabled template exit without waiting for their idle timeout
+        if await self.template_disabled():
+            self.stop("its worker template is disabled or deleted")
         task = self.current_task
         if task is not None:
             async with self.queue() as queue:
@@ -214,27 +253,7 @@ class TaskWorker:
 
     async def listen_loop(self) -> None:
         """Wake up immediately on NOTIFY instead of waiting for the next poll."""
-
-        def on_notify(*_: Any) -> None:
-            self._wakeup.set()
-
-        while True:
-            try:
-                async with engine.connect() as conn:
-                    raw = await conn.get_raw_connection()
-                    driver = raw.driver_connection
-                    if driver is None:
-                        raise RuntimeError("No driver connection available for LISTEN")
-                    await driver.add_listener(TASK_QUEUE_CHANNEL, on_notify)
-                    try:
-                        await asyncio.Future()
-                    finally:
-                        await driver.remove_listener(TASK_QUEUE_CHANNEL, on_notify)
-            except asyncio.CancelledError:
-                raise
-            except Exception as e:
-                logger.warning(f"Task queue listener stopped: {e}, falling back to polling for 30s")
-                await asyncio.sleep(30)
+        await listen_task_queue(self._wakeup.set, name="Task queue")
 
     async def set_status(
         self, status: Literal["free", "busy", "offline"], task_info: dict[str, str] | None = None
@@ -244,10 +263,9 @@ class TaskWorker:
         try:
             async with self.workers() as worker_service:
                 await worker_service.change_worker_status(self.worker.id, status)
+                # Kept once the task finished, so the Workers page shows the last task of each worker
                 if status == "busy":
                     await worker_service.set_current_task(self.worker.id, task_info)
-                else:
-                    await worker_service.set_current_task(self.worker.id, None)
             self.worker.status = status
         except Exception as e:
             logger.error(f"Failed to set worker status {status}: {e}")
@@ -257,7 +275,9 @@ class TaskWorker:
     async def run_once(self) -> bool:
         """Reap one dead worker's task or claim and run one queued task. Returns True if work was done."""
         async with self.queue() as queue:
-            expired = await queue.claim_expired(self.worker_id, self.settings.WORKER_LEASE_SECONDS)
+            expired = await queue.claim_expired(
+                self.worker_id, self.settings.WORKER_LEASE_SECONDS, self.worker_template_id
+            )
         if expired is not None:
             await self.reap(expired)
             return True
@@ -265,13 +285,31 @@ class TaskWorker:
         if self._stopping.is_set():
             return False
 
+        if await self.template_disabled():
+            # The tasks of a disabled template wait until it is enabled again
+            self.stop("its worker template is disabled or deleted")
+            return False
+
         async with self.queue() as queue:
-            item = await queue.claim(self.worker_id, self.settings.WORKER_LEASE_SECONDS)
+            item = await queue.claim(self.worker_id, self.settings.WORKER_LEASE_SECONDS, self.worker_template_id)
         if item is None:
             return False
 
         await self.process_task(item)
         return True
+
+    async def template_disabled(self) -> bool:
+        """True for an on-demand worker whose worker template is no longer enabled: it must not take new tasks."""
+        if self.worker_template_id is None:
+            return False
+        try:
+            async with self.session_factory() as session:
+                status = await get_worker_template_service(session).get_status(self.worker_template_id)
+        except Exception as e:
+            # Keep working rather than stalling the queue when the check itself fails
+            logger.error(f"Failed to check the worker template status: {e}")
+            return False
+        return status != ModelStatus.ENABLED
 
     async def process_task(self, item: TaskQueueItemDTO) -> None:
         self.current_task = item

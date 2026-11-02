@@ -18,7 +18,10 @@ export type TaskWaitingReason =
   | "cancel_window"
   | "no_workers"
   | "workers_busy"
-  | "pending_pickup";
+  | "pending_pickup"
+  | "spawning"
+  | "template_backoff"
+  | "template_disabled";
 
 export interface GqlQueuedTask {
   id: string;
@@ -32,9 +35,12 @@ export interface GqlQueuedTask {
   maxRetries: number;
   position: number | null;
   workerHost: string | null;
+  workerTemplateId: string | null;
+  workerTemplateName: string | null;
   creatorId: string | null;
   creatorName: string | null;
   waitingReason: TaskWaitingReason | null;
+  poolReason?: TaskWaitingReason | null;
 }
 
 export interface GqlEntityQueueStatus {

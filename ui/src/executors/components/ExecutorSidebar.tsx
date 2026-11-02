@@ -27,6 +27,8 @@ import { sameStringSet } from "../../common/utils";
 import { ToolSelect, toolLabel } from "../../tools";
 import { IkEntity } from "../../types";
 import { TextField } from "../../ui";
+import { WorkerTemplateSelect } from "../../worker_templates/components/WorkerTemplateSelect";
+import { useCanSelectWorkerTemplate } from "../../worker_templates/hooks/useCanSelectWorkerTemplate";
 import {
   ExecutorUpdateFieldInput,
   EXECUTOR_UPDATE_MUTATION,
@@ -55,6 +57,7 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = userEntityPermissions.includes("admin");
   const canEditInfra = checkActionPermission("api:executor", "write");
+  const canSelectWorkerTemplate = useCanSelectWorkerTemplate();
   // Storage edits can corrupt Terraform/OpenTofu state, so they stay behind an
   // admin permission and an explicit unlock.
   const canEditStorage = canEdit;
@@ -327,6 +330,28 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
           onSave={(value) => saveField({ toolId: value })}
           renderEditor={({ value, onChange }) => (
             <ToolSelect value={value} onChange={onChange} />
+          )}
+          span="full"
+        />
+        <CommonEditableField<string | null>
+          name="Worker Template"
+          canEdit={canEditInfra && canSelectWorkerTemplate}
+          value={executor.workerTemplate?.id ?? null}
+          ariaLabel="Edit worker template"
+          display={
+            executor.workerTemplate ? (
+              <EntityReference
+                id={executor.workerTemplate.id}
+                entityName="worker_template"
+                display_name={executor.workerTemplate.name}
+              />
+            ) : (
+              <span>Global default</span>
+            )
+          }
+          onSave={(value) => saveField({ workerTemplateId: value })}
+          renderEditor={({ value, onChange }) => (
+            <WorkerTemplateSelect value={value} onChange={onChange} />
           )}
           span="full"
         />

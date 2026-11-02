@@ -1,6 +1,6 @@
-from typing import Any
+from typing import Any, cast
 from datetime import datetime, UTC
-from kubernetes_asyncio.client import Configuration, CoreV1Api, ApiClient, AppsV1Api
+from kubernetes_asyncio.client import Configuration, CoreV1Api, ApiClient, AppsV1Api, V1Pod
 
 
 class KubernetesClient:
@@ -15,10 +15,13 @@ class KubernetesClient:
             return namespaces
         return [n.metadata.name for n in namespaces.items]
 
-    async def list_namespaced_pods(self, namespace: str, raw: bool = False):
+    async def list_namespaced_pods(self, namespace: str, raw: bool = False, label_selector: str | None = None):
         async with ApiClient(self.configuration) as api:
             v1 = CoreV1Api(api)
-            pods = await v1.list_namespaced_pod(namespace)
+            if label_selector:
+                pods = await v1.list_namespaced_pod(namespace, label_selector=label_selector)
+            else:
+                pods = await v1.list_namespaced_pod(namespace)
 
             if raw:
                 return pods
@@ -83,6 +86,37 @@ class KubernetesClient:
         async with ApiClient(self.configuration) as api:
             v1 = CoreV1Api(api)
             return await v1.delete_namespaced_pod(pod_name, namespace)
+
+    async def read_namespaced_pod(self, pod_name: str, namespace: str) -> dict[str, Any]:
+        """The pod as a manifest-style dict (camelCase keys), as it would be written in YAML."""
+        async with ApiClient(self.configuration) as api:
+            v1 = CoreV1Api(api)
+            pod = await v1.read_namespaced_pod(pod_name, namespace)
+            return api.sanitize_for_serialization(pod)
+
+    async def read_namespaced_secret_names(self, namespace: str) -> set[str]:
+        async with ApiClient(self.configuration) as api:
+            v1 = CoreV1Api(api)
+            return {item.metadata.name for item in (await v1.list_namespaced_secret(namespace)).items}
+
+    async def read_namespaced_config_map_names(self, namespace: str) -> set[str]:
+        async with ApiClient(self.configuration) as api:
+            v1 = CoreV1Api(api)
+            return {item.metadata.name for item in (await v1.list_namespaced_config_map(namespace)).items}
+
+    async def read_namespaced_pod_log(self, pod_name: str, namespace: str, tail_lines: int = 500) -> str:
+        async with ApiClient(self.configuration) as api:
+            v1 = CoreV1Api(api)
+            return await v1.read_namespaced_pod_log(pod_name, namespace, tail_lines=tail_lines, timestamps=True)
+
+    async def create_namespaced_pod(self, namespace: str, body: dict[str, Any], dry_run: bool = False) -> V1Pod:
+        # The API client serializes plain dicts as-is, so a manifest can be sent without building a V1Pod
+        pod = cast(V1Pod, cast(object, body))
+        async with ApiClient(self.configuration) as api:
+            v1 = CoreV1Api(api)
+            if dry_run:
+                return await v1.create_namespaced_pod(namespace, pod, dry_run="All")
+            return await v1.create_namespaced_pod(namespace, pod)
 
     async def restart_namespaced_deployment(self, deployment: str, namespace: str):
         async with ApiClient(self.configuration) as api:

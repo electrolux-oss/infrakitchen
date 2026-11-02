@@ -46,12 +46,14 @@ class TaskQueueService:
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
 
-    async def claim(self, worker_id: UUID, lease_seconds: int) -> TaskQueueItemDTO | None:
+    async def claim(
+        self, worker_id: UUID, lease_seconds: int, worker_template_id: UUID | None = None
+    ) -> TaskQueueItemDTO | None:
         # Two workers can race for different queued tasks of the same entity; the unique
         # "one running task per entity" index rejects the loser, which then simply retries.
         for _ in range(2):
             try:
-                item = await self.crud.claim(worker_id, lease_seconds)
+                item = await self.crud.claim(worker_id, lease_seconds, worker_template_id)
                 if item:
                     await self.crud.notify_changed(item)
                 await self.crud.commit()
@@ -61,8 +63,10 @@ class TaskQueueService:
             return TaskQueueItemDTO.model_validate(item) if item else None
         return None
 
-    async def claim_expired(self, worker_id: UUID, lease_seconds: int) -> TaskQueueItemDTO | None:
-        item = await self.crud.claim_expired(worker_id, lease_seconds)
+    async def claim_expired(
+        self, worker_id: UUID, lease_seconds: int, worker_template_id: UUID | None = None
+    ) -> TaskQueueItemDTO | None:
+        item = await self.crud.claim_expired(worker_id, lease_seconds, worker_template_id)
         if item:
             await self.crud.notify_changed(item)
         await self.crud.commit()
@@ -128,13 +132,16 @@ class TaskQueueService:
             return {}
 
         now = await self.crud.db_now()
-        workers = await self.crud.worker_counts(datetime.now(UTC) - timedelta(seconds=worker_alive_seconds))
-        workers_online = workers["free"] + workers["busy"]
+        alive_since = datetime.now(UTC) - timedelta(seconds=worker_alive_seconds)
+        pools = await self.crud.worker_counts_by_template(alive_since)
+        # The UI falls back to these for tasks of static workers when a live update has no pool reason
+        static = pools.get(None, {"free": 0, "busy": 0})
 
         statuses: dict[UUID, EntityQueueStatus] = {}
         for item, worker_host, creator_name, position in rows:
             status = statuses.setdefault(
-                item.entity_id, EntityQueueStatus(workers_free=workers["free"], workers_online=workers_online)
+                item.entity_id,
+                EntityQueueStatus(workers_free=static["free"], workers_online=static["free"] + static["busy"]),
             )
             status.tasks.append(
                 QueuedTaskInfo(
@@ -149,6 +156,7 @@ class TaskQueueService:
                     max_retries=item.max_retries,
                     position=position,
                     worker_host=worker_host,
+                    worker_template_id=item.worker_template_id,
                     creator_id=item.created_by,
                     creator_name=creator_name,
                 )
@@ -158,31 +166,51 @@ class TaskQueueService:
             running_entities = {t.entity for t in status.tasks if t.status == TaskQueueStatus.RUNNING}
             for task in status.tasks:
                 if task.status == TaskQueueStatus.QUEUED:
-                    task.waiting_reason = self._waiting_reason(task, running_entities, status, now)
+                    task.pool_reason = self._pool_reason(task, pools.get(task.worker_template_id))
+                    task.waiting_reason = self._waiting_reason(task, running_entities, now) or task.pool_reason
         return statuses
 
     @staticmethod
-    def _waiting_reason(
-        task: QueuedTaskInfo, running_entities: set[str], status: EntityQueueStatus, now: datetime
-    ) -> WaitingReason:
+    def _waiting_reason(task: QueuedTaskInfo, running_entities: set[str], now: datetime) -> WaitingReason | None:
+        """Why the task waits whatever its workers do; None when only its workers can tell."""
         delayed = task.available_at is not None and task.available_at > now
         if delayed and task.retries == 0:
             return WaitingReason.CANCEL_WINDOW
         if task.entity in running_entities:
             return WaitingReason.ENTITY_BUSY
-        if task.available_at is not None and task.available_at > now:
+        if delayed:
             return WaitingReason.RETRY_DELAY
-        if status.workers_online == 0:
-            return WaitingReason.NO_WORKERS
-        if status.workers_free == 0:
+        return None
+
+    @staticmethod
+    def _pool_reason(task: QueuedTaskInfo, workers: dict[str, int] | None) -> WaitingReason:
+        """Why the workers of the task's pool don't take it right now."""
+        free = (workers or {}).get("free", 0)
+        online = free + (workers or {}).get("busy", 0)
+        if online == 0:
+            # A pool of a worker template gets its workers spawned on demand
+            return WaitingReason.SPAWNING if task.worker_template_id else WaitingReason.NO_WORKERS
+        if free == 0:
             return WaitingReason.WORKERS_BUSY
         return WaitingReason.PENDING_PICKUP
+
+    async def count_claimable_by_template(self) -> dict[UUID | None, int]:
+        return await self.crud.count_claimable_by_template()
+
+    async def worker_counts_by_template(self, worker_alive_seconds: int) -> dict[UUID | None, dict[str, int]]:
+        """Free, busy and offline workers per worker pool (None: static workers)."""
+        return await self.crud.worker_counts_by_template(datetime.now(UTC) - timedelta(seconds=worker_alive_seconds))
+
+    async def count_claimable(self, worker_template_id: UUID | None) -> int:
+        """Tasks workers of ``worker_template_id`` could take; None is the pool of static workers."""
+        return await self.crud.count_claimable(worker_template_id)
 
     async def stats(self, worker_alive_seconds: int) -> TaskQueueStats:
         counts = await self.crud.queue_counts()
         oldest: datetime | None = counts["oldest"]
         oldest_seconds = (counts["now"] - oldest).total_seconds() if oldest else 0.0
-        workers = await self.crud.worker_counts(datetime.now(UTC) - timedelta(seconds=worker_alive_seconds))
+        pools = await self.crud.worker_counts_by_template(datetime.now(UTC) - timedelta(seconds=worker_alive_seconds))
+        workers = {status: sum(pool[status] for pool in pools.values()) for status in ("free", "busy", "offline")}
         return TaskQueueStats(
             queued=counts["queued"],
             delayed=counts["delayed"],

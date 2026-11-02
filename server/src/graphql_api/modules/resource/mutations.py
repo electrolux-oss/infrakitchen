@@ -37,6 +37,7 @@ class ResourceCreateInput:
     storage_id: uuid.UUID | None = None
     storage_path: str | None = None
     tool_id: uuid.UUID | None = None
+    worker_template_id: uuid.UUID | None = None
     variables: JSON | None = None
     dependency_tags: JSON | None = None
     dependency_config: JSON | None = None
@@ -57,6 +58,7 @@ class ResourceUpdateInput:
     storage_id: Maybe[uuid.UUID | None] = None
     storage_path: Maybe[str | None] = None
     tool_id: Maybe[uuid.UUID | None] = None
+    worker_template_id: Maybe[uuid.UUID | None] = None
     variables: Maybe[JSON | None] = None
     dependency_tags: Maybe[JSON | None] = None
     dependency_config: Maybe[JSON | None] = None

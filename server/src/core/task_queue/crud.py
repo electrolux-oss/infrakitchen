@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, exists, func, select, update
+from sqlalchemy import ColumnElement, case, delete, exists, func, literal, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
@@ -14,7 +14,7 @@ from core.database import (
 )
 from core.utils.model_tools import is_valid_uuid
 from core.users.model import User
-from core.workers.model import Worker
+from core.workers.model import POOL_METADATA_KEY, Worker, worker_alive
 
 from .enqueue import NOTIFY_STATEMENT, notify_queue_changed, queue_item_event
 from .query_options import build_task_queue_query_options
@@ -95,8 +95,9 @@ class TaskQueueCRUD:
         """Publish the item's new state on the event stream. Delivered when the transaction commits."""
         await notify_queue_changed(self.session, [queue_item_event(item)])
 
-    async def claim(self, worker_id: UUID, lease_seconds: int) -> TaskQueueItem | None:
-        """Atomically take the next claimable task and lease it to ``worker_id``.
+    @staticmethod
+    def _claimable() -> tuple[ColumnElement[bool], ...]:
+        """Queued tasks a free worker could take right now.
 
         Tasks whose entity already has a running task are skipped, so work on a
         single entity is serialized across all workers.
@@ -107,13 +108,63 @@ class TaskQueueCRUD:
             running.entity == TaskQueueItem.entity,
             running.entity_id == TaskQueueItem.entity_id,
         )
+        return (
+            TaskQueueItem.status == TaskQueueStatus.QUEUED,
+            TaskQueueItem.available_at <= func.now(),
+            ~entity_is_busy,
+        )
+
+    @staticmethod
+    def _in_pool(worker_template_id: UUID | None) -> ColumnElement[bool]:
+        """Tasks routed to workers of ``worker_template_id``; None is the pool of static workers."""
+        return TaskQueueItem.worker_template_id.is_not_distinct_from(worker_template_id)
+
+    @staticmethod
+    def _expired() -> tuple[ColumnElement[bool], ...]:
+        """Running tasks whose lease expired: their worker is gone and a worker of the pool must reap them."""
+        return (TaskQueueItem.status == TaskQueueStatus.RUNNING, TaskQueueItem.locked_until < func.now())
+
+    async def _count_demand(self, *conditions: ColumnElement[bool]) -> dict[UUID | None, int]:
+        claimable = (
+            select(
+                TaskQueueItem.worker_template_id,
+                func.count(func.distinct(func.concat(TaskQueueItem.entity, ":", TaskQueueItem.entity_id))).filter(
+                    TaskQueueItem.entity_id.is_not(None)
+                ),
+                func.count().filter(TaskQueueItem.entity_id.is_(None)),
+            )
+            .where(*self._claimable(), *conditions)
+            .group_by(TaskQueueItem.worker_template_id)
+        )
+        expired = (
+            select(TaskQueueItem.worker_template_id, func.count())
+            .where(*self._expired(), *conditions)
+            .group_by(TaskQueueItem.worker_template_id)
+        )
+        demand: dict[UUID | None, int] = {}
+        for template_id, per_entity, without_entity in (await self.session.execute(claimable)).all():
+            demand[template_id] = (per_entity or 0) + (without_entity or 0)
+        for template_id, count in (await self.session.execute(expired)).all():
+            demand[template_id] = demand.get(template_id, 0) + (count or 0)
+        return demand
+
+    async def count_claimable_by_template(self) -> dict[UUID | None, int]:
+        """Per worker pool, how many workers could be busy right now.
+
+        Queued tasks of one entity run one at a time; running tasks with an expired lease count too,
+        as only a worker of their pool can reap them (and unblock their entity).
+        """
+        return await self._count_demand()
+
+    async def count_claimable(self, worker_template_id: UUID | None) -> int:
+        """How many workers of ``worker_template_id`` could be busy right now; None is the pool of static workers."""
+        return (await self._count_demand(self._in_pool(worker_template_id))).get(worker_template_id, 0)
+
+    async def claim(self, worker_id: UUID, lease_seconds: int, worker_template_id: UUID | None) -> TaskQueueItem | None:
+        """Atomically take the next claimable task of the worker's pool and lease it to ``worker_id``."""
         next_id = (
             select(TaskQueueItem.id)
-            .where(
-                TaskQueueItem.status == TaskQueueStatus.QUEUED,
-                TaskQueueItem.available_at <= func.now(),
-                ~entity_is_busy,
-            )
+            .where(*self._claimable(), self._in_pool(worker_template_id))
             .order_by(TaskQueueItem.priority.desc(), TaskQueueItem.available_at, TaskQueueItem.seq)
             .limit(1)
             .with_for_update(skip_locked=True, of=TaskQueueItem)
@@ -135,11 +186,13 @@ class TaskQueueCRUD:
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
-    async def claim_expired(self, worker_id: UUID, lease_seconds: int) -> TaskQueueItem | None:
-        """Take over one running task whose lease expired (its worker is gone)."""
+    async def claim_expired(
+        self, worker_id: UUID, lease_seconds: int, worker_template_id: UUID | None
+    ) -> TaskQueueItem | None:
+        """Take over one running task of the worker's pool whose lease expired (its worker is gone)."""
         expired_id = (
             select(TaskQueueItem.id)
-            .where(TaskQueueItem.status == TaskQueueStatus.RUNNING, TaskQueueItem.locked_until < func.now())
+            .where(*self._expired(), self._in_pool(worker_template_id))
             .order_by(TaskQueueItem.locked_until)
             .limit(1)
             .with_for_update(skip_locked=True)
@@ -235,20 +288,19 @@ class TaskQueueCRUD:
         queued, delayed, running, oldest, db_now = (await self.session.execute(statement)).one()
         return {"queued": queued, "delayed": delayed, "running": running, "oldest": oldest, "now": db_now}
 
-    async def worker_counts(self, alive_since: datetime) -> dict[str, int]:
-        """Count workers by status; workers without a recent heartbeat count as offline."""
-        statement = select(
-            Worker.status,
-            func.count().filter(Worker.updated_at >= alive_since),
-            func.count().filter(Worker.updated_at < alive_since),
-        ).group_by(Worker.status)
-        counts = {"free": 0, "busy": 0, "offline": 0}
-        for status, alive, stale in (await self.session.execute(statement)).all():
-            if status in ("free", "busy"):
-                counts[status] += alive
-                counts["offline"] += stale
-            else:
-                counts["offline"] += alive + stale
+    async def worker_counts_by_template(self, alive_since: datetime) -> dict[UUID | None, dict[str, int]]:
+        """Free, busy and offline workers per worker pool (None: static workers).
+
+        Workers without a heartbeat since ``alive_since`` count as offline.
+        """
+        template_id = Worker.host_metadata[POOL_METADATA_KEY].as_string()
+        status = case((worker_alive(alive_since), Worker.status), else_=literal("offline"))
+        statement = select(template_id, status, func.count()).group_by(template_id, status)
+        counts: dict[UUID | None, dict[str, int]] = {}
+        for pool, pool_status, count in (await self.session.execute(statement)).all():
+            key = UUID(pool) if pool and is_valid_uuid(pool) else None
+            pool_counts = counts.setdefault(key, {"free": 0, "busy": 0, "offline": 0})
+            pool_counts[pool_status] += count
         return counts
 
     async def commit(self) -> None:

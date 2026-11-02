@@ -78,6 +78,12 @@ class TaskQueueItem(Base):
     worker_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("workers.id", ondelete="SET NULL"), nullable=True
     )
+    # Workers spawned from this template are the only ones that claim the task; None means static workers
+    worker_template_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("worker_templates.id", ondelete="SET NULL", name="fk_task_queue_worker_template_id"),
+        nullable=True,
+    )
     locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -104,6 +110,7 @@ class TaskQueueItemDTO(BaseModel):
     retries: int = Field(default=0)
     max_retries: int = Field(default=3)
     worker_id: uuid.UUID | None = Field(default=None)
+    worker_template_id: uuid.UUID | None = Field(default=None)
     locked_until: datetime | None = Field(default=None)
     started_at: datetime | None = Field(default=None)
     finished_at: datetime | None = Field(default=None)
@@ -131,7 +138,11 @@ class WaitingReason(StrEnum):
     ENTITY_BUSY = "entity_busy"  # another task for the same entity is running
     RETRY_DELAY = "retry_delay"  # re-queued after a not-ready error, waiting for its delay
     CANCEL_WINDOW = "cancel_window"  # just requested; held back briefly so the user can cancel it
-    NO_WORKERS = "no_workers"  # no worker has sent a heartbeat recently
+    NO_WORKERS = "no_workers"  # no worker of the task's pool has sent a heartbeat recently
+    SPAWNING = "spawning"  # no worker of the task's worker template is running yet, one is being started
+    # Set by worker templates, which know the state of their pools
+    TEMPLATE_DISABLED = "template_disabled"  # the task's worker template is disabled, no workers are spawned
+    TEMPLATE_BACKOFF = "template_backoff"  # workers of the task's worker template keep failing
     WORKERS_BUSY = "workers_busy"  # workers are online but all busy
     PENDING_PICKUP = "pending_pickup"  # a worker is free and will claim it shortly
 
@@ -150,13 +161,18 @@ class QueuedTaskInfo(BaseModel):
     max_retries: int = 3
     position: int | None = Field(default=None, title="1-based position among all queued tasks")
     worker_host: str | None = None
+    worker_template_id: uuid.UUID | None = Field(default=None, title="Template whose workers run it, None: static")
+    worker_template_name: str | None = Field(default=None, title="Filled in by worker templates")
     creator_id: uuid.UUID | None = None
     creator_name: str | None = None
     waiting_reason: WaitingReason | None = None
+    # Why its workers can't take it right now, whatever the time or entity: the UI recomputes the rest itself
+    pool_reason: WaitingReason | None = None
 
 
 class EntityQueueStatus(BaseModel):
     tasks: list[QueuedTaskInfo] = Field(default_factory=list)
+    # Static workers only (no worker template); tasks of templates carry their own ``pool_reason``
     workers_free: int = 0
     workers_online: int = 0
 

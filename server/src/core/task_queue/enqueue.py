@@ -12,6 +12,7 @@ from core.db_engine import engine
 
 from .model import TASK_QUEUE_CHANNEL, SupersededTask, TaskQueueItem, TaskQueueStatus
 from .notifications import notify_superseded
+from .routing import resolve_targets
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,7 @@ QUEUE_ITEM_FIELDS = (
     "max_retries",
     "created_by",
     "worker_id",
+    "worker_template_id",
 )
 
 
@@ -49,6 +51,17 @@ def queue_item_event(item: Any, **overrides: Any) -> dict[str, Any]:
 async def notify_queue_changed(session: AsyncSession, events: Iterable[dict[str, Any]]) -> None:
     """Publish queue item events on the event stream. Delivered when the transaction commits."""
     await pubsub.notify_in(session, [(pubsub.EVENTS_TOPIC, event) for event in events])
+
+
+async def publish_tasks_changed(session: AsyncSession, items: list[TaskQueueItem]) -> None:
+    """Wake up workers and refresh the UI after queued tasks were changed in place, e.g. routed again.
+
+    Runs in the caller's transaction; the notifications are delivered when it commits.
+    """
+    if not items:
+        return
+    _ = await session.execute(NOTIFY_STATEMENT)
+    await notify_queue_changed(session, [queue_item_event(item) for item in items])
 
 
 def task_target(payload: dict[str, Any]) -> str:
@@ -159,6 +172,7 @@ async def enqueue_tasks(items: list[dict[str, Any]]) -> None:
             _ = await session.execute(select(func.pg_advisory_xact_lock(func.hashtextextended(key, 0))))
         for item in items:
             superseded.extend(await cancel_queued(session, item))
+        await resolve_targets(session, items)
         rows = [to_row(item) for item in items]
         session.add_all(rows)
         await session.flush()

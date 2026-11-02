@@ -152,6 +152,7 @@ export default function DashboardSidebar({
     "/roles/*",
     "/audit_logs/*",
     "/auth_providers/*",
+    "/worker_templates/*",
     "/admin/*",
   ].some((pattern) => matchPath(pattern, pathname));
 

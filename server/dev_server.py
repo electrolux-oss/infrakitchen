@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import logging
 import os
 from prometheus_async.aio import web
@@ -11,12 +12,10 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from application.logger import change_logger, get_uvicorn_log_config
 from build_info import write_build_info
 from core.config import setup_service_environment
-from core.utils.event_sender import EventSender
-from scheduler import schedule_jobs, schedule_polling_job, schedule_task_queue_cleanup_job, start_reload_consumer
+from scheduler import setup_scheduler, stop_consumers
 from worker import run_task_worker
 
 from src.app import app
@@ -58,45 +57,27 @@ def run_sql_migrations():
 
 
 def dev_worker_count() -> int:
-    """Number of task workers to run in-process, from DEV_WORKERS (default 1)."""
+    """Number of task workers to run in-process, from DEV_WORKERS (default 1, 0 disables them)."""
     value = os.getenv("DEV_WORKERS", "1")
     try:
         count = int(value)
     except ValueError:
         logger.warning(f"Invalid DEV_WORKERS={value!r}, running 1 worker")
         return 1
-    return max(count, 1)
+    return max(count, 0)
 
 
 async def start_task_workers(count: int):
     """Runs ``count`` TaskWorkers indefinitely, like separate worker nodes sharing the queue."""
+    if count == 0:
+        logger.info("No in-process task workers (DEV_WORKERS=0): tasks run on on-demand or external workers only")
+        return
     await web.start_http_server(port=8001)
     # Workers register by name + host, so each one needs its own name to get its own worker row
     names = ["task_worker"] if count == 1 else [f"task_worker_{i}" for i in range(1, count + 1)]
     logger.info(f"Starting {count} task worker(s): {', '.join(names)}")
     # uvicorn owns the process signals in dev mode
     _ = await asyncio.gather(*(run_task_worker(handle_signals=False, name=name) for name in names))
-
-
-async def setup_scheduler() -> tuple[AsyncIOScheduler, "asyncio.Task[None]"]:
-    """Initializes and configures the AsyncIOScheduler.
-
-    Returns the scheduler and the background task running its reload consumer so
-    they can both be torn down on shutdown.
-    """
-    scheduler = AsyncIOScheduler()
-
-    event_sender = EventSender("scheduler_job")
-
-    await schedule_jobs(scheduler=scheduler, event_sender=event_sender)
-    await schedule_polling_job(scheduler=scheduler, event_sender=event_sender)
-    schedule_task_queue_cleanup_job(scheduler=scheduler)
-
-    scheduler.start()
-
-    reload_task = asyncio.create_task(start_reload_consumer(scheduler=scheduler, event_sender=event_sender))
-
-    return scheduler, reload_task
 
 
 async def run_server_and_worker():
@@ -106,7 +87,7 @@ async def run_server_and_worker():
     setup_service_environment()
     change_logger()
 
-    scheduler, reload_task = await setup_scheduler()
+    scheduler, consumers = await setup_scheduler()
     worker_task = asyncio.create_task(start_task_workers(dev_worker_count()))
 
     uvicorn_log_config = get_uvicorn_log_config()
@@ -117,13 +98,10 @@ async def run_server_and_worker():
 
     await server.serve()
     scheduler.shutdown(wait=False)
-    reload_task.cancel()
+    await stop_consumers(consumers)
     worker_task.cancel()
-    for task in (reload_task, worker_task):
-        try:
-            await task
-        except asyncio.CancelledError:
-            pass
+    with contextlib.suppress(asyncio.CancelledError):
+        await worker_task
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ import { STORAGE_SHORT_FIELDS } from "../../storages/graphql";
 import { TEMPLATE_SHORT_FIELDS } from "../../templates/graphql";
 import { TOOL_SHORT_FIELDS } from "../../tools/graphql";
 import { USER_SHORT_FIELDS } from "../../users/graphql";
+import { WORKER_TEMPLATE_SHORT_FIELDS } from "../../worker_templates/graphql/fragments";
 import { WORKSPACE_SHORT_FIELDS } from "../../workspaces/graphql";
 
 export const RESOURCE_GRAPHQL_FIELDS = {
@@ -41,6 +42,7 @@ export const RESOURCE_GRAPHQL_FIELDS = {
     secretIds: "secretIds",
     storage: "storage",
     tool: "tool",
+    workerTemplate: "workerTemplate",
     creator: "creator",
     tempState: "tempState",
     scheduledActions: "scheduledActions",
@@ -97,6 +99,7 @@ export const RESOURCE_DETAIL_FIELDS = `
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.secretIds, SECRET_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.storage, STORAGE_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.tool, TOOL_SHORT_FIELDS)}
+  ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.workerTemplate, WORKER_TEMPLATE_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.tempState, RESOURCE_TEMP_STATE_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.scheduledActions, RESOURCE_SCHEDULED_ACTION_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.parents, RESOURCE_SHORT_FIELDS)}
@@ -134,6 +137,10 @@ export const RESOURCE_FIELD_MAP: GraphqlFieldMap = {
   tool: buildNestedSelection(
     RESOURCE_GRAPHQL_FIELDS.relations.tool,
     TOOL_SHORT_FIELDS,
+  ),
+  workerTemplate: buildNestedSelection(
+    RESOURCE_GRAPHQL_FIELDS.relations.workerTemplate,
+    WORKER_TEMPLATE_SHORT_FIELDS,
   ),
   workspace: buildNestedSelection(
     RESOURCE_GRAPHQL_FIELDS.relations.workspace,

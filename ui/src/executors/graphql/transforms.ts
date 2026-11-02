@@ -5,6 +5,7 @@ import { GqlSourceCodeShort } from "../../source_codes/graphql";
 import { GqlStorageShort } from "../../storages/graphql";
 import type { ToolShort } from "../../tools/types";
 import { GqlUserShort } from "../../users/graphql";
+import type { GqlWorkerTemplateShort } from "../../worker_templates/graphql/transforms";
 
 export interface GqlExecutor {
   id: string;
@@ -22,6 +23,7 @@ export interface GqlExecutor {
   storage: GqlStorageShort | null;
   storagePath: string | null;
   tool: ToolShort | null;
+  workerTemplate: GqlWorkerTemplateShort | null;
   labels: string[] | null;
   state: string;
   status: string;

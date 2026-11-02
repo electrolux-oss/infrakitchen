@@ -15,6 +15,7 @@ from application.integrations.model import Integration, IntegrationDTO
 from application.source_code_versions.model import SourceCodeVersion, SourceCodeVersionDTO
 from application.workspaces.model import Workspace
 from core.base_models import Base, BaseEntity
+from application.worker_templates.model import WorkerTemplate
 from core.tools.model import Tool
 from core.constants.model import ModelState, ModelStatus
 from core.users.model import User, UserDTO
@@ -70,6 +71,12 @@ class Resource(BaseEntity):
         UUID(as_uuid=True), ForeignKey("tools.id", ondelete="RESTRICT", name="fk_resources_tool_id"), nullable=True
     )
     tool: Mapped[Tool | None] = relationship("Tool", lazy="joined")
+    worker_template_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("worker_templates.id", ondelete="RESTRICT", name="fk_resources_worker_template_id"),
+        nullable=True,
+    )
+    worker_template: Mapped[WorkerTemplate | None] = relationship("WorkerTemplate", lazy="joined")
     variables: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
     outputs: Mapped[list[Any]] = mapped_column(JSON, default=list)
     dependency_tags: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
@@ -174,6 +181,7 @@ class ResourceDTO(BaseModel):
         default=None,
     )
     tool_id: uuid.UUID | None = Field(default=None)
+    worker_template_id: uuid.UUID | None = Field(default=None)
     project_id: uuid.UUID | None = Field(default=None)
     project: ProjectResponse | None = Field(default=None)
     variables: list[Variables] = Field(default=[])

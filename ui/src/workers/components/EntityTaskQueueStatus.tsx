@@ -49,6 +49,7 @@ const waitingReasonText = (
   const position = task.position
     ? ` Position in queue: #${task.position}.`
     : "";
+  const templateName = task.workerTemplateName ?? "";
   return {
     entity_busy: `Waits for the running task on this ${humanize(entityName).toLowerCase()} to finish.`,
     retry_delay: (
@@ -64,10 +65,14 @@ const waitingReasonText = (
     ) : (
       "Starts shortly. You can cancel it until then."
     ),
-    no_workers:
-      "No workers are online. The task starts as soon as a worker becomes available.",
+    no_workers: task.workerTemplateId
+      ? "No workers are online. The task starts as soon as a worker becomes available."
+      : "No static workers are online. The task starts as soon as one becomes available.",
     workers_busy: `All workers are busy.${position}`,
     pending_pickup: `A worker will pick it up shortly.${position}`,
+    spawning: `A worker is being started from template ${templateName}.`,
+    template_backoff: `Workers of template ${templateName} keep failing, new ones are started after a pause. Check the template's last error.`,
+    template_disabled: `Worker template ${templateName} is disabled.`,
   };
 };
 
@@ -170,6 +175,9 @@ const waitingReason = (
   );
   if (entityBusy) return "entity_busy";
   if (delayed) return "retry_delay";
+  // The worker counts below are for static workers only, the server knows the ones of templates
+  if (task.poolReason) return task.poolReason;
+  if (task.workerTemplateId) return "pending_pickup";
   if (workers?.workersOnline === 0) return "no_workers";
   if (workers?.workersFree === 0) return "workers_busy";
   return "pending_pickup";
@@ -193,6 +201,8 @@ const toQueuedTask = (
   maxRetries: task.maxRetries,
   position: task.position ?? null,
   workerHost: task.workerHost ?? null,
+  workerTemplateId: task.workerTemplateId ?? null,
+  workerTemplateName: task.workerTemplateName ?? null,
   creatorId: task.createdBy,
   creatorName:
     task.creatorName ??
@@ -249,7 +259,11 @@ export const EntityTaskQueueStatus = () => {
     userEntityPermissions.includes("admin") ||
     bootstrapPermissions?.["*"] === "admin";
   const queued = tasks.filter((task) => task.status === "queued");
-  const noWorkers = queued.some((task) => task.waitingReason === "no_workers");
+  const noWorkers = queued.some((task) =>
+    ["no_workers", "template_backoff", "template_disabled"].includes(
+      task.waitingReason ?? "",
+    ),
+  );
   const title =
     queued.length === 0
       ? "Task in progress"

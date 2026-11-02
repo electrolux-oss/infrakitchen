@@ -31,6 +31,7 @@ export interface ResourceCreate {
   secretIds: string[];
   storagePath: string | null;
   toolId: string | null;
+  workerTemplateId: string | null;
   variables: ResourceVariableSchema[];
   outputs: object[];
   dependencyTags: object[];

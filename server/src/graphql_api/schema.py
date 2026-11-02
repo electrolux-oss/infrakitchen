@@ -37,6 +37,8 @@ from graphql_api.modules.source_code_version.queries import SourceCodeVersionQue
 from graphql_api.modules.source_code_version.mutations import SourceCodeVersionMutation
 from graphql_api.modules.secret.queries import SecretQuery
 from graphql_api.modules.secret.mutations import SecretMutation
+from graphql_api.modules.worker_template.queries import WorkerTemplateQuery
+from graphql_api.modules.worker_template.mutations import WorkerTemplateMutation
 from graphql_api.modules.storage.queries import StorageQuery
 from graphql_api.modules.storage.mutations import StorageMutation
 from graphql_api.modules.scheduler.queries import SchedulerQuery
@@ -97,6 +99,7 @@ class Query(
     SourceCodeQuery,
     SourceCodeVersionQuery,
     SecretQuery,
+    WorkerTemplateQuery,
     SchedulerQuery,
     StorageQuery,
     ExecutorQuery,
@@ -144,6 +147,7 @@ class Mutation(
     SourceCodeVersionMutation,
     StorageMutation,
     SecretMutation,
+    WorkerTemplateMutation,
     SchedulerMutation,
     ExecutorMutation,
     FavoriteMutation,

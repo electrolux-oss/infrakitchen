@@ -17,6 +17,7 @@ from application.secrets.model import Secret
 from application.source_codes.model import SourceCode
 from application.source_code_versions.model import SourceCodeVersion
 from application.storages.model import Storage
+from application.worker_templates.dependencies import get_worker_template_service
 from application.templates.model import Template
 from application.workspaces.model import Workspace
 from application.workflows.model import Workflow
@@ -142,6 +143,7 @@ async def _load_task_queue_status(
         [UUID(key) for key in keys],
         worker_alive_seconds(),
     )
+    await get_worker_template_service(session).describe_queue_pools(statuses)
     return [statuses.get(UUID(key)) for key in keys]
 
 

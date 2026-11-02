@@ -72,17 +72,31 @@ const remember = (finished: string[], id: string) =>
   finished.includes(id) ? finished : [...finished, id].slice(-FINISHED_MEMORY);
 
 /** Fill details the newer state doesn't have from the older one. */
-const keepDetails = (next: QueueTask, prev: QueueTask | undefined): Entry => ({
-  ...next,
-  entityData: next.entityData ?? prev?.entityData,
-  creatorName: next.creatorName ?? prev?.creatorName,
-  // Entity page queries don't carry the worker id, only its host
-  workerHost:
-    next.workerHost ??
-    ((prev?.workerId ?? next.workerId) === next.workerId
-      ? prev?.workerHost
-      : undefined),
-});
+const keepDetails = (next: QueueTask, prev: QueueTask | undefined): Entry => {
+  // Routed to other workers (selection or default changed): what is known of the old ones doesn't apply
+  const samePool =
+    next.workerTemplateId === undefined ||
+    (prev?.workerTemplateId ?? null) === (next.workerTemplateId ?? null);
+  return {
+    ...next,
+    workerTemplateId:
+      next.workerTemplateId !== undefined
+        ? next.workerTemplateId
+        : prev?.workerTemplateId,
+    workerTemplateName:
+      next.workerTemplateName ??
+      (samePool ? prev?.workerTemplateName : undefined),
+    poolReason: next.poolReason ?? (samePool ? prev?.poolReason : undefined),
+    entityData: next.entityData ?? prev?.entityData,
+    creatorName: next.creatorName ?? prev?.creatorName,
+    // Entity page queries don't carry the worker id, only its host
+    workerHost:
+      next.workerHost ??
+      ((prev?.workerId ?? next.workerId) === next.workerId
+        ? prev?.workerHost
+        : undefined),
+  };
+};
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
@@ -108,6 +122,9 @@ const reducer = (state: State, action: Action): State => {
           // A status change moves the task in the queue
           position: undefined,
           workerHost: undefined,
+          // Left to keepDetails, which drops them when the task was routed to other workers
+          workerTemplateName: undefined,
+          poolReason: undefined,
         } as QueueTask,
         prev,
       );
@@ -200,6 +217,7 @@ const fromQueryItem = (item: GqlTaskQueueItem): QueueTask => ({
   maxRetries: item.maxRetries,
   createdBy: item.createdBy ?? item.creator?.id ?? null,
   workerId: item.workerId,
+  workerTemplateId: item.workerTemplateId,
   entityData: item.entityData,
   creatorName: item.creator?.identifier ?? null,
   workerHost: item.workerHost,
@@ -395,6 +413,9 @@ export const TaskQueueProvider = ({ children }: { children: ReactNode }) => {
           maxRetries: task.maxRetries,
           createdBy: task.creatorId,
           workerId: null,
+          workerTemplateId: task.workerTemplateId,
+          workerTemplateName: task.workerTemplateName,
+          poolReason: task.poolReason ?? null,
           creatorName: task.creatorName,
           workerHost: task.workerHost,
           position: task.position,

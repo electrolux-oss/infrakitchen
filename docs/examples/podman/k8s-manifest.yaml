@@ -6,6 +6,31 @@ metadata:
   name: <SERVICE_ACCOUNT_NAME>
   namespace: infrakitchen
 ---
+# Optional: lets the scheduler and backend manage on-demand worker pods (see docs/operations/on_demand_workers)
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: Role
+# metadata:
+#   name: infrakitchen-worker-manager
+#   namespace: infrakitchen
+# rules:
+#   - apiGroups: [""]
+#     resources: ["pods"]
+#     verbs: ["get", "list", "create", "delete"]
+# ---
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: RoleBinding
+# metadata:
+#   name: infrakitchen-worker-manager
+#   namespace: infrakitchen
+# subjects:
+#   - kind: ServiceAccount
+#     name: <SERVICE_ACCOUNT_NAME>
+#     namespace: infrakitchen
+# roleRef:
+#   kind: Role
+#   name: infrakitchen-worker-manager
+#   apiGroup: rbac.authorization.k8s.io
+---
 # Service for InfraKitchen backend
 apiVersion: v1
 kind: Service

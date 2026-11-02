@@ -9,6 +9,7 @@ from application.integrations.service import IntegrationService
 from application.executors.model import Executor, ExecutorDTO
 from application.source_code_versions.service import SourceCodeService
 from application.storages.service import StorageService
+from application.worker_templates.service import WorkerTemplateService
 from core.audit_logs.handler import AuditLogHandler
 from core.base_models import PatchBodyModel
 from core.tools.service import ToolService
@@ -60,6 +61,7 @@ class ExecutorService:
         task_service: TaskEntityService,
         favorite_service: FavoriteService,
         tool_service: ToolService,
+        worker_template_service: WorkerTemplateService,
     ):
         self.crud: ExecutorCRUD = crud
         self.integration_service: IntegrationService = integration_service
@@ -73,6 +75,7 @@ class ExecutorService:
         self.task_service: TaskEntityService = task_service
         self.favorite_service: FavoriteService = favorite_service
         self.tool_service: ToolService = tool_service
+        self.worker_template_service: WorkerTemplateService = worker_template_service
 
     async def get_dto_by_id(self, executor_id: str | UUID) -> ExecutorDTO | None:
         if not is_valid_uuid(executor_id):
@@ -163,6 +166,9 @@ class ExecutorService:
         integration_ids = [i.id if isinstance(i, IntegrationShort) else i for i in executor.integration_ids]
         await require_entity_write_access(requester, "integration", integration_ids)
         await require_entity_write_access(requester, "secret", executor.secret_ids)
+
+        if executor.worker_template_id is not None:
+            _ = await self.worker_template_service.validate_selectable(executor.worker_template_id, requester)
 
         body = executor.model_dump(exclude_unset=True)
 
@@ -255,6 +261,15 @@ class ExecutorService:
             if executor.tool_id is not None and executor.tool_id != existing_executor.tool_id:
                 _ = await self.tool_service.validate_ready(executor.tool_id)
             body["tool_id"] = executor.tool_id
+        if "worker_template_id" in executor.model_fields_set:
+            # None resets to the global default template
+            # a disabled template stays selected, its tasks wait until it is enabled again
+            if (
+                executor.worker_template_id is not None
+                and executor.worker_template_id != existing_executor.worker_template_id
+            ):
+                _ = await self.worker_template_service.validate_selectable(executor.worker_template_id, requester)
+            body["worker_template_id"] = executor.worker_template_id
 
         if not body:
             raise ValueError("No fields to update")
@@ -286,6 +301,9 @@ class ExecutorService:
                     raise EntityWrongState("Storage is not provisioned")
 
         await self.crud.update(existing_executor, body)
+        if "worker_template_id" in body:
+            # tasks queued before the change must run on the newly selected workers
+            _ = await self.worker_template_service.retarget_tasks("executor", existing_executor.id)
         await self.revision_handler.handle_revision(existing_executor)
         await self.audit_log_handler.create_log(
             existing_executor_pydantic.id,

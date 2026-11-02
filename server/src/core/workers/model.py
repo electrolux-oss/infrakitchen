@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from ..base_models import BaseModel, Base
 
-from sqlalchemy import JSON, UUID, DateTime, func
+from sqlalchemy import JSON, UUID, ColumnElement, DateTime, and_, func
 
 
 logger = logging.getLogger(__name__)
@@ -28,13 +28,22 @@ class Worker(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), default=func.now())
 
 
+# host_metadata key of the pool an on-demand worker runs tasks of (its worker template), absent on static workers
+POOL_METADATA_KEY = "worker_template_id"
+
+
+def worker_alive(alive_since: datetime) -> ColumnElement[bool]:
+    """Workers that sent a heartbeat since ``alive_since`` and did not go offline."""
+    return and_(Worker.updated_at >= alive_since, Worker.status != "offline")
+
+
 class WorkerDTO(BaseModel):
     id: uuid.UUID | None = Field(default=None)
     name: str = Field(..., title="Worker name")
     host: str = Field(..., title="Worker host")
     host_metadata: dict[str, str] = Field(default={}, title="Worker metadata")
     status: Literal["free", "busy", "offline"] = Field(default="free", title="Worker status")
-    current_task: dict[str, str] | None = Field(default=None, title="Currently running task")
+    current_task: dict[str, str] | None = Field(default=None, title="Running task, or the last one of a free worker")
     tasks_completed: int | None = Field(default=0, title="Total tasks completed")
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

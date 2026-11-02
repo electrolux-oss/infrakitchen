@@ -1,0 +1,79 @@
+from datetime import datetime, UTC
+from typing import Any, Literal
+import uuid
+
+from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy import UUID, Boolean, DateTime, ForeignKey, Index, JSON, Text, func, text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Enum as SQLAlchemyEnum
+
+from core.base_models import BaseEntity
+from core.constants.model import ModelStatus
+from core.users.model import User, UserDTO
+
+from .schema import WorkerProviderConfig, WorkerProviderType
+
+
+class WorkerTemplate(BaseEntity):
+    """Describes how to spawn task workers on demand with a worker provider (e.g. a Kubernetes pod)."""
+
+    __tablename__: str = "worker_templates"
+    __table_args__ = (
+        # at most one template is the global default
+        Index("uq_worker_templates_is_default", "is_default", unique=True, postgresql_where=text("is_default")),
+    )
+
+    name: Mapped[str] = mapped_column(unique=True)
+    description: Mapped[str] = mapped_column(default="")
+    provider: Mapped[str] = mapped_column()
+    configuration: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    max_workers: Mapped[int] = mapped_column(default=3)
+    idle_timeout_seconds: Mapped[int] = mapped_column(default=300)
+    # used by resources and executors that don't select a template, and by all other tasks
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
+    last_error: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
+    # Autoscaler backoff after failed workers or spawn errors; kept here so every scheduler process shares it
+    spawn_failures: Mapped[int] = mapped_column(default=0, server_default="0", nullable=False)
+    spawn_blocked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+    spawn_failed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+    labels: Mapped[list[str]] = mapped_column(JSON, default=list)
+    creator: Mapped[User] = relationship("User", lazy="joined")
+
+    status: Mapped[ModelStatus] = mapped_column(
+        SQLAlchemyEnum(ModelStatus, name="model_status", native_enum=False),
+        nullable=False,
+        default=ModelStatus.ENABLED,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), default=func.now())
+    created_by: Mapped[str | uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+
+
+class WorkerTemplateDTO(BaseModel):
+    id: uuid.UUID = Field(...)
+
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    status: Literal[
+        ModelStatus.ENABLED,
+        ModelStatus.DISABLED,
+    ] = Field(default=ModelStatus.ENABLED)
+
+    revision_number: int = Field(default=1)
+    created_by: UserDTO | uuid.UUID = Field()
+
+    name: str = Field(...)
+    description: str = Field(default="")
+    provider: WorkerProviderType = Field(..., frozen=True)
+    configuration: WorkerProviderConfig = Field(...)
+    max_workers: int = Field(default=3)
+    idle_timeout_seconds: int = Field(default=300)
+    is_default: bool = Field(default=False)
+    last_error: str | None = Field(default=None)
+    spawn_failures: int = Field(default=0)
+    spawn_blocked_until: datetime | None = Field(default=None)
+    spawn_failed_at: datetime | None = Field(default=None)
+    labels: list[str] = Field(default_factory=list)
+
+    model_config = ConfigDict(from_attributes=True)

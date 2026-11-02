@@ -11,6 +11,7 @@ const ENTITY_PATHS: Record<string, string> = {
   template: "templates",
   integration: "integrations",
   auth_provider: "auth_providers",
+  worker_template: "worker_templates",
 };
 
 const ENTITY_LABELS: Record<string, string> = {
@@ -26,6 +27,7 @@ const ENTITY_LABELS: Record<string, string> = {
   template: "View template",
   integration: "View integration",
   auth_provider: "View auth provider",
+  worker_template: "View worker template",
 };
 
 export interface NotificationEntityLink {

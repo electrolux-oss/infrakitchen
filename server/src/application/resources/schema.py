@@ -14,6 +14,7 @@ from application.integrations.schema import IntegrationShort
 from application.source_code_versions.schema import SourceCodeVersionShort
 from application.validation_rules.schema import ValidationRuleResponse
 from application.workspaces.schema import WorkspaceShort
+from application.worker_templates.schema import WorkerTemplateShort
 from core.tools.schema import ToolShort
 from core.constants.model import ModelState, ModelStatus
 from core.users.schema import UserShort
@@ -138,6 +139,7 @@ class ResourceResponse(BaseModel):
         default=None,
     )
     tool: ToolShort | None = Field(default=None)
+    worker_template: WorkerTemplateShort | None = Field(default=None)
     variables: list[Variables] = Field(default=[])
     outputs: list[Outputs] = Field(default=[])
     dependency_tags: list[DependencyTag] = Field(default_factory=list)
@@ -188,6 +190,7 @@ class ResourceCreate(BaseModel):
         default=None,
     )
     tool_id: uuid.UUID | None = Field(default=None)
+    worker_template_id: uuid.UUID | None = Field(default=None)
     variables: list[Variables] = Field(default=[])
     dependency_tags: list[DependencyTag] = Field(default_factory=list)
     dependency_config: list[DependencyConfig] = Field(default_factory=list)
@@ -229,6 +232,9 @@ class ResourceUpdate(BaseModel):
         default=cast(Any, MISSING),
     )
     tool_id: OptionalUUID = Field(
+        default=cast(Any, MISSING),
+    )
+    worker_template_id: OptionalUUID = Field(
         default=cast(Any, MISSING),
     )
 

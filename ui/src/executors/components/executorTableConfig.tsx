@@ -10,6 +10,7 @@ import { StatusLabel } from "../../common/components/labels";
 import { toolColumn } from "../../tools/components/toolColumn";
 import { RenderCellParams } from "../../ui";
 import { ENTITY_STATE, ENTITY_STATUS } from "../../utils/constants";
+import { workerTemplateColumn } from "../../worker_templates/components/workerTemplateColumn";
 
 export const executorColumns: EntityTableColumn[] = [
   {
@@ -126,6 +127,7 @@ export const executorColumns: EntityTableColumn[] = [
     ),
   },
   toolColumn(),
+  workerTemplateColumn(),
   ...createdUpdatedColumns({ withCreator: true }),
   labelsColumn("executor"),
 ];

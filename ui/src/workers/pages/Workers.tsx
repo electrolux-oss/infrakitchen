@@ -1,5 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
+import { useNavigate } from "react-router";
+
+import { useConfig } from "../../common";
 import { Entity } from "../../common/components/entities/Entity";
 import { entityIcons } from "../../common/components/entities/entityIcons";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
@@ -8,9 +11,12 @@ import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { StatusLabel } from "../../common/components/labels";
 import PageContainer from "../../common/PageContainer";
 import { PermissionWrapper } from "../../common/wrappers/PermissionWrapper";
+import { HeroDocumentTextIcon, HeroPlusCircleIcon } from "../../icons";
 import { TaskQueueButton } from "../../tasks/components/TaskQueueDialog";
-import { Tooltip } from "../../ui";
+import { Button, IconButton, Tooltip } from "../../ui";
 import { RenderCellParams } from "../../ui";
+import { WorkerLogsDialog } from "../../worker_templates/components/WorkerLogsDialog";
+import { WORKER_LOGS_QUERY } from "../../worker_templates/graphql";
 import { WORKER_FIELD_MAP } from "../graphql";
 
 // Helper function to flatten nested objects,
@@ -69,6 +75,12 @@ const HostInfoField = {
 };
 
 export default function WorkerList() {
+  const { linkPrefix } = useConfig();
+  const navigate = useNavigate();
+  const [logsWorker, setLogsWorker] = useState<{
+    id: string;
+    host: string;
+  } | null>(null);
   const columns = useMemo(
     () => [
       {
@@ -76,6 +88,12 @@ export default function WorkerList() {
         headerName: "Host",
         flex: 1,
         hideable: false,
+      },
+      {
+        // On-demand workers are named after the worker template they were spawned from
+        field: "name",
+        headerName: "Name",
+        flex: 1,
       },
       {
         field: "status",
@@ -149,6 +167,32 @@ export default function WorkerList() {
         ),
       },
       HostInfoField,
+      {
+        field: "logs",
+        headerName: "",
+        width: 60,
+        sortable: false,
+        hideable: false,
+        fetchFields: ["id", "host", "hostMetadata"],
+        // Only workers spawned from a worker template have logs to read
+        renderCell: (params: RenderCellParams) =>
+          params.row.hostMetadata?.worker_template_id ? (
+            <PermissionWrapper
+              requiredPermission="api:worker_template"
+              permissionAction="read"
+            >
+              <Tooltip title="Logs">
+                <IconButton
+                  onClick={() =>
+                    setLogsWorker({ id: params.row.id, host: params.row.host })
+                  }
+                >
+                  <HeroDocumentTextIcon className="size-5" />
+                </IconButton>
+              </Tooltip>
+            </PermissionWrapper>
+          ) : null,
+      },
     ],
     [],
   );
@@ -159,13 +203,27 @@ export default function WorkerList() {
       icon={entityIcons.worker}
       description="The processes that pick up and execute infrastructure tasks."
       actions={
-        // The queue is task data, so it needs task read access on top of worker access
-        <PermissionWrapper
-          requiredPermission="api:task"
-          permissionAction="read"
-        >
-          <TaskQueueButton />
-        </PermissionWrapper>
+        <div className="flex items-center gap-2">
+          {/* The queue is task data, so it needs task read access on top of worker access */}
+          <PermissionWrapper
+            requiredPermission="api:task"
+            permissionAction="read"
+          >
+            <TaskQueueButton />
+          </PermissionWrapper>
+          {/* Workers are not created directly: on-demand ones are spawned from worker templates */}
+          <PermissionWrapper
+            requiredPermission="api:worker_template"
+            permissionAction="admin"
+          >
+            <Button
+              onClick={() => navigate(`${linkPrefix}worker_templates/create`)}
+              startIcon={<HeroPlusCircleIcon />}
+            >
+              Create Worker Template
+            </Button>
+          </PermissionWrapper>
+        </div>
       }
     >
       <EntityFetchTable
@@ -173,6 +231,13 @@ export default function WorkerList() {
         entityName="worker"
         columns={columns}
         entityFieldMap={WORKER_FIELD_MAP}
+      />
+      <WorkerLogsDialog
+        title={logsWorker?.host ?? null}
+        query={WORKER_LOGS_QUERY}
+        variables={{ id: logsWorker?.id }}
+        resultKey="workerLogs"
+        onClose={() => setLogsWorker(null)}
       />
     </PageContainer>
   );

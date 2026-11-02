@@ -47,6 +47,8 @@ import {
   transformValidationRulesByVariable,
   VALIDATION_RULES_BY_TEMPLATE_QUERY,
 } from "../../validation_rules/graphql";
+import { WorkerTemplateSelect } from "../../worker_templates/components/WorkerTemplateSelect";
+import { useCanSelectWorkerTemplate } from "../../worker_templates/hooks/useCanSelectWorkerTemplate";
 import { ResourceVariableForm } from "../components/variables/ResourceVariablesForm";
 import { GqlResource, RESOURCE_VARIABLE_SCHEMA_QUERY } from "../graphql";
 import { CREATE_RESOURCE_MUTATION } from "../graphql/mutations";
@@ -76,10 +78,12 @@ const toCloneDefaults = (source: GqlResource): Partial<ResourceCreate> => ({
   storageId: source.storage?.id ?? "",
   storagePath: "",
   toolId: source.tool?.id ?? "",
+  workerTemplateId: source.workerTemplate?.id ?? "",
 });
 
 const ResourceCreatePageInner = () => {
   const { ikApi, linkPrefix } = useConfig();
+  const canSelectWorkerTemplate = useCanSelectWorkerTemplate();
   const {
     control,
     formState: { errors },
@@ -192,6 +196,9 @@ const ResourceCreatePageInner = () => {
         ...data,
         storageId: data.storageId || null,
         toolId: data.toolId || null,
+        // a cloned selection is only kept by users who may select one
+        workerTemplateId:
+          (canSelectWorkerTemplate && data.workerTemplateId) || null,
         workspaceId: data.workspaceId || null,
         projectId: data.projectId || null,
         sourceCodeVersionId: data.sourceCodeVersionId || null,
@@ -215,7 +222,7 @@ const ResourceCreatePageInner = () => {
           setSaving(false);
         });
     },
-    [ikApi, navigate, setSaving, linkPrefix],
+    [ikApi, navigate, setSaving, linkPrefix, canSelectWorkerTemplate],
   );
 
   const handleInvalidSave = useCallback(
@@ -1165,6 +1172,19 @@ const ResourceCreatePageInner = () => {
                     />
                   )}
 
+                  {watchedStorage && (
+                    <Controller
+                      name="workerTemplateId"
+                      control={control}
+                      render={({ field }) => (
+                        <WorkerTemplateSelect
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
+                      )}
+                    />
+                  )}
+
                   <Controller
                     name="projectId"
                     control={control}
@@ -1333,6 +1353,7 @@ const ResourceCreatePage = () => {
           storageId: "",
           storagePath: "",
           toolId: "",
+          workerTemplateId: "",
         },
     mode: "onChange",
   });

@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 import logging
 from typing import Any, Literal
 from uuid import UUID
@@ -63,6 +63,36 @@ class WorkerService:
         await self.crud.commit()
 
         return WorkerDTO.model_validate(response)
+
+    async def get_by_hosts(self, hosts: list[str]) -> list[WorkerResponse]:
+        """Workers registered on ``hosts``, oldest update first."""
+        return [WorkerResponse.model_validate(worker) for worker in await self.crud.get_by_hosts(hosts)]
+
+    async def get_live_hosts(self, alive_seconds: int) -> set[str]:
+        """Hosts with a worker that sent a heartbeat within ``alive_seconds`` and is not offline."""
+        return await self.crud.get_live_hosts(datetime.now(UTC) - timedelta(seconds=alive_seconds))
+
+    async def get_hosts_with_prefix(self, prefix: str) -> set[str]:
+        return await self.crud.get_hosts_with_prefix(prefix)
+
+    async def delete_by_hosts(self, hosts: list[str]) -> int:
+        """Remove the rows of workers that ran on ``hosts``, e.g. deleted on-demand worker pods."""
+        deleted = await self.crud.delete_by_hosts(hosts)
+        await self.crud.commit()
+        return deleted
+
+    async def delete_gone(self, pool_id: str, keep_hosts: set[str], alive_seconds: int) -> int:
+        """Remove rows of dead on-demand workers of ``pool_id`` whose host is not in ``keep_hosts``,
+        e.g. workers whose pod was deleted by someone else."""
+        deleted = await self.crud.delete_gone(pool_id, keep_hosts, datetime.now(UTC) - timedelta(seconds=alive_seconds))
+        await self.crud.commit()
+        return deleted
+
+    async def mark_stale_offline(self, stale_after_seconds: int) -> int:
+        """Set workers that stopped heartbeating (e.g. killed without a clean shutdown) to offline."""
+        updated = await self.crud.mark_stale_offline(datetime.now(UTC) - timedelta(seconds=stale_after_seconds))
+        await self.crud.commit()
+        return updated
 
     async def change_worker_status(self, worker_id: str | UUID, status: Literal["free", "busy", "offline"]) -> None:
         worker = await self.crud.get_by_id(str(worker_id))
