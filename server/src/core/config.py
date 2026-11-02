@@ -60,6 +60,13 @@ class Settings(BaseSettings):
     CACHE_DISABLED: str = "false"
     JWT_KEY: str = "supersecret"
     SESSION_EXPIRATION: str = "3600"
+    OTEL_METRICS_ENABLED: bool = False
+    # Lets FastAPI export request traces and error logs over OTLP (API only).
+    FASTAPI_OTEL_AUTO_CONFIGURE: bool = False
+    OTEL_SERVICE_NAME: str = "infrakitchen"
+    OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://localhost:4318"
+    OTEL_EXPORTER_OTLP_PROTOCOL: str = "http/protobuf"
+    OTEL_RESOURCE_ATTRIBUTES: str = ""
     # Local directory where workers unpack IaC tools (tofu/terraform) stored in the database
     TOOL_CACHE_DIR: str = os.path.join(tempfile.gettempdir(), "infrakitchen", "tools")
     # Task queue / worker settings

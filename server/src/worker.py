@@ -4,13 +4,11 @@ import os
 import signal
 import sys
 
-from prometheus_async.aio import web
-
-
 sys.path.append(os.path.join(os.path.dirname(__file__), "."))
 
 from application.logger import change_logger
-from core.config import setup_service_environment
+from core.config import Settings, setup_service_environment
+from core.telemetry import init_metrics
 from application.workers import TaskWorker
 
 change_logger()
@@ -29,8 +27,7 @@ async def run_task_worker(handle_signals: bool = True, name: str = "task_worker"
 
 
 async def main():
-    # prometheus
-    await web.start_http_server(port=8001)
+    init_metrics(service_name=f"{Settings().OTEL_SERVICE_NAME}-worker")
     await run_task_worker()
 
 
