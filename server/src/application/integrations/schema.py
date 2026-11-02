@@ -65,6 +65,21 @@ class GCPIntegrationConfig(BaseModel):
     gcp_project_id: str = Field(...)
     integration_provider: Literal["gcp"] = Field(default="gcp", frozen=True)
 
+    @field_validator(
+        "gcp_wif_pool_provider_audience",
+        "gcp_wif_service_account_email",
+        "gcp_wif_service_account_impersonation_url",
+        "gcp_oidc_subject",
+        mode="before",
+    )
+    @classmethod
+    def normalize_optional_wif_strings(cls, value: object) -> object:
+        # The UI submits blank optional fields as "" and textareas may add stray whitespace.
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+
     @field_validator("gcp_wif_pool_provider_audience")
     @classmethod
     def validate_gcp_wif_pool_provider_audience(cls, value: str | None) -> str | None:
