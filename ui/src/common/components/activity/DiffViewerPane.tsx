@@ -29,21 +29,23 @@ export default function DiffViewerPane({
     const parent = parentRef.current;
     if (!parent) return;
 
-    const dark = resolvedMode === "dark";
+    // Tinted from the theme's status colors, so they follow every theme.
+    const tint = (color: string, percent: number) =>
+      `color-mix(in srgb, var(${color}) ${percent}%, transparent)`;
     const diffTheme = EditorView.theme({
       "&.cm-merge-a .cm-changedLine, .cm-deletedChunk": {
-        backgroundColor: dark ? "#f8717114" : "#ef44440d",
+        backgroundColor: tint("--ik-error", 8),
       },
       "&.cm-merge-b .cm-changedLine, .cm-inlineChangedLine": {
-        backgroundColor: dark ? "#4ade8014" : "#22c55e0d",
+        backgroundColor: tint("--ik-success", 8),
       },
       "&.cm-merge-a .cm-changedText, .cm-deletedChunk .cm-deletedText, &.cm-merge-b .cm-deletedText":
         {
-          background: dark ? "#f8717133" : "#ef444426",
+          background: tint("--ik-error", 20),
           textDecoration: "none",
         },
       "&.cm-merge-b .cm-changedText": {
-        background: dark ? "#4ade8033" : "#22c55e26",
+        background: tint("--ik-success", 20),
         textDecoration: "none",
       },
     });

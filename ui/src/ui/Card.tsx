@@ -58,7 +58,7 @@ export function CardHeader({
         {title && (
           <div
             className={cn(
-              "d-card-title block text-[1.25rem] leading-[1.334] font-semibold",
+              "d-card-title block text-(length:--text-h6) leading-[1.334] font-semibold",
               titleClassName,
             )}
           >

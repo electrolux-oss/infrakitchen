@@ -205,7 +205,9 @@ export const EntityCard = ({
       />
       <CardContent className="grow pb-3">
         <Divider className="mb-3" />
-        <div className="flex justify-between text-[14px]">{entityFields}</div>
+        <div className="flex justify-between text-(length:--text-body2)">
+          {entityFields}
+        </div>
         {labels.length > 0 && (
           <div className="mt-3">
             <Labels labels={labels} max={labelsMax} margins={false} />

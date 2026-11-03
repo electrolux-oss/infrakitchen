@@ -129,7 +129,7 @@ function ProjectHeatMapTile({
         navigate(projectPageResourcesUrl);
       }}
       className={cn(
-        "flex min-h-32 cursor-pointer flex-col gap-2 rounded-[12px] border p-3 text-fg no-underline [transition:transform_120ms_ease,box-shadow_120ms_ease] hover:[transform:translateY(-1px)] hover:shadow-[var(--ik-shadow-2)]",
+        "flex min-h-32 cursor-pointer flex-col gap-2 rounded-xl border p-3 text-fg no-underline [transition:transform_120ms_ease,box-shadow_120ms_ease] hover:[transform:translateY(-1px)] hover:shadow-[var(--ik-shadow-2)]",
         SCORE_CARD_CLASSES[scoreColor],
       )}
     >

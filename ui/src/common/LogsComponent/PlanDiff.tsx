@@ -160,7 +160,7 @@ const DiffRow = ({ line }: { line: DiffLine }) => {
   const colorMarker = marker && !text.includes(ESC);
 
   return (
-    <pre className="m-0 px-1 font-[inherit] text-[0.8rem] whitespace-pre">
+    <pre className="m-0 px-1 font-[inherit] text-(length:--text-caption) whitespace-pre">
       {colorMarker ? (
         <>
           {text.slice(0, markerCol)}
@@ -239,7 +239,7 @@ export const PlanDiff = ({ lines }: { lines: string[] }) => {
                         new Set(prev).add(segment.start),
                       )
                     }
-                    className="my-0.5 flex w-full cursor-pointer items-center justify-start gap-1 rounded-[2px] border-0 bg-selected px-1 py-0.5 font-[inherit] text-[0.75rem] text-fg-muted hover:bg-[hsla(0,0%,4%,0.12)] dark:hover:bg-[hsla(0,0%,96%,0.2)]"
+                    className="my-0.5 flex w-full cursor-pointer items-center justify-start gap-1 rounded-[2px] border-0 bg-selected px-1 py-0.5 font-[inherit] text-(length:--text-caption) text-fg-muted hover:bg-[hsla(0,0%,4%,0.12)] dark:hover:bg-[hsla(0,0%,96%,0.2)]"
                   >
                     <HeroChevronDoubleDownIcon className="size-4!" />
                     {count} unchanged lines

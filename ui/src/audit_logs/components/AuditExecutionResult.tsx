@@ -158,7 +158,7 @@ const ResourceActionGroup = ({
       <Label tone={tone} label={`${count} ${label}`} className="self-start" />
       {shown.map((address) => (
         <span
-          className="ml-2 min-w-0 font-mono text-[0.8125rem] font-normal tracking-[0.01em] break-all"
+          className="ml-2 min-w-0 font-mono text-(length:--text-body2) font-normal tracking-[0.01em] break-all"
           key={address}
         >
           {address}
@@ -252,7 +252,7 @@ const ExecutionTooltip = ({
             <dt
               // Muted label style shared with the overview card fields:
               // the value is the visual anchor, not the label.
-              className="text-[0.8125rem] font-medium text-fg-muted capitalize"
+              className="text-(length:--text-body2) font-medium text-fg-muted capitalize"
             >
               {label}
             </dt>

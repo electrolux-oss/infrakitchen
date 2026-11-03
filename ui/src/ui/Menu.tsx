@@ -31,7 +31,7 @@ export interface MenuProps extends Omit<PopoverProps, "role"> {
 }
 
 const ITEM_SELECTOR =
-  '[role="menuitem"]:not([aria-disabled="true"]), [role="option"]:not([aria-disabled="true"])';
+  '[role="menuitem"]:not([aria-disabled="true"]), [role="menuitemradio"]:not([aria-disabled="true"]), [role="option"]:not([aria-disabled="true"])';
 
 /**
  * Dropdown menu: daisyUI `menu` list inside a Popover. Arrow keys, Home and End move between items, Tab closes, and the

@@ -103,7 +103,7 @@ export function InputLabel({
     <label
       htmlFor={htmlFor ?? control?.inputId}
       className={cn(
-        "pointer-events-auto absolute -top-4 left-1 z-[1] max-w-[calc(100%-8px)] truncate text-[12px] leading-[17px] text-fg-muted group-focus-within/field:text-primary",
+        "pointer-events-auto absolute -top-4 left-1 z-[1] max-w-[calc(100%-8px)] truncate text-(length:--text-caption) leading-[17px] text-fg-muted group-focus-within/field:text-primary",
         isError && "text-error group-focus-within/field:text-error",
         control?.disabled && "text-fg-disabled",
         className,
@@ -131,7 +131,7 @@ export function FormHelperText({
     <p
       id={control ? `${control.inputId}-helper` : undefined}
       className={cn(
-        "mx-3.5 mt-1 mb-0 text-[12px] leading-[1.4] text-fg-muted",
+        "mx-3.5 mt-1 mb-0 text-(length:--text-caption) leading-[1.4] text-fg-muted",
         isError && "text-error",
         className,
       )}

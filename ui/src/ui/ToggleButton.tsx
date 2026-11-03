@@ -106,7 +106,7 @@ export function ToggleButton({
         "d-join-item h-auto min-h-0 border border-divider bg-transparent font-medium text-fg-muted hover:bg-hover dark:text-grey-300",
         // Both sizes share the 12px 16px padding; only the text size differs.
         group?.size === "small"
-          ? "px-4 py-3 text-[0.8125rem]"
+          ? "px-4 py-3 text-(length:--text-body2)"
           : "px-4 py-3 text-body2",
         isSelected &&
           "bg-selected text-grey-900 hover:bg-selected dark:text-grey-50",

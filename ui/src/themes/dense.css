@@ -1,0 +1,182 @@
+/*
+ * "Dense" theme: flat and compact, in the spirit of the Proxmox VE web UI.
+ * Tokens only; see index.css for the format.
+ */
+
+:root[data-ik-theme="dense"] {
+  /* Shape: square-ish, flat. Floating surfaces (menus, tooltips, dialogs)
+     keep one thin shadow (set per scheme below) so they stay readable. */
+  --ik-surface-radius: 2px;
+  --ik-code-radius: 2px;
+  --radius-selector: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --ik-base-shadow: none;
+  --ik-shadow-sm: var(--ik-shadow-2);
+  --ik-shadow-lg: var(--ik-shadow-2);
+  --ik-dialog-radius: 2px;
+  --ik-dialog-shadow: var(--ik-shadow-8);
+  --ik-popover-shadow: var(--ik-shadow-4);
+  --ik-node-shadow: var(--ik-shadow-2);
+  --ik-toast-shadow: var(--ik-shadow-4);
+
+  /* Type: system font, smaller scale. */
+  --ik-font-sans:
+    -apple-system, "system-ui", "Segoe UI", "Helvetica Neue", Helvetica, Arial,
+    sans-serif;
+  --ik-body-font-size: 0.8125rem;
+  --ik-body-line-height: 1.4;
+  --text-h1: 3rem;
+  --text-h2: 2.25rem;
+  --text-h3: 1.875rem;
+  --text-h4: 1.5rem;
+  --text-h5: 1.25rem;
+  --text-h6: 1.0625rem;
+  --text-subtitle1: 0.875rem;
+  --text-subtitle2: 0.8125rem;
+  --text-body1: 0.875rem;
+  --text-body2: 0.8125rem;
+  --text-caption: 0.6875rem;
+  --text-body1--line-height: 1.4;
+  --text-body2--line-height: 1.4;
+
+  /* Density: only the table tokens. Tailwind's global --spacing is left
+     alone because it also scales icons, buttons and layout widths. */
+  --ik-table-font-size: var(--text-body2);
+  --ik-table-line-height: 1.3;
+  --ik-table-head-h: 28px;
+  --ik-table-row-h: 28px;
+  --ik-table-row-h-compact: 28px;
+  --ik-table-cell-px: 8px;
+  --ik-table-cell-py: 3px;
+  --ik-table-cell-py-compact: 3px;
+  --ik-static-table-cell-px: 8px;
+  --ik-static-table-cell-py: 3px;
+  --ik-static-table-cell-py-small: 3px;
+}
+
+/* Colors follow the recipe in index.css: one accent seed, derived tints,
+   explicit status colors (checked for contrast by check:themes). */
+:root[data-ik-theme="dense"]:not([data-color-scheme="dark"]) {
+  --ik-accent: #2271b3;
+
+  --ik-fg: #222222;
+  --ik-fg-muted: #666666;
+  --ik-canvas: #f5f5f5;
+  --ik-paper: #ffffff;
+  --ik-divider: #d6d6d6;
+  --ik-hover: color-mix(in srgb, var(--ik-accent) 8%, transparent);
+  --ik-selected: color-mix(in srgb, var(--ik-accent) 16%, transparent);
+  --ik-link: var(--ik-accent);
+  --ik-link-hover: var(--ik-primary-dark);
+  --ik-disabled-bg: rgba(0, 0, 0, 0.08);
+
+  --ik-action-bg: var(--ik-primary);
+  --ik-action-bg-hover: var(--ik-primary-dark);
+  --ik-action-bg-active: color-mix(in srgb, var(--ik-accent) 60%, black);
+  --ik-action-fg: var(--ik-primary-contrast);
+
+  --ik-primary: var(--ik-accent);
+  --ik-primary-light: color-mix(in srgb, var(--ik-accent) 25%, white);
+  --ik-primary-dark: color-mix(in srgb, var(--ik-accent) 80%, black);
+  --ik-primary-contrast: #ffffff;
+  --ik-secondary: #566b7a;
+  --ik-secondary-light: #a9b7c2;
+  --ik-secondary-dark: #3f505c;
+  --ik-secondary-contrast: #ffffff;
+  --ik-info: var(--ik-accent);
+  --ik-info-light: var(--ik-primary-light);
+  --ik-info-dark: var(--ik-primary-dark);
+  --ik-info-contrast: #ffffff;
+  --ik-success: #2e7d32;
+  --ik-success-light: #8bc88b;
+  --ik-success-dark: #1f5a22;
+  --ik-success-contrast: #ffffff;
+  --ik-warning: #e0a030;
+  --ik-warning-light: #f0c36d;
+  --ik-warning-dark: #8c5f10;
+  --ik-warning-contrast: #1a1a1a;
+  --ik-error: #c62828;
+  --ik-error-light: #e8817e;
+  --ik-error-dark: #8f1f1c;
+  --ik-error-contrast: #ffffff;
+
+  --ik-grey-50: #fafafa;
+  --ik-grey-100: #f2f2f2;
+  --ik-grey-200: #e6e6e6;
+  --ik-grey-300: #d6d6d6;
+  --ik-grey-400: #b0b0b0;
+  --ik-grey-500: #808080;
+  --ik-grey-600: #5c5c5c;
+  --ik-grey-700: #444444;
+  --ik-grey-800: #2e2e2e;
+  --ik-grey-900: #1a1a1a;
+
+  --ik-shadow-2: 0 1px 2px rgba(0, 0, 0, 0.15);
+  --ik-shadow-3: 0 1px 2px rgba(0, 0, 0, 0.15);
+  --ik-shadow-4: 0 1px 3px rgba(0, 0, 0, 0.18);
+  --ik-shadow-8: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+:root[data-ik-theme="dense"][data-color-scheme="dark"] {
+  --ik-accent: #4da3e0;
+
+  --ik-fg: #e6e6e6;
+  --ik-fg-muted: #a0a0a0;
+  --ik-fg-disabled: rgba(255, 255, 255, 0.45);
+  --ik-canvas: #1b1b1b;
+  --ik-paper: #262626;
+  --ik-divider: #3a3a3a;
+  --ik-hover: color-mix(in srgb, var(--ik-accent) 10%, transparent);
+  --ik-selected: color-mix(in srgb, var(--ik-accent) 20%, transparent);
+  --ik-link: var(--ik-accent);
+  --ik-link-hover: var(--ik-primary-dark);
+  --ik-disabled-bg: rgba(255, 255, 255, 0.1);
+
+  --ik-action-bg: var(--ik-primary);
+  --ik-action-bg-hover: var(--ik-primary-dark);
+  --ik-action-bg-active: color-mix(in srgb, var(--ik-accent) 70%, white);
+  --ik-action-fg: var(--ik-primary-contrast);
+
+  --ik-primary: var(--ik-accent);
+  --ik-primary-light: color-mix(in srgb, var(--ik-accent) 25%, black);
+  --ik-primary-dark: color-mix(in srgb, var(--ik-accent) 75%, white);
+  --ik-primary-contrast: #0d1b26;
+  --ik-secondary: #8fa3b2;
+  --ik-secondary-light: #c3cfd8;
+  --ik-secondary-dark: #6b7f8e;
+  --ik-secondary-contrast: #111111;
+  --ik-info: var(--ik-accent);
+  --ik-info-light: var(--ik-primary-light);
+  --ik-info-dark: var(--ik-primary-dark);
+  --ik-info-contrast: #0d1b26;
+  --ik-success: #4caf50;
+  --ik-success-light: #2a4d2b;
+  --ik-success-dark: #81c784;
+  --ik-success-contrast: #0f1f10;
+  --ik-warning: #d39e3a;
+  --ik-warning-light: #4d3a14;
+  --ik-warning-dark: #f0c36d;
+  --ik-warning-contrast: #111111;
+  --ik-error: #e05a56;
+  --ik-error-light: #4f1f1e;
+  --ik-error-dark: #f09a97;
+  --ik-error-contrast: #1a0807;
+
+  --ik-grey-50: #1f1f1f;
+  --ik-grey-100: #2a2a2a;
+  --ik-grey-200: #333333;
+  --ik-grey-300: #3d3d3d;
+  --ik-grey-400: #5a5a5a;
+  --ik-grey-500: #8a8a8a;
+  --ik-grey-600: #a8a8a8;
+  --ik-grey-700: #c4c4c4;
+  --ik-grey-800: #dadada;
+  --ik-grey-900: #f0f0f0;
+
+  --ik-shadow-2: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --ik-shadow-3: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --ik-shadow-4: 0 1px 3px rgba(0, 0, 0, 0.55);
+  --ik-shadow-8: 0 2px 6px rgba(0, 0, 0, 0.6);
+}

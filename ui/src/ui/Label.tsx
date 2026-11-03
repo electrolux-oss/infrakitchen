@@ -59,8 +59,8 @@ const toneClasses: Record<LabelTone, string> = {
 };
 
 const sizeClasses: Record<LabelSize, string> = {
-  small: "h-5 text-[0.6875rem]",
-  medium: "h-5 text-[0.8125rem]",
+  small: "h-5 text-(length:--text-caption)",
+  medium: "h-5 text-(length:--text-body2)",
   large: "h-7.5 text-sm",
 };
 

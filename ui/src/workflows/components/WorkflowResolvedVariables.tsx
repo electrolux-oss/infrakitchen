@@ -141,7 +141,7 @@ const StepVariablesBlock = ({
           No resolved variables.
         </p>
       ) : (
-        <pre className="m-0 max-h-100 overflow-auto rounded-code bg-canvas px-4 py-3 font-mono text-[13px] whitespace-pre">
+        <pre className="m-0 max-h-100 overflow-auto rounded-code bg-canvas px-4 py-3 font-mono text-(length:--text-body2) whitespace-pre">
           {jsonText}
         </pre>
       )}

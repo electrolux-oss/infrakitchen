@@ -239,7 +239,7 @@ export function NodeCard({
         <Tooltip title={hint} placement="top" enterDelay={600}>
           <span
             className={cn(
-              "flex min-w-0 flex-1 items-baseline font-mono text-[12px]",
+              "flex min-w-0 flex-1 items-baseline font-mono text-(length:--text-caption)",
               r.outKey && !r.inKey && "justify-end",
             )}
           >
@@ -269,7 +269,7 @@ export function NodeCard({
           </span>
         </Tooltip>
         {showDefault && (
-          <span className="max-w-[45%] shrink-0 truncate rounded bg-grey-900/5 px-1.5 font-mono text-[11px] leading-[18px] text-fg-muted dark:bg-grey-100/8">
+          <span className="max-w-[45%] shrink-0 truncate rounded bg-grey-900/5 px-1.5 font-mono text-(length:--text-caption) leading-[18px] text-fg-muted dark:bg-grey-100/8">
             {defaultText}
           </span>
         )}
@@ -281,7 +281,7 @@ export function NodeCard({
   return (
     <div
       className={cn(
-        "group/node rounded-xl border bg-paper text-fg shadow-[0_1px_2px_rgb(0_0_0/0.06),0_4px_12px_rgb(0_0_0/0.06)] transition-[box-shadow,border-color]",
+        "group/node rounded-xl border bg-paper text-fg shadow-node transition-[box-shadow,border-color]",
         selected
           ? "border-primary ring-2 ring-primary/25"
           : statusTone && statusTone !== "default"
@@ -307,14 +307,14 @@ export function NodeCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             {step?.order != null && <Label size="small" label={step.order} />}
-            <span className="truncate text-[13px] leading-5 font-semibold">
+            <span className="truncate text-(length:--text-body2) leading-5 font-semibold">
               {spec.kind === "constant" ? spec.title || "Unnamed" : spec.title}
             </span>
             {spec.kind === "constant" && spec.constantType && (
               <InlineCode disableCopy>{spec.constantType}</InlineCode>
             )}
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] leading-4 text-fg-muted">
+          <div className="flex items-center gap-1.5 text-(length:--text-caption) leading-4 text-fg-muted">
             <span className="truncate">
               {spec.note ??
                 (spec.kind === "constant" ? "Constant" : nodeKindLabel(spec))}
@@ -342,7 +342,7 @@ export function NodeCard({
         </div>
         {readOnly ? null : spec.kind === "ancestor" ? (
           <Tooltip title="Not part of this blueprint. Its outputs reach the dashed inputs at run time through the parent chain.">
-            <span className="shrink-0 text-[11px] text-fg-disabled">
+            <span className="shrink-0 text-(length:--text-caption) text-fg-disabled">
               {nodeKindLabel(spec)}
             </span>
           </Tooltip>
@@ -367,7 +367,7 @@ export function NodeCard({
         <div className="grid gap-1.5 border-t border-divider px-3 py-2">
           {step.resourceId && (
             <div
-              className="nodrag flex min-w-0 items-center gap-1 text-[12px]"
+              className="nodrag flex min-w-0 items-center gap-1 text-(length:--text-caption)"
               onPointerDown={stop}
             >
               <span className="shrink-0 text-fg-muted">Resource:</span>
@@ -382,7 +382,7 @@ export function NodeCard({
           )}
           {step.errorMessage && (
             <Tooltip title={step.errorMessage}>
-              <div className="cursor-help truncate rounded-md bg-error px-2 py-1 font-mono text-[11px] text-error-contrast">
+              <div className="cursor-help truncate rounded-md bg-error px-2 py-1 font-mono text-(length:--text-caption) text-error-contrast">
                 {step.errorMessage}
               </div>
             </Tooltip>
@@ -401,7 +401,9 @@ export function NodeCard({
       ) : (
         <div className="border-t border-divider pb-1.5">
           {inputs.length + outputs.length + configs.length === 0 && (
-            <div className="px-4 py-3 text-[12px] text-fg-muted">No ports</div>
+            <div className="px-4 py-3 text-(length:--text-caption) text-fg-muted">
+              No ports
+            </div>
           )}
           <Section title="Inputs" kind="input" count={sections.inputs.length}>
             {inputs.map(row)}
@@ -424,7 +426,7 @@ export function NodeCard({
             <button
               type="button"
               className={cn(
-                "nodrag mx-3 mt-1 w-[calc(100%-1.5rem)] cursor-pointer rounded-md border-0 bg-transparent px-0 py-1 text-[12px] font-medium text-fg-muted hover:bg-hover hover:text-fg",
+                "nodrag mx-3 mt-1 w-[calc(100%-1.5rem)] cursor-pointer rounded-md border-0 bg-transparent px-0 py-1 text-(length:--text-caption) font-medium text-fg-muted hover:bg-hover hover:text-fg",
               )}
               onPointerDown={stop}
               onClick={onToggleExpanded}
@@ -454,7 +456,7 @@ function Section({
     <section className="pt-2">
       <div
         className={cn(
-          "flex items-center gap-1.5 px-4 pb-0.5 text-[10px] font-semibold tracking-wider text-fg-muted uppercase",
+          "flex items-center gap-1.5 px-4 pb-0.5 text-(length:--text-caption) font-semibold tracking-wider text-fg-muted uppercase",
           kind === "output" && "justify-end",
         )}
       >
@@ -468,7 +470,7 @@ function Section({
 }
 
 const FIELD_CLASS = cn(
-  "nodrag h-8 w-full select-text rounded-md border border-divider bg-canvas px-2 font-mono text-[12px] text-fg outline-none transition-colors placeholder:text-fg-disabled focus:border-primary",
+  "nodrag h-8 w-full select-text rounded-md border border-divider bg-canvas px-2 font-mono text-(length:--text-caption) text-fg outline-none transition-colors placeholder:text-fg-disabled focus:border-primary",
 );
 
 /** Wait for a pause in typing before an edit reaches the form. */
@@ -533,7 +535,9 @@ function ConstantBody({
     <div className="border-t border-divider pb-1.5">
       <div className="grid gap-2 px-3 pt-2.5 pb-1">
         <label className="grid gap-1">
-          <span className="text-[11px] font-medium text-fg-muted">Name</span>
+          <span className="text-(length:--text-caption) font-medium text-fg-muted">
+            Name
+          </span>
           <input
             {...fieldProps}
             value={name}
@@ -545,7 +549,7 @@ function ConstantBody({
           />
         </label>
         <label className="grid gap-1">
-          <span className="text-[11px] font-medium text-fg-muted">
+          <span className="text-(length:--text-caption) font-medium text-fg-muted">
             Default value
           </span>
           <input

@@ -6,6 +6,7 @@ import {
   HeroArrowDownIcon,
   HeroArrowPathIcon,
   HeroArrowUpIcon,
+  HeroArrowsRightLeftIcon,
   HeroViewColumnsIcon,
 } from "../../../icons";
 import {
@@ -23,6 +24,7 @@ import {
   Tooltip,
   useMediaQuery,
 } from "../../../ui";
+import { useControllable } from "../../../ui/useControllable";
 import { cn } from "../../../utils/cn";
 import { useConfig } from "../../context/ConfigContext";
 import { ColumnFilterSpec } from "../filter_panel/FilterConfig";
@@ -48,6 +50,9 @@ export interface ResourceTableProps {
   handleSortModelChange?: (model: SortModel) => void;
   handlePaginationModelChange?: (model: PaginationModel) => void;
   handleColumnVisibilityModelChange?: (model: ColumnVisibilityModel) => void;
+  /** Columns sized to their content instead of an even split. */
+  fitColumns?: boolean;
+  handleFitColumnsChange?: (fitColumns: boolean) => void;
   onRefresh?: () => void;
   /** Set false to remove the row hover affordance (e.g. no detail page). */
   rowClickable?: boolean;
@@ -68,11 +73,18 @@ export const EntityTable = ({
   handleSortModelChange,
   handlePaginationModelChange,
   handleColumnVisibilityModelChange,
+  fitColumns: fitColumnsProp,
+  handleFitColumnsChange,
   onRefresh,
   rowClickable = true,
   quickFilters,
   onRowClick,
 }: ResourceTableProps) => {
+  const [fitColumns, setFitColumns] = useControllable(
+    fitColumnsProp,
+    false,
+    handleFitColumnsChange,
+  );
   const [columnMenuAnchor, setColumnMenuAnchor] = useState<HTMLElement | null>(
     null,
   );
@@ -180,7 +192,7 @@ export const EntityTable = ({
         {isMobile && sortableColumns.length > 0 && (
           <div className="mr-auto flex min-w-0 items-center gap-0.5">
             <Select
-              className="text-[0.8125rem] text-fg-muted"
+              className="text-(length:--text-body2) text-fg-muted"
               size="small"
               variant="standard"
               displayEmpty
@@ -232,6 +244,23 @@ export const EntityTable = ({
             <HeroArrowPathIcon fontSize="small" />
           </IconButton>
         </Tooltip>
+        {!isMobile && (
+          <Tooltip
+            title={
+              fitColumns ? "Reset column widths" : "Fit columns to content"
+            }
+          >
+            <IconButton
+              className={cn("p-1", fitColumns && "bg-selected text-primary")}
+              size="small"
+              aria-label="Fit columns to content"
+              aria-pressed={fitColumns}
+              onClick={() => setFitColumns(!fitColumns)}
+            >
+              <HeroArrowsRightLeftIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
         {!isMobile && (
           <Tooltip title="Show or hide columns">
             <span>
@@ -294,6 +323,7 @@ export const EntityTable = ({
         ) : (
           <DataTable
             className="md:min-h-[380px]"
+            fitColumns={fitColumns}
             rows={entities}
             columns={columns}
             loading={loading}

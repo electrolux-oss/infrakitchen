@@ -172,7 +172,7 @@ export const SourceCodeRefRow = ({
       >
         <div className="flex items-center gap-3 px-4 py-2.5">
           <SrcIcon className="shrink-0 text-fg-muted" fontSize="small" />
-          <p className="m-0 text-[0.82rem] font-normal">{entry}</p>
+          <p className="m-0 text-(length:--text-body2) font-normal">{entry}</p>
           {hasVersion &&
             !!entity.resourcesCount && ( // Render only when the SCV has resources
               <Label

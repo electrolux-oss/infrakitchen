@@ -163,7 +163,7 @@ export const CommonField = ({
       <div
         // Muted label style shared with the datagrid headers: medium weight,
         // small size, secondary color — the value is the visual anchor.
-        className="m-0 mb-0.5 text-[0.8125rem] font-medium text-fg-muted"
+        className="m-0 mb-0.5 text-(length:--text-body2) font-medium text-fg-muted"
       >
         {name}
       </div>

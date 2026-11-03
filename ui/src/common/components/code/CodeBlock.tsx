@@ -45,7 +45,7 @@ export const CodeBlock: FC<CodeBlockProps> = ({
       <pre
         ref={preRef}
         className={cn(
-          "m-0 overflow-auto rounded-code bg-hover p-2 pr-6 font-mono text-[0.75rem] [word-break:break-word] whitespace-pre-wrap",
+          "m-0 overflow-auto rounded-code bg-hover p-2 pr-6 font-mono text-(length:--text-caption) [word-break:break-word] whitespace-pre-wrap",
           className,
         )}
       >

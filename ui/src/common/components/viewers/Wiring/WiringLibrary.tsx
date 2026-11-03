@@ -296,7 +296,7 @@ function Group({
 }) {
   return (
     <section>
-      <h3 className="m-0 flex min-h-8 items-center gap-2 px-2 text-[0.875rem] font-semibold text-fg-muted">
+      <h3 className="m-0 flex min-h-8 items-center gap-2 px-2 text-(length:--text-body2) font-semibold text-fg-muted">
         {icon}
         {title}
         {count !== undefined && <Label size="small" label={count} />}

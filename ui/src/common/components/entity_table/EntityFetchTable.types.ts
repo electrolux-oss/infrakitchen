@@ -22,6 +22,8 @@ export interface EntityFetchTableProps {
   defaultSort?: { field: string; sort: "asc" | "desc" };
   /** Set to false for tables whose rows shouldn't offer a click affordance. */
   rowClickable?: boolean;
+  /** Buttons shown at the right end of the filter row. */
+  toolbarActions?: ReactNode;
   /** Content rendered between the filter panel and the grid (e.g. quick filter chips). */
   quickFilters?: ReactNode;
   /** Replaces the default navigation to the row's detail page. */

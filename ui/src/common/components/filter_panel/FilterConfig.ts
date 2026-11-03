@@ -164,4 +164,6 @@ export interface FilterState {
 
 export interface FilterPanelProps {
   className?: string;
+  /** Extra buttons shown at the right end of the filter row. */
+  actions?: ReactNode;
 }

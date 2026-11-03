@@ -77,7 +77,7 @@ export function WirePopover({
       ref={ref}
       role="dialog"
       aria-label="Wire"
-      className="absolute z-20 rounded-xl border border-divider bg-paper text-fg shadow-[0_4px_24px_rgb(0_0_0/0.12)]"
+      className="absolute z-20 rounded-xl border border-divider bg-paper text-fg shadow-popover"
       style={{
         width: WIDTH,
         left: clamp(left, bounds.width - WIDTH - 8),
@@ -86,7 +86,7 @@ export function WirePopover({
       onPointerDown={(e) => e.stopPropagation()}
     >
       <div className="flex items-center justify-between gap-2 py-1.5 pr-1.5 pl-4">
-        <h3 className="m-0 text-[13px] font-semibold">Wire</h3>
+        <h3 className="m-0 text-(length:--text-body2) font-semibold">Wire</h3>
         <Tooltip title="Close">
           <button
             type="button"
@@ -108,7 +108,7 @@ export function WirePopover({
       </div>
 
       {inherited ? (
-        <div className="flex items-start gap-2 border-t border-divider px-3 py-2.5 text-[12px] text-fg-muted">
+        <div className="flex items-start gap-2 border-t border-divider px-3 py-2.5 text-(length:--text-caption) text-fg-muted">
           <span
             className="mt-1.5 h-0.5 w-3 shrink-0 rounded-full"
             style={{ background: WIRE_COLOR.inherited }}
@@ -125,7 +125,7 @@ export function WirePopover({
           </span>
         </div>
       ) : locked ? (
-        <div className="flex items-start gap-2 border-t border-divider px-3 py-2.5 text-[12px] text-fg-muted">
+        <div className="flex items-start gap-2 border-t border-divider px-3 py-2.5 text-(length:--text-caption) text-fg-muted">
           <span
             className="mt-1.5 h-0.5 w-3 shrink-0 rounded-full"
             style={{ background: WIRE_COLOR.source }}
@@ -138,9 +138,9 @@ export function WirePopover({
         </div>
       ) : readOnly ? null : (
         <div className="flex items-center justify-between gap-2 border-t border-divider px-3 py-2">
-          <span className="text-[11px] text-fg-muted">
+          <span className="text-(length:--text-caption) text-fg-muted">
             or press{" "}
-            <kbd className="rounded border border-divider bg-canvas px-1 font-sans text-[11px] text-fg">
+            <kbd className="rounded border border-divider bg-canvas px-1 font-sans text-(length:--text-caption) text-fg">
               Delete
             </kbd>
           </span>
@@ -172,10 +172,10 @@ function End({ title, end }: { title: string; end: WireEnd }) {
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className="w-8 shrink-0 text-[10px] font-semibold tracking-wider text-fg-muted uppercase">
+          <span className="w-8 shrink-0 text-(length:--text-caption) font-semibold tracking-wider text-fg-muted uppercase">
             {title}
           </span>
-          <span className="truncate text-[13px] leading-5 font-semibold">
+          <span className="truncate text-(length:--text-body2) leading-5 font-semibold">
             {node.title || "Unnamed"}
           </span>
           <Label
@@ -183,7 +183,7 @@ function End({ title, end }: { title: string; end: WireEnd }) {
             label={node.kind === "constant" ? "Constant" : nodeKindLabel(node)}
           />
         </div>
-        <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[12px]">
+        <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-(length:--text-caption)">
           <span
             className="size-2 shrink-0 rounded-full"
             style={{ background: PORT_COLOR[kind] }}

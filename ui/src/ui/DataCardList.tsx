@@ -122,7 +122,7 @@ export function DataCardList<R = any>({
                 onRowClick ? (event) => onRowClick(row, event) : undefined
               }
               className={cn(
-                "px-4 py-3 text-[0.875rem]",
+                "px-4 py-3 text-(length:--text-body2)",
                 index > 0 && "border-t border-divider",
                 onRowClick && "cursor-pointer hover:bg-primary/8",
               )}

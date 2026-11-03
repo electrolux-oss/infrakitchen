@@ -55,7 +55,7 @@ const MarkdownEditorInner: FC<MarkdownEditorProps> = ({
       {label && (
         <label
           className={cn(
-            "mb-1 block text-[0.75rem] leading-[1.4375] transition-colors duration-200",
+            "mb-1 block text-(length:--text-caption) leading-[1.4375] transition-colors duration-200",
             hasError
               ? "text-error"
               : focused

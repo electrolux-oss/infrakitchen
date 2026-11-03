@@ -35,6 +35,7 @@ interface EntityFetchTableContentProps {
   entityFieldMap?: GraphqlFieldMap;
   transformFn?: (data: any) => any;
   rowClickable?: boolean;
+  toolbarActions?: ReactNode;
   /** Content rendered between the filter panel and the grid (e.g. quick filter chips). */
   quickFilters?: ReactNode;
   onRowClick?: (row: any, event?: MouseEvent) => void;
@@ -60,6 +61,8 @@ interface EntityFetchTableContentProps {
   handleColumnVisibilityModelChange: (
     newColumnVisibilityModel: ColumnVisibilityModel,
   ) => void;
+  fitColumns: boolean;
+  handleFitColumnsChange: (fitColumns: boolean) => void;
 }
 
 export const EntityFetchTableContent = forwardRef<
@@ -77,6 +80,7 @@ export const EntityFetchTableContent = forwardRef<
     transformFn,
     rowClickable,
     quickFilters,
+    toolbarActions,
     onRowClick,
     onDataChange,
     buildApiFiltersRef,
@@ -96,6 +100,8 @@ export const EntityFetchTableContent = forwardRef<
     handleSortModelChange,
     handlePaginationModelChange,
     handleColumnVisibilityModelChange,
+    fitColumns,
+    handleFitColumnsChange,
   } = props;
 
   const { ikApi } = useConfig();
@@ -241,7 +247,9 @@ export const EntityFetchTableContent = forwardRef<
 
   return (
     <div className="w-full max-w-full self-center">
-      {hasFilters && <FilterPanel />}
+      {(hasFilters || toolbarActions) && (
+        <FilterPanel actions={toolbarActions} />
+      )}
       <EntityTable
         entityName={title}
         subtitle={subtitle}
@@ -255,6 +263,8 @@ export const EntityFetchTableContent = forwardRef<
         handlePaginationModelChange={handlePaginationModelChange}
         columnVisibilityModel={columnVisibilityModel}
         handleColumnVisibilityModelChange={handleColumnVisibilityModelChange}
+        fitColumns={fitColumns}
+        handleFitColumnsChange={handleFitColumnsChange}
         onRefresh={fetchFilteredData}
         rowClickable={rowClickable}
         quickFilters={quickFilters}

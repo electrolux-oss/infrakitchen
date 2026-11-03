@@ -34,7 +34,10 @@ export const RevisionTimeline = ({
               : undefined
           }
         />
-        <RelativeTime className="text-[0.75rem]" date={logs[0].createdAt} />
+        <RelativeTime
+          className="text-(length:--text-caption)"
+          date={logs[0].createdAt}
+        />
       </div>
       <div className="mt-6">
         <HorizontalTimeline
@@ -42,7 +45,10 @@ export const RevisionTimeline = ({
           renderItem={(log) => (
             <>
               <p className="m-0 mt-1 text-body2 font-medium">{log.action}</p>
-              <RelativeTime className="text-[0.7rem]" date={log.createdAt} />
+              <RelativeTime
+                className="text-(length:--text-caption)"
+                date={log.createdAt}
+              />
               <div className="mt-1">
                 <AuditExecutionResult log={log} hideSummary />
               </div>

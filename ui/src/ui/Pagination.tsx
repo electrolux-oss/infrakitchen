@@ -42,7 +42,7 @@ export function Pagination({
     BUTTON_BASE,
     "mx-px min-h-0 min-w-0 rounded-full border-0 bg-transparent px-1 font-normal text-fg hover:bg-hover disabled:bg-transparent disabled:text-disabled",
     size === "small"
-      ? "h-[26px] min-w-[26px] text-[0.8125rem]"
+      ? "h-[26px] min-w-[26px] text-(length:--text-body2)"
       : "h-8 min-w-8 text-body2",
   );
   return (
