@@ -1,13 +1,13 @@
 import { useRef, useState } from "react";
 
-import { PermissionWrapper } from "../../common";
+import { useHasPermission } from "../../common";
 import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../common/components/entity_table/EntityFetchTable";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { HeroAdjustmentsHorizontalIcon } from "../../icons";
+import { HeroQueueListIcon } from "../../icons";
 import { Button } from "../../ui";
 import { SCV_FIELD_MAP } from "../graphql/fragments";
 
@@ -29,23 +29,13 @@ export const EntitySourceCodeVersions = ({
   const { entity } = useEntityProvider();
   const tableRef = useRef<EntityFetchTableRef>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const canManageVersions = useHasPermission(
+    "api:source_code_version",
+    "write",
+  );
 
   return (
     <>
-      <PermissionWrapper
-        requiredPermission="api:source_code_version"
-        permissionAction="write"
-      >
-        <div className="mb-1 flex w-full justify-end">
-          <Button
-            size="small"
-            startIcon={<HeroAdjustmentsHorizontalIcon />}
-            onClick={() => setDialogOpen(true)}
-          >
-            Manage Versions
-          </Button>
-        </div>
-      </PermissionWrapper>
       <EntityFetchTable
         ref={tableRef}
         title="Template Versions"
@@ -56,6 +46,16 @@ export const EntitySourceCodeVersions = ({
         }
         entityFieldMap={SCV_FIELD_MAP}
         filterStorageKey={filterStorageKey}
+        toolbarActions={
+          canManageVersions ? (
+            <Button
+              startIcon={<HeroQueueListIcon />}
+              onClick={() => setDialogOpen(true)}
+            >
+              Manage Versions
+            </Button>
+          ) : undefined
+        }
         buildApiFilters={(filterValues) => ({
           ...buildAdvancedApiFilters(filterValues),
           ...fixedFilters,

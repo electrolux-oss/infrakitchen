@@ -74,11 +74,15 @@ const SavedViewActions = () => {
 };
 
 export const FilterPanel = memo((props: FilterPanelProps) => {
-  const { className } = props;
+  const { className, actions } = props;
   const { filters, filterValues, setFilterValue } = useFilterContext();
 
   if (filters.length === 0) {
-    return null;
+    return actions ? (
+      <div className={cn("flex w-full justify-end gap-1 pb-1", className)}>
+        {actions}
+      </div>
+    ) : null;
   }
 
   return (
@@ -89,7 +93,14 @@ export const FilterPanel = memo((props: FilterPanelProps) => {
           config={config}
           filterValues={filterValues}
           onChange={setFilterValue}
-          trailing={index === filters.length - 1 ? <SavedViewActions /> : null}
+          trailing={
+            index === filters.length - 1 ? (
+              <>
+                <SavedViewActions />
+                {actions}
+              </>
+            ) : null
+          }
         />
       ))}
     </div>

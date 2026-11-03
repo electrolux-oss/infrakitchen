@@ -394,7 +394,7 @@ export const TemplateVersionReorderDialog = ({
                     />
                   )}
                   <div className="flex min-h-17.5 w-full items-center gap-3 px-4">
-                    <div className="mr-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-selected text-[12px] font-semibold text-fg-muted">
+                    <div className="mr-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-selected text-(length:--text-caption) font-semibold text-fg-muted">
                       {index + 1}
                     </div>
                     <span

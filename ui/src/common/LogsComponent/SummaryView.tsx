@@ -548,7 +548,7 @@ export const SummaryView = (props: {
                 )}
                 {allLogs.length > 0 && (
                   <RelativeTime
-                    className="ml-3 flex items-center text-[0.8rem] text-fg-muted"
+                    className="ml-3 flex items-center text-(length:--text-caption) text-fg-muted"
                     date={allLogs[allLogs.length - 1].createdAt}
                   />
                 )}
@@ -590,7 +590,7 @@ export const SummaryView = (props: {
               }
             >
               <AlertTitle>Fatal error</AlertTitle>
-              <div className="font-mono text-[0.8rem] [word-break:break-word] whitespace-pre-wrap">
+              <div className="font-mono text-(length:--text-caption) [word-break:break-word] whitespace-pre-wrap">
                 {fatalErrorLines.map((line, index) => (
                   <div key={`fatal-${index}`}>
                     <Ansi>{line || " "}</Ansi>
@@ -626,7 +626,7 @@ export const SummaryView = (props: {
                         label={change.action}
                         tone={getActionColor(change.action)}
                       />
-                      <p className="m-0 font-mono text-[0.85rem] font-medium">
+                      <p className="m-0 font-mono text-(length:--text-body2) font-medium">
                         {change.resourceType}.{change.resourceName}
                       </p>
                     </div>
@@ -640,13 +640,13 @@ export const SummaryView = (props: {
                 </AccordionSummary>
                 <AccordionDetails
                   className={cn(
-                    "font-mono text-[0.8rem]",
+                    "font-mono text-(length:--text-caption)",
                     expanded === change.id && "bg-hover p-3",
                   )}
                 >
                   <PlanDiff lines={change.rawLines} />
                   {change.errorLines && change.errorLines.length > 0 && (
-                    <div className="overflow-x-auto border-t-2 border-error p-3 font-mono text-[0.8rem]">
+                    <div className="overflow-x-auto border-t-2 border-error p-3 font-mono text-(length:--text-caption)">
                       <span className="mb-1 block font-sans text-caption font-bold text-error">
                         Error
                       </span>

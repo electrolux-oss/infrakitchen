@@ -202,7 +202,7 @@ const ActivityCardList = ({
             cn(
               index === 0 ? "border-t-0" : "border-t",
               "border-t-divider",
-              "cursor-pointer px-4 py-3 text-[0.875rem]",
+              "cursor-pointer px-4 py-3 text-(length:--text-body2)",
             ),
           )}
           key={activity.id}
@@ -212,7 +212,7 @@ const ActivityCardList = ({
           <div className="min-w-0 font-medium wrap-anywhere">
             <ActivityEntity activity={activity} showLabel={false} />
           </div>
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-fg-muted">
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-(length:--text-body2) text-fg-muted">
             <ActivityEvent activity={activity} />
             {typeLabel && (
               <Label label={typeLabel} icon={entityIcons[activity.model]} />

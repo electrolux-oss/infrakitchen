@@ -19,7 +19,7 @@ const NotifyLinkButton = ({
   const navigate = useNavigate();
   return (
     <Button
-      className="ml-auto min-w-20 px-4 text-[0.85rem] font-semibold whitespace-nowrap text-inherit underline hover:bg-transparent hover:underline"
+      className="ml-auto min-w-20 px-4 text-(length:--text-body2) font-semibold whitespace-nowrap text-inherit underline hover:bg-transparent hover:underline"
       variant="text"
       onClick={() => {
         toast.dismiss();

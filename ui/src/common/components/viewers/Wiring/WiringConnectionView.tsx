@@ -107,7 +107,7 @@ export function WiringEdgeView({
             }}
           >
             <span
-              className="max-w-full truncate rounded-full border bg-paper px-2 py-0.5 font-mono text-[11px] leading-4 text-fg shadow-sm"
+              className="max-w-full truncate rounded-full border bg-paper px-2 py-0.5 font-mono text-(length:--text-caption) leading-4 text-fg shadow-sm"
               style={{ borderColor: color }}
             >
               {label}

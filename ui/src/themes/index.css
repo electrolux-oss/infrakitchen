@@ -1,0 +1,47 @@
+/*
+ * Optional visual themes. styles.css imports this file into the `ik-themes`
+ * cascade layer, which sits after `base`, so a theme only needs to redefine
+ * tokens. It never needs selector overrides or !important.
+ *
+ * A theme file has up to three blocks. Each is optional and may be partial:
+ * any token it leaves out keeps the default value for the current scheme.
+ *
+ *   :root[data-ik-theme="x"] { ... }
+ *     Scheme-independent tokens: fonts, type scale, density, radii.
+ *   :root[data-ik-theme="x"]:not([data-color-scheme="dark"]) { ... }
+ *     Light colors and shadows.
+ *   :root[data-ik-theme="x"][data-color-scheme="dark"] { ... }
+ *     Dark colors and shadows.
+ *
+ * Tokens (defaults in styles.css):
+ *   Colors    --ik-fg, --ik-canvas, --ik-paper, --ik-primary*, --ik-grey-*, ...
+ *   Actions   --ik-action-bg{,-hover,-active}, --ik-action-fg: contained
+ *             primary/secondary buttons (point at --ik-primary for a colored
+ *             call to action; default is black/white)
+ *   Elevation --ik-base-shadow, --ik-shadow-{2,3,4,8}, --ik-shadow-{sm,lg},
+ *             --ik-{dialog,popover,node,toast}-shadow (alias --ik-shadow-*)
+ *   Shape     --ik-surface-radius, --ik-code-radius, --ik-dialog-radius,
+ *             --radius-{md,lg,xl}, --radius-selector
+ *   Type      --ik-font-sans, --ik-font-mono, --ik-body-font-size,
+ *             --ik-body-line-height, --ik-th-font-size,
+ *             --text-{h1..caption}[--line-height]
+ *   Density   --ik-table-*, --ik-static-table-*. Do not set --spacing: it
+ *             also scales icons, buttons and layout widths.
+ *   Tints     --color-tint-{green,blue,orange,red,purple}-{50..900} for
+ *             Alert and Label surfaces.
+ *
+ * Short palette recipe (see dense.css): set one seed, --ik-accent, and
+ * derive the rest with color-mix(), e.g.
+ *   --ik-primary: var(--ik-accent);
+ *   --ik-primary-light: color-mix(in srgb, var(--ik-accent) 25%, white);
+ *   --ik-hover: color-mix(in srgb, var(--ik-accent) 8%, transparent);
+ * Status colors and *-contrast stay literal hex so they can be checked.
+ *
+ * Single-scheme themes: omit the other scheme's block and list `schemes` in
+ * registry.ts; the Light/Dark/System choice is then pinned.
+ *
+ * To add a theme, create <id>.css, import it below and register it in
+ * registry.ts, then run `yarn check:themes` (ids, blocks, unknown tokens,
+ * WCAG contrast of literal colors).
+ */
+@import "./dense.css";

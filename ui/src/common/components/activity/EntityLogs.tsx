@@ -100,7 +100,9 @@ export const EntityLogs = ({
         headerName: "Action",
         flex: 1,
         renderCell: (params) => (
-          <div className="text-[0.875rem] font-medium">{params.value}</div>
+          <div className="text-(length:--text-body2) font-medium">
+            {params.value}
+          </div>
         ),
       },
       ...(renderEntity

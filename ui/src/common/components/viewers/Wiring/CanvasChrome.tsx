@@ -150,7 +150,7 @@ export function ToolbarDivider() {
 
 export function Kbd({ children }: { children: ReactNode }) {
   return (
-    <kbd className="rounded border border-divider bg-canvas px-1 font-sans text-[11px] text-fg">
+    <kbd className="rounded border border-divider bg-canvas px-1 font-sans text-(length:--text-caption) text-fg">
       {children}
     </kbd>
   );
@@ -223,7 +223,7 @@ export function ZoomToolbar({
       >
         <HeroMinusCircleIcon className="text-[16px]" />
       </ToolButton>
-      <span className="w-11 text-center text-[12px] text-fg-muted tabular-nums">
+      <span className="w-11 text-center text-(length:--text-caption) text-fg-muted tabular-nums">
         {Math.round(zoom * 100)}%
       </span>
       <ToolButton
@@ -262,7 +262,7 @@ const LEGEND_WIRES: WireType[] = [
 /** Bottom-right: what each port and wire colour means. */
 export function PortLegend() {
   return (
-    <div className="pointer-events-none absolute right-3 bottom-3 z-10 flex max-w-[calc(100%-1.5rem)] flex-col gap-1 rounded-lg border border-divider bg-paper/90 px-3 py-1.5 text-[11px] text-fg-muted shadow-sm backdrop-blur">
+    <div className="pointer-events-none absolute right-3 bottom-3 z-10 flex max-w-[calc(100%-1.5rem)] flex-col gap-1 rounded-lg border border-divider bg-paper/90 px-3 py-1.5 text-(length:--text-caption) text-fg-muted shadow-sm backdrop-blur">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <span className="font-semibold">Ports</span>
         {(
@@ -317,10 +317,10 @@ export function EmptyCanvas() {
         <div className="mx-auto mb-3 grid size-11 place-items-center rounded-xl border border-divider bg-paper text-fg-muted shadow-sm">
           <HeroRectangleGroupIcon className="text-[22px]" />
         </div>
-        <div className="text-[14px] font-semibold">
+        <div className="text-(length:--text-body2) font-semibold">
           Start building your blueprint
         </div>
-        <p className="mt-1 mb-0 text-[13px] text-fg-muted">
+        <p className="mt-1 mb-0 text-(length:--text-body2) text-fg-muted">
           Drag templates from the library onto the canvas, then drag from an
           output to an input to wire them together.
         </p>
@@ -332,7 +332,7 @@ export function EmptyCanvas() {
 /** Top-centre: how to remove the selected nodes. */
 export function SelectionHint({ nodes }: { nodes: number }) {
   return (
-    <div className="pointer-events-none absolute top-3 left-1/2 z-10 -translate-x-1/2 rounded-full border border-divider bg-paper px-3 py-1 text-[12px] text-fg-muted shadow-sm">
+    <div className="pointer-events-none absolute top-3 left-1/2 z-10 -translate-x-1/2 rounded-full border border-divider bg-paper px-3 py-1 text-(length:--text-caption) text-fg-muted shadow-sm">
       {nodes} node{nodes > 1 ? "s" : ""} selected · <Kbd>Delete</Kbd> to remove
     </div>
   );

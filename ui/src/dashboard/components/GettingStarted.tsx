@@ -63,11 +63,13 @@ export const GettingStartedContent = () => {
             className="flex flex-wrap items-center gap-3 px-4 py-4 sm:flex-nowrap [&:not(:first-of-type)]:border-t [&:not(:first-of-type)]:border-divider"
             key={step.title}
           >
-            <span className="mt-[2.4px] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[0.75rem] leading-[1] text-primary-contrast">
+            <span className="mt-[2.4px] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-(length:--text-caption) leading-[1] text-primary-contrast">
               {idx + 1}
             </span>
             <div className="min-w-0 flex-[1_1_0]">
-              <p className="m-0 mb-1 text-[16px] font-semibold">{step.title}</p>
+              <p className="m-0 mb-1 text-(length:--text-body1) font-semibold">
+                {step.title}
+              </p>
               <p className="m-0 text-body2 text-fg-muted">{step.description}</p>
             </div>
             <Button

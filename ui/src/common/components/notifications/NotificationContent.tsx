@@ -62,7 +62,7 @@ export const NotificationContent = forwardRef<
     <div
       ref={ref}
       className={cn(
-        "flex min-w-[300px] items-start rounded-surface border p-3 text-fg shadow-[0_3px_3px_-2px_rgba(0,0,0,0.2),0_3px_4px_0_rgba(0,0,0,0.14),0_1px_8px_0_rgba(0,0,0,0.12)] sm:min-w-[400px]",
+        "flex min-w-[300px] items-start rounded-surface border p-3 text-fg shadow-toast sm:min-w-[400px]",
         VARIANT_BG[variant],
       )}
     >

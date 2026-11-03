@@ -38,7 +38,7 @@ export function GraphViewNode({ data }: { data: GraphNodeData }) {
         "box-border flex cursor-grab items-center gap-2 overflow-hidden rounded-surface border bg-paper px-3 active:cursor-grabbing",
         emphasised
           ? "border-info shadow-[0_0_0_2px_color-mix(in_srgb,var(--color-info)_20%,transparent)]"
-          : "border-divider shadow-[0_1px_2px_rgb(0_0_0/0.1)]",
+          : "border-divider shadow-sm",
       )}
       style={{ width: GRAPH_NODE_WIDTH, height: GRAPH_NODE_HEIGHT }}
     >

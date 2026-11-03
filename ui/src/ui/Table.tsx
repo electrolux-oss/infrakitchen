@@ -97,7 +97,10 @@ export function TableCell({
       className={cn(
         "border-b border-divider text-left align-middle",
         !inHead && "text-body2 text-fg",
-        size === "small" ? "px-4 py-1.5" : "p-4",
+        "px-(--ik-static-table-cell-px)",
+        size === "small"
+          ? "py-(--ik-static-table-cell-py-small)"
+          : "py-(--ik-static-table-cell-py)",
         Cell === "th" && !inHead && "font-normal",
         inHead && sticky && "sticky top-0 z-[2] bg-paper",
         align === "center" && "text-center",

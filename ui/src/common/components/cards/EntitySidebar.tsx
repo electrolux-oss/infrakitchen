@@ -67,7 +67,7 @@ export const SidebarSection = ({
         // Keep the title baseline steady whether or not an action is present.
         className="mb-3 flex min-h-8 items-center justify-between gap-2"
       >
-        <h3 className="m-0 text-[0.875rem] font-semibold text-fg-muted">
+        <h3 className="m-0 text-(length:--text-body2) font-semibold text-fg-muted">
           {count !== undefined ? (
             <CountLabel label={title ?? ""} count={count} />
           ) : (

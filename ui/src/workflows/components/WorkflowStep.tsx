@@ -235,7 +235,7 @@ export const WorkflowStep = ({
 
           {/* Error message */}
           {step.errorMessage && (
-            <div className="mt-3 rounded-surface bg-error p-3 font-mono text-[13px] [word-break:break-word] whitespace-pre-wrap text-error-contrast">
+            <div className="mt-3 rounded-surface bg-error p-3 font-mono text-(length:--text-body2) [word-break:break-word] whitespace-pre-wrap text-error-contrast">
               {step.errorMessage}
             </div>
           )}
@@ -271,12 +271,12 @@ export const WorkflowStep = ({
                         ([key, value]) => (
                           <TableRow key={key}>
                             <TableCell>
-                              <p className="m-0 font-mono text-[12px] font-normal">
+                              <p className="m-0 font-mono text-(length:--text-caption) font-normal">
                                 {key}
                               </p>
                             </TableCell>
                             <TableCell>
-                              <p className="m-0 max-w-100 font-mono text-[12px] font-normal break-all">
+                              <p className="m-0 max-w-100 font-mono text-(length:--text-caption) font-normal break-all">
                                 {typeof value === "object"
                                   ? JSON.stringify(value)
                                   : String(value)}

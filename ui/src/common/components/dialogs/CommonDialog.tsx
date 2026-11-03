@@ -45,7 +45,7 @@ export const CommonDialog: React.FC<CommonDialogProps> = ({
       fullWidth={fullWidth}
       resizable={resizable}
     >
-      <DialogTitle className="flex items-center justify-between px-6 pt-5 pb-3 text-[1.0625rem] leading-[1.4] font-semibold">
+      <DialogTitle className="flex items-center justify-between px-6 pt-5 pb-3 text-(length:--text-body1) leading-[1.4] font-semibold">
         {title}
         <div className="flex items-center gap-1">
           {headerAction}

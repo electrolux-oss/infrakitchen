@@ -47,7 +47,7 @@ export default function UserSidebar() {
       >
         <UserAvatar
           identifier={user.identifier}
-          className="border border-divider text-[0.875rem]"
+          className="border border-divider text-(length:--text-body2)"
         />
       </MenuButton>
       <Menu

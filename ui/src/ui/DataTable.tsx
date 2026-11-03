@@ -2,6 +2,7 @@ import {
   MouseEvent,
   PointerEvent as ReactPointerEvent,
   ReactNode,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -98,12 +99,20 @@ export interface DataTableProps<R = any> {
   /** Root classes, e.g. a min height floor (`md:min-h-[380px]`). */
   className?: string;
   "aria-label"?: string;
+  /**
+   * Fit every column to its content (the last one takes the leftover) and
+   * keep fitting on later data changes; false restores the even flex split.
+   * Switching either way clears widths the user dragged.
+   */
+  fitColumns?: boolean;
 }
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const SELECT_COLUMN_WIDTH = 50;
 const DEFAULT_COLUMN_WIDTH = 100;
 const DEFAULT_MIN_WIDTH = 50;
+/** Cap for a flex column sized from its content, so one long value can't take the whole row. */
+const MAX_AUTO_WIDTH = 480;
 const SKELETON_ROWS = 5;
 const EMPTY_VISIBILITY: ColumnVisibilityModel = {};
 
@@ -160,8 +169,10 @@ function useWidth() {
  * Data table on TanStack Table. Takes column definitions (`field`, `flex`,
  * `width`, `valueGetter`, `renderCell`, ...) plus controlled sort,
  * pagination, visibility and selection models. Sorting and pagination run client side or report to the server;
- * columns flex to the container width and resize by dragging the header
- * separators.
+ * columns flex to the container width (or, with `fitColumns`, size to
+ * their content and the last one takes the leftover) and resize by dragging
+ * the header separators. Row heights, padding and font size come from the
+ * --ik-table-* tokens in styles.css.
  */
 export function DataTable<R extends RowData = any>({
   rows,
@@ -189,6 +200,7 @@ export function DataTable<R extends RowData = any>({
   emptyLabel = "No Results Found",
   className,
   "aria-label": ariaLabel,
+  fitColumns = false,
 }: DataTableProps<R>) {
   const compact = density === "compact";
   const paginated = !hideFooter || paginationModel !== undefined;
@@ -320,24 +332,151 @@ export function DataTable<R extends RowData = any>({
   const [resized, setResized] = useState<Record<string, number>>({});
   const [resizing, setResizing] = useState<string | null>(null);
 
-  const widths = useMemo(() => {
-    let fixed = checkboxSelection ? SELECT_COLUMN_WIDTH : 0;
-    let totalFlex = 0;
-    for (const column of visibleColumns) {
-      if (resized[column.field] !== undefined) fixed += resized[column.field];
-      else if (column.flex) totalFlex += column.flex;
-      else fixed += column.width ?? DEFAULT_COLUMN_WIDTH;
+  // Natural (no-wrap) width of each column's content, measured after
+  // the rows render: one extra render lays the table out at max-content,
+  // reads the cell widths, then switches back to the fixed layout. All of
+  // it runs in layout effects, so nothing flashes.
+  const tableRef = useRef<HTMLTableElement>(null);
+  const [natural, setNatural] = useState<Record<string, number>>({});
+  const [measuring, setMeasuring] = useState(false);
+  // A fresh measure replaces the widths; otherwise they only grow, so paging
+  // or refetching doesn't make columns jump back and forth.
+  const freshMeasure = useRef(true);
+  const remeasure = useCallback((fresh: boolean) => {
+    if (fresh) freshMeasure.current = true;
+    setMeasuring(true);
+  }, []);
+  // Fitting on or off is a fresh layout: drop widths the user dragged.
+  // The columnKey effect below does the measuring.
+  useLayoutEffect(() => {
+    setResized({});
+  }, [fitColumns]);
+  const columnKey = visibleColumns.map((column) => column.field).join(",");
+  useLayoutEffect(() => {
+    if (fitColumns) remeasure(true);
+  }, [columnKey, fitColumns, remeasure]);
+  // A string, so a caller passing a new but equal rows array doesn't re-measure.
+  const rowKey = useMemo(
+    () => rows.map((row) => String(getRowId(row))).join("|"),
+    [rows, getRowId],
+  );
+  useLayoutEffect(() => {
+    if (fitColumns && rows.length > 0) remeasure(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rowKey]);
+  // Widths measured with a fallback font are wrong once the web font loads.
+  useEffect(() => {
+    if (!fitColumns || !document.fonts || document.fonts.status === "loaded") {
+      return;
     }
-    const free = Math.max(0, containerWidth - fixed);
-    return visibleColumns.map((column) => {
-      const minWidth = column.minWidth ?? DEFAULT_MIN_WIDTH;
-      if (resized[column.field] !== undefined) return resized[column.field];
-      if (column.flex) {
-        return Math.max(minWidth, Math.floor((free * column.flex) / totalFlex));
-      }
-      return Math.max(minWidth, column.width ?? DEFAULT_COLUMN_WIDTH);
+    let cancelled = false;
+    document.fonts.ready.then(() => {
+      if (!cancelled) remeasure(true);
     });
-  }, [visibleColumns, resized, containerWidth, checkboxSelection]);
+    return () => {
+      cancelled = true;
+    };
+  }, [fitColumns, remeasure]);
+  useLayoutEffect(() => {
+    if (!measuring) return;
+    const firstRow = tableRef.current?.rows[0];
+    const offset = checkboxSelection ? 1 : 0;
+    const next: Record<string, number> = {};
+    if (firstRow) {
+      visibleColumns.forEach((column, index) => {
+        const cell = firstRow.cells[index + offset];
+        const width = cell ? Math.ceil(cell.getBoundingClientRect().width) : 0;
+        if (width > 0) next[column.field] = width;
+      });
+    }
+    const fresh = freshMeasure.current;
+    freshMeasure.current = false;
+    setNatural((previous) => {
+      if (fresh) return next;
+      const merged: Record<string, number> = {};
+      for (const [field, width] of Object.entries(next)) {
+        merged[field] = Math.max(previous[field] ?? 0, width);
+      }
+      return merged;
+    });
+    setMeasuring(false);
+  }, [measuring, visibleColumns, checkboxSelection]);
+
+  const widths = useMemo(() => {
+    const result: number[] = [];
+    // Flex columns without a measured width share the free space as before.
+    const flexIndexes: number[] = [];
+    // Columns sized from content: they absorb the leftover or give way.
+    const autoIndexes: number[] = [];
+    let used = checkboxSelection ? SELECT_COLUMN_WIDTH : 0;
+    let totalFlex = 0;
+    visibleColumns.forEach((column, index) => {
+      const minWidth = column.minWidth ?? DEFAULT_MIN_WIDTH;
+      let width: number;
+      if (resized[column.field] !== undefined) {
+        width = resized[column.field];
+      } else if (fitColumns && natural[column.field] !== undefined) {
+        width = Math.min(
+          MAX_AUTO_WIDTH,
+          Math.max(minWidth, natural[column.field]),
+        );
+        autoIndexes.push(index);
+      } else if (column.flex) {
+        width = 0;
+        totalFlex += column.flex;
+        flexIndexes.push(index);
+      } else {
+        width = Math.max(minWidth, column.width ?? DEFAULT_COLUMN_WIDTH);
+      }
+      result.push(width);
+      used += width;
+    });
+
+    const free = Math.max(0, containerWidth - used);
+    for (const index of flexIndexes) {
+      const column = visibleColumns[index];
+      result[index] = Math.max(
+        column.minWidth ?? DEFAULT_MIN_WIDTH,
+        Math.floor((free * (column.flex ?? 0)) / totalFlex),
+      );
+    }
+
+    if (flexIndexes.length === 0 && autoIndexes.length > 0 && containerWidth) {
+      const leftover = containerWidth - used;
+      if (leftover > 0) {
+        // Pack columns to the left; the last content-sized flex column
+        // (else the last content-sized one) takes the rest.
+        const flexAuto = autoIndexes.filter(
+          (index) => visibleColumns[index].flex,
+        );
+        const target = (flexAuto.length > 0 ? flexAuto : autoIndexes).at(-1)!;
+        result[target] += leftover;
+      } else if (leftover < 0) {
+        // Too wide: shrink content-sized columns in proportion to their
+        // room above the minimum (cells wrap or truncate as before).
+        const room = autoIndexes.map(
+          (index) =>
+            result[index] -
+            (visibleColumns[index].minWidth ?? DEFAULT_MIN_WIDTH),
+        );
+        const totalRoom = room.reduce((sum, value) => sum + value, 0);
+        if (totalRoom > 0) {
+          const ratio = Math.min(1, -leftover / totalRoom);
+          autoIndexes.forEach((index, i) => {
+            result[index] -= Math.floor(room[i] * ratio);
+          });
+        }
+      }
+    }
+    return result;
+  }, [
+    visibleColumns,
+    resized,
+    natural,
+    fitColumns,
+    containerWidth,
+    checkboxSelection,
+  ]);
 
   const tableWidth =
     widths.reduce((sum, width) => sum + width, 0) +
@@ -379,7 +518,10 @@ export function DataTable<R extends RowData = any>({
   const tableRows = table.getRowModel().rows;
   const isEmpty = !loading && tableRows.length === 0;
   const showSkeleton = loading && tableRows.length === 0;
-  const cellPadding = compact ? "px-2.5 py-0.5" : "px-2.5 py-2.5";
+  const cellPadding = cn(
+    "px-(--ik-table-cell-px)",
+    compact ? "py-(--ik-table-cell-py-compact)" : "py-(--ik-table-cell-py)",
+  );
   const columnCount = visibleColumns.length + (checkboxSelection ? 1 : 0);
 
   const handleRowClick = (row: R, event: MouseEvent<HTMLTableRowElement>) => {
@@ -393,7 +535,11 @@ export function DataTable<R extends RowData = any>({
 
   const header = !hideHeader && (
     <thead>
-      <tr className={compact ? "h-9" : "h-14"}>
+      <tr
+        className={
+          compact ? "h-(--ik-table-row-h-compact)" : "h-(--ik-table-head-h)"
+        }
+      >
         {checkboxSelection && (
           <th className="border-b border-divider px-0 text-center">
             <Checkbox
@@ -465,7 +611,7 @@ export function DataTable<R extends RowData = any>({
                     ? "descending"
                     : undefined
               }
-              className="relative border-b border-divider px-2.5 leading-[1.2]"
+              className="relative border-b border-divider px-(--ik-table-cell-px) leading-[1.2]"
             >
               {column.description ? (
                 <Tooltip title={column.description}>{content}</Tooltip>
@@ -552,24 +698,43 @@ export function DataTable<R extends RowData = any>({
           <LinearProgress className="absolute inset-x-0 top-0 z-[3] h-0.5 rounded-none" />
         )}
         <table
+          ref={tableRef}
           aria-label={ariaLabel}
           aria-busy={loading || undefined}
-          className="table-fixed border-separate border-spacing-0 text-left text-[0.875rem] text-fg"
-          style={{ width: tableWidth, minWidth: "100%" }}
+          className={cn(
+            "border-separate border-spacing-0 text-left text-(length:--ik-table-font-size) text-fg",
+            measuring
+              ? "table-auto [&_:is(td,th)]:whitespace-nowrap"
+              : "table-fixed",
+          )}
+          style={
+            measuring
+              ? { width: "max-content" }
+              : { width: tableWidth, minWidth: "100%" }
+          }
         >
-          <colgroup>
-            {checkboxSelection && (
-              <col style={{ width: SELECT_COLUMN_WIDTH }} />
-            )}
-            {visibleColumns.map((column, index) => (
-              <col key={column.field} style={{ width: widths[index] }} />
-            ))}
-          </colgroup>
+          {!measuring && (
+            <colgroup>
+              {checkboxSelection && (
+                <col style={{ width: SELECT_COLUMN_WIDTH }} />
+              )}
+              {visibleColumns.map((column, index) => (
+                <col key={column.field} style={{ width: widths[index] }} />
+              ))}
+            </colgroup>
+          )}
           {header}
           <tbody>
             {showSkeleton &&
               Array.from({ length: SKELETON_ROWS }).map((_, rowIndex) => (
-                <tr key={rowIndex} className={compact ? "h-9" : "h-[52px]"}>
+                <tr
+                  key={rowIndex}
+                  className={
+                    compact
+                      ? "h-(--ik-table-row-h-compact)"
+                      : "h-(--ik-table-row-h)"
+                  }
+                >
                   {Array.from({ length: columnCount }).map((_, cellIndex) => (
                     <td
                       key={cellIndex}
@@ -606,7 +771,9 @@ export function DataTable<R extends RowData = any>({
                   }
                   className={cn(
                     "group/row",
-                    compact ? "h-9" : "h-[52px]",
+                    compact
+                      ? "h-(--ik-table-row-h-compact)"
+                      : "h-(--ik-table-row-h)",
                     onRowClick
                       ? "cursor-pointer hover:bg-primary/8"
                       : "hover:bg-primary/3",
@@ -636,7 +803,7 @@ export function DataTable<R extends RowData = any>({
                       key={column.field}
                       className={cn(
                         cellPadding,
-                        "align-middle leading-[1.4] break-words",
+                        "align-middle leading-(--ik-table-line-height) break-words",
                         ALIGN[column.align ?? "left"],
                         rowIndex > 0 && "border-t border-divider",
                       )}

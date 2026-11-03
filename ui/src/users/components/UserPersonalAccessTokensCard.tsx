@@ -513,7 +513,7 @@ const TokenValueDialog = ({
               Access token
             </span>
             <div className="flex items-center gap-2 rounded-code border border-divider bg-paper px-3 py-2">
-              <code className="m-0 min-w-0 flex-1 font-mono text-[13px] leading-[1.6] font-normal break-all">
+              <code className="m-0 min-w-0 flex-1 font-mono text-(length:--text-body2) leading-[1.6] font-normal break-all">
                 {token ?? ""}
               </code>
               <Tooltip title="Copy token">

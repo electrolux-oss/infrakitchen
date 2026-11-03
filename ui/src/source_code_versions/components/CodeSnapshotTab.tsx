@@ -133,7 +133,7 @@ function renderTreeItems(nodes: TreeNode[]) {
             ) : (
               <HeroDocumentTextIcon className="size-4" color="action" />
             )}
-            <p className="m-0 font-mono text-[13px] font-normal">
+            <p className="m-0 font-mono text-(length:--text-body2) font-normal">
               {isFolder ? node.name : node.name.replace(/@[^/]+$/, "")}
             </p>
             {!isFolder && node.file?.ref && (

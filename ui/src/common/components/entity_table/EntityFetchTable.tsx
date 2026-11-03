@@ -22,6 +22,7 @@ interface DataGridState {
   sortModel: SortModel;
   paginationModel: PaginationModel;
   columnVisibilityModel?: ColumnVisibilityModel;
+  fitColumns?: boolean;
 }
 
 export const EntityFetchTable = forwardRef<
@@ -45,6 +46,7 @@ export const EntityFetchTable = forwardRef<
     defaultSort,
     rowClickable,
     quickFilters,
+    toolbarActions,
     onRowClick,
     onDataChange,
   } = props;
@@ -110,6 +112,8 @@ export const EntityFetchTable = forwardRef<
       ...(savedState?.columnVisibilityModel ?? {}),
     }));
 
+  const [fitColumns, setFitColumns] = useState(savedState?.fitColumns ?? false);
+
   const handleSortModelChange = (newSortModel: SortModel) => {
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
     setSortModel(newSortModel.length > 0 ? newSortModel : defaultSortModel);
@@ -153,8 +157,9 @@ export const EntityFetchTable = forwardRef<
     setKey(storageKey, {
       sortModel,
       columnVisibilityModel,
+      fitColumns,
     });
-  }, [sortModel, columnVisibilityModel, storageKey, setKey]);
+  }, [sortModel, columnVisibilityModel, fitColumns, storageKey, setKey]);
 
   return (
     <FilterProvider
@@ -179,6 +184,7 @@ export const EntityFetchTable = forwardRef<
         defaultSort={defaultSort}
         rowClickable={rowClickable}
         quickFilters={quickFilters}
+        toolbarActions={toolbarActions}
         onRowClick={onRowClick}
         onDataChange={onDataChange}
         loading={loading}
@@ -194,6 +200,8 @@ export const EntityFetchTable = forwardRef<
         handleSortModelChange={handleSortModelChange}
         handlePaginationModelChange={handlePaginationModelChange}
         handleColumnVisibilityModelChange={handleColumnVisibilityModelChange}
+        fitColumns={fitColumns}
+        handleFitColumnsChange={setFitColumns}
       />
     </FilterProvider>
   );

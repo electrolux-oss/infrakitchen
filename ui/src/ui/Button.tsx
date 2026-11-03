@@ -27,11 +27,13 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
 }
 
+/** Solid call-to-action; colors come from the --ik-action-* tokens. */
+const ACTION =
+  "border-transparent bg-action text-action-contrast hover:bg-action-hover active:bg-action-pressed";
+
 const CONTAINED: Record<ButtonColor, string> = {
-  primary:
-    "border-transparent bg-grey-900 text-white hover:bg-[#202020] active:bg-grey-800 dark:bg-grey-50 dark:text-grey-900 dark:hover:bg-[#ededed] dark:active:bg-grey-300",
-  secondary:
-    "border-transparent bg-grey-900 text-white hover:bg-[#202020] active:bg-grey-800 dark:bg-grey-50 dark:text-grey-900 dark:hover:bg-[#ededed] dark:active:bg-grey-300",
+  primary: ACTION,
+  secondary: ACTION,
   error:
     "border-transparent bg-error text-white hover:bg-error-dark active:bg-error dark:bg-error-dark dark:hover:bg-error dark:active:bg-error-dark",
   warning:

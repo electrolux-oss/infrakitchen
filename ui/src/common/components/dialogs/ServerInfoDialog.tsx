@@ -123,7 +123,7 @@ export const ServerInfoDialog = ({ open, onClose }: ServerInfoDialogProps) => {
             <>
               {/* Release identification: what build is running. */}
               <div>
-                <h6 className="m-0 mb-2 text-[0.75rem] font-semibold tracking-[0.08em] text-fg-muted uppercase">
+                <h6 className="m-0 mb-2 text-(length:--text-caption) font-semibold tracking-[0.08em] text-fg-muted uppercase">
                   Build
                 </h6>
                 <div className="flex flex-col gap-2">
@@ -149,7 +149,7 @@ export const ServerInfoDialog = ({ open, onClose }: ServerInfoDialogProps) => {
 
               {/* Runtime environment: where the server runs. */}
               <div>
-                <h6 className="m-0 mb-2 text-[0.75rem] font-semibold tracking-[0.08em] text-fg-muted uppercase">
+                <h6 className="m-0 mb-2 text-(length:--text-caption) font-semibold tracking-[0.08em] text-fg-muted uppercase">
                   Server
                 </h6>
                 <div className="flex flex-col gap-2">

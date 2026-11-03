@@ -149,7 +149,7 @@ export function Dialog({
             fullScreen
               ? "m-0 h-full max-h-none w-full max-w-none rounded-none border-0"
               : cn(
-                  "m-8 max-h-[calc(100%-64px)] rounded-[12px] border border-divider shadow-[0_24px_64px_rgba(0,0,0,0.14)] dark:shadow-[0_24px_64px_rgba(0,0,0,0.55)]",
+                  "m-8 max-h-[calc(100%-64px)] rounded-dialog border border-divider shadow-dialog",
                   maxWidth ? MAX_WIDTH[maxWidth] : "max-w-[calc(100%-64px)]",
                   fullWidth ? "w-[calc(100%-64px)]" : "w-auto",
                   resizable &&

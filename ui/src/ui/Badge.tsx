@@ -54,7 +54,7 @@ export function Badge({
             BADGE_COLORS[color],
             variant === "dot"
               ? "size-2 min-w-0 p-0"
-              : "h-5 min-w-5 rounded-full px-1.5 text-[0.75rem] leading-none",
+              : "h-5 min-w-5 rounded-full px-1.5 text-(length:--text-caption) leading-none",
           )}
         >
           {variant === "dot" ? null : content}

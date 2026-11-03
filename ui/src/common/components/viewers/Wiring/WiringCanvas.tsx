@@ -475,7 +475,7 @@ function WiringCanvasInner(props: WiringCanvasEditorProps) {
           className="flex w-80 shrink-0 flex-col border-l border-divider bg-canvas"
         >
           <div className="flex min-h-12 items-center justify-between gap-2 border-b border-divider px-4">
-            <h3 className="m-0 text-[0.875rem] font-semibold text-fg-muted">
+            <h3 className="m-0 text-(length:--text-body2) font-semibold text-fg-muted">
               {detailsTitle}
             </h3>
             <ToolButton

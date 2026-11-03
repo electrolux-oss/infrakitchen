@@ -6,13 +6,17 @@
  * values sit on :root and the dark ones under [data-color-scheme="dark"],
  * which ColorSchemeProvider (ui/colorScheme.tsx) sets on <html>.
  *
+ * Optional themes (themes/*.css) live in the `ik-themes` layer, after
+ * `base`, and only redefine tokens; see themes/index.css.
+ *
  * Preflight is not imported; the base layer below carries the small reset
  * the components are built against.
  */
-@layer theme, base, components, utilities;
+@layer theme, base, ik-themes, components, utilities;
 
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
+@import "./themes/index.css" layer(ik-themes);
 
 /*
  * daisyUI supplies the widget classes (btn, badge, alert, loading, ...). Its
@@ -33,12 +37,12 @@
 @custom-variant dark (&:where([data-color-scheme="dark"], [data-color-scheme="dark"] *));
 
 @theme inline {
-  --font-sans:
-    "Geist Sans", -apple-system, "system-ui", "Segoe UI", "Noto Sans",
-    Helvetica, Arial, sans-serif;
-  --font-mono:
-    "Geist Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono",
-    monospace;
+  /* Fonts and the raw Tailwind shadows point at tokens so themes can swap
+     them (inline theme values are copied into utilities, not referenced). */
+  --font-sans: var(--ik-font-sans);
+  --font-mono: var(--ik-font-mono);
+  --shadow-sm: var(--ik-shadow-sm);
+  --shadow-lg: var(--ik-shadow-lg);
 
   --color-fg: var(--ik-fg);
   --color-fg-muted: var(--ik-fg-muted);
@@ -80,6 +84,12 @@
   --color-disabled: var(--ik-disabled);
   --color-disabled-bg: var(--ik-disabled-bg);
 
+  /* Solid call-to-action surface (contained primary/secondary buttons). */
+  --color-action: var(--ik-action-bg);
+  --color-action-hover: var(--ik-action-bg-hover);
+  --color-action-pressed: var(--ik-action-bg-active);
+  --color-action-contrast: var(--ik-action-fg);
+
   --color-grey-50: var(--ik-grey-50);
   --color-grey-100: var(--ik-grey-100);
   --color-grey-200: var(--ik-grey-200);
@@ -93,6 +103,11 @@
 
   --radius-surface: var(--ik-surface-radius);
   --radius-code: var(--ik-code-radius);
+  --radius-dialog: var(--ik-dialog-radius);
+  --shadow-dialog: var(--ik-dialog-shadow);
+  --shadow-popover: var(--ik-popover-shadow);
+  --shadow-node: var(--ik-node-shadow);
+  --shadow-toast: var(--ik-toast-shadow);
   --shadow-base: var(--ik-base-shadow);
   /* Used by tooltips, menus and popovers. */
   --shadow-dropdown: var(--ik-shadow-4);
@@ -109,7 +124,10 @@
 }
 
 /* Typography scale. Subtitle variants carry no
-   color; pair them with text-grey-500. */
+   color; pair them with text-grey-500. Themes resize these, so components
+   should not hard-code text-[Npx]. `text-body2` also sets line-height and
+   weight; for the size alone use `text-(length:--text-body2)`. Icons keep
+   fixed sizes. */
 @theme {
   --text-h1: 6rem;
   --text-h1--line-height: 1.06;
@@ -231,6 +249,13 @@
     --ik-disabled: #bbbbbb;
     --ik-disabled-bg: rgba(0, 0, 0, 0.12);
 
+    /* Contained primary/secondary buttons. Themes can point these at
+       --ik-primary for an accent-colored call to action. */
+    --ik-action-bg: hsl(0, 0%, 4%);
+    --ik-action-bg-hover: #202020;
+    --ik-action-bg-active: hsl(0, 0%, 15%);
+    --ik-action-fg: #ffffff;
+
     --ik-primary: hsl(0, 0%, 4%);
     --ik-primary-light: hsl(0, 0%, 82%);
     --ik-primary-dark: hsl(0, 0%, 0%);
@@ -285,10 +310,25 @@
       0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14),
       0px 3px 14px 2px rgba(0, 0, 0, 0.12);
 
+    /* Floating surfaces. Themes usually alias these to --ik-shadow-*. */
+    --ik-dialog-shadow: 0 24px 64px rgba(0, 0, 0, 0.14);
+    --ik-popover-shadow: 0 4px 24px rgb(0 0 0 / 0.12);
+    --ik-node-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 12px rgb(0 0 0 / 0.06);
+    --ik-toast-shadow:
+      0 3px 3px -2px rgba(0, 0, 0, 0.2), 0 3px 4px 0 rgba(0, 0, 0, 0.14),
+      0 1px 8px 0 rgba(0, 0, 0, 0.12);
+
+    /* Raw Tailwind shadow-sm / shadow-lg (Tailwind's own values). */
+    --ik-shadow-sm:
+      0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --ik-shadow-lg:
+      0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
     --ik-z-appbar: 1100;
     --ik-surface-radius: 8px;
     /* Tighter radius for inline and block code chips than 8px surfaces. */
     --ik-code-radius: 4px;
+    --ik-dialog-radius: 12px;
   }
 
   [data-color-scheme="dark"] {
@@ -307,6 +347,11 @@
     --ik-action-active: #fff;
     --ik-disabled: #555555;
     --ik-disabled-bg: rgba(255, 255, 255, 0.12);
+
+    --ik-action-bg: hsl(0, 0%, 98%);
+    --ik-action-bg-hover: #ededed;
+    --ik-action-bg-active: hsl(0, 0%, 84%);
+    --ik-action-fg: hsl(0, 0%, 4%);
 
     --ik-primary: hsl(0, 0%, 98%);
     --ik-primary-light: hsl(0, 0%, 92%);
@@ -328,6 +373,44 @@
     --ik-base-shadow:
       hsla(0, 0%, 0%, 0.55) 0px 1px 2px 0px,
       hsla(0, 0%, 0%, 0.5) 0px 4px 16px 0px;
+    --ik-dialog-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+    --ik-popover-shadow: 0 4px 24px rgb(0 0 0 / 0.5);
+    --ik-node-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 12px rgb(0 0 0 / 0.35);
+  }
+}
+
+/*
+ * Scheme-independent tokens: fonts, body text and table density. Themes
+ * override these along with Tailwind's own --spacing, --text-* and
+ * --radius-* variables.
+ */
+@layer base {
+  :root {
+    --ik-font-sans:
+      "Geist Sans", -apple-system, "system-ui", "Segoe UI", "Noto Sans",
+      Helvetica, Arial, sans-serif;
+    --ik-font-mono:
+      "Geist Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono",
+      monospace;
+
+    --ik-body-font-size: 0.875rem;
+    --ik-body-line-height: 1.43;
+    --ik-th-font-size: 0.8125rem;
+
+    /* DataTable. Spacing-based values follow the theme's --spacing. */
+    --ik-table-font-size: 0.875rem;
+    --ik-table-line-height: 1.4;
+    --ik-table-head-h: calc(var(--spacing) * 14);
+    --ik-table-row-h: 52px;
+    --ik-table-row-h-compact: calc(var(--spacing) * 9);
+    --ik-table-cell-px: calc(var(--spacing) * 2.5);
+    --ik-table-cell-py: calc(var(--spacing) * 2.5);
+    --ik-table-cell-py-compact: calc(var(--spacing) * 0.5);
+
+    /* Static Table (size medium / small). */
+    --ik-static-table-cell-px: calc(var(--spacing) * 4);
+    --ik-static-table-cell-py: calc(var(--spacing) * 4);
+    --ik-static-table-cell-py-small: calc(var(--spacing) * 1.5);
   }
 }
 
@@ -356,9 +439,9 @@
     margin: 0;
     color: var(--ik-fg);
     background-color: var(--ik-canvas);
-    font-family: var(--font-sans);
-    font-size: 0.875rem;
-    line-height: 1.43;
+    font-family: var(--ik-font-sans);
+    font-size: var(--ik-body-font-size);
+    line-height: var(--ik-body-line-height);
   }
 
   @media print {
@@ -372,12 +455,12 @@
   }
 
   code {
-    font-family: var(--font-mono);
+    font-family: var(--ik-font-mono);
   }
 
   /* Shared table header style; table components must not override it. */
   th {
-    font-size: 0.8125rem;
+    font-size: var(--ik-th-font-size);
     font-weight: 400;
     color: var(--ik-fg-muted);
   }
@@ -430,7 +513,7 @@
    editor (including diff/merge views) shows the bundled Geist Mono. */
 @layer base {
   .cm-editor .cm-scroller {
-    font-family: var(--font-mono) !important;
+    font-family: var(--ik-font-mono) !important;
   }
 }
 
