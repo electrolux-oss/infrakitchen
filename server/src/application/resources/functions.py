@@ -113,8 +113,9 @@ async def get_resource_actions(
             actions.append(ModelActions.REJECT)
         actions.append(ModelActions.DRYRUN)
         actions.append(ModelActions.DOWNLOAD)
-        actions.append(ModelActions.EDIT)
+        # a pending destroy is locked until it is approved or rejected
         if state == ModelState.PROVISION:
+            actions.append(ModelActions.EDIT)
             actions.append(ModelActions.DELETE)
     elif status == ModelStatus.REJECTED:
         actions.append(ModelActions.RECREATE)
@@ -156,6 +157,10 @@ async def get_resource_actions(
             actions.append(ModelActions.DOWNLOAD)
             actions.append(ModelActions.EXECUTE)
             actions.append(ModelActions.DRYRUN)
+            actions.append(ModelActions.EDIT)
+            if temp_state_exists and user_is_admin:
+                actions.append(ModelActions.APPROVE)
+                actions.append(ModelActions.REJECT)
 
     # Executing a resource in DESTROY state destroys it, so cascades start only from live resources
     if has_children and state != ModelState.DESTROY:

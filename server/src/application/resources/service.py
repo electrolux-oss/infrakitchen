@@ -530,7 +530,11 @@ class ResourceService:
         if existing_resource.status in [ModelStatus.DISABLED, ModelStatus.QUEUED, ModelStatus.IN_PROGRESS]:
             raise ValueError(f"Entity cannot be updated, has wrong status {existing_resource.status}")
 
-        if existing_resource.state in [ModelState.DESTROY, ModelState.DESTROYED]:
+        # a destroy that failed or is waiting to run can still be fixed before it is applied
+        if existing_resource.state == ModelState.DESTROYED or (
+            existing_resource.state == ModelState.DESTROY
+            and existing_resource.status not in [ModelStatus.READY, ModelStatus.ERROR]
+        ):
             raise ValueError(f"Entity cannot be updated, has wrong state {existing_resource.state}")
 
         existing_resource_pydantic = ResourceResponse.model_validate(existing_resource)
@@ -747,6 +751,7 @@ class ResourceService:
         if resource_temp_state is not None and pydantic_resource.state in [
             ModelState.PROVISIONED,
             ModelState.PROVISION,
+            ModelState.DESTROY,
         ]:
             if pydantic_resource.status not in [ModelStatus.DONE, ModelStatus.READY, ModelStatus.ERROR]:
                 raise ValueError(f"Cannot reject changes for a resource in {pydantic_resource.status} status")
@@ -836,7 +841,14 @@ class ResourceService:
             await self.resource_temp_state_handler.delete_by_resource_id(resource_id=pydantic_resource.id)
             await self.crud.refresh(existing_resource)
 
-        elif resource_temp_state is not None and pydantic_resource.state == ModelState.PROVISIONED:
+        elif resource_temp_state is not None and (
+            pydantic_resource.state == ModelState.PROVISIONED
+            or (
+                pydantic_resource.state == ModelState.DESTROY
+                and pydantic_resource.status in [ModelStatus.READY, ModelStatus.ERROR]
+            )
+        ):
+            # for DESTROY, the next apply runs destroy with the approved values
             if resource_variables_differ():
                 await approve_entity(existing_resource, abstract=existing_resource.abstract)
             await self.audit_log_handler.create_log(

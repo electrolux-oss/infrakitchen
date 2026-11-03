@@ -27,6 +27,8 @@ class TestPatch:
             (ModelState.PROVISIONED, ModelStatus.READY, ModelState.PROVISIONED, ModelStatus.READY),
             (ModelState.PROVISION, ModelStatus.READY, ModelState.PROVISION, ModelStatus.READY),
             (ModelState.PROVISION, ModelStatus.ERROR, ModelState.PROVISION, ModelStatus.ERROR),
+            (ModelState.DESTROY, ModelStatus.ERROR, ModelState.DESTROY, ModelStatus.ERROR),
+            (ModelState.DESTROY, ModelStatus.READY, ModelState.DESTROY, ModelStatus.READY),
         ],
     )
     async def test_patch_success_and_create_temp_state(
@@ -129,7 +131,8 @@ class TestPatch:
         "state,status",
         [
             (ModelState.PROVISION, ModelStatus.QUEUED),
-            (ModelState.DESTROY, ModelStatus.READY),
+            (ModelState.DESTROY, ModelStatus.APPROVAL_PENDING),
+            (ModelState.DESTROY, ModelStatus.IN_PROGRESS),
             (ModelState.DESTROYED, ModelStatus.DONE),
             (ModelState.PROVISIONED, ModelStatus.IN_PROGRESS),
         ],
@@ -137,8 +140,7 @@ class TestPatch:
     async def test_patch_resource_has_invalid_status(
         self, state, status, mock_resource_service, mock_resource_crud, mocked_resource, mock_user_dto
     ):
-        resource_update = Mock(spec=ResourceUpdate)
-        resource_update.source_code_version_id = None
+        resource_update = ResourceUpdate(description="Resource description")
 
         existing_resource = mocked_resource
         existing_resource.id = uuid4()
@@ -147,7 +149,7 @@ class TestPatch:
         existing_resource.source_code_version_id = None
         mock_resource_crud.get_by_id.return_value = existing_resource
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Entity cannot be updated, has wrong"):
             await mock_resource_service.update_resource(
                 resource_id=existing_resource.id, resource=resource_update, requester=mock_user_dto
             )
@@ -593,6 +595,8 @@ class TestPatchAction:
             (ModelState.PROVISIONED, ModelStatus.READY, ModelState.PROVISIONED, ModelStatus.READY),
             (ModelState.PROVISION, ModelStatus.READY, ModelState.PROVISION, ModelStatus.READY),
             (ModelState.PROVISION, ModelStatus.ERROR, ModelState.PROVISION, ModelStatus.ERROR),
+            (ModelState.DESTROY, ModelStatus.ERROR, ModelState.DESTROY, ModelStatus.ERROR),
+            (ModelState.DESTROY, ModelStatus.READY, ModelState.DESTROY, ModelStatus.READY),
         ],
     )
     async def test_patch_approve_when_provisioned_resource_edited(
@@ -663,6 +667,7 @@ class TestPatchAction:
             (ModelState.PROVISIONED, ModelStatus.READY, ModelState.PROVISIONED, ModelStatus.READY),
             (ModelState.PROVISION, ModelStatus.READY, ModelState.PROVISION, ModelStatus.READY),
             (ModelState.PROVISION, ModelStatus.ERROR, ModelState.PROVISION, ModelStatus.READY),
+            (ModelState.DESTROY, ModelStatus.ERROR, ModelState.DESTROY, ModelStatus.READY),
         ],
     )
     async def test_patch_approve_when_provisioned_resource_edited_include_variables(
@@ -928,6 +933,7 @@ class TestPatchAction:
             (ModelState.PROVISIONED, ModelStatus.DONE, ModelState.PROVISIONED, ModelStatus.DONE),
             (ModelState.PROVISIONED, ModelStatus.READY, ModelState.PROVISIONED, ModelStatus.READY),
             (ModelState.PROVISION, ModelStatus.READY, ModelState.PROVISION, ModelStatus.READY),
+            (ModelState.DESTROY, ModelStatus.ERROR, ModelState.DESTROY, ModelStatus.ERROR),
         ],
     )
     async def test_patch_reject_when_provisioned_resource_edited(
@@ -1092,6 +1098,7 @@ class TestPatchAction:
             (ModelState.PROVISION, ModelStatus.REJECTED, ModelState.PROVISION, ModelStatus.READY, True),
             (ModelState.PROVISION, ModelStatus.REJECTED, ModelState.PROVISION, ModelStatus.APPROVAL_PENDING, False),
             (ModelState.DESTROY, ModelStatus.READY, ModelState.PROVISIONED, ModelStatus.READY, False),
+            (ModelState.DESTROY, ModelStatus.ERROR, ModelState.PROVISIONED, ModelStatus.READY, False),
             (ModelState.DESTROYED, ModelStatus.DONE, ModelState.PROVISION, ModelStatus.APPROVAL_PENDING, False),
         ],
     )
