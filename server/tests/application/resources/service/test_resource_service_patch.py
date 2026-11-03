@@ -1488,3 +1488,53 @@ class TestToolSelection:
 
         assert result.state == ModelState.PROVISIONED
         assert result.status == ModelStatus.READY
+
+
+@pytest.mark.asyncio
+async def test_check_drift_queues_the_task(
+    monkeypatch, mock_resource_service, mock_resource_crud, mock_event_sender, mocked_user, mocked_resource
+):
+    monkeypatch.setattr("application.resources.functions.resource_supports_drift_check", lambda resource: True)
+    mocked_resource.state = ModelState.PROVISIONED
+    mocked_resource.status = ModelStatus.DONE
+    mock_resource_crud.get_by_id.return_value = mocked_resource
+
+    await mock_resource_service.patch_action(
+        resource_id=mocked_resource.id, body=PatchBodyModel(action=ModelActions.CHECK_DRIFT), requester=mocked_user
+    )
+
+    assert mock_event_sender.send_task.call_args.kwargs["action"] == ModelActions.CHECK_DRIFT
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status", [ModelStatus.IN_PROGRESS, ModelStatus.READY, ModelStatus.ERROR])
+async def test_check_drift_needs_a_resource_without_pending_changes(
+    monkeypatch, mock_resource_service, mock_resource_crud, mock_event_sender, mocked_user, mocked_resource, status
+):
+    # the plan would report the changes waiting for an apply, or left by a failed one, as drift
+    monkeypatch.setattr("application.resources.functions.resource_supports_drift_check", lambda resource: True)
+    mocked_resource.state = ModelState.PROVISIONED
+    mocked_resource.status = status
+    mock_resource_crud.get_by_id.return_value = mocked_resource
+
+    with pytest.raises(EntityWrongState):
+        await mock_resource_service.patch_action(
+            resource_id=mocked_resource.id, body=PatchBodyModel(action=ModelActions.CHECK_DRIFT), requester=mocked_user
+        )
+
+    mock_event_sender.send_task.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_check_drift_needs_opentofu_code(
+    mock_resource_service, mock_resource_crud, mock_event_sender, mocked_user, mocked_resource
+):
+    mocked_resource.state = ModelState.PROVISIONED
+    mocked_resource.status = ModelStatus.DONE
+    mocked_resource.abstract = True
+    mock_resource_crud.get_by_id.return_value = mocked_resource
+
+    with pytest.raises(ValueError, match="OpenTofu"):
+        await mock_resource_service.patch_action(
+            resource_id=mocked_resource.id, body=PatchBodyModel(action=ModelActions.CHECK_DRIFT), requester=mocked_user
+        )

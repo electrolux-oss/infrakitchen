@@ -51,7 +51,18 @@ type GqlResourceDetailFieldTypes = {
   entityName: string;
 };
 
+type GqlResourceDrift = {
+  status: string;
+  checkedAt: string;
+  firstDetectedAt: string | null;
+  /** checks that failed in a row since the last successful one */
+  consecutiveFailures: number;
+  lastError: string | null;
+  lastErrorAt: string | null;
+};
+
 type GqlResourceRelationFieldTypes = {
+  drift: GqlResourceDrift | null;
   template: GqlTemplateShort | null;
   sourceCodeVersion: GqlSourceCodeVersionShort | null;
   integrationIds: GqlIntegrationShort[] | null;

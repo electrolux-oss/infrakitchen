@@ -72,6 +72,11 @@ class Settings(BaseSettings):
     WORKER_HEARTBEAT_SECONDS: int = 30  # how often a worker extends its lease and reports itself alive
     TASK_QUEUE_RETENTION_DAYS: int = 14  # finished queue rows older than this are purged
     TASK_QUEUE_CANCEL_DELAY_SECONDS: int = 5  # user actions wait this long in the queue so they can be cancelled
+    # a drift check holds its resource and user actions wait for it, so a hung check is stopped after this
+    DRIFT_CHECK_TIMEOUT_SECONDS: int = 900
+    # drift checks running at once across all workers, so background checks never take every worker.
+    # A soft limit: workers claiming at the same moment each see the same running count
+    DRIFT_MAX_RUNNING_CHECKS: int = 2
     NOTIFICATION_DISPATCHERS: int = 4  # notification outbox items routed concurrently per API process
     NOTIFICATION_LEASE_SECONDS: int = 120  # a claimed outbox item is retried by another dispatcher after this
     NOTIFICATION_RETENTION_DAYS: int = 30  # in-app notifications older than this are purged

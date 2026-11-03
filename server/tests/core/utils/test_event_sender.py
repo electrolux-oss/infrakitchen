@@ -35,6 +35,7 @@ class TestEventSenderTasks:
                 "action": "execute",
                 "payload": {"user": str(mock_user_dto.id), "trace_id": "trace-1", "audit_log_id": None},
                 "created_by": mock_user_dto.id,
+                "priority": 0,
                 "delay_seconds": 5,
             }
         ]

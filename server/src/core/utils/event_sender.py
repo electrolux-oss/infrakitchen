@@ -90,6 +90,7 @@ class EventSender:
         audit_log_id: str | UUID | None = None,
         extra_metadata: dict[str, str] | None = None,
         delay_seconds: float | None = None,
+        priority: int = 0,
     ):
         """Buffer a task for the worker queue. It is written to the DB queue on flush.
 
@@ -117,6 +118,7 @@ class EventSender:
                 "action": str(action),
                 "payload": payload,
                 "created_by": requester.id,
+                "priority": priority,
                 "delay_seconds": Settings().TASK_QUEUE_CANCEL_DELAY_SECONDS if delay_seconds is None else delay_seconds,
             }
         )

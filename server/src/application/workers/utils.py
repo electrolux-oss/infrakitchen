@@ -8,6 +8,7 @@ from application.executors.task import ExecutorTask
 from application.integrations.dependencies import get_integration_service
 from application.resources.crud import ResourceCRUD
 from application.resources.dependencies import get_resource_service
+from application.resources.drift_task import ResourceDriftTask
 from application.resources.task import ResourceTask
 from application.source_code_versions.crud import SourceCodeVersionCRUD
 from application.source_code_versions.dependencies import get_source_code_version_service
@@ -175,7 +176,8 @@ async def get_resource_task(
         integration_service=get_integration_service(session=session),
     )
 
-    return ResourceTask(
+    task_class = ResourceDriftTask if action == ModelActions.CHECK_DRIFT else ResourceTask
+    return task_class(
         session=session,
         crud_resource=crud_resource,
         resource_service=get_resource_service(session=session),

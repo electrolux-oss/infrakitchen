@@ -18,6 +18,8 @@ from application.resources.functions import (
     convert_field_by_naming_convention_pattern,
     delete_resource_policies,
     get_resource_actions,
+    resource_supports_drift_check,
+    validate_drift_action,
     get_resource_variable_schema,
     validate_resource_variables_on_create,
     update_resource_variables_on_patch,
@@ -197,7 +199,9 @@ class ResourceService:
                 "status": None,
                 "state": None,
                 "created_by": None,
+                "abstract": None,
                 "project": {"id": None, "owners": {"id": None}},
+                "source_code_version": {"id": None, "source_code": {"id": None, "source_code_language": None}},
             },
         )
         if not resource:
@@ -212,6 +216,7 @@ class ResourceService:
             project=getattr(resource, "project", None),
             has_children=include_cascade and await self.crud.has_children(resource.id),
             created_by=resource.created_by,
+            drift_check_supported=resource_supports_drift_check(resource),
         )
 
     async def create_resource(
@@ -1009,6 +1014,15 @@ class ResourceService:
                     existing_resource.id,
                     requester=requester,
                     action=ModelActions.DRYRUN,
+                    trace_id=trace_id or self.audit_log_handler.trace_id,
+                    audit_log_id=self.audit_log_handler.audit_log_id,
+                )
+            case ModelActions.CHECK_DRIFT:
+                validate_drift_action(existing_resource)
+                await self.event_sender.send_task(
+                    existing_resource.id,
+                    requester=requester,
+                    action=ModelActions.CHECK_DRIFT,
                     trace_id=trace_id or self.audit_log_handler.trace_id,
                     audit_log_id=self.audit_log_handler.audit_log_id,
                 )

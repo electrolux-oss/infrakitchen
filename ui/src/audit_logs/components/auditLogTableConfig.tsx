@@ -146,12 +146,13 @@ export const auditLogColumns: EntityTableColumn[] = [
             showLabel={showTemplateChip}
             // Personal access tokens have no detail route — they are managed
             // on the owner's user page (Personal Access Tokens card). Feature
-            // flags are likewise managed in the admin panel, not on a detail
-            // route.
+            // flags and drift settings are likewise managed in the admin
+            // panel, not on a detail route.
             disableLink={
               isDeleted ||
               params.row.model === "personal_access_token" ||
-              params.row.model === "feature_flag"
+              params.row.model === "feature_flag" ||
+              params.row.model === "drift_settings"
             }
           />
           {uuidLine}

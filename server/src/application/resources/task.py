@@ -43,6 +43,8 @@ from core.users.model import UserDTO
 from core.utils.entity_state_handler import make_done, make_in_progress
 from core.utils.event_sender import EventSender
 from ..resources.model import Resource, ResourceDTO
+from ..resource_drifts.dependencies import get_resource_drift_service
+from ..resource_drifts.service import ResourceDriftService
 from ..resources.schema import Outputs, ResourceResponse
 from ..tools import OtfClient, OtfProvider
 
@@ -50,6 +52,9 @@ logger = logging.getLogger(__name__)
 
 
 class ResourceTask:
+    # actions whose log replaces the previous one instead of being appended
+    EXPIRING_ACTIONS: tuple[ModelActions, ...] = (ModelActions.DRYRUN,)
+
     def __init__(
         self,
         session: AsyncSession,
@@ -65,6 +70,7 @@ class ResourceTask:
         action: ModelActions,
         resource_temp_state_instance: ResourceTempStateDTO | None = None,
         workspace_root: str | None = None,
+        drift_service: ResourceDriftService | None = None,
     ) -> None:
         self.session: AsyncSession = session
         self.crud_resource: ResourceCRUD = crud_resource
@@ -90,6 +96,10 @@ class ResourceTask:
         self.secret_manager: SecretManager = secret_manager
         self.environment_variables: dict[str, str] = {}
         self.workspace_path: str | None = None
+        # its events go out with this task's commits (change_entity_status)
+        self.drift_service: ResourceDriftService = drift_service or get_resource_drift_service(
+            session=session, event_sender=event_sender
+        )
 
     # workflow states
     async def start_pipeline(self):
@@ -97,7 +107,7 @@ class ResourceTask:
             f"Starting pipeline for {self.resource_instance} {self.resource_instance.id} with action {self.action}"
         )
 
-        if self.action == ModelActions.DRYRUN:
+        if self.action in self.EXPIRING_ACTIONS:
             self.logger.make_expired()
 
         if hasattr(self.logger, "add_log_header"):
@@ -117,7 +127,11 @@ class ResourceTask:
                     raise CannotProceed("Temporary state is not found for dry run with temp state")
                 await self.dry_run()
             case _:
-                raise CannotProceed(f"Unknown action: {self.action}")
+                await self.run_other_action()
+
+    async def run_other_action(self) -> None:
+        """Actions that are not part of the common pipeline; subclasses add theirs."""
+        raise CannotProceed(f"Unknown action: {self.action}")
 
     async def init_workspace(self, git_auth_only: bool = False):
         """
@@ -505,6 +519,12 @@ class ResourceTask:
     async def make_failed(self) -> None:
         if self.resource_instance.state == ModelState.DESTROYED:
             return None
+        if self.action == ModelActions.EXECUTE:
+            # a failed apply may have changed the infrastructure, so the last drift result is outdated
+            try:
+                _ = await self.drift_service.mark_outdated(self.resource_instance.id)
+            except Exception:
+                logger.exception(f"Failed to mark the drift of resource {self.resource_instance.id} as outdated")
         await self.change_entity_status(new_status=ModelStatus.ERROR)
 
     async def make_retry(self, retry: int, max_retries: int):
@@ -545,6 +565,7 @@ class ResourceTask:
         await self.create()
         make_done(self.resource_instance)
         self.logger.info("Create task is done")
+        _ = await self.drift_service.mark_applied(self.resource_instance.id)
         await self.change_entity_status()
         await self.clean_workspace()
 
@@ -558,6 +579,7 @@ class ResourceTask:
 
         make_done(self.resource_instance)
         self.logger.info("Update task is done")
+        _ = await self.drift_service.mark_applied(self.resource_instance.id)
         await self.change_entity_status()
         await self.clean_workspace()
 
@@ -570,6 +592,7 @@ class ResourceTask:
         await self.destroy()
         make_done(self.resource_instance)
         self.logger.info("Destroy task is done")
+        await self.drift_service.clear(self.resource_instance.id)
         await self.change_entity_status()
         await self.clean_workspace()
 

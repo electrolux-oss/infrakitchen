@@ -1,3 +1,4 @@
+export { DriftSettingsSection } from "./DriftSettingsSection";
 export { FeatureFlagRow } from "./FeatureFlagRow";
 export { FeatureFlagSection } from "./FeatureFlag";
 export { PermissionsSection } from "./Permissions";

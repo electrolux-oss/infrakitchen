@@ -12,6 +12,8 @@ export interface DependencyConfig {
 
 export interface ProjectConfig {
   always_use_workspace: boolean;
+  // null follows the global drift setting
+  drift_detection?: boolean | null;
   allow_unapproved_metadata_edits: ResourceUpdateApprovalBypassField[];
 }
 
