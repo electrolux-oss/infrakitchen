@@ -368,6 +368,15 @@ The Recreate step makes it possible to re-provision a resource that has been pre
 - **Success**: State: `provisioned`, Status: `done`
 - **Failure**: State: `provision`, Status: `error`
 
+### Cancelling a destroy
+
+Recreate also cancels a destroy that is waiting to run or that failed:
+
+- **Before**: State: `destroy`, Status: `ready` OR State: `destroy`, Status: `error`
+- **After**: State: `provisioned`, Status: `ready`
+
+A failed destroy may already have removed part of the infrastructure. Run **Apply** after cancelling to restore it.
+
 ## Destroy
 
 The Destroy step removes infrastructure from the cloud provider while keeping the resource record in InfraKitchen.
@@ -392,6 +401,10 @@ The Destroy step removes infrastructure from the cloud provider while keeping th
 :::tip[Destroying a whole tree]
 To destroy a resource together with everything below it, use [Cascade Destroy](#cascade-destroy) instead of destroying each child by hand.
 :::
+
+### Fixing a failed destroy
+
+A resource in `destroy` state with status `error` or `ready` can still be edited, for example to fix a variable or an integration that made the destroy fail. The edit creates a pending change like any other update. After it is approved, run **Apply** again and the destroy uses the new values. A destroy waiting for approval cannot be edited until it is approved or rejected.
 
 ### Dependency Checks
 

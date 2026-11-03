@@ -100,7 +100,11 @@ async def recreate_entity(entity_instance: BaseEntity, is_resource: bool = True)
         if entity_instance.status == ModelStatus.REJECTED:
             return True
 
-        if entity_instance.status == ModelStatus.READY and entity_instance.state == ModelState.DESTROY:
+        # a pending or failed destroy can be cancelled
+        if entity_instance.state == ModelState.DESTROY and entity_instance.status in [
+            ModelStatus.READY,
+            ModelStatus.ERROR,
+        ]:
             return True
 
         return False
@@ -116,7 +120,11 @@ async def recreate_entity(entity_instance: BaseEntity, is_resource: bool = True)
         else:
             entity_instance.status = ModelStatus.READY
 
-    elif entity_instance.state == ModelState.DESTROY and entity_instance.status == ModelStatus.READY:
+    elif entity_instance.state == ModelState.DESTROY and entity_instance.status in [
+        ModelStatus.READY,
+        ModelStatus.ERROR,
+    ]:
+        # a failed destroy may have removed part of the infra, applying again restores it
         entity_instance.status = ModelStatus.READY
         entity_instance.state = ModelState.PROVISIONED
     elif entity_instance.state == ModelState.DESTROYED and entity_instance.status == ModelStatus.DONE:
