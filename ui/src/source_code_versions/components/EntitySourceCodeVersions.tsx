@@ -1,13 +1,16 @@
 import { useRef, useState } from "react";
 
-import { useHasPermission } from "../../common";
+import { useNavigate } from "react-router";
+
+import { CreatePrefillState, useHasPermission } from "../../common";
 import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../common/components/entity_table/EntityFetchTable";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
+import { useConfig } from "../../common/context/ConfigContext";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { HeroAdjustmentsHorizontalIcon } from "../../icons";
+import { HeroAdjustmentsHorizontalIcon, HeroPlusCircleIcon } from "../../icons";
 import { Button } from "../../ui";
 import { SCV_FIELD_MAP } from "../graphql/fragments";
 
@@ -22,11 +25,17 @@ interface EntitySourceCodeVersionsProps {
   filterStorageKey: string;
 }
 
+/**
+ * Versions table for the template in the surrounding entity context: the
+ * create shortcut and the reorder dialog both act on that template.
+ */
 export const EntitySourceCodeVersions = ({
   fixedFilters,
   filterStorageKey,
 }: EntitySourceCodeVersionsProps) => {
   const { entity } = useEntityProvider();
+  const { linkPrefix } = useConfig();
+  const navigate = useNavigate();
   const tableRef = useRef<EntityFetchTableRef>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const canManageVersions = useHasPermission(
@@ -48,12 +57,28 @@ export const EntitySourceCodeVersions = ({
         filterStorageKey={filterStorageKey}
         toolbarActions={
           canManageVersions ? (
-            <Button
-              startIcon={<HeroAdjustmentsHorizontalIcon />}
-              onClick={() => setDialogOpen(true)}
-            >
-              Manage Versions
-            </Button>
+            <>
+              <Button
+                variant="contained"
+                startIcon={<HeroPlusCircleIcon />}
+                disabled={!entity?.id}
+                onClick={() =>
+                  navigate(`${linkPrefix}source_code_versions/create`, {
+                    state: {
+                      template_id: entity?.id,
+                    } satisfies CreatePrefillState,
+                  })
+                }
+              >
+                Create New Version
+              </Button>
+              <Button
+                startIcon={<HeroAdjustmentsHorizontalIcon />}
+                onClick={() => setDialogOpen(true)}
+              >
+                Manage Versions
+              </Button>
+            </>
           ) : undefined
         }
         buildApiFilters={(filterValues) => ({

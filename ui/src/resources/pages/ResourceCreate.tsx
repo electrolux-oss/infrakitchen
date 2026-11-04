@@ -16,7 +16,12 @@ import {
 } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
 
-import { GradientCircularProgress, LabelInput } from "../../common";
+import {
+  GradientCircularProgress,
+  LabelInput,
+  useCreatePageBack,
+  useCreatePrefill,
+} from "../../common";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { DependencyConfigurationFields } from "../../common/components/hcl/DependencyConfigurationFields";
@@ -113,6 +118,7 @@ const ResourceCreatePageInner = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const cloneSource = location.state?.clone as GqlResource | undefined;
+  const prefill = useCreatePrefill();
 
   const [parentSelections, setParentSelections] = useState<
     Record<string, string[]>
@@ -129,7 +135,12 @@ const ResourceCreatePageInner = () => {
   });
   // Template-dependent resets must not wipe the values copied from the clone
   // source, so they only run once the template differs from the one last seen.
-  const sourceCodeVersionTemplateRef = useRef(cloneSource?.template?.id);
+  // A version passed in from the template version page counts as already
+  // chosen for its template, so it is kept too.
+  const sourceCodeVersionTemplateRef = useRef<string | undefined>(
+    cloneSource?.template?.id ??
+      (prefill.source_code_version_id ? prefill.template_id : undefined),
+  );
   const parentsTemplateRef = useRef(cloneSource?.template?.id);
 
   const [namingConvention, setNamingConvention] = useState(null);
@@ -187,7 +198,7 @@ const ResourceCreatePageInner = () => {
     }
   }, [location.state, setValue]);
 
-  const handleBack = () => navigate(`${linkPrefix}resources`);
+  const handleBack = useCreatePageBack("resources");
 
   const handleSave = useCallback(
     async (data: ResourceCreate) => {
@@ -1334,6 +1345,7 @@ const ResourceCreatePage = () => {
   const location = useLocation();
   const template = location.state?.template as GqlTemplateShort | undefined;
   const cloneSource = location.state?.clone as GqlResource | undefined;
+  const prefill = useCreatePrefill();
 
   const methods = useForm<ResourceCreate>({
     defaultValues: cloneSource
@@ -1341,16 +1353,16 @@ const ResourceCreatePage = () => {
       : {
           name: "",
           description: "",
-          templateId: template?.id,
+          templateId: template?.id ?? prefill.template_id,
           parents: [],
-          integrationIds: [],
-          sourceCodeVersionId: "",
+          integrationIds: prefill.integration_ids ?? [],
+          sourceCodeVersionId: prefill.source_code_version_id ?? "",
           variables: [],
           workspaceId: "",
-          projectId: "",
+          projectId: prefill.project_id ?? "",
           dependencyTags: [],
           dependencyConfig: [],
-          storageId: "",
+          storageId: prefill.storage_id ?? "",
           storagePath: "",
           toolId: "",
           workerTemplateId: "",

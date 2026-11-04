@@ -8,7 +8,7 @@ import {
 } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
 
-import { LabelInput } from "../../common";
+import { LabelInput, useCreatePageBack, useCreatePrefill } from "../../common";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
@@ -73,7 +73,7 @@ const ExecutorCreatePageInner = () => {
   const location = useLocation();
   const cloneSource = location.state?.clone as GqlExecutor | undefined;
 
-  const handleBack = () => navigate(`${linkPrefix}executors`);
+  const handleBack = useCreatePageBack("executors");
 
   const watchedSourceCode = watch("sourceCodeId");
   const watchedVersion = watch("sourceCodeVersion");
@@ -556,6 +556,7 @@ const ExecutorCreatePageInner = () => {
 const ExecutorCreatePage = () => {
   const location = useLocation();
   const cloneSource = location.state?.clone as GqlExecutor | undefined;
+  const prefill = useCreatePrefill();
 
   const methods = useForm<ExecutorCreate>({
     defaultValues: cloneSource
@@ -566,9 +567,9 @@ const ExecutorCreatePage = () => {
           commandArgs: "",
           labels: [],
           description: "",
-          integrationIds: [],
-          sourceCodeId: "",
-          storageId: "",
+          integrationIds: prefill.integration_ids ?? [],
+          sourceCodeId: prefill.source_code_id ?? "",
+          storageId: prefill.storage_id ?? "",
           storagePath: "",
           toolId: "",
           workerTemplateId: "",

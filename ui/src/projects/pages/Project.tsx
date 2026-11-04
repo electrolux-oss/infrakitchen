@@ -1,11 +1,34 @@
 import { useParams } from "react-router";
 
+import { CreateMenuButton } from "../../common/components/buttons/CreateMenuButton";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { entityIcons } from "../../common/components/entities/entityIcons";
-import { EntityProvider } from "../../common/context/EntityContext";
+import {
+  EntityProvider,
+  useEntityProvider,
+} from "../../common/context/EntityContext";
 import { ProjectContent } from "../components/ProjectContent";
 import { PROJECT_DETAIL_FIELDS } from "../graphql";
+
+const CreateResourceButton = () => {
+  const { entity } = useEntityProvider();
+
+  if (!entity?.id) return null;
+
+  return (
+    <CreateMenuButton
+      options={[
+        {
+          label: "Resource",
+          path: "resources/create",
+          state: { project_id: entity.id },
+          permission: "api:resource",
+        },
+      ]}
+    />
+  );
+};
 
 export const ProjectPage = () => {
   const { project_id } = useParams();
@@ -18,7 +41,12 @@ export const ProjectPage = () => {
     >
       <EntityContainer
         titleIcon={entityIcons.project}
-        actions={<EntityRefreshButton />}
+        actions={
+          <>
+            <CreateResourceButton />
+            <EntityRefreshButton />
+          </>
+        }
       >
         <ProjectContent />
       </EntityContainer>
