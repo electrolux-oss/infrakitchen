@@ -8,6 +8,7 @@ from datetime import datetime, UTC
 from typing import Any, Literal
 from uuid import UUID
 
+from pydantic import ValidationError
 from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
@@ -64,6 +65,21 @@ logger = logging.getLogger("TaskWorker")
 
 
 prometheus_counter = Counter("tasks_total", "Total executed tasks", ["job_type", "status"])
+
+
+def error_details(e: Exception) -> dict[str, Any] | None:
+    if not isinstance(e, ValidationError):
+        return None
+    # Inputs are omitted because they can contain configuration values or secrets
+    return {
+        "type": type(e).__name__,
+        "title": e.title,
+        "items": [
+            {"loc": ".".join(str(part) for part in err["loc"]), "msg": err["msg"], "type": err["type"]}
+            for err in e.errors(include_url=False, include_input=False)
+        ],
+    }
+
 
 TaskController = (
     SourceCodeTask
@@ -390,6 +406,8 @@ class TaskWorker:
         except Exception as e:
             status = "failed"
             execution["error"] = f"{type(e).__name__}: {e}"
+            if details := error_details(e):
+                execution["error_details"] = details
             prometheus_counter.labels(item.entity, "error").inc()
             try:
                 await self.handle_exception(e, item, task_controller, action)

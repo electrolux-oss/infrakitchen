@@ -87,6 +87,32 @@ def make_scheduler_item(**payload) -> TaskQueueItemDTO:
     )
 
 
+class TestErrorDetails:
+    def test_validation_error_is_structured_without_inputs(self):
+        from pydantic import BaseModel
+
+        class Config(BaseModel):
+            web_url: str
+
+        class WorkspaceResponse(BaseModel):
+            configuration: Config
+
+        with pytest.raises(tw_mod.ValidationError) as e:
+            WorkspaceResponse.model_validate({"configuration": {"secret": "hunter2"}})
+
+        details = tw_mod.error_details(e.value)
+
+        assert details == {
+            "type": "ValidationError",
+            "title": "WorkspaceResponse",
+            "items": [{"loc": "configuration.web_url", "msg": "Field required", "type": "missing"}],
+        }
+        assert "hunter2" not in str(details)
+
+    def test_other_errors_have_no_details(self):
+        assert tw_mod.error_details(ValueError("boom")) is None
+
+
 class TestSchedulerJobs:
     async def test_process_scheduler_job_success(self, task_worker, mock_session, monkeypatch):
         mock_executor = Mock(spec=SchedulerExecutor)
