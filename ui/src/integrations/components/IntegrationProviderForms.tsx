@@ -2,13 +2,13 @@ import { Control, Controller, FieldErrors, useWatch } from "react-hook-form";
 
 import { InlineCode } from "../../common/components/code/InlineCode";
 import {
-  Checkbox,
   FormControlLabel,
   FormControl,
   FormHelperText,
   InputLabel,
   MenuItem,
   Select,
+  Switch,
   TextField,
 } from "../../ui";
 
@@ -227,15 +227,17 @@ const GcpProviderFields = ({
           render={({ field }) => (
             <>
               <FormControlLabel
-                control={<Checkbox {...field} checked={field.value} />}
+                className="-ml-[3.5px]"
+                control={<Switch {...field} checked={field.value} />}
                 label="Automatically create storage for OpenTofu/Terraform remote state management"
               />
-              <span className="ml-8 block text-caption text-fg-muted">
+              <span className="mt-1 block text-caption text-fg-muted">
                 Google storage bucket named{" "}
-                <InlineCode>
+                <InlineCode disableCopy>
                   infrakitchen-{"{GCP Project ID}"}-bucket
                 </InlineCode>{" "}
-                will be created in <InlineCode>us</InlineCode> region.
+                will be created in <InlineCode disableCopy>us</InlineCode>{" "}
+                region.
               </span>
             </>
           )}
@@ -419,16 +421,17 @@ export const renderFieldsForProvider = (
               render={({ field }) => (
                 <>
                   <FormControlLabel
-                    control={<Checkbox {...field} checked={field.value} />}
+                    className="-ml-[3.5px]"
+                    control={<Switch {...field} checked={field.value} />}
                     label="Automatically create S3 bucket for OpenTofu/Terraform remote state management"
                   />
-                  <span className="ml-8 block text-caption text-fg-muted">
+                  <span className="mt-1 block text-caption text-fg-muted">
                     S3 bucket named{" "}
-                    <InlineCode>
+                    <InlineCode disableCopy>
                       infrakitchen-{"{AWS_ACCOUNT_ID}"}-bucket
                     </InlineCode>{" "}
-                    will be created in <InlineCode>us-east-1</InlineCode>{" "}
-                    region.
+                    will be created in{" "}
+                    <InlineCode disableCopy>us-east-1</InlineCode> region.
                   </span>
                 </>
               )}

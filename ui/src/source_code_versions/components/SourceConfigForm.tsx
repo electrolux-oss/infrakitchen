@@ -12,7 +12,6 @@ import { Label } from "../../common/components/labels";
 import {
   Autocomplete,
   Divider,
-  Checkbox,
   FormControlLabel,
   Switch,
   Tooltip,
@@ -271,16 +270,17 @@ export const SourceConfigForm = (props: {
             </div>
           )}
 
-          <div className="mt-2 mb-4 flex flex-col items-center gap-2 md:flex-row">
-            <div className="flex grow flex-col items-start gap-1 md:flex-row md:gap-2">
+          <div className="mt-2 mb-4 flex flex-col items-start gap-2">
+            <div className="flex flex-col items-start gap-1 md:flex-row md:gap-2">
               <div>
                 <Controller
                   name={`configs.${index}.required`}
                   control={control}
                   render={({ field }) => (
-                    <Tooltip title="When checked, this field cannot be left empty during creation or updates.">
+                    <Tooltip title="When enabled, this field cannot be left empty during creation or updates.">
                       <FormControlLabel
-                        control={<Checkbox {...field} checked={field.value} />}
+                        className="-ml-[3.5px]"
+                        control={<Switch {...field} checked={field.value} />}
                         label={<p className="m-0 text-body2">Required</p>}
                       />
                     </Tooltip>
@@ -292,9 +292,10 @@ export const SourceConfigForm = (props: {
                   name={`configs.${index}.frozen`}
                   control={control}
                   render={({ field }) => (
-                    <Tooltip title="When checked, the value of this field cannot be changed after the initial creation.">
+                    <Tooltip title="When enabled, the value of this field cannot be changed after the initial creation.">
                       <FormControlLabel
-                        control={<Checkbox {...field} checked={field.value} />}
+                        className="-ml-[3.5px]"
+                        control={<Switch {...field} checked={field.value} />}
                         label={<p className="m-0 text-body2">Frozen</p>}
                       />
                     </Tooltip>
@@ -306,9 +307,10 @@ export const SourceConfigForm = (props: {
                   name={`configs.${index}.unique`}
                   control={control}
                   render={({ field }) => (
-                    <Tooltip title="When checked, this field must have a unique value across all instances.">
+                    <Tooltip title="When enabled, this field must have a unique value across all instances.">
                       <FormControlLabel
-                        control={<Checkbox {...field} checked={field.value} />}
+                        className="-ml-[3.5px]"
+                        control={<Switch {...field} checked={field.value} />}
                         label={<p className="m-0 text-body2">Unique</p>}
                       />
                     </Tooltip>
@@ -320,9 +322,10 @@ export const SourceConfigForm = (props: {
                   name={`configs.${index}.restricted`}
                   control={control}
                   render={({ field }) => (
-                    <Tooltip title="When checked, this field will be hidden during creation, default value should be provided.">
+                    <Tooltip title="When enabled, this field will be hidden during creation, default value should be provided.">
                       <FormControlLabel
-                        control={<Checkbox {...field} checked={field.value} />}
+                        className="-ml-[3.5px]"
+                        control={<Switch {...field} checked={field.value} />}
                         label={<p className="m-0 text-body2">Restricted</p>}
                       />
                     </Tooltip>

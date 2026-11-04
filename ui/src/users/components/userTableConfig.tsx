@@ -12,9 +12,12 @@ const UserIdentifierCell = (params: RenderCellParams) => {
   const isCurrentUser = currentUser?.id === params.row.id;
 
   return (
-    <div className="flex h-full items-center gap-1">
-      <Entity entity={{ ...params.row, entityType: "user" }} />
+    <div className="flex h-full min-w-0 items-center gap-1">
+      <Entity entity={{ ...params.row, entityType: "user" }} noWrap />
       {isCurrentUser ? <Label size="small" tone="info" label="You" /> : null}
+      {params.row.deactivated ? (
+        <Label size="small" tone="error" label="Deactivated" />
+      ) : null}
     </div>
   );
 };
@@ -31,7 +34,7 @@ const USER_AUTH_PROVIDERS = [
 export const userColumns: EntityTableColumn[] = [
   {
     field: "identifier",
-    fetchFields: ["id", "identifier", "entityName"],
+    fetchFields: ["id", "identifier", "entityName", "deactivated"],
     headerName: "Identifier",
     flex: 1,
     hideable: false,

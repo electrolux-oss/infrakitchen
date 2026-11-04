@@ -1,9 +1,6 @@
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
-import {
-  relativeTimeColumn,
-  userColumn,
-} from "../../common/components/entity_table/tableColumns";
+import { createdByColumn } from "../../common/components/entity_table/tableColumns";
 import { Label } from "../../common/components/labels";
 import { StatusLabel } from "../../common/components/labels";
 import { HeroTrashIcon } from "../../icons";
@@ -100,7 +97,9 @@ export const toolColumns = (actions: ToolRowActions): EntityTableColumn[] => [
     renderCell: (params: RenderCellParams) => (
       <div className="flex h-full flex-row items-center gap-1">
         <StatusLabel status={toolStatus(params.row as Tool)} />
-        {params.row.isDefault && <Label tone="primary" label="default" />}
+        {params.row.isDefault && (
+          <Label size="small" tone="info" label="Default" />
+        )}
       </div>
     ),
   },
@@ -126,8 +125,7 @@ export const toolColumns = (actions: ToolRowActions): EntityTableColumn[] => [
     sortable: false,
     filterable: false,
   },
-  userColumn({ headerName: "Added by" }),
-  relativeTimeColumn("createdAt", "Created", { sortField: "created_at" }),
+  createdByColumn({ createdSortField: "created_at" }),
   {
     field: "actions",
     fetchFields: ["name", "version", "os", "arch", "status", "isDefault"],
@@ -153,7 +151,7 @@ export const toolColumns = (actions: ToolRowActions): EntityTableColumn[] => [
           )}
           {status === "ready" && !tool.isDefault && (
             <Button size="small" onClick={() => actions.onSetDefault(tool)}>
-              Set default
+              Set as default
             </Button>
           )}
           {["ready", "error"].includes(status) && !tool.isDefault && (

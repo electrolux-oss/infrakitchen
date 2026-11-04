@@ -82,7 +82,7 @@ export const ToolHeaderActions = () => {
       )}
       {actions.includes("set_default") && (
         <Button onClick={setDefault} disabled={submitting}>
-          Set default
+          Set as default
         </Button>
       )}
     </>

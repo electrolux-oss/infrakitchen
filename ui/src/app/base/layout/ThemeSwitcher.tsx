@@ -61,14 +61,16 @@ function Option({
     <MenuItem
       role="menuitemradio"
       aria-checked={checked}
-      selected={checked}
       disabled={disabled}
       onClick={onSelect}
+      className="min-h-8 py-0.5"
     >
       <ListItemIcon className="w-4 [&_svg]:size-4">
         {checked && <HeroCheckIcon />}
       </ListItemIcon>
-      <ListItemText>{label}</ListItemText>
+      <ListItemText className="my-0" primaryClassName="font-normal">
+        {label}
+      </ListItemText>
     </MenuItem>
   );
 }

@@ -15,7 +15,7 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import {
   Autocomplete,
-  Checkbox,
+  Switch,
   FormControlLabel,
   Button,
   TextField,
@@ -192,7 +192,8 @@ const AuthProviderCreatePageInner = () => {
               defaultValue={false}
               render={({ field }) => (
                 <FormControlLabel
-                  control={<Checkbox {...field} checked={field.value} />}
+                  className="-ml-[3.5px]"
+                  control={<Switch {...field} checked={field.value} />}
                   label="Enabled"
                 />
               )}

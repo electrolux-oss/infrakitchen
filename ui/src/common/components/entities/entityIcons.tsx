@@ -16,7 +16,6 @@ import {
   HeroPuzzlePieceIcon,
   HeroRectangleGroupIcon,
   HeroRectangleStackIcon,
-  HeroRocketLaunchIcon,
   HeroServerStackIcon,
   HeroSquare3Stack3DIcon,
   HeroTagIcon,
@@ -46,6 +45,6 @@ export const entityIcons: Record<string, ComponentProps<typeof Label>["icon"]> =
     user: <HeroUserIcon />,
     worker: <HeroCogIcon />,
     workflow: <HeroArrowsRightLeftIcon />,
-    worker_template: <HeroRocketLaunchIcon />,
+    worker_template: <HeroCogIcon />,
     workspace: <HeroCodeBracketIcon />,
   };

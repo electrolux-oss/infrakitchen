@@ -81,7 +81,7 @@ export const EntityContainer = (props: EntityContainerProps) => {
     <PageContainer
       title={
         titleIcon ? (
-          <span className="inline-flex items-center gap-2.5">
+          <span className="flex items-center gap-2.5">
             <span className="inline-flex shrink-0 text-fg-muted">
               {titleIcon}
             </span>

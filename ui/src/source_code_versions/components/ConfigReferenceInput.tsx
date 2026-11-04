@@ -3,11 +3,14 @@ import { useEffect, useState } from "react";
 import { Control, Controller, useFormContext, useWatch } from "react-hook-form";
 
 import { GradientCircularProgress, useConfig } from "../../common";
+import { EntityReference } from "../../common/components/fields/CommonField";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { HeroXMarkIcon } from "../../icons";
 import { useSourceCodeVersionConfigContext } from "../../source_code_versions/context/SourceCodeVersionConfigContext";
 import { GqlTemplateShort } from "../../templates/graphql";
 import {
-  Button,
+  IconButton,
+  Tooltip,
   FormControl,
   InputLabel,
   Select,
@@ -97,29 +100,39 @@ export const ConfigReferenceInput = ({
   }
 
   return (
-    <>
+    <div className="flex w-full flex-col gap-2 md:flex-row md:items-start">
       <Controller
         name={`configs.${index}.referenceTemplateId`}
         control={control}
         render={({ field }) => (
           <FormControl fullWidth margin="normal">
-            <InputLabel id="template-select-label">Select Template</InputLabel>
+            <InputLabel id="template-select-label">
+              Reference template (optional)
+            </InputLabel>
             <Select
               labelId="template-select-label"
               id="template-select"
               value={field.value || ""}
               onChange={field.onChange}
+              renderValue={(value) => {
+                const selected = templates.find((e) => e.id === value);
+                return selected ? (
+                  <EntityReference {...selected} disableLink />
+                ) : (
+                  ""
+                );
+              }}
             >
               {templates &&
                 templates.map((e: GqlTemplateShort) => (
                   <MenuItem key={e.id} value={e.id}>
-                    {e.name}
+                    <EntityReference {...e} disableLink />
                   </MenuItem>
                 ))}
             </Select>
             <FormHelperText>
-              Select the template to reference. This will be used to fetch the
-              output variables.
+              When a parent resource uses this template, its output pre-fills
+              this variable.
             </FormHelperText>
           </FormControl>
         )}
@@ -131,9 +144,7 @@ export const ConfigReferenceInput = ({
           control={control}
           render={({ field }) => (
             <FormControl fullWidth margin="normal">
-              <InputLabel id="sco-select-label">
-                Select Source Code Output
-              </InputLabel>
+              <InputLabel id="sco-select-label">Reference output</InputLabel>
               <Select
                 labelId="sco-select-label"
                 id="sco-select"
@@ -148,16 +159,23 @@ export const ConfigReferenceInput = ({
                   ))}
               </Select>
               <FormHelperText>
-                Select the source code output to reference. This will be used to
-                fetch the output variables.
+                Output of the parent resource to use as the default value.
               </FormHelperText>
             </FormControl>
           )}
         />
       )}
-      <Button className="mt-4" onClick={handleDeleteTemplateSelection}>
-        Clear
-      </Button>
-    </>
+      {selectedTemplateId && (
+        <Tooltip title="Clear reference">
+          <IconButton
+            className="md:mt-3.5"
+            aria-label="Clear reference"
+            onClick={handleDeleteTemplateSelection}
+          >
+            <HeroXMarkIcon />
+          </IconButton>
+        </Tooltip>
+      )}
+    </div>
   );
 };

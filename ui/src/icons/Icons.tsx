@@ -13,6 +13,7 @@ import deviconPlainSlackData from "@iconify-icons/devicon-plain/slack";
 import simpleIconsBitbucketData from "@iconify-icons/simple-icons/bitbucket";
 import simpleIconsDatadogData from "@iconify-icons/simple-icons/datadog";
 import simpleIconsGithubData from "@iconify-icons/simple-icons/github";
+import simpleIconsKubernetesData from "@iconify-icons/simple-icons/kubernetes";
 import simpleIconsMicrosoftData from "@iconify-icons/simple-icons/microsoft";
 import simpleIconsOpentofuData from "@iconify-icons/simple-icons/opentofu";
 
@@ -58,6 +59,10 @@ const simpleIconsBackstageData = {
 
 export const BackstageIcon: React.FC<IconProps> = (props) => (
   <Icon icon={simpleIconsBackstageData} ssr {...props} />
+);
+
+export const KubernetesIcon: React.FC<IconProps> = (props) => (
+  <Icon icon={simpleIconsKubernetesData} ssr {...props} />
 );
 
 export const BitbucketIcon: React.FC<IconProps> = (props) => (
@@ -108,6 +113,7 @@ const providerIcons = new Map<string, React.ElementType>([
   ["datadog", DatadogIcon],
   ["postgresql", PostgreSQLIcon],
   ["opentofu", OpenTofuIcon],
+  ["kubernetes", KubernetesIcon],
   ["slack", SlackIcon],
   ["guest", HeroUserCircleIcon],
 ]);

@@ -55,7 +55,7 @@ export const providers: Provider[] = [
     instructions: [
       <>
         Generate a new SSH key pair on your local machine using the command:{" "}
-        <InlineCode>ssh-keygen -t rsa -b 4096</InlineCode>
+        <InlineCode disableCopy>ssh-keygen -t rsa -b 4096</InlineCode>
       </>,
       <>
         Add the public key to your Bitbucket account by going to{" "}
@@ -63,7 +63,7 @@ export const providers: Provider[] = [
       </>,
       <>
         Copy the contents of your private key file (usually located at{" "}
-        <InlineCode>~/.ssh/id_rsa</InlineCode>) and paste it below
+        <InlineCode disableCopy>~/.ssh/id_rsa</InlineCode>) and paste it below
       </>,
     ],
     tokenLink: "",
@@ -118,7 +118,7 @@ export const providers: Provider[] = [
     instructions: [
       <>
         Generate a new SSH key pair on your local machine using the command:{" "}
-        <InlineCode>ssh-keygen -t rsa -b 4096</InlineCode>
+        <InlineCode disableCopy>ssh-keygen -t rsa -b 4096</InlineCode>
       </>,
       <>
         Add the public key to your GitHub account by going to{" "}
@@ -126,7 +126,7 @@ export const providers: Provider[] = [
       </>,
       <>
         Copy the contents of your private key file (usually located at{" "}
-        <InlineCode>~/.ssh/id_rsa</InlineCode>) and paste it below
+        <InlineCode disableCopy>~/.ssh/id_rsa</InlineCode>) and paste it below
       </>,
     ],
     tokenLink: "",
@@ -209,7 +209,7 @@ export const providers: Provider[] = [
     instructions: [
       <>
         Generate a new SSH key pair on your local machine using the command:{" "}
-        <InlineCode>ssh-keygen -t rsa -b 4096</InlineCode>
+        <InlineCode disableCopy>ssh-keygen -t rsa -b 4096</InlineCode>
       </>,
       <>
         Add the public key to your Azure DevOps account by going to{" "}
@@ -217,7 +217,7 @@ export const providers: Provider[] = [
       </>,
       <>
         Copy the contents of your private key file (usually located at{" "}
-        <InlineCode>~/.ssh/id_rsa</InlineCode>) and paste it below
+        <InlineCode disableCopy>~/.ssh/id_rsa</InlineCode>) and paste it below
       </>,
     ],
     tokenLink: "",
@@ -268,8 +268,8 @@ export const providers: Provider[] = [
         assume this role
       </>,
       <>
-        Attach the <InlineCode>sts:AssumeRole</InlineCode> permission to the IAM
-        user for this specific role
+        Attach the <InlineCode disableCopy>sts:AssumeRole</InlineCode>{" "}
+        permission to the IAM user for this specific role
       </>,
       <>
         Provide the <strong>AWS Account ID</strong>,{" "}
@@ -362,9 +362,10 @@ export const providers: Provider[] = [
       </>,
       "Grant the federated principal direct IAM roles",
       <>
-        InfraKitchen must have <InlineCode>INFRAKITCHEN_URL</InlineCode>{" "}
-        configured for the OIDC method, otherwise{" "}
-        <strong>Test Connection</strong> and OpenTofu runs will fail
+        InfraKitchen must have{" "}
+        <InlineCode disableCopy>INFRAKITCHEN_URL</InlineCode> configured for the
+        OIDC method, otherwise <strong>Test Connection</strong> and OpenTofu
+        runs will fail
       </>,
     ],
     tokenLink: "",

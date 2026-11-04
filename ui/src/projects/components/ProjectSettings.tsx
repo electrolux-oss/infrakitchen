@@ -6,7 +6,7 @@ import { CommonEditableField } from "../../common/components/editors/CommonEdita
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
-import { Checkbox, FormControlLabel } from "../../ui";
+import { FormControlLabel, Switch } from "../../ui";
 import { RESOURCE_UPDATE_APPROVAL_BYPASS_FIELD_OPTIONS } from "../constants";
 import { GqlProject } from "../graphql";
 import {
@@ -46,6 +46,7 @@ export const ProjectSettings = ({ project }: ProjectSettingsProps) => {
     <BaseCard name="Project Configuration">
       <BooleanInlineField
         name={"Always Use Workspace"}
+        info="Force resources in this project to use the assigned workspace."
         canEdit={canEdit}
         value={project.configuration?.always_use_workspace ?? false}
         ariaLabel="Edit always use workspace"
@@ -53,7 +54,8 @@ export const ProjectSettings = ({ project }: ProjectSettingsProps) => {
         span="half"
       />
       <CommonEditableField<ResourceUpdateApprovalBypassField[]>
-        name={"Allow Update Without Approval"}
+        name={"Fields Editable Without Approval"}
+        info="Users can update the selected resource fields without creating an approval request."
         canEdit={canEdit}
         value={project.configuration?.allow_unapproved_metadata_edits ?? []}
         ariaLabel="Edit allow unapproved resource update fields"
@@ -76,12 +78,13 @@ export const ProjectSettings = ({ project }: ProjectSettingsProps) => {
           saveConfiguration({ allow_unapproved_metadata_edits: value })
         }
         renderEditor={({ value, onChange }) => (
-          <>
+          <div className="grid grid-cols-2">
             {RESOURCE_UPDATE_APPROVAL_BYPASS_FIELD_OPTIONS.map((option) => (
               <FormControlLabel
                 key={option.value}
+                className="-ml-[3.5px]"
                 control={
-                  <Checkbox
+                  <Switch
                     checked={value.includes(option.value)}
                     onChange={(e) =>
                       onChange(
@@ -95,20 +98,13 @@ export const ProjectSettings = ({ project }: ProjectSettingsProps) => {
                 label={option.label}
               />
             ))}
-          </>
+          </div>
         )}
         isEqual={(a, b) =>
           a.length === b.length && a.every((value) => b.includes(value))
         }
         span="half"
       />
-      <p className="m-0 text-body2 text-fg-muted">
-        Force resources in this project to use the assigned workspace.
-      </p>
-      <p className="m-0 text-body2 text-fg-muted">
-        Let users update selected resource fields without creating an approval
-        request.
-      </p>
     </BaseCard>
   );
 };

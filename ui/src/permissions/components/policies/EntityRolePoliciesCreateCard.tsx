@@ -8,12 +8,12 @@ import { notify, notifyError } from "../../../common/hooks/useNotification";
 import { CREATE_RESOURCE_POLICY_MUTATION } from "../../../resources/graphql";
 import { IkEntity } from "../../../types";
 import {
-  Checkbox,
   FormControlLabel,
   FormControl,
   InputLabel,
   MenuItem,
   Select,
+  Switch,
 } from "../../../ui";
 import { CREATE_ENTITY_POLICY_MUTATION } from "../../graphql";
 import { EntityPolicyCreate } from "../../types";
@@ -207,7 +207,8 @@ export const EntityRolePolicyCreateCard = (
             control={control}
             render={({ field }) => (
               <FormControlLabel
-                control={<Checkbox {...field} checked={field.value} />}
+                className="-ml-[3.5px]"
+                control={<Switch {...field} checked={field.value} />}
                 label="Inherit to Child Resources"
               />
             )}

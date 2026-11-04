@@ -2,6 +2,7 @@ import { useParams } from "react-router";
 
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { entityIcons } from "../../common/components/entities/entityIcons";
+import { UserAvatar } from "../../common/components/entities/UserAvatar";
 import {
   EntityProvider,
   useEntityProvider,
@@ -9,6 +10,17 @@ import {
 import { Label } from "../../ui";
 import { UserContent } from "../components/UserContent";
 import { USER_FIELDS } from "../graphql";
+
+const UserTitleAvatar = () => {
+  const { entity } = useEntityProvider();
+  if (!entity?.identifier) return entityIcons.user;
+  return (
+    <UserAvatar
+      identifier={entity.identifier}
+      className="size-8 cursor-default text-base"
+    />
+  );
+};
 
 const DeactivatedBadge = () => {
   const { entity } = useEntityProvider();
@@ -27,7 +39,7 @@ export const UserPage = () => {
       entityFields={USER_FIELDS}
     >
       <EntityContainer
-        titleIcon={entityIcons.user}
+        titleIcon={<UserTitleAvatar />}
         titleAdornment={<DeactivatedBadge />}
       >
         <UserContent />

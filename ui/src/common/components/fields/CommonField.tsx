@@ -41,6 +41,8 @@ export const EntityReference: FC<
     tone?: React.ComponentProps<typeof Label>["tone"];
     /** Shows the provider's brand icon instead of the entity icon. */
     provider?: string;
+    /** Renders a plain, non-clickable pill. */
+    disableLink?: boolean;
   }
 > = ({
   id,
@@ -51,6 +53,7 @@ export const EntityReference: FC<
   icon,
   tone,
   provider,
+  disableLink = false,
 }) => {
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
@@ -77,6 +80,16 @@ export const EntityReference: FC<
           className: "size-[1em]",
         })
       : entityIcons[entityName]);
+
+  if (disableLink) {
+    return (
+      <Label
+        icon={resolvedIcon}
+        tone={tone}
+        label={display_name || name || identifier}
+      />
+    );
+  }
 
   return (
     <Label

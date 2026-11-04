@@ -7,7 +7,7 @@ import {
 } from "../../common/components/entity_table/EntityFetchTable";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { HeroQueueListIcon } from "../../icons";
+import { HeroAdjustmentsHorizontalIcon } from "../../icons";
 import { Button } from "../../ui";
 import { SCV_FIELD_MAP } from "../graphql/fragments";
 
@@ -49,7 +49,7 @@ export const EntitySourceCodeVersions = ({
         toolbarActions={
           canManageVersions ? (
             <Button
-              startIcon={<HeroQueueListIcon />}
+              startIcon={<HeroAdjustmentsHorizontalIcon />}
               onClick={() => setDialogOpen(true)}
             >
               Manage Versions

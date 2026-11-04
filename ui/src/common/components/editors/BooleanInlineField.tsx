@@ -1,9 +1,12 @@
 import { Switch } from "../../../ui";
 import { CommonField, FieldSpan } from "../fields/CommonField";
+import { FieldInfo } from "../fields/FieldInfo";
 
 export interface BooleanInlineFieldProps {
   /** Field label shown above the value. */
   name: string;
+  /** Explanation shown in an info tooltip next to the label. */
+  info?: string;
   /** Whether the current user is allowed to edit this field. */
   canEdit: boolean;
   /** Current persisted value. */
@@ -23,6 +26,7 @@ export interface BooleanInlineFieldProps {
  */
 export const BooleanInlineField = ({
   name,
+  info,
   canEdit,
   value,
   span,
@@ -40,7 +44,16 @@ export const BooleanInlineField = ({
 
   return (
     <CommonField
-      name={name}
+      name={
+        info ? (
+          <div className="flex items-center gap-1">
+            <span>{name}</span>
+            <FieldInfo text={info} />
+          </div>
+        ) : (
+          name
+        )
+      }
       span={span}
       value={
         <Switch

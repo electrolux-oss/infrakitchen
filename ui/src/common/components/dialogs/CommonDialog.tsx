@@ -64,7 +64,7 @@ export const CommonDialog: React.FC<CommonDialogProps> = ({
       </DialogTitle>
       <DialogContent
         className={cn(
-          "min-w-75 pt-1 sm:min-w-100",
+          "min-w-75 sm:min-w-100 [[data-dialog-title]+&]:pt-5",
           resizable && "flex min-h-0 flex-col",
         )}
       >
