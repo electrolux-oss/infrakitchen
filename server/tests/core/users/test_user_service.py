@@ -4,10 +4,11 @@ from unittest.mock import AsyncMock, Mock
 
 from pydantic import PydanticUserError
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.exc import IntegrityError
 from uuid import uuid4
 
 from core.constants.model import ModelActions
-from core.errors import EntityNotFound
+from core.errors import DependencyError, EntityNotFound
 from core.users.model import User
 from core.users.schema import UserResponse, UserCreate, UserUpdate
 from core.users.crud import UserCRUD
@@ -310,6 +311,143 @@ class TestUpdate:
             await mock_user_service.update_user(user_id=USER_ID, user=user_update, requester=requester)
 
         assert exc.value is error
+
+
+class TestDeleteUser:
+    @pytest.fixture(autouse=True)
+    def mock_casbin(self, monkeypatch):
+        enforcer = Mock()
+        enforcer.send_reload_event = AsyncMock()
+        monkeypatch.setattr("core.users.service.CasbinEnforcer", Mock(return_value=enforcer))
+        return enforcer
+
+    @pytest.mark.asyncio
+    async def test_delete_service_account_success(
+        self, mock_user_service, mock_user_crud, mock_audit_log_handler, mocked_user, mock_casbin
+    ):
+        mocked_user.provider = "ik_service_account"
+        mock_user_crud.get_by_id.return_value = mocked_user
+        requester = Mock(spec=UserDTO)
+        requester.id = uuid4()
+
+        await mock_user_service.delete_user(user_id=mocked_user.id, requester=requester)
+
+        mock_user_crud.delete_user_references.assert_awaited_once_with(mocked_user.id)
+        mock_user_crud.delete.assert_awaited_once_with(mocked_user)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(mocked_user.id, requester.id, ModelActions.DELETE)
+        mock_casbin.send_reload_event.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_delete_regular_user_rejected(self, mock_user_service, mock_user_crud, mocked_user):
+        mock_user_crud.get_by_id.return_value = mocked_user
+        requester = Mock(spec=UserDTO)
+        requester.id = uuid4()
+
+        with pytest.raises(ValueError, match="Only service accounts can be deleted"):
+            await mock_user_service.delete_user(user_id=mocked_user.id, requester=requester)
+
+        mock_user_crud.delete.assert_not_awaited()
+        mock_user_crud.delete_user_references.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_delete_self_rejected(self, mock_user_service, mock_user_crud, mocked_user):
+        mocked_user.provider = "ik_service_account"
+        mock_user_crud.get_by_id.return_value = mocked_user
+        requester = Mock(spec=UserDTO)
+        requester.id = mocked_user.id
+
+        with pytest.raises(ValueError, match="cannot delete your own account"):
+            await mock_user_service.delete_user(user_id=mocked_user.id, requester=requester)
+
+        mock_user_crud.delete.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_delete_user_not_found(self, mock_user_service, mock_user_crud):
+        mock_user_crud.get_by_id.return_value = None
+
+        with pytest.raises(EntityNotFound):
+            await mock_user_service.delete_user(user_id=uuid4(), requester=Mock(spec=UserDTO))
+
+    @pytest.mark.asyncio
+    async def test_delete_referenced_service_account(
+        self, mock_user_service, mock_user_crud, mock_audit_log_handler, mocked_user
+    ):
+        mocked_user.provider = "ik_service_account"
+        mock_user_crud.get_by_id.return_value = mocked_user
+        mock_user_crud.delete.side_effect = IntegrityError("stmt", {}, Exception("fk violation"))
+        requester = Mock(spec=UserDTO)
+        requester.id = uuid4()
+
+        with pytest.raises(DependencyError):
+            await mock_user_service.delete_user(user_id=mocked_user.id, requester=requester)
+
+        mock_audit_log_handler.create_log.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_delete_blocked_by_created_entities(self, mock_user_service, mock_user_crud, mocked_user):
+        mocked_user.provider = "ik_service_account"
+        mock_user_crud.get_by_id.return_value = mocked_user
+        mock_user_crud.get_deletion_impact.return_value = {
+            "delete": {"audit_logs": 3},
+            "clear": {},
+            "block": {"resources": 2},
+        }
+        requester = Mock(spec=UserDTO)
+        requester.id = uuid4()
+
+        with pytest.raises(DependencyError, match="2 resources"):
+            await mock_user_service.delete_user(user_id=mocked_user.id, requester=requester)
+
+        mock_user_crud.delete_user_references.assert_not_awaited()
+        mock_user_crud.delete.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_get_deletion_impact(self, mock_user_service, mock_user_crud, mocked_user):
+        mocked_user.provider = "ik_service_account"
+        mock_user_crud.get_by_id.return_value = mocked_user
+        mock_user_crud.get_deletion_impact.return_value = {
+            "delete": {"tasks": 1, "audit_logs": 3},
+            "clear": {"task_queue": 4},
+            "block": {},
+        }
+        requester = Mock(spec=UserDTO)
+        requester.id = uuid4()
+
+        impact = await mock_user_service.get_deletion_impact(mocked_user.id, requester)
+
+        assert [(i.table, i.count) for i in impact.deleted] == [("audit_logs", 3), ("tasks", 1)]
+        assert [(i.table, i.count) for i in impact.cleared] == [("task_queue", 4)]
+        assert impact.blocking == []
+
+
+class TestGetActions:
+    @pytest.fixture(autouse=True)
+    def mock_actions(self, monkeypatch):
+        monkeypatch.setattr(
+            "core.users.service.get_user_actions",
+            AsyncMock(return_value=[ModelActions.EDIT, ModelActions.DELETE]),
+        )
+
+    @pytest.mark.asyncio
+    async def test_service_account_can_be_deleted(self, mock_user_service, mock_user_crud, mocked_user):
+        mocked_user.provider = "ik_service_account"
+        mock_user_crud.get_by_id.return_value = mocked_user
+        requester = Mock(spec=UserDTO)
+        requester.id = uuid4()
+
+        actions = await mock_user_service.get_actions(mocked_user.id, requester)
+
+        assert actions == [ModelActions.EDIT, ModelActions.DELETE]
+
+    @pytest.mark.asyncio
+    async def test_regular_user_cannot_be_deleted(self, mock_user_service, mock_user_crud, mocked_user):
+        mock_user_crud.get_by_id.return_value = mocked_user
+        requester = Mock(spec=UserDTO)
+        requester.id = uuid4()
+
+        actions = await mock_user_service.get_actions(mocked_user.id, requester)
+
+        assert actions == [ModelActions.EDIT]
 
 
 class TestLinkUserAccount:

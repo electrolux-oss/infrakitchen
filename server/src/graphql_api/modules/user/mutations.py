@@ -41,6 +41,14 @@ class UserMutation:
         return await service.update_user(user_id=id, user=user_update, requester=requester)
 
     @strawberry.mutation(permission_classes=[IsSuperAdmin])
+    async def delete_user(self, info: Info, id: uuid.UUID) -> bool:
+        requester = info.context["request"].state.user
+        session = info.context["session"]
+        service = get_user_service(session=session)
+        await service.delete_user(user_id=id, requester=requester)
+        return True
+
+    @strawberry.mutation(permission_classes=[IsSuperAdmin])
     async def link_user_account(self, info: Info, primary_user_id: uuid.UUID, secondary_user_id: uuid.UUID) -> UserType:
         requester = info.context["request"].state.user
 

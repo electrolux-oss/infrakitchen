@@ -10,8 +10,17 @@ export const DeleteButton = (props: {
   onClose?: () => void;
   onDelete?: () => void;
   children?: string;
+  disabled?: boolean;
 }) => {
-  const { entity_id, entity_name, ikApi, onClose, onDelete, children } = props;
+  const {
+    entity_id,
+    entity_name,
+    ikApi,
+    onClose,
+    onDelete,
+    children,
+    disabled,
+  } = props;
 
   const handleClick = () => {
     if (entity_id) {
@@ -37,7 +46,12 @@ export const DeleteButton = (props: {
   };
 
   return (
-    <Button color="error" variant="contained" onClick={handleClick}>
+    <Button
+      color="error"
+      variant="contained"
+      onClick={handleClick}
+      disabled={disabled}
+    >
       {children}
     </Button>
   );

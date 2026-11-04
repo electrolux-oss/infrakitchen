@@ -9,3 +9,24 @@ export const USERS_SHORT_QUERY = `
     }
   }
 `;
+
+export interface UserDeletionImpactItem {
+  table: string;
+  count: number;
+}
+
+export interface UserDeletionImpact {
+  deleted: UserDeletionImpactItem[];
+  cleared: UserDeletionImpactItem[];
+  blocking: UserDeletionImpactItem[];
+}
+
+export const USER_DELETION_IMPACT_QUERY = `
+  query UserDeletionImpact($id: UUID!) {
+    userDeletionImpact(id: $id) {
+      deleted { table count }
+      cleared { table count }
+      blocking { table count }
+    }
+  }
+`;

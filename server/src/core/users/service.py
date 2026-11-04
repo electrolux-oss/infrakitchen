@@ -2,20 +2,33 @@ import logging
 from typing import Any
 from uuid import UUID
 
+from sqlalchemy.exc import IntegrityError
+
 from core.audit_logs.handler import AuditLogHandler
 from core.constants import ModelActions
 from core.database import FieldSpec
-from core.errors import EntityNotFound
+from core.casbin.enforcer import CasbinEnforcer
+from core.errors import DependencyError, EntityNotFound
 from core.models.encrypted_secret import EncryptedSecretStr
 from core.users.functions import get_user_actions, user_entity_permissions
 from core.utils.model_tools import model_db_dump
 from core.utils.password_manager import hash_new_password
 from .crud import UserCRUD
 from core.users.model import User, UserDTO
-from .schema import UserMetadata, UserCreate, UserCreateWithProvider, UserResponse, UserUpdate
+from .schema import (
+    UserCreate,
+    UserCreateWithProvider,
+    UserDeletionImpact,
+    UserDeletionImpactItem,
+    UserMetadata,
+    UserResponse,
+    UserUpdate,
+)
 
 
 logger = logging.getLogger(__name__)
+
+SERVICE_ACCOUNT_PROVIDER = "ik_service_account"
 
 
 class UserService:
@@ -168,11 +181,66 @@ class UserService:
         await self.crud.update(existing_user, {"meta": existing_meta})
         return existing_user
 
+    async def _get_deletable_user(self, user_id: str | UUID, requester: UserDTO) -> User:
+        existing_user = await self.crud.get_by_id(user_id)
+        if not existing_user:
+            raise EntityNotFound("User not found")
+
+        if existing_user.provider != SERVICE_ACCOUNT_PROVIDER:
+            raise ValueError("Only service accounts can be deleted, other users can only be deactivated")
+
+        if str(existing_user.id) == str(requester.id):
+            raise ValueError("You cannot delete your own account")
+        return existing_user
+
+    async def get_deletion_impact(self, user_id: str | UUID, requester: UserDTO) -> UserDeletionImpact:
+        """
+        Preview what deleting a service account does: which rows are deleted, which references are cleared
+        and which created entities block the deletion.
+        """
+        existing_user = await self._get_deletable_user(user_id, requester)
+        impact = await self.crud.get_deletion_impact(existing_user.id)
+        return UserDeletionImpact(
+            deleted=[UserDeletionImpactItem(table=t, count=c) for t, c in sorted(impact["delete"].items())],
+            cleared=[UserDeletionImpactItem(table=t, count=c) for t, c in sorted(impact["clear"].items())],
+            blocking=[UserDeletionImpactItem(table=t, count=c) for t, c in sorted(impact["block"].items())],
+        )
+
+    async def delete_user(self, user_id: str | UUID, requester: UserDTO) -> None:
+        """
+        Delete a service account together with its personal data and activity history.
+        Regular users can only be deactivated.
+        :param user_id: ID of the user to delete
+        :param requester: User who deletes the user
+        """
+        impact = await self.get_deletion_impact(user_id, requester)
+        if impact.blocking:
+            raise DependencyError(
+                message="Cannot delete service account, it created entities that still exist: "
+                + ", ".join(f"{item.count} {item.table}" for item in impact.blocking),
+                metadata=[{"entityName": item.table, "count": item.count} for item in impact.blocking],
+            )
+
+        existing_user = await self._get_deletable_user(user_id, requester)
+        await self.crud.delete_user_references(existing_user.id)
+        try:
+            await self.crud.delete(existing_user)
+        except IntegrityError as e:
+            raise DependencyError("Service account is still referenced by other entities") from e
+
+        if self.audit_log_handler:
+            await self.audit_log_handler.create_log(existing_user.id, requester.id, ModelActions.DELETE)
+
+        await CasbinEnforcer().send_reload_event()
+
     async def get_actions(self, user_id: str | UUID, requester: UserDTO) -> list[str]:
         user = await self.crud.get_by_id(user_id)
         if not user:
             raise EntityNotFound("User not found")
-        return await get_user_actions(requester)
+        actions = await get_user_actions(requester)
+        if user.provider != SERVICE_ACCOUNT_PROVIDER or str(user.id) == str(requester.id):
+            actions = [action for action in actions if action != ModelActions.DELETE]
+        return actions
 
     async def get_user_entity_permissions(
         self, requester: UserDTO, entity_id: str | UUID, entity_name: str

@@ -96,3 +96,16 @@ class UserShort(BaseModel):
     @computed_field
     def _entity_name(self) -> str:
         return "user"
+
+
+class UserDeletionImpactItem(BaseModel):
+    table: str = Field(..., title="Table the rows belong to")
+    count: int = Field(..., title="Number of rows")
+
+
+class UserDeletionImpact(BaseModel):
+    deleted: list[UserDeletionImpactItem] = Field(default_factory=list, title="Rows deleted with the user")
+    cleared: list[UserDeletionImpactItem] = Field(default_factory=list, title="Rows whose reference is cleared")
+    blocking: list[UserDeletionImpactItem] = Field(
+        default_factory=list, title="Entities created by the user that prevent deletion"
+    )

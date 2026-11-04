@@ -1,11 +1,13 @@
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, Literal
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import Column, Table, delete, func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 
+from core.base_models import Base
 from core.database import (
     FieldSpec,
     evaluate_sqlalchemy_filters,
@@ -16,6 +18,55 @@ from core.utils.model_tools import is_valid_uuid
 
 from .model import User
 from .query_options import build_user_query_options
+
+# Rows that only exist for the user (personal data and activity history).
+# They are deleted together with a service account.
+USER_OWNED_TABLES = frozenset(
+    {
+        "audit_logs",
+        "favorites",
+        "personal_access_tokens",
+        "project_owners",
+        "resources_temp_state",
+        "service_owners",
+        "tasks",
+        "user_accounts_associations",
+    }
+)
+
+ReferencePolicy = Literal["delete", "clear", "block"]
+
+
+@dataclass(frozen=True)
+class UserReference:
+    table: Table
+    column: Column[Any]
+    policy: ReferencePolicy
+
+
+def get_user_references() -> list[UserReference]:
+    """
+    Every column that points at users.id and what deleting a user means for it:
+    - delete: the row belongs to the user and is removed
+    - clear: the column is nullable and is set to NULL
+    - block: the row is an entity created by the user, so the user can't be deleted
+    """
+    users_table = User.__table__
+    references: list[UserReference] = []
+    for table in Base.metadata.sorted_tables:
+        for fk in table.foreign_keys:
+            if fk.column.table is not users_table:
+                continue
+            column = fk.parent
+            ondelete = (fk.ondelete or "").upper()
+            if table.name in USER_OWNED_TABLES or ondelete == "CASCADE":
+                policy: ReferencePolicy = "delete"
+            elif column.nullable or ondelete == "SET NULL":
+                policy = "clear"
+            else:
+                policy = "block"
+            references.append(UserReference(table=table, column=column, policy=policy))
+    return references
 
 
 class UserCRUD:
@@ -101,7 +152,36 @@ class UserCRUD:
         return existing_user
 
     async def delete(self, user: User) -> None:
-        await self.session.delete(user)
+        # Savepoint so a foreign-key violation doesn't break the outer transaction
+        async with self.session.begin_nested():
+            await self.session.delete(user)
+
+    async def get_deletion_impact(self, user_id: str | UUID) -> dict[ReferencePolicy, dict[str, int]]:
+        """Count rows per table that deleting the user would delete, clear or that block the deletion."""
+        impact: dict[ReferencePolicy, dict[str, int]] = {"delete": {}, "clear": {}, "block": {}}
+        for ref in get_user_references():
+            count = await self.session.scalar(select(func.count()).select_from(ref.table).where(ref.column == user_id))
+            if count:
+                group = impact[ref.policy]
+                group[ref.table.name] = group.get(ref.table.name, 0) + count
+
+        rules = await self.session.scalar(
+            text("SELECT count(*) FROM casbin_rules WHERE v0 = :subject"), {"subject": f"user:{user_id}"}
+        )
+        if rules:
+            impact["delete"]["casbin_rules"] = rules
+        return impact
+
+    async def delete_user_references(self, user_id: str | UUID) -> None:
+        """Delete rows owned by the user and clear nullable references to it. Blocking references are left as is."""
+        for ref in get_user_references():
+            if ref.policy == "delete":
+                await self.session.execute(delete(ref.table).where(ref.column == user_id))
+            elif ref.policy == "clear":
+                await self.session.execute(
+                    update(ref.table).where(ref.column == user_id).values({ref.column.name: None})
+                )
+        await self.session.execute(text("DELETE FROM casbin_rules WHERE v0 = :subject"), {"subject": f"user:{user_id}"})
 
     async def refresh(self, user: User) -> None:
         await self.session.refresh(user)

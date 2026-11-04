@@ -1,5 +1,4 @@
 import { Audit } from "../../common/components/activity/Audit";
-import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
@@ -10,6 +9,7 @@ import { UserPoliciesCard } from "../../permissions/components/policies/UserPoli
 import { UserRolesCard } from "../../permissions/components/roles/UserRolesCard";
 
 import { UserConfiguration } from "./UserConfiguration";
+import { UserDangerZone } from "./UserDangerZone";
 import { UserNotificationPreferencesCard } from "./UserNotificationPreferencesCard";
 import { UserNotificationSubscriptionsCard } from "./UserNotificationSubscriptionsCard";
 import { UserPersonalAccessTokensCard } from "./UserPersonalAccessTokensCard";
@@ -53,13 +53,17 @@ export const UserContent = () => {
       label: "Audit",
       content: <Audit entityId={entity.id} />,
     },
-    {
+  ];
+
+  // Only service accounts can be deleted; other users can only be deactivated.
+  if (entity.provider === "ik_service_account") {
+    tabs.push({
       label: "Settings",
-      content: <DangerZoneCard />,
+      content: <UserDangerZone user={entity} />,
       requiredPermission: "api:user",
       permissionAction: "write" as const,
-    },
-  ];
+    });
+  }
 
   return (
     <EntitySidebarLayout sidebar={<UserSidebar user={entity} />}>
