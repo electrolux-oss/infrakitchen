@@ -11,7 +11,7 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { IkEntity } from "../../types";
-import { Checkbox, FormControlLabel, Button, TextField } from "../../ui";
+import { FormControlLabel, Button, Switch, TextField } from "../../ui";
 import {
   TemplateConfigurationFields,
   TemplateConfigurationControl,
@@ -222,10 +222,11 @@ export const TemplateCreatePage = () => {
             render={({ field }) => (
               <div>
                 <FormControlLabel
-                  control={<Checkbox {...field} checked={field.value} />}
+                  className="-ml-[3.5px]"
+                  control={<Switch {...field} checked={field.value} />}
                   label="Abstract Template"
                 />
-                <span className="-mt-2 mb-2 block text-caption text-fg-muted">
+                <span className="mt-1 mb-2 block text-caption text-fg-muted">
                   Abstract templates represent reusable entities such as Org,
                   Team, or Project. They do not provision infrastructure
                   directly, but provide values for other templates.

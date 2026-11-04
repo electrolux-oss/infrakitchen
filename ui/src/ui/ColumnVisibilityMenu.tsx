@@ -1,8 +1,8 @@
 import { Button } from "./Button";
-import { Checkbox } from "./Checkbox";
 import type { ColumnVisibilityModel, DataTableColumn } from "./DataTable.types";
 import { FormControlLabel } from "./FormControlLabel";
 import { Popover, PopoverOrigin } from "./Popover";
+import { Switch } from "./Switch";
 
 export interface ColumnVisibilityMenuProps {
   open: boolean;
@@ -54,12 +54,12 @@ export function ColumnVisibilityMenu({
           return (
             <FormControlLabel
               key={column.field}
-              className="mx-0 px-2"
+              className="mx-0 px-4 py-1.5"
               disabled={locked}
               label={column.headerName}
               control={
-                <Checkbox
-                  className="m-1.5"
+                <Switch
+                  className="mr-2 ml-[11px]"
                   checked={locked || model[column.field] !== false}
                   onChange={(_event, checked) =>
                     onChange({ ...model, [column.field]: checked })

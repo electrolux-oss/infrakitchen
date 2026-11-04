@@ -273,12 +273,7 @@ const TokenDialog = ({
       title="Create Personal Access Token"
       maxWidth="sm"
       content={
-        <div
-          // the Name field's floating label sits above the input's top
-          // border, so the top needs more room to avoid clipping (see
-          // ToolDownloadDialog's pt: 3 for the same pattern)
-          className="flex flex-col gap-4 pt-6 pb-1"
-        >
+        <div className="flex flex-col gap-4 pb-1">
           <TextField
             label="Name *"
             value={name}

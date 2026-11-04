@@ -81,20 +81,24 @@ export default function UserSidebar() {
         <Divider className="my-0.5" />
 
         <MenuItem
-          className="my-0.5 py-1"
+          className="min-h-8 py-0.5"
           onClick={() => navigate(`/users/${user.id}`)}
         >
           <ListItemIcon className="mr-3">
             <HeroUserIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText primaryClassName="font-normal">My Profile</ListItemText>
+          <ListItemText className="my-0" primaryClassName="font-normal">
+            My Profile
+          </ListItemText>
         </MenuItem>
 
-        <MenuItem className="my-0.5 py-1" onClick={logout}>
+        <MenuItem className="min-h-8 py-0.5" onClick={logout}>
           <ListItemIcon className="mr-3">
             <HeroArrowRightStartOnRectangleIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText primaryClassName="font-normal">Log Out</ListItemText>
+          <ListItemText className="my-0" primaryClassName="font-normal">
+            Log Out
+          </ListItemText>
         </MenuItem>
       </Menu>
     </div>

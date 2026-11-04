@@ -7,7 +7,7 @@ import { SelectionControlProps, selectionInputProps } from "./selectionControl";
 export type CheckboxProps = SelectionControlProps;
 
 /**
- * daisyUI `checkbox`, drawn at 20px with a 10px margin so labels keep their
+ * daisyUI `checkbox`, drawn at 16px with an 8px margin so labels keep their
  * spacing.
  */
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
@@ -17,7 +17,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         ref={ref}
         {...selectionInputProps(props)}
         className={cn(
-          "d-checkbox m-2.5 rounded-[5px] border-grey-300 d-checkbox-sm d-checkbox-primary checked:border-primary dark:border-divider dark:checked:border-primary",
+          "d-checkbox m-2 rounded-[4px] border-grey-300 d-checkbox-xs d-checkbox-primary text-primary transition-colors checked:border-primary checked:bg-transparent hover:border-primary focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-0 disabled:opacity-50 dark:border-divider dark:checked:border-primary",
           className,
         )}
       />

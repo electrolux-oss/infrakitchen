@@ -24,7 +24,7 @@ export const ToolSidebar = ({ tool }: ToolSidebarProps) => (
       <div className="col-span-full">
         <div className="flex flex-row items-center gap-1">
           <StatusLabel status={toolStatus(tool)} />
-          {tool.isDefault && <Label tone="primary" label="default" />}
+          {tool.isDefault && <Label size="small" tone="info" label="Default" />}
         </div>
       </div>
       {toolStatus(tool) === "error" && (

@@ -1,6 +1,7 @@
 import { ReactNode, useState } from "react";
 
 import { CommonField, FieldSpan } from "../fields/CommonField";
+import { FieldInfo } from "../fields/FieldInfo";
 
 import {
   InlineEditableField,
@@ -10,6 +11,8 @@ import {
 export interface CommonEditableFieldProps<T> {
   /** Field label shown above the value. */
   name: string;
+  /** Explanation shown in an info tooltip next to the label. */
+  info?: string;
   /** Width in the surrounding field grid. */
   span?: FieldSpan;
   /** Whether the current user is allowed to edit this field. */
@@ -46,6 +49,7 @@ export interface CommonEditableFieldProps<T> {
  */
 export function CommonEditableField<T>({
   name,
+  info,
   span,
   canEdit,
   disabledTooltip,
@@ -70,6 +74,7 @@ export function CommonEditableField<T>({
       name={
         <div className="flex items-center gap-1">
           <span>{name}</span>
+          {info && <FieldInfo text={info} />}
           <span className="inline-flex items-center" ref={setAffordanceSlot} />
         </div>
       }

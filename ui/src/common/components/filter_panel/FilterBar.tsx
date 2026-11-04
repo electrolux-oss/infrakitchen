@@ -1,7 +1,7 @@
 import { ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { HeroAdjustmentsHorizontalIcon } from "../../../icons";
-import { Button } from "../../../ui";
+import { Button, Label } from "../../../ui";
 import { cn } from "../../../utils/cn";
 
 import { isClauseComplete } from "./clauseUtils";
@@ -99,9 +99,12 @@ export const FilterBar = ({
       >
         Filter
         {appliedCount > 0 && (
-          <span className="ml-1.5 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-primary px-1 text-(length:--text-caption) leading-none font-semibold text-white">
-            {appliedCount}
-          </span>
+          <Label
+            className="ml-1.5"
+            size="small"
+            tone="primary"
+            label={appliedCount}
+          />
         )}
       </Button>
 

@@ -6,10 +6,10 @@ import { notifyError } from "../../common/hooks/useNotification";
 import { HeroArrowDownTrayIcon } from "../../icons";
 import { ProviderIcon } from "../../icons/Icons";
 import {
-  Checkbox,
   FormControlLabel,
   Button,
   MenuItem,
+  Switch,
   TextField,
 } from "../../ui";
 import { AVAILABLE_TOOL_VERSIONS_QUERY } from "../graphql";
@@ -96,10 +96,7 @@ export const ToolDownloadDialog = ({
       onClose={onClose}
       title="Add tool"
       content={
-        <div
-          // the outlined labels float above the first row, so the top needs more room to match the bottom
-          className="flex flex-col gap-4 pt-6 pb-2"
-        >
+        <div className="flex flex-col gap-4 pb-2">
           <div className="flex flex-col gap-4 sm:flex-row">
             <TextField
               select
@@ -167,10 +164,9 @@ export const ToolDownloadDialog = ({
               ))}
             </TextField>
             <FormControlLabel
-              className="mt-1"
+              className="mt-1 -ml-[3.5px]"
               control={
-                <Checkbox
-                  size="small"
+                <Switch
                   checked={includePrerelease}
                   onChange={(event) =>
                     setIncludePrerelease(event.target.checked)

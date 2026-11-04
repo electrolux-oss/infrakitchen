@@ -2,8 +2,8 @@ import { useParams } from "react-router";
 
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import { EntityProvider } from "../../common/context/EntityContext";
-import { HeroRocketLaunchIcon } from "../../icons";
 import { WorkerTemplateContent } from "../components/WorkerTemplateContent";
 import { WorkerTemplateHeaderActions } from "../components/WorkerTemplateHeaderActions";
 import { WORKER_TEMPLATE_DETAIL_FIELDS } from "../graphql";
@@ -18,7 +18,7 @@ export const WorkerTemplatePage = () => {
       entityFields={WORKER_TEMPLATE_DETAIL_FIELDS}
     >
       <EntityContainer
-        titleIcon={<HeroRocketLaunchIcon />}
+        titleIcon={entityIcons.worker_template}
         actions={
           <>
             <WorkerTemplateHeaderActions />

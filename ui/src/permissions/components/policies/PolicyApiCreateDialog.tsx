@@ -6,12 +6,12 @@ import { CommonDialog } from "../../../common";
 import { useConfig } from "../../../common/context/ConfigContext";
 import { notify, notifyError } from "../../../common/hooks/useNotification";
 import {
-  Checkbox,
   FormControlLabel,
   Button,
   FormControl,
   RadioGroup,
   Radio,
+  Switch,
 } from "../../../ui";
 import { CREATE_API_POLICY_MUTATION } from "../../graphql/mutations";
 import { ApiPolicyCreate } from "../../types";
@@ -152,8 +152,9 @@ export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
                         key={apiName}
                       >
                         <FormControlLabel
+                          className="-ml-[3.5px]"
                           control={
-                            <Checkbox
+                            <Switch
                               checked={isApiSelected}
                               onChange={(e) =>
                                 handleApiToggle(apiName, e.target.checked)

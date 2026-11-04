@@ -4,25 +4,18 @@ import { useNavigate } from "react-router";
 
 import { PermissionWrapper, useConfig } from "../../common";
 import { Entity } from "../../common/components/entities/Entity";
+import { entityIcons } from "../../common/components/entities/entityIcons";
 import {
   EntityFetchTable,
   type EntityFetchTableRef,
 } from "../../common/components/entity_table/EntityFetchTable";
 import type { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
-import {
-  RELATIVE_TIME_COLUMN_WIDTH,
-  userColumn,
-} from "../../common/components/entity_table/tableColumns";
+import { createdByColumn } from "../../common/components/entity_table/tableColumns";
 import { getProviderValue } from "../../common/components/fields/CommonField";
-import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { Label, StatusLabel } from "../../common/components/labels";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import {
-  HeroExclamationTriangleIcon,
-  HeroPlusCircleIcon,
-  HeroServerStackIcon,
-} from "../../icons";
+import { HeroExclamationTriangleIcon, HeroPlusCircleIcon } from "../../icons";
 import { Button, RenderCellParams, Tooltip } from "../../ui";
 import { DefaultWorkerTemplateSelect } from "../components";
 import {
@@ -65,7 +58,9 @@ export const WorkerTemplatesPage = () => {
         renderCell: (params: RenderCellParams) => (
           <div className="flex items-center gap-2">
             <Entity entity={params.row} />
-            {params.row.isDefault && <Label tone="primary" label="default" />}
+            {params.row.isDefault && (
+              <Label size="small" tone="info" label="Default" />
+            )}
             {params.row.lastError && (
               <Tooltip title={params.row.lastError}>
                 <span className="inline-flex text-warning">
@@ -102,18 +97,7 @@ export const WorkerTemplatesPage = () => {
         flex: 0.5,
         sortField: "max_workers",
       },
-      {
-        field: "createdAt",
-        headerName: "Created",
-        width: RELATIVE_TIME_COLUMN_WIDTH,
-        align: "right",
-        headerAlign: "right",
-        sortField: "created_at",
-        renderCell: (params: RenderCellParams) => (
-          <RelativeTime date={params.value} compact />
-        ),
-      },
-      userColumn({ disableFilter: true }),
+      createdByColumn({ createdSortField: "created_at" }),
     ],
     [],
   );
@@ -121,6 +105,7 @@ export const WorkerTemplatesPage = () => {
   return (
     <PageContainer
       title="Worker Templates"
+      icon={entityIcons.worker_template}
       // the current global default is shown by the picker in the actions
       description="Spawn task workers on demand when tasks are waiting, and remove them once they are idle."
       actions={
@@ -141,7 +126,7 @@ export const WorkerTemplatesPage = () => {
           >
             <Button
               onClick={() => navigate(`${linkPrefix}workers`)}
-              startIcon={<HeroServerStackIcon />}
+              startIcon={entityIcons.worker}
             >
               Workers
             </Button>

@@ -5,6 +5,7 @@ import { useNavigate } from "react-router";
 
 import { LabelInput, MultiSelectEditor } from "../../common";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
+import { FieldInfo } from "../../common/components/fields/FieldInfo";
 import { DependencyConfigurationFields } from "../../common/components/hcl/DependencyConfigurationFields";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -12,7 +13,7 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { validateTagEntries } from "../../resources/utils/formValidation";
 import { IkEntity } from "../../types";
-import { Checkbox, FormControlLabel, Button, TextField } from "../../ui";
+import { FormControlLabel, Button, Switch, TextField } from "../../ui";
 import { GqlUserShort, USERS_SHORT_QUERY } from "../../users/graphql";
 import { RESOURCE_UPDATE_APPROVAL_BYPASS_FIELD_OPTIONS } from "../constants";
 import { CREATE_PROJECT_MUTATION } from "../graphql";
@@ -184,20 +185,18 @@ export const ProjectCreatePage = () => {
               name="configuration.always_use_workspace"
               control={control}
               render={({ field }) => (
-                <div>
+                <div className="flex items-center gap-1">
                   <FormControlLabel
+                    className="mr-0 -ml-[3.5px]"
                     control={
-                      <Checkbox
+                      <Switch
                         checked={field.value}
                         onChange={(e) => field.onChange(e.target.checked)}
                       />
                     }
                     label="Always use workspace"
                   />
-                  <span className="-mt-2 mb-2 block text-caption text-fg-muted">
-                    Force resources in this project to use the assigned
-                    workspace.
-                  </span>
+                  <FieldInfo text="Force resources in this project to use the assigned workspace." />
                 </div>
               )}
             />
@@ -205,14 +204,21 @@ export const ProjectCreatePage = () => {
               name="configuration.allow_unapproved_metadata_edits"
               control={control}
               render={({ field }) => (
-                <div>
-                  <div className="flex flex-col flex-wrap">
+                <div className="mt-4">
+                  <div className="mb-1 flex items-center gap-1">
+                    <span className="text-body2 font-medium">
+                      Fields editable without approval
+                    </span>
+                    <FieldInfo text="Users can update these resource fields without creating an approval request." />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                     {RESOURCE_UPDATE_APPROVAL_BYPASS_FIELD_OPTIONS.map(
                       (option) => (
                         <FormControlLabel
                           key={option.value}
+                          className="-ml-[3.5px]"
                           control={
-                            <Checkbox
+                            <Switch
                               checked={(field.value || []).includes(
                                 option.value,
                               )}
@@ -232,10 +238,6 @@ export const ProjectCreatePage = () => {
                       ),
                     )}
                   </div>
-                  <span className="-mt-2 mb-2 block text-caption text-fg-muted">
-                    Let users update selected resource fields without creating
-                    an approval request.
-                  </span>
                 </div>
               )}
             />

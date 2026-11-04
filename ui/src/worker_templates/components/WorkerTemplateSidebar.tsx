@@ -116,7 +116,7 @@ export const WorkerTemplateSidebar = ({
             span="full"
             value={
               <div className="flex flex-col items-start gap-1">
-                <Label tone="primary" label="default" />
+                <Label size="small" tone="info" label="Default" />
                 <p className="m-0 text-body2 text-fg-muted">
                   Runs the tasks of resources and executors without a selected
                   template, and all other tasks.

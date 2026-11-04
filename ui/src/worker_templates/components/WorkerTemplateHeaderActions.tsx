@@ -39,7 +39,7 @@ export const WorkerTemplateHeaderActions = () => {
 
   return (
     <Button onClick={setDefault} disabled={submitting}>
-      Set default
+      Set as default
     </Button>
   );
 };

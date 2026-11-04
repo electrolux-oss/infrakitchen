@@ -74,7 +74,7 @@ database, so all workers share the same tools.
 | :-------------- | :------------------------------------------------------------------- | :---------------------- |
 | **queued**      | Waiting for a worker to download it                                  | -                       |
 | **in_progress** | Being downloaded and verified                                        | -                       |
-| **ready**        | Ready to be used                                                     | Set default, Disable    |
+| **ready**        | Ready to be used                                                     | Set as default, Disable |
 | **error**       | Download or checksum verification failed                             | Retry download, Disable |
 | **disabled**    | Cannot be selected anymore, see [Disabling](#disabling-and-deleting) | Enable, Delete          |
 
@@ -85,7 +85,7 @@ The error message of a failed download is shown on the tool page and in the stat
 One tool can be marked as the **global default**. It is used by every resource and executor that does not select a
 tool, which makes it possible to upgrade the IaC version for all of them in one place.
 
-- **Set default** - available on a `ready` tool, in the list or on its page. The previous default is replaced.
+- **Set as default** - available on a `ready` tool, in the list or on its page. The previous default is replaced.
 - **Clear default** - available in the **IaC Tools** page header and in the danger zone of the default tool.
   Resources and executors without a selected tool go back to the `tofu` installed on the worker.
 
