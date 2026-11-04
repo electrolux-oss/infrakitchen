@@ -62,6 +62,10 @@ class Settings(BaseSettings):
     SESSION_EXPIRATION: str = "3600"
     # Local directory where workers unpack IaC tools (tofu/terraform) stored in the database
     TOOL_CACHE_DIR: str = os.path.join(tempfile.gettempdir(), "infrakitchen", "tools")
+    # Provider cache shared by the tofu/terraform runs of the worker host, so `init` doesn't download every
+    # provider again for each task. Keep the directory on local disk.
+    TF_PLUGIN_CACHE_ENABLED: bool = True
+    TF_PLUGIN_CACHE_DIR: str = os.path.join(tempfile.gettempdir(), "infrakitchen", "plugin-cache")
     # Task queue / worker settings
     WORKER_POLL_INTERVAL: float = 5.0  # seconds between polls when no task notification arrives
     WORKER_LEASE_SECONDS: int = 90  # how long a claimed task stays owned without a heartbeat

@@ -13,6 +13,53 @@ from application.tools import tf_client as tf_client_module
 from application.tools.tf_client import OtfClient
 
 
+@pytest.fixture(autouse=True)
+def plugin_cache_dir(monkeypatch, tmp_path):
+    """Keep the provider cache of every client in this module out of the real temp dir."""
+    cache_dir = tmp_path / "plugin-cache"
+    monkeypatch.setenv("TF_PLUGIN_CACHE_DIR", str(cache_dir))
+    monkeypatch.delenv("TF_PLUGIN_CACHE_ENABLED", raising=False)
+    return cache_dir
+
+
+def make_client(environment_variables: dict[str, str] | None = None) -> OtfClient:
+    return OtfClient(tempfile.mkdtemp(), environment_variables or {}, {}, "", Mock())
+
+
+def test_providers_are_installed_from_the_plugin_cache_by_default(plugin_cache_dir):
+    client = make_client()
+
+    assert client.environment_variables["TF_PLUGIN_CACHE_DIR"] == str(plugin_cache_dir)
+    assert client.environment_variables["TF_PLUGIN_CACHE_MAY_BREAK_DEPENDENCY_LOCK_FILE"] == "true"
+    assert plugin_cache_dir.is_dir()
+
+
+def test_the_plugin_cache_can_be_turned_off(monkeypatch, plugin_cache_dir):
+    monkeypatch.setenv("TF_PLUGIN_CACHE_ENABLED", "false")
+
+    client = make_client()
+
+    assert "TF_PLUGIN_CACHE_DIR" not in client.environment_variables
+    assert "TF_PLUGIN_CACHE_MAY_BREAK_DEPENDENCY_LOCK_FILE" not in client.environment_variables
+    assert not plugin_cache_dir.exists()
+
+
+def test_a_plugin_cache_set_by_the_task_is_kept():
+    client = make_client({"TF_PLUGIN_CACHE_DIR": "/opt/providers"})
+
+    assert client.environment_variables["TF_PLUGIN_CACHE_DIR"] == "/opt/providers"
+
+
+async def test_the_plugin_cache_is_passed_to_tofu(monkeypatch, plugin_cache_dir):
+    shell_client = Mock()
+    shell_client.return_value.run_shell_command = AsyncMock(return_value="")
+    monkeypatch.setattr(tf_client_module, "ShellScriptClient", shell_client)
+
+    await make_client().init()
+
+    assert shell_client.call_args.kwargs["environment_variables"]["TF_PLUGIN_CACHE_DIR"] == str(plugin_cache_dir)
+
+
 class TestOtfClient(OtfClient):
     __test__ = False
 

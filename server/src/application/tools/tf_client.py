@@ -5,6 +5,7 @@ from typing import Any
 
 import aiofiles
 
+from core.config import Settings
 from core.custom_entity_log_controller import EntityLogger
 from core.errors import ShellExecutionError
 
@@ -32,6 +33,7 @@ class OtfClient:
     ):
         self.workspace_path: str = workspace_path
         self.environment_variables: dict[str, str] = environment_variables
+        self._use_plugin_cache()
         self.backend_storage_config: str = backend_storage_config
         self.logger: EntityLogger = logger
         self.variables: dict[str, Any] = variables
@@ -39,6 +41,18 @@ class OtfClient:
         self.tool_path: str | None = tool_path
         # tofu workspace for backends keyed by workspace instead of a state path (pg)
         self.workspace: str | None = workspace
+
+    def _use_plugin_cache(self) -> None:
+        """Install providers from the worker's shared cache instead of downloading them for every task."""
+        settings = Settings()
+        cache_dir = settings.TF_PLUGIN_CACHE_DIR
+        if not settings.TF_PLUGIN_CACHE_ENABLED or not cache_dir:
+            return
+        os.makedirs(cache_dir, exist_ok=True)
+        _ = self.environment_variables.setdefault("TF_PLUGIN_CACHE_DIR", cache_dir)
+        # without it, the cache is skipped for templates without a `.terraform.lock.hcl`;
+        # the lock file it would "break" is thrown away with the task workspace
+        _ = self.environment_variables.setdefault("TF_PLUGIN_CACHE_MAY_BREAK_DEPENDENCY_LOCK_FILE", "true")
 
     async def init_tf_workspace(self):
         await self._generate_tfvar()
