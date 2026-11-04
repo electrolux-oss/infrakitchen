@@ -74,7 +74,7 @@ database, so all workers share the same tools.
 | :-------------- | :------------------------------------------------------------------- | :---------------------- |
 | **queued**      | Waiting for a worker to download it                                  | -                       |
 | **in_progress** | Being downloaded and verified                                        | -                       |
-| **ready**        | Ready to be used                                                     | Set as default, Disable |
+| **ready**       | Ready to be used                                                     | Set as default, Disable |
 | **error**       | Download or checksum verification failed                             | Retry download, Disable |
 | **disabled**    | Cannot be selected anymore, see [Disabling](#disabling-and-deleting) | Enable, Delete          |
 
@@ -117,12 +117,27 @@ Both actions are available in the **Settings** tab (danger zone) of the tool pag
 Workers unpack the executable from the stored archive on first use and keep it in a local cache, so later tasks start
 without loading the archive again. The archive is verified against the stored checksum before it is unpacked.
 
-| Setting          | Description                              | Default                                |
-| :--------------- | :--------------------------------------- | :------------------------------------- |
-| `TOOL_CACHE_DIR` | Local directory where tools are unpacked | `<system temp dir>/infrakitchen/tools` |
+| Setting                   | Description                                           | Default                                       |
+| :------------------------ | :---------------------------------------------------- | :-------------------------------------------- |
+| `TOOL_CACHE_DIR`          | Local directory where tools are unpacked              | `<system temp dir>/infrakitchen/tools`        |
+| `TF_PLUGIN_CACHE_ENABLED` | Install providers from a shared cache (`false` = off) | `true`                                        |
+| `TF_PLUGIN_CACHE_DIR`     | Local directory of the provider cache                 | `<system temp dir>/infrakitchen/plugin-cache` |
 
 A tool only runs on workers with the same operating system and architecture. A task using a tool built for
 another platform fails with a message naming the worker platform.
+
+### Provider cache
+
+Every task runs `init` in a fresh workspace. With the provider cache, a provider version is downloaded once per
+worker host and later tasks install it from the cache (`TF_PLUGIN_CACHE_DIR` of OpenTofu and Terraform). It is used
+even when a template has no `.terraform.lock.hcl`: the lock file is discarded with the task workspace.
+
+- Keep the cache on local disk, not on a network share.
+- Several workers sharing one disk (worker processes on one VM, or `DEV_WORKERS` above 1) can share the cache with
+  OpenTofu 1.10 or newer, which locks it. With Terraform or an older OpenTofu, give each worker its own directory.
+- The cache keeps every provider version it downloads and is never cleaned up. On long-lived hosts, delete it from
+  time to time; workers download what they need again.
+- All tasks of a worker use the same cache, just as they use the same tool cache.
 
 The InfraKitchen server (to list the available versions) and the workers (to download them) need outbound HTTPS
 access to the release sites listed above.
