@@ -319,7 +319,7 @@ export const BatchOperationEntities = ({
     ).length;
     const errorCount = results.length - successCount;
     notify(
-      `${actionType === "dryrun" ? "Plan" : "Execute"} completed: ${successCount} success, ${errorCount} failed`,
+      `${actionType === "dryrun" ? "Plan" : "Execute"} requests sent to workers: ${successCount}; failed to send: ${errorCount}`,
       errorCount ? "warning" : "success",
     );
 
