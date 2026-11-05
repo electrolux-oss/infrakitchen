@@ -109,6 +109,7 @@ const providerIcons = new Map<string, React.ElementType>([
   ["postgresql", PostgreSQLIcon],
   ["opentofu", OpenTofuIcon],
   ["slack", SlackIcon],
+  ["aws_ecr", AwsIcon],
   ["guest", HeroUserCircleIcon],
 ]);
 

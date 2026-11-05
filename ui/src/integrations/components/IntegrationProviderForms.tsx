@@ -1,6 +1,11 @@
+import { useState } from "react";
+
 import { Control, Controller, FieldErrors, useWatch } from "react-hook-form";
 
 import { InlineCode } from "../../common/components/code/InlineCode";
+import ReferenceInput from "../../common/components/inputs/ReferenceInput";
+import { useConfig } from "../../common/context";
+import { IkEntity } from "../../types";
 import {
   Checkbox,
   FormControlLabel,
@@ -240,6 +245,217 @@ const GcpProviderFields = ({
             </>
           )}
         />
+      )}
+    </>
+  );
+};
+
+type EcrAuthSource = "integration" | "credentials";
+
+const AwsEcrProviderFields = ({
+  control,
+  errors,
+  readonly,
+}: {
+  control: Control<any>;
+  errors: FieldErrors<FormValues>;
+  readonly: boolean;
+}) => {
+  const { ikApi } = useConfig();
+  const [buffer, setBuffer] = useState<Record<string, IkEntity[]>>({});
+  const storedAccessKeyId = useWatch({
+    control,
+    name: "configuration.aws_access_key_id",
+  });
+  // Not part of the configuration: the backend infers the source from the fields that are set.
+  // Fields of the hidden source unregister, so only one source is submitted.
+  const [authSource, setAuthSource] = useState<EcrAuthSource>(() =>
+    storedAccessKeyId ? "credentials" : "integration",
+  );
+  const configErrors = errors.configuration as any;
+
+  return (
+    <>
+      <Controller
+        name="configuration.aws_account"
+        control={control}
+        defaultValue=""
+        rules={{
+          required: "Account ID is required",
+          pattern: {
+            value: /^\d{12}$/,
+            message: "AWS Account ID must be a 12-digit number",
+          },
+        }}
+        render={({ field }) => (
+          <TextField
+            {...field}
+            label="Registry AWS Account ID"
+            fullWidth
+            margin="normal"
+            required
+            placeholder="123456789012"
+            error={!!configErrors?.aws_account}
+            helperText={
+              configErrors?.aws_account?.message ||
+              "Account that owns the registry; it can differ from the account of the credentials"
+            }
+            readOnly={readonly}
+          />
+        )}
+      />
+      <Controller
+        name="configuration.aws_region"
+        control={control}
+        defaultValue="us-east-1"
+        rules={{ required: "Region is required" }}
+        render={({ field }) => (
+          <TextField
+            {...field}
+            label="Registry Region"
+            fullWidth
+            margin="normal"
+            required
+            placeholder="us-east-1"
+            error={!!configErrors?.aws_region}
+            helperText={
+              configErrors?.aws_region?.message ||
+              "Region of the registry, e.g. eu-west-1"
+            }
+            readOnly={readonly}
+          />
+        )}
+      />
+      <FormControl fullWidth margin="normal">
+        <InputLabel id="aws-ecr-auth-source-label">Authentication</InputLabel>
+        <Select
+          labelId="aws-ecr-auth-source-label"
+          label="Authentication"
+          value={authSource}
+          onChange={(e) => setAuthSource(e.target.value as EcrAuthSource)}
+          disabled={readonly}
+        >
+          <MenuItem value="integration">Use an AWS integration</MenuItem>
+          <MenuItem value="credentials">AWS credentials</MenuItem>
+        </Select>
+        <FormHelperText>
+          Reuse the credentials of an existing AWS integration, or enter
+          credentials for this registry only.
+        </FormHelperText>
+      </FormControl>
+      {authSource === "integration" && (
+        <Controller
+          name="configuration.aws_integration_id"
+          control={control}
+          defaultValue=""
+          shouldUnregister
+          rules={{ required: "AWS integration is required" }}
+          render={({ field }) => (
+            <ReferenceInput
+              {...field}
+              ikApi={ikApi}
+              buffer={buffer}
+              setBuffer={setBuffer}
+              entity_name="integrations"
+              filter={{
+                integration_type: "cloud",
+                integration_provider: "aws",
+              }}
+              value={field.value}
+              label="AWS Integration"
+              required
+              readOnly={readonly}
+              error={!!configErrors?.aws_integration_id}
+              helpertext={
+                configErrors?.aws_integration_id?.message ||
+                "Its credentials (and assumed role) are used to get ECR authorization tokens"
+              }
+            />
+          )}
+        />
+      )}
+      {authSource === "credentials" && (
+        <>
+          <Controller
+            name="configuration.aws_access_key_id"
+            control={control}
+            defaultValue=""
+            shouldUnregister
+            rules={{ required: "Access key ID is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="AWS Access Key ID"
+                fullWidth
+                required
+                margin="normal"
+                placeholder="AKIA..."
+                error={!!configErrors?.aws_access_key_id}
+                helperText={
+                  configErrors?.aws_access_key_id?.message ||
+                  "Access Key ID of an IAM user allowed to call ecr:GetAuthorizationToken"
+                }
+                readOnly={readonly}
+              />
+            )}
+          />
+          <Controller
+            name="configuration.aws_secret_access_key"
+            control={control}
+            defaultValue=""
+            shouldUnregister
+            rules={{ required: "Secret access key is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="AWS Secret Access Key"
+                type="password"
+                fullWidth
+                required
+                margin="normal"
+                error={!!configErrors?.aws_secret_access_key}
+                helperText={
+                  configErrors?.aws_secret_access_key?.message ||
+                  "Stored encrypted"
+                }
+                readOnly={readonly}
+              />
+            )}
+          />
+          <Controller
+            name="configuration.aws_assumed_role_name"
+            control={control}
+            defaultValue=""
+            shouldUnregister
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="AWS Assumed Role Name"
+                fullWidth
+                margin="normal"
+                helperText="Optional: role to assume in the registry account"
+                readOnly={readonly}
+              />
+            )}
+          />
+          <Controller
+            name="configuration.aws_partition"
+            control={control}
+            defaultValue=""
+            shouldUnregister
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="AWS Partition"
+                placeholder="aws"
+                fullWidth
+                margin="normal"
+                helperText="Optional: e.g. aws-cn for AWS China. Defaults to aws if empty"
+                readOnly={readonly}
+              />
+            )}
+          />
+        </>
       )}
     </>
   );
@@ -1243,6 +1459,14 @@ export const renderFieldsForProvider = (
             )}
           />
         </>
+      );
+    case "aws_ecr":
+      return (
+        <AwsEcrProviderFields
+          control={control}
+          errors={errors}
+          readonly={readonly}
+        />
       );
     default:
       return null;

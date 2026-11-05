@@ -13,6 +13,7 @@ from .mongo_atlas import MongodbAtlasProvider
 from .postgresql import PostgresqlProvider
 from .public.public_provider import PublicProvider
 from .slack.slack_provider import SlackProvider
+from .container_registry import AwsEcrProvider
 from .tf_storage_providers.aws_storage_provider import AwsTfStorage
 from .tf_storage_providers.azure_storage_provider import AzurermTfStorage
 from .tf_storage_providers.gcp_storage_provider import GcpStorage
@@ -42,6 +43,7 @@ __all__ = [
     "AzurermProvider",
     "DatadogProvider",
     "SlackProvider",
+    "AwsEcrProvider",
     "AzureStorage",
     "AzureResourceGroup",
     "AzureStorageAccount",

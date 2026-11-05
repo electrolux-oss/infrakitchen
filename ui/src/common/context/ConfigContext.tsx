@@ -88,6 +88,7 @@ export const ConfigProvider = ({
             cloudProviderRegistry
             gitProviderRegistry
             notificationProviderRegistry
+            containerRegistryProviderRegistry
             storageProviderRegistry
             secretProviderRegistry
           }
@@ -118,6 +119,8 @@ export const ConfigProvider = ({
         services: gql.services,
         cloud_provider_registry: gql.cloudProviderRegistry,
         git_provider_registry: gql.gitProviderRegistry,
+        container_registry_provider_registry:
+          gql.containerRegistryProviderRegistry,
         storage_provider_registry: gql.storageProviderRegistry,
         secret_provider_registry: gql.secretProviderRegistry,
         entities: response.entities,

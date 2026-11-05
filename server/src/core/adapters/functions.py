@@ -4,11 +4,13 @@ from core.adapters.provider_adapters import IntegrationProvider, SecretProviderA
 from core.errors import CannotProceed
 
 
-async def get_integration_adapter(provider: str, config: Any, integration_id: Any = None) -> IntegrationProvider:
+async def get_integration_adapter(
+    provider: str, config: Any, integration_id: Any = None, **kwargs: Any
+) -> IntegrationProvider:
     # TODO: pass integration dto to the adapter instead of just the id
     provider_adapter_cls = IntegrationProvider.adapters.get(provider)
     if provider_adapter_cls:
-        return provider_adapter_cls(configuration=config, integration_id=integration_id)
+        return provider_adapter_cls(configuration=config, integration_id=integration_id, **kwargs)
 
     raise CannotProceed(f"Provider {provider} is not supported")
 

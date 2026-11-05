@@ -7,7 +7,12 @@ from uuid import UUID
 from core.models.encrypted_secret import EncryptedSecretStr
 from core.adapters.functions import get_integration_adapter
 from application.providers.gcp import gcp_oidc
-from application.integrations.schema import GCPIntegrationConfig, PostgreSQLIntegrationConfig
+from application.integrations.schema import (
+    AWSECRIntegrationConfig,
+    AWSIntegrationConfig,
+    GCPIntegrationConfig,
+    PostgreSQLIntegrationConfig,
+)
 from application.providers.postgresql import PostgresqlProvider
 from core.audit_logs.handler import AuditLogHandler
 from core.base_models import PatchBodyModel
@@ -19,6 +24,7 @@ from core.errors import CloudWrongCredentials, DependencyError, EntityNotFound, 
 from core.permissions.schema import EntityPolicyCreate
 from core.permissions.service import PermissionService
 from core.revisions.handler import RevisionHandler
+from core.users.functions import user_has_access_to_entity
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import has_field_changes, model_db_dump
@@ -113,6 +119,7 @@ class IntegrationService:
             "git_public",
         ]
         notification_providers = ["slack"]
+        container_registry_providers = ["aws_ecr"]
         if integration.integration_type == "cloud":
             if integration.integration_provider not in cloud_providers:
                 raise ValueError(f"Invalid integration provider, must be one of {', '.join(cloud_providers)}")
@@ -122,7 +129,13 @@ class IntegrationService:
         elif integration.integration_type == "notification":
             if integration.integration_provider not in notification_providers:
                 raise ValueError(f"Invalid integration provider, must be one of {', '.join(notification_providers)}")
+        elif integration.integration_type == "container_registry":
+            if integration.integration_provider not in container_registry_providers:
+                raise ValueError(
+                    f"Invalid integration provider, must be one of {', '.join(container_registry_providers)}"
+                )
 
+        _ = await self.resolve_linked_aws_configuration(getattr(integration, "configuration", None), requester)
         self._ensure_gcp_oidc_signing_material(getattr(integration, "configuration", None))
         await self._ensure_postgresql_database(getattr(integration, "configuration", None))
         body = model_db_dump(integration)
@@ -171,6 +184,7 @@ class IntegrationService:
         self.revision_handler.original_entity_instance_dump = to_dict(existing_integration)
 
         self.validate_configuration(integration_update=integration, existing_integration=existing_integration)
+        _ = await self.resolve_linked_aws_configuration(integration.configuration, requester)
         self._validate_postgresql_database_unchanged(integration.configuration, existing_integration)
         self._carry_over_gcp_oidc_signing_material(integration, existing_integration)
         self._ensure_gcp_oidc_signing_material(integration.configuration)
@@ -299,12 +313,44 @@ class IntegrationService:
                 # the existing secret shouldn't be updated
                 setattr(integration_update.configuration, secret_name, existing_secret_value)
 
+    async def resolve_linked_aws_configuration(
+        self, config: Any, requester: UserDTO | None = None
+    ) -> AWSIntegrationConfig | None:
+        """Return the configuration of the AWS integration an ECR registry authenticates through.
+
+        Returns None when the configuration is not an ECR registry linked to an AWS integration.
+        With a requester, the requester must be able to read the linked integration.
+        """
+        if not isinstance(config, AWSECRIntegrationConfig) or not config.aws_integration_id:
+            return None
+
+        aws_integration = await self.crud.get_by_id(config.aws_integration_id)
+        if not aws_integration or aws_integration.integration_provider != "aws":
+            raise ValueError(f"AWS integration {config.aws_integration_id} not found")
+        if requester and not await user_has_access_to_entity(
+            requester, config.aws_integration_id, action="read", entity_name="integration"
+        ):
+            raise ValueError(f"AWS integration {config.aws_integration_id} not found")
+
+        aws_configuration = IntegrationDTO.model_validate(aws_integration).configuration
+        if not isinstance(aws_configuration, AWSIntegrationConfig):
+            raise ValueError(f"Integration {config.aws_integration_id} is not an AWS integration")
+        return aws_configuration
+
     async def validate(
-        self, integration_config: Any, integration_provider: str, integration_id: str | UUID | None = None
+        self,
+        integration_config: Any,
+        integration_provider: str,
+        integration_id: str | UUID | None = None,
+        requester: UserDTO | None = None,
     ) -> IntegrationValidationResponse:
         try:
+            adapter_kwargs: dict[str, Any] = {}
+            aws_configuration = await self.resolve_linked_aws_configuration(integration_config, requester)
+            if aws_configuration:
+                adapter_kwargs["aws_configuration"] = aws_configuration
             provider_adapter_instance = await get_integration_adapter(
-                integration_provider, integration_config, integration_id=integration_id
+                integration_provider, integration_config, integration_id=integration_id, **adapter_kwargs
             )
             await provider_adapter_instance.authenticate()
             integration_is_valid = await provider_adapter_instance.is_valid()

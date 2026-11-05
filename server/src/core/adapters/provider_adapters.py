@@ -118,6 +118,42 @@ class NotificationProviderAdapter:
         raise NotImplementedError("Subclasses must implement send_notification method.")
 
 
+class RegistryCredentials(BaseModel):
+    """Docker-login credentials for a container registry."""
+
+    registry_host: str = Field(..., description="Registry hostname, e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com")
+    username: str = Field(...)
+    password: str = Field(..., repr=False)
+    expires_at: datetime | None = Field(default=None, description="When the credentials expire, if short-lived")
+
+
+class ContainerRegistryProvider:
+    """Base adapter class for container registry providers like AWS ECR.
+
+    Implementations also subclass ``IntegrationProvider`` so they are found through
+    ``IntegrationProvider.adapters`` (validation endpoint, tasks).
+
+    Attributes:
+        registry_host (str): Hostname of the registry
+    """
+
+    registry_host: str = ""
+
+    async def get_registry_credentials(self) -> RegistryCredentials:
+        """Return credentials usable for ``docker login`` / a docker config.json entry.
+
+        Must be implemented by subclasses.
+        """
+        raise NotImplementedError("Subclasses must implement get_registry_credentials method.")
+
+    async def is_valid(self) -> bool:
+        """Validate the connection to the registry.
+
+        Must be implemented by subclasses.
+        """
+        raise NotImplementedError("Subclasses must implement is_valid method.")
+
+
 class IntegrationProvider:
     """Base class for integration providers. Like GitHub, AWS, Atlas etc.
 

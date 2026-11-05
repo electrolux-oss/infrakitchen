@@ -439,4 +439,22 @@ export const providers: Provider[] = [
 
     tokenLink: "",
   },
+  {
+    type: IntegrationType.CONTAINER_REGISTRY,
+    name: "Amazon ECR",
+    icon: AwsIcon,
+    slug: "aws_ecr",
+    instructions: [
+      "Enter the AWS account ID and region of the registry",
+      "Choose an existing AWS integration to authenticate with, or enter AWS credentials for this registry only",
+      <>
+        The credentials need <InlineCode>ecr:GetAuthorizationToken</InlineCode>{" "}
+        plus pull (and, if needed, push) permissions on the repositories, e.g.
+        the <InlineCode>AmazonEC2ContainerRegistryReadOnly</InlineCode> managed
+        policy
+      </>,
+      "For a registry in another account, allow the account of the credentials in the repository policies, or set a role to assume in the registry account",
+    ],
+    tokenLink: "",
+  },
 ];
