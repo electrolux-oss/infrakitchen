@@ -9,7 +9,7 @@ def register_docs(mcp: FastMCP, docs_dir: Path) -> None:
     docs_dir = docs_dir.resolve()
     docs_content: dict[str, str] = {}
 
-    for path in docs_dir.rglob("*.md"):
+    for path in sorted([*docs_dir.rglob("*.md"), *docs_dir.rglob("*.mdx")]):
         if not path.is_file():
             continue
         content = path.read_text(encoding="utf-8").strip()

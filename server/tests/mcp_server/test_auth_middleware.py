@@ -6,7 +6,7 @@ import pytest
 import httpx
 
 from core.config import InfrakitchenConfig
-from infrakitchen_mcp.server import _auth_middleware_factory, AUTH_PROBE_PATH
+from mcp_server.server import _auth_middleware_factory, AUTH_PROBE_PATH
 
 
 @pytest.fixture(autouse=True)

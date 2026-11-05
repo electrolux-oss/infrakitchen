@@ -3,9 +3,9 @@ from pathlib import Path
 import httpx
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from infrakitchen_mcp.docs_tools import register_docs
-from infrakitchen_mcp.graphql_tools import register_graphql_tools
-from infrakitchen_mcp.rest_tools import register_rest_write_tools
+from mcp_server.docs_tools import register_docs
+from mcp_server.graphql_tools import register_graphql_tools
+from mcp_server.rest_tools import register_rest_write_tools
 from starlette.applications import Starlette
 from starlette.middleware.base import BaseHTTPMiddleware
 

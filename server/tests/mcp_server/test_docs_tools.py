@@ -3,8 +3,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from fastmcp import FastMCP
+from mcp.types import TextContent
 
-from infrakitchen_mcp.docs_tools import register_docs
+from mcp_server.docs_tools import register_docs
 
 
 class TestRegisterDocs:
@@ -58,6 +59,23 @@ class TestRegisterDocs:
         # Read should return content
         read_result = await server_with_docs.call_tool("read_doc", {"path": "guide.md"})
         assert "Content here" in read_result.content[0].text
+
+    @pytest.mark.asyncio
+    async def test_mdx_files_are_readable(self):
+        """.mdx files should be listed and readable."""
+        server = FastMCP("TestServer")
+        with TemporaryDirectory() as tmpdir:
+            (Path(tmpdir) / "manual.mdx").write_text("---\ntitle: Manual\n---\n\nMdx content here.")
+            register_docs(server, Path(tmpdir))
+
+            list_result = await server.call_tool("list_docs", {})
+            list_content = list_result.content[0]
+            assert isinstance(list_content, TextContent)
+            assert "manual.mdx" in list_content.text
+            read_result = await server.call_tool("read_doc", {"path": "manual.mdx"})
+            read_content = read_result.content[0]
+            assert isinstance(read_content, TextContent)
+            assert "Mdx content here." in read_content.text
 
     def test_empty_dir_doesnt_crash(self):
         """Empty docs directory should work without errors."""
