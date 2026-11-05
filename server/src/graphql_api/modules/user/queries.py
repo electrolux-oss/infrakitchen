@@ -9,13 +9,18 @@ from core.users.dependencies import get_user_service
 from core.users.service import UserService
 from graphql_api.helpers import (
     IsAuthenticated,
+    IsSuperAdmin,
     build_field_spec,
     check_api_permission,
     get_entity_selection,
     parse_range,
     parse_sort,
 )
-from graphql_api.modules.user.types import UserType
+from graphql_api.modules.user.types import (
+    UserDeletionImpactItemType,
+    UserDeletionImpactType,
+    UserType,
+)
 
 
 def _build_service(info: Info) -> UserService:
@@ -41,6 +46,17 @@ class UserQuery:
         entity_fields = get_entity_selection(info.selected_fields, "user")
         fields = build_field_spec(entity_fields)
         return await service.query_by_id(id, fields=fields)
+
+    @strawberry.field(permission_classes=[IsSuperAdmin])
+    async def user_deletion_impact(self, info: Info, id: uuid.UUID) -> UserDeletionImpactType:
+        service = _build_service(info)
+        requester = info.context["request"].state.user
+        impact = await service.get_deletion_impact(id, requester=requester)
+        return UserDeletionImpactType(
+            deleted=[UserDeletionImpactItemType(table=i.table, count=i.count) for i in impact.deleted],
+            cleared=[UserDeletionImpactItemType(table=i.table, count=i.count) for i in impact.cleared],
+            blocking=[UserDeletionImpactItemType(table=i.table, count=i.count) for i in impact.blocking],
+        )
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def users(

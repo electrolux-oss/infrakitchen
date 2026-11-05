@@ -25,6 +25,19 @@ class UserShortType:
         return "user"
 
 
+@strawberry.type
+class UserDeletionImpactItemType:
+    table: str
+    count: int
+
+
+@strawberry.type
+class UserDeletionImpactType:
+    deleted: list[UserDeletionImpactItemType]
+    cleared: list[UserDeletionImpactItemType]
+    blocking: list[UserDeletionImpactItemType]
+
+
 @user_mapper.type(User)
 class UserType:
     __exclude__ = ["password", "secondary_accounts", "primary_account", "meta"]

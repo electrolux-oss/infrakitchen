@@ -21,6 +21,8 @@ def mock_user_crud():
     crud.create = AsyncMock()
     crud.update = AsyncMock()
     crud.delete = AsyncMock()
+    crud.delete_user_references = AsyncMock()
+    crud.get_deletion_impact = AsyncMock(return_value={"delete": {}, "clear": {}, "block": {}})
     crud.refresh = AsyncMock()
     return crud
 
