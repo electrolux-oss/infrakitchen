@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -24,10 +25,11 @@ def audit_log(monkeypatch):
 
 
 async def test_running_execution_is_failed_keeping_worker_details(audit_log):
-    audit_log.action_metadata = {
+    metadata: dict[str, Any] = {
         "other": "kept",
         "execution": {"status": "running", "worker": "w-1", "started_at": "2026-11-04T13:00:00+00:00"},
     }
+    audit_log.action_metadata = metadata
 
     await fail_unfinished_audit_log_execution("id", "Worker lost (lease expired)")
 

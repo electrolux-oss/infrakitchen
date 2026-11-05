@@ -17,7 +17,11 @@ type ErrorDetails = {
 };
 
 const VALIDATION_HEADER_RE = /^(\w+): \d+ validation errors? for (.+)$/;
-const PYDANTIC_NOISE_RE = /\s*\[type=.*$/;
+
+const stripPydanticNoise = (text: string) => {
+  const noise = text.indexOf("[type=");
+  return noise === -1 ? text : text.slice(0, noise).trimEnd();
+};
 
 // Legacy logs only store pydantic's formatted text: loc lines, indented message lines, URL lines.
 const parseLegacyValidationError = (
@@ -35,7 +39,7 @@ const parseLegacyValidationError = (
     if (!/^\s/.test(line)) {
       loc = text;
     } else if (loc !== null) {
-      items.push({ loc, msg: text.replace(PYDANTIC_NOISE_RE, "") });
+      items.push({ loc, msg: stripPydanticNoise(text) });
       loc = null;
     }
   }
