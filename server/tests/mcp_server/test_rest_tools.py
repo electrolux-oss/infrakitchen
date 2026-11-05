@@ -7,8 +7,8 @@ import pytest
 from fastmcp import FastMCP
 from mcp.types import TextContent
 
-from infrakitchen_mcp.context import request_auth_token
-from infrakitchen_mcp.rest_tools import ENTITIES, register_rest_write_tools
+from mcp_server.context import request_auth_token
+from mcp_server.rest_tools import ENTITIES, register_rest_write_tools
 
 
 @pytest.fixture(autouse=True)

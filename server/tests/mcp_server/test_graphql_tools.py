@@ -8,7 +8,7 @@ import pytest
 from fastmcp import FastMCP
 from mcp.types import TextContent
 
-from infrakitchen_mcp.graphql_tools import register_graphql_tools
+from mcp_server.graphql_tools import register_graphql_tools
 
 
 def _text(result: Any) -> str:

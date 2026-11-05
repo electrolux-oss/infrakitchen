@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import RedirectResponse
 from application.tools.notification_manager import start_notification_dispatcher
-from infrakitchen_mcp import setup_mcp_server
+from mcp_server import setup_mcp_server
 from sqlalchemy.exc import IntegrityError
 from starlette.responses import JSONResponse, StreamingResponse
 

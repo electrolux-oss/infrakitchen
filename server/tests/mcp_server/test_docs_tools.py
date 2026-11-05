@@ -4,7 +4,7 @@ from tempfile import TemporaryDirectory
 
 from fastmcp import FastMCP
 
-from infrakitchen_mcp.docs_tools import register_docs
+from mcp_server.docs_tools import register_docs
 
 
 class TestRegisterDocs:
