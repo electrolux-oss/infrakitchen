@@ -3,6 +3,10 @@ import { useCallback, useState } from "react";
 import { useParams } from "react-router";
 
 import { LogLiveTail, PermissionWrapper, useConfig } from "../../common";
+import {
+  CreateMenuButton,
+  CreateMenuOption,
+} from "../../common/components/buttons/CreateMenuButton";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { entityIcons } from "../../common/components/entities/entityIcons";
@@ -21,7 +25,7 @@ import {
   VALIDATE_INTEGRATION_MUTATION,
 } from "../graphql";
 import { IntegrationValidationResult } from "../types";
-import { integrationTypeChipColor } from "../types";
+import { IntegrationType, integrationTypeChipColor } from "../types";
 
 export const EntityStatusChipSlot = () => {
   const { entity } = useEntityProvider();
@@ -38,6 +42,65 @@ export const IntegrationHeaderTypeLabel = () => {
       label={entity.integrationType.toUpperCase()}
     />
   );
+};
+
+/**
+ * Shortcuts for creating entities that use this integration: resources,
+ * executors and storages for cloud integrations, code repositories for git integrations.
+ */
+const IntegrationCreateActions = () => {
+  const { entity } = useEntityProvider();
+  const { globalConfig } = useConfig();
+
+  if (!entity?.id) return null;
+  const provider: string = entity.integrationProvider ?? "";
+  const options: CreateMenuOption[] = [];
+
+  if (entity.integrationType === IntegrationType.CLOUD) {
+    options.push({
+      label: "Resource",
+      icon: entityIcons.resource,
+      path: "resources/create",
+      state: { integration_ids: [entity.id] },
+      permission: "api:resource",
+    });
+    options.push({
+      label: "Executor",
+      icon: entityIcons.executor,
+      path: "executors/create",
+      state: { integration_ids: [entity.id] },
+      permission: "api:executor",
+    });
+    if (globalConfig?.storage_provider_registry?.includes(provider)) {
+      options.push({
+        label: "Storage",
+        icon: entityIcons.storage,
+        path: "storages/create",
+        state: { integration_id: entity.id, storage_provider: provider },
+        permission: "api:storage",
+      });
+    }
+  } else if (entity.integrationType === IntegrationType.GIT) {
+    // SSH integrations (e.g. "github_ssh") belong to the base repository
+    // provider ("github") in the import form. A provider the form doesn't
+    // offer is left for the user to pick.
+    const baseProvider = provider.replace(/_ssh$/, "");
+    const repoProvider = globalConfig?.git_provider_registry?.includes(
+      baseProvider,
+    )
+      ? baseProvider
+      : undefined;
+    options.push({
+      label: "Code Repository",
+      buttonLabel: "Import Repository",
+      icon: entityIcons.source_code,
+      path: "source_codes/create",
+      state: { integration_id: entity.id, source_code_provider: repoProvider },
+      permission: "api:source_code",
+    });
+  }
+
+  return <CreateMenuButton options={options} />;
 };
 
 export const IntegrationPage = () => {
@@ -90,6 +153,7 @@ export const IntegrationPage = () => {
         }
         actions={
           <>
+            <IntegrationCreateActions />
             <PermissionWrapper
               requiredPermission={"api:integration"}
               permissionAction="write"

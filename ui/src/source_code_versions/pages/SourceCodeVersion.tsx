@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useParams } from "react-router";
 
 import { LogLiveTail, PermissionWrapper } from "../../common";
+import { CreateMenuButton } from "../../common/components/buttons/CreateMenuButton";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { entityIcons } from "../../common/components/entities/entityIcons";
@@ -11,9 +12,13 @@ import {
   EntityProvider,
   useEntityProvider,
 } from "../../common/context/EntityContext";
-import { HeroAdjustmentsHorizontalIcon } from "../../icons";
-import { HeroShareIcon, HeroTagIcon } from "../../icons";
+import {
+  HeroAdjustmentsHorizontalIcon,
+  HeroShareIcon,
+  HeroTagIcon,
+} from "../../icons";
 import { Button, Label } from "../../ui";
+import { ENTITY_STATUS } from "../../utils";
 import { TASK_QUEUE_STATUS_SELECTION } from "../../workers/graphql";
 import { SourceCodeVersionContent } from "../components/SourceCodeVersionContent";
 import { TemplateVersionReorderDialog } from "../components/TemplateVersionReorderDialog";
@@ -40,6 +45,11 @@ const SourceCodeVersionPageContent = () => {
   const { entity, refreshEntity } = useEntityProvider();
   const sourceCodeVersion = entity as GqlSourceCodeVersion | undefined;
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // The resource form only offers versions that finished processing.
+  const canCreateResource =
+    !!sourceCodeVersion?.template?.id &&
+    sourceCodeVersion.status?.toLowerCase() === ENTITY_STATUS.DONE;
 
   // The identifier ("repo/folder/:tag") is unwieldy as a heading; lead with the
   // template name and show the git ref and status next to it.
@@ -76,6 +86,21 @@ const SourceCodeVersionPageContent = () => {
         }
         actions={
           <>
+            {canCreateResource && sourceCodeVersion?.template ? (
+              <CreateMenuButton
+                options={[
+                  {
+                    label: "Resource",
+                    path: "resources/create",
+                    state: {
+                      template_id: sourceCodeVersion.template.id,
+                      source_code_version_id: sourceCodeVersion.id,
+                    },
+                    permission: "api:resource",
+                  },
+                ]}
+              />
+            ) : null}
             {sourceCodeVersion?.template?.id ? (
               <PermissionWrapper
                 requiredPermission="api:source_code_version"

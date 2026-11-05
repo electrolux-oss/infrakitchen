@@ -1,6 +1,7 @@
 import { useParams } from "react-router";
 
 import { LogLiveTail } from "../../common";
+import { CreateMenuButton } from "../../common/components/buttons/CreateMenuButton";
 import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { entityIcons } from "../../common/components/entities/entityIcons";
@@ -30,6 +31,37 @@ export const SourceCodePage = () => {
   );
 };
 
+const SourceCodeCreateActions = () => {
+  const { entity } = useEntityProvider();
+
+  if (!entity?.id) return null;
+
+  return (
+    <CreateMenuButton
+      options={[
+        {
+          label: "Template Version",
+          buttonLabel: "Create Version",
+          icon: entityIcons.source_code_version,
+          path: "source_code_versions/create",
+          state: {
+            source_code_id: entity.id,
+            source_code_branch: entity.defaultBranch ?? undefined,
+          },
+          permission: "api:source_code_version",
+        },
+        {
+          label: "Executor",
+          icon: entityIcons.executor,
+          path: "executors/create",
+          state: { source_code_id: entity.id },
+          permission: "api:executor",
+        },
+      ]}
+    />
+  );
+};
+
 const SourceCodePageContent = () => {
   const { entity } = useEntityProvider();
 
@@ -43,7 +75,12 @@ const SourceCodePageContent = () => {
           ? getRepoNameFromUrl(entity.sourceCodeUrl)
           : undefined
       }
-      actions={<EntityRefreshButton />}
+      actions={
+        <>
+          <SourceCodeCreateActions />
+          <EntityRefreshButton />
+        </>
+      }
     >
       <SourceCodeContent />
       <LogLiveTail />

@@ -8,7 +8,7 @@ import {
 } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import { LabelInput } from "../../common";
+import { LabelInput, useCreatePageBack, useCreatePrefill } from "../../common";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -29,6 +29,7 @@ const SourceCodeCreatePageInner = () => {
     trigger,
     watch,
     handleSubmit,
+    setValue,
   } = useFormContext<SourceCodeCreate>();
 
   const [saving, setSaving] = useState(false);
@@ -67,7 +68,7 @@ const SourceCodeCreatePageInner = () => {
     [ikApi, linkPrefix, trigger, navigate],
   );
 
-  const handleBack = () => navigate(`${linkPrefix}source_codes`);
+  const handleBack = useCreatePageBack("source_codes");
 
   return (
     <PageContainer
@@ -135,6 +136,12 @@ const SourceCodeCreatePageInner = () => {
               render={({ field }) => (
                 <TextField
                   {...field}
+                  onChange={(event) => {
+                    field.onChange(event);
+                    // The integration list is filtered by provider, so an
+                    // earlier pick would stay selected but hidden.
+                    setValue("integrationId", null);
+                  }}
                   select
                   label="Repository Provider"
                   required
@@ -227,13 +234,14 @@ const SourceCodeCreatePageInner = () => {
 };
 
 export const SourceCodeCreatePage = () => {
+  const prefill = useCreatePrefill();
   const methods = useForm<SourceCodeCreate>({
     defaultValues: {
       description: "",
       sourceCodeUrl: "",
-      sourceCodeProvider: "",
+      sourceCodeProvider: prefill.source_code_provider ?? "",
       sourceCodeLanguage: "opentofu",
-      integrationId: null,
+      integrationId: prefill.integration_id ?? null,
       labels: [],
     },
     mode: "onChange",

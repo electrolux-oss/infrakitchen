@@ -8,7 +8,7 @@ import {
 } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import { LabelInput } from "../../common";
+import { LabelInput, useCreatePageBack, useCreatePrefill } from "../../common";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -46,7 +46,7 @@ const SourceCodeVersionCreatePageInner = () => {
   const [gitFolders, setGitFolders] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
-  const handleBack = () => navigate(`${linkPrefix}source_code_versions`);
+  const handleBack = useCreatePageBack("source_code_versions");
 
   const watchedSourceCode = watch("sourceCodeId");
   const watchedVersion = watch("sourceCodeVersion");
@@ -90,15 +90,15 @@ const SourceCodeVersionCreatePageInner = () => {
 
   useEffect(() => {
     if (watchedVersion && watchedSourceCode) {
-      const sourceCode = buffer["source_codes"].find(
-        (code: IkEntity) => code.id === watchedSourceCode,
-      );
+      const sourceCode = (
+        buffer["source_codes"] as IkEntity[] | undefined
+      )?.find((code: IkEntity) => code.id === watchedSourceCode);
       if (sourceCode) {
-        const version = sourceCode.gitTags.find(
+        const version = sourceCode.gitTags?.find(
           (tag: string) => tag === watchedVersion,
         );
         if (version) {
-          const gitFolders = sourceCode.gitFoldersMap.find(
+          const gitFolders = sourceCode.gitFoldersMap?.find(
             (ref: RefFolders) => ref.ref === version,
           );
           if (gitFolders) {
@@ -111,15 +111,15 @@ const SourceCodeVersionCreatePageInner = () => {
 
   useEffect(() => {
     if (watchedBranch && watchedSourceCode) {
-      const sourceCode = buffer["source_codes"].find(
-        (code: IkEntity) => code.id === watchedSourceCode,
-      );
+      const sourceCode = (
+        buffer["source_codes"] as IkEntity[] | undefined
+      )?.find((code: IkEntity) => code.id === watchedSourceCode);
       if (sourceCode) {
-        const branch = sourceCode.gitBranches.find(
+        const branch = sourceCode.gitBranches?.find(
           (branch: string) => branch === watchedBranch,
         );
         if (branch) {
-          const gitFolders = sourceCode.gitFoldersMap.find(
+          const gitFolders = sourceCode.gitFoldersMap?.find(
             (ref: RefFolders) => ref.ref === branch,
           );
           if (gitFolders) {
@@ -401,15 +401,16 @@ const SourceCodeVersionCreatePageInner = () => {
 };
 
 const SourceCodeVersionCreatePage = () => {
+  const prefill = useCreatePrefill();
   const methods = useForm<SourceCodeVersionCreate>({
     defaultValues: {
       description: "",
       labels: [],
-      sourceCodeId: "",
+      sourceCodeId: prefill.source_code_id ?? "",
       sourceCodeVersion: "",
-      sourceCodeBranch: "",
+      sourceCodeBranch: prefill.source_code_branch ?? "",
       sourceCodeFolder: "",
-      templateId: "",
+      templateId: prefill.template_id ?? "",
       breakingChanges: "",
       lifecycleState: "active",
     },

@@ -9,7 +9,7 @@ import {
 } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import { LabelInput } from "../../common";
+import { LabelInput, useCreatePageBack, useCreatePrefill } from "../../common";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -31,6 +31,7 @@ const StorageCreatePageInner = () => {
     watch,
     trigger,
     handleSubmit,
+    setValue,
   } = useFormContext<StorageCreate>();
 
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
@@ -40,7 +41,7 @@ const StorageCreatePageInner = () => {
   const selectedProvider = watch("storageProvider");
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
-  const handleBack = () => navigate(`${linkPrefix}storages`);
+  const handleBack = useCreatePageBack("storages");
 
   const handleSave = useCallback(
     async (data: StorageCreate) => {
@@ -139,6 +140,12 @@ const StorageCreatePageInner = () => {
               render={({ field }) => (
                 <TextField
                   {...field}
+                  onChange={(event) => {
+                    field.onChange(event);
+                    // The integration list is filtered by provider, so an
+                    // earlier pick would stay selected but hidden.
+                    setValue("integrationId", "");
+                  }}
                   select
                   label="Storage Provider"
                   error={!!errors.storageProvider}
@@ -234,14 +241,15 @@ const StorageCreatePageInner = () => {
 };
 
 const StorageCreatePage = () => {
+  const prefill = useCreatePrefill();
   const methods = useForm<StorageCreate>({
     defaultValues: {
       name: "",
       description: "",
-      integrationId: "",
+      integrationId: prefill.integration_id ?? "",
       labels: [],
       storageType: "tofu",
-      storageProvider: "",
+      storageProvider: prefill.storage_provider ?? "",
       configuration: {},
     },
     mode: "onChange",
