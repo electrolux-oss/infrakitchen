@@ -1,3 +1,4 @@
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -19,6 +20,23 @@ async def set_audit_log_execution(audit_log_id: str | UUID, execution: dict[str,
         if audit_log is None:
             return
         # reassign the dict, in-place changes of a JSON column are not tracked
+        audit_log.action_metadata = {**(audit_log.action_metadata or {}), "execution": execution}
+        await session.commit()
+
+
+async def fail_unfinished_audit_log_execution(audit_log_id: str | UUID, error: str) -> None:
+    """Mark an execution its worker never finished as failed, keeping what the worker recorded."""
+    async with get_async_session() as session:
+        audit_log = await session.get(AuditLog, audit_log_id)
+        if audit_log is None:
+            return
+        execution = dict((audit_log.action_metadata or {}).get("execution") or {})
+        if execution.get("status") not in (None, "running", "retry"):
+            return
+        finished_at = datetime.now(UTC)
+        execution.update(status="failed", error=error, finished_at=finished_at.isoformat())
+        if started_at := execution.get("started_at"):
+            execution["duration_seconds"] = int((finished_at - datetime.fromisoformat(started_at)).total_seconds())
         audit_log.action_metadata = {**(audit_log.action_metadata or {}), "execution": execution}
         await session.commit()
 

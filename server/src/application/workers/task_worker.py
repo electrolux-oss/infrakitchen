@@ -30,7 +30,7 @@ from application.workers.utils import (
 from application.worker_templates.dependencies import get_worker_template_service
 from application.workflows.task import WorkflowTask
 from application.workspaces.task import WorkspaceTask
-from core.audit_logs.handler import set_audit_log_execution
+from core.audit_logs.handler import fail_unfinished_audit_log_execution, set_audit_log_execution
 from core.tools.task import ToolTask, get_tool_task
 from core.config import Settings
 from core.constants.model import EventType, ModelActions, ModelStatus
@@ -492,6 +492,12 @@ class TaskWorker:
                     await self.send_task_notification(task_controller, item.action, "failed", reason=error)
             except Exception as e:
                 logger.error(f"Failed to mark entity of reaped task {item.id} as failed: {e}")
+
+            if audit_log_id := item.payload.get("audit_log_id"):
+                try:
+                    await fail_unfinished_audit_log_execution(audit_log_id, error)
+                except Exception as e:
+                    logger.error(f"Failed to mark audit log {audit_log_id} of reaped task {item.id} as failed: {e}")
 
         async with self.queue() as queue:
             # claim_expired leased the task to this worker, so it may now fail it
