@@ -8,6 +8,7 @@ from datetime import datetime, UTC
 from typing import Any, Literal
 from uuid import UUID
 
+from pydantic import ValidationError
 from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
@@ -29,7 +30,7 @@ from application.workers.utils import (
 from application.worker_templates.dependencies import get_worker_template_service
 from application.workflows.task import WorkflowTask
 from application.workspaces.task import WorkspaceTask
-from core.audit_logs.handler import set_audit_log_execution
+from core.audit_logs.handler import fail_unfinished_audit_log_execution, set_audit_log_execution
 from core.tools.task import ToolTask, get_tool_task
 from core.config import Settings
 from core.constants.model import EventType, ModelActions, ModelStatus
@@ -64,6 +65,21 @@ logger = logging.getLogger("TaskWorker")
 
 
 prometheus_counter = Counter("tasks_total", "Total executed tasks", ["job_type", "status"])
+
+
+def error_details(e: Exception) -> dict[str, Any] | None:
+    if not isinstance(e, ValidationError):
+        return None
+    # Inputs are omitted because they can contain configuration values or secrets
+    return {
+        "type": type(e).__name__,
+        "title": e.title,
+        "items": [
+            {"loc": ".".join(str(part) for part in err["loc"]), "msg": err["msg"], "type": err["type"]}
+            for err in e.errors(include_url=False, include_input=False)
+        ],
+    }
+
 
 TaskController = (
     SourceCodeTask
@@ -390,6 +406,8 @@ class TaskWorker:
         except Exception as e:
             status = "failed"
             execution["error"] = f"{type(e).__name__}: {e}"
+            if details := error_details(e):
+                execution["error_details"] = details
             prometheus_counter.labels(item.entity, "error").inc()
             try:
                 await self.handle_exception(e, item, task_controller, action)
@@ -474,6 +492,12 @@ class TaskWorker:
                     await self.send_task_notification(task_controller, item.action, "failed", reason=error)
             except Exception as e:
                 logger.error(f"Failed to mark entity of reaped task {item.id} as failed: {e}")
+
+            if audit_log_id := item.payload.get("audit_log_id"):
+                try:
+                    await fail_unfinished_audit_log_execution(audit_log_id, error)
+                except Exception as e:
+                    logger.error(f"Failed to mark audit log {audit_log_id} of reaped task {item.id} as failed: {e}")
 
         async with self.queue() as queue:
             # claim_expired leased the task to this worker, so it may now fail it

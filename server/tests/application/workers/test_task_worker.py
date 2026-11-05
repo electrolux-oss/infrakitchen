@@ -87,6 +87,32 @@ def make_scheduler_item(**payload) -> TaskQueueItemDTO:
     )
 
 
+class TestErrorDetails:
+    def test_validation_error_is_structured_without_inputs(self):
+        from pydantic import BaseModel
+
+        class Config(BaseModel):
+            web_url: str
+
+        class WorkspaceResponse(BaseModel):
+            configuration: Config
+
+        with pytest.raises(tw_mod.ValidationError) as e:
+            WorkspaceResponse.model_validate({"configuration": {"secret": "hunter2"}})
+
+        details = tw_mod.error_details(e.value)
+
+        assert details == {
+            "type": "ValidationError",
+            "title": "WorkspaceResponse",
+            "items": [{"loc": "configuration.web_url", "msg": "Field required", "type": "missing"}],
+        }
+        assert "hunter2" not in str(details)
+
+    def test_other_errors_have_no_details(self):
+        assert tw_mod.error_details(ValueError("boom")) is None
+
+
 class TestSchedulerJobs:
     async def test_process_scheduler_job_success(self, task_worker, mock_session, monkeypatch):
         mock_executor = Mock(spec=SchedulerExecutor)
@@ -232,6 +258,21 @@ class TestRunOnce:
         mock_queue.claim.assert_not_awaited()
         mock_task_controller.make_failed.assert_awaited_once()
         mock_queue.fail.assert_awaited_once_with(item.id, task_worker.worker_id, "Worker lost (lease expired)")
+
+    async def test_reaping_fails_the_audit_log_execution(
+        self, task_worker, mock_queue, mock_task_controller, monkeypatch
+    ):
+        audit_log_id = str(uuid4())
+        item = make_item(payload={"user": str(uuid4()), "audit_log_id": audit_log_id})
+        mock_queue.claim_expired = AsyncMock(return_value=item)
+        monkeypatch.setattr(task_worker, "build_task_controller", AsyncMock(return_value=mock_task_controller))
+        monkeypatch.setattr(tw_mod, "publish_notification_event", AsyncMock())
+        fail_execution = AsyncMock()
+        monkeypatch.setattr(tw_mod, "fail_unfinished_audit_log_execution", fail_execution)
+
+        assert await task_worker.run_once() is True
+
+        fail_execution.assert_awaited_once_with(audit_log_id, "Worker lost (lease expired)")
 
     async def test_worker_of_disabled_template_does_not_claim(self, task_worker, mock_queue, monkeypatch):
         task_worker.settings.WORKER_TEMPLATE_ID = str(uuid4())

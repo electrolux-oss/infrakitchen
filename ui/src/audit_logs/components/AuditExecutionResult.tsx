@@ -10,6 +10,54 @@ type ChangeCounts = {
   [key: string]: unknown;
 };
 
+type ErrorDetails = {
+  type?: string;
+  title?: string;
+  items: { loc: string; msg: string; type?: string }[];
+};
+
+const VALIDATION_HEADER_RE = /^(\w+): \d+ validation errors? for (.+)$/;
+
+const stripPydanticNoise = (text: string) => {
+  const noise = text.indexOf("[type=");
+  return noise === -1 ? text : text.slice(0, noise).trimEnd();
+};
+
+// Legacy logs only store pydantic's formatted text: loc lines, indented message lines, URL lines.
+const parseLegacyValidationError = (
+  error: string,
+): ErrorDetails | undefined => {
+  const [header, ...lines] = error.split("\n");
+  const match = VALIDATION_HEADER_RE.exec(header.trim());
+  if (!match) return undefined;
+
+  const items: ErrorDetails["items"] = [];
+  let loc: string | null = null;
+  for (const line of lines) {
+    const text = line.trim();
+    if (!text || text.startsWith("For further information")) continue;
+    if (!/^\s/.test(line)) {
+      loc = text;
+    } else if (loc !== null) {
+      items.push({ loc, msg: stripPydanticNoise(text) });
+      loc = null;
+    }
+  }
+  return items.length ? { type: match[1], title: match[2], items } : undefined;
+};
+
+const getErrorDetails = (
+  execution: AuditExecution,
+): ErrorDetails | undefined =>
+  execution.error_details?.items?.length
+    ? execution.error_details
+    : execution.error
+      ? parseLegacyValidationError(execution.error)
+      : undefined;
+
+const formatErrorSummary = ({ items, title }: ErrorDetails) =>
+  `${items.length} validation error${items.length === 1 ? "" : "s"}${title ? ` in ${title}` : ""}`;
+
 export interface AuditExecution {
   // warning: the entity is fine but a side effect failed (e.g. workspace sync)
   status: "running" | "success" | "failed" | "warning" | "retry";
@@ -21,6 +69,7 @@ export interface AuditExecution {
   finished_at?: string;
   duration_seconds?: number;
   error?: string;
+  error_details?: ErrorDetails;
   details?: {
     operation?: string;
     plan?: ChangeCounts;
@@ -109,7 +158,12 @@ export const formatExecutionSummarySegments = (
   if (details.new_branches?.length)
     parts.push(`${details.new_branches.length} new branches`);
 
-  if (parts.length === 0 && execution.error) parts.push(execution.error);
+  if (parts.length === 0 && execution.error) {
+    const errorDetails = getErrorDetails(execution);
+    parts.push(
+      errorDetails ? formatErrorSummary(errorDetails) : execution.error,
+    );
+  }
 
   return parts;
 };
@@ -215,6 +269,29 @@ const formatDuration = (seconds: number) =>
     ? `${seconds}s`
     : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
 
+const ExecutionErrorItems = ({ details }: { details: ErrorDetails }) => {
+  const shown = details.items.slice(0, MAX_ROWS_PER_GROUP);
+  const hidden = details.items.length - shown.length;
+  return (
+    <ul className="m-0 flex list-none flex-col gap-1 p-0">
+      {shown.map((item, i) => (
+        <li className="min-w-0 [word-break:break-word]" key={i}>
+          {item.loc && (
+            <span className="font-mono text-(length:--text-body2) break-all">
+              {item.loc}
+            </span>
+          )}
+          {item.loc && " — "}
+          {item.msg}
+        </li>
+      ))}
+      {hidden > 0 && (
+        <li className="text-caption text-fg-muted">{`+${hidden} more`}</li>
+      )}
+    </ul>
+  );
+};
+
 const ExecutionTooltip = ({
   execution,
   tofuResult,
@@ -242,7 +319,13 @@ const ExecutionTooltip = ({
     const value = execution.details?.[key];
     if (value) rows.push([key.replace(/_/g, " "), String(value)]);
   }
-  if (execution.error) rows.push(["Error", execution.error]);
+  const errorDetails = getErrorDetails(execution);
+  if (errorDetails)
+    rows.push([
+      "Error",
+      `${errorDetails.type ?? "Error"}: ${formatErrorSummary(errorDetails)}`,
+    ]);
+  else if (execution.error) rows.push(["Error", execution.error]);
 
   return (
     <div className="flex flex-col gap-2 py-1">
@@ -260,6 +343,7 @@ const ExecutionTooltip = ({
           </div>
         ))}
       </dl>
+      {errorDetails && <ExecutionErrorItems details={errorDetails} />}
       {tofuResult && Object.keys(tofuResult.resources ?? {}).length > 0 && (
         <>
           <Divider />
