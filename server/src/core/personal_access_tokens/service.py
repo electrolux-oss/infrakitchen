@@ -95,7 +95,7 @@ class PersonalAccessTokenService:
                 owner_action = owner_permissions.get(f"api:{entity}", "")
                 if "admin" in owner_action or owner_permissions.get("*") == "admin":
                     continue
-                if owner_action != action:
+                if owner_action != action and not (owner_action == "write" and action == "read"):
                     raise ValueError(f"Scope {scope!r} exceeds the creator's own permissions")
 
         token_id = uuid.uuid4()

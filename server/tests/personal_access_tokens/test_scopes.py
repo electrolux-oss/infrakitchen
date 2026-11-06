@@ -210,6 +210,34 @@ async def test_create_token_allows_scope_for_super_admin_owner():
         assert result == "sentinel"
 
 
+@pytest.mark.asyncio
+async def test_create_token_allows_read_scope_for_write_owner():
+    """An owner with write on an entity can delegate read-only access to it."""
+    from core.personal_access_tokens.service import PersonalAccessTokenService
+
+    crud = MagicMock(create=AsyncMock(return_value=SimpleNamespace()), refresh=AsyncMock())
+    service = PersonalAccessTokenService(crud=crud)
+    requester = MagicMock(id="user-1")
+    body = MagicMock(name="agent", scopes=["read:resource", "read:log"], expires_at="2027-01-01")
+
+    with (
+        patch(
+            "core.personal_access_tokens.service.user_apis_permissions",
+            AsyncMock(return_value={"api:resource": "write", "api:log": "write"}),
+        ),
+        patch("core.personal_access_tokens.service.PersonalAccessTokenResponse") as resp_cls,
+        patch("core.personal_access_tokens.service.PersonalAccessTokenCreateResponse") as create_resp_cls,
+    ):
+        resp_cls.model_validate.return_value.model_dump.return_value = {}
+        create_resp_cls.return_value = "sentinel"
+        assert await service.create_token("user-1", body, requester) == "sentinel"
+
+
+def test_scoped_token_read_log_allows_log_queries():
+    assert scope_allows({"read:log"}, "read", "log")
+    assert not scope_allows({"read:task"}, "read", "log")
+
+
 # --- check_api_permission clamping ---
 
 
