@@ -194,7 +194,7 @@ export const LogLiveTail = () => {
           "border",
           showActivity ? "border-success" : "border-divider",
           isMinimized ? "cursor-pointer" : "cursor-default",
-          "fixed right-5 bottom-5 z-1300 flex flex-col overflow-hidden bg-paper",
+          "fixed right-5 bottom-5 z-[1240] flex flex-col overflow-hidden bg-paper",
         ),
       )}
       ref={containerRef}

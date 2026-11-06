@@ -24,6 +24,7 @@ export interface ThemeDef {
 export const THEMES = [
   { id: "default", label: "Default" },
   { id: "dense", label: "Dense" },
+  { id: "snake", label: "Snake" },
 ] as const satisfies readonly ThemeDef[];
 
 export type UiTheme = (typeof THEMES)[number]["id"];
