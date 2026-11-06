@@ -84,6 +84,7 @@ const SCOPE_GROUPS: { title: string; entities: [string, string][] }[] = [
     title: "Operations",
     entities: [
       ["task", "Tasks"],
+      ["log", "Logs"],
       ["workflow", "Workflows"],
       ["worker", "Workers"],
     ],
