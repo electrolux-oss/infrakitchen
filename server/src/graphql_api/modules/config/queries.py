@@ -23,6 +23,7 @@ class GlobalConfigType:
     cloud_provider_registry: list[str]
     git_provider_registry: list[str]
     notification_provider_registry: list[str]
+    container_registry_provider_registry: list[str]
     storage_provider_registry: list[str]
     secret_provider_registry: list[str]
 
@@ -121,6 +122,7 @@ class ConfigQuery:
         cloud_provider_registry: list[str] = []
         git_provider_registry: list[str] = []
         notification_provider_registry: list[str] = []
+        container_registry_provider_registry: list[str] = []
         for provider_name, provider_cls in IntegrationProvider.adapters.items():
             if provider_cls.__integration_provider_type__ == "cloud":
                 cloud_provider_registry.append(provider_name)
@@ -128,6 +130,8 @@ class ConfigQuery:
                 git_provider_registry.append(provider_name)
             elif provider_cls.__integration_provider_type__ == "notification":
                 notification_provider_registry.append(provider_name)
+            elif provider_cls.__integration_provider_type__ == "container_registry":
+                container_registry_provider_registry.append(provider_name)
 
         return GlobalConfigType(
             approval_flow=config.approval_flow,
@@ -137,6 +141,7 @@ class ConfigQuery:
             cloud_provider_registry=cloud_provider_registry,
             git_provider_registry=git_provider_registry,
             notification_provider_registry=notification_provider_registry,
+            container_registry_provider_registry=container_registry_provider_registry,
             storage_provider_registry=list(StorageProviderAdapter.adapters.keys()),
             secret_provider_registry=list(SecretProviderAdapter.adapters.keys()),
         )

@@ -3,6 +3,7 @@ from .adapters.provider_adapters import (
     StorageProviderAdapter,
     SecretProviderAdapter,
     NotificationProviderAdapter,
+    ContainerRegistryProvider,
     WorkerProviderAdapter,
 )
 from .feature_flags.model import FeatureFlag
@@ -62,6 +63,7 @@ __all__ = [
     "StorageProviderAdapter",
     "SecretProviderAdapter",
     "NotificationProviderAdapter",
+    "ContainerRegistryProvider",
     "WorkerProviderAdapter",
     "UserDTO",
     "get_logged_user",

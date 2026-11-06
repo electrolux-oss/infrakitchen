@@ -30,6 +30,7 @@ export const IntegrationContent = () => {
 
   const isGit = entity.integrationType === "git";
   const isCloud = entity.integrationType === "cloud";
+  const isContainerRegistry = entity.integrationType === "container_registry";
 
   const tabs: TabDefinition[] = [
     {
@@ -80,30 +81,34 @@ export const IntegrationContent = () => {
           },
         ]
       : []),
-    {
-      label: "Executors",
-      tabLabel: (
-        <CountLabel label="Executors" count={entity.executorCount ?? 0} />
-      ),
-      content: (
-        <EntityExecutors
-          fixedFilters={{ integration_ids__any: [entity.id] }}
-          filterStorageKey="filter_integration_executors"
-        />
-      ),
-    },
-    {
-      label: "Storages",
-      tabLabel: (
-        <CountLabel label="Storages" count={entity.storageCount ?? 0} />
-      ),
-      content: (
-        <EntityStorages
-          fixedFilters={{ integration_id: entity.id }}
-          filterStorageKey="filter_integration_storages"
-        />
-      ),
-    },
+    ...(!isContainerRegistry
+      ? [
+          {
+            label: "Executors",
+            tabLabel: (
+              <CountLabel label="Executors" count={entity.executorCount ?? 0} />
+            ),
+            content: (
+              <EntityExecutors
+                fixedFilters={{ integration_ids__any: [entity.id] }}
+                filterStorageKey="filter_integration_executors"
+              />
+            ),
+          },
+          {
+            label: "Storages",
+            tabLabel: (
+              <CountLabel label="Storages" count={entity.storageCount ?? 0} />
+            ),
+            content: (
+              <EntityStorages
+                fixedFilters={{ integration_id: entity.id }}
+                filterStorageKey="filter_integration_storages"
+              />
+            ),
+          },
+        ]
+      : []),
     {
       label: "Audit",
       content: <Audit entityId={entity.id} showRevisionColumn />,

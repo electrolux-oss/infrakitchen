@@ -15,6 +15,7 @@ const typeOptions = [
   { label: "Git", value: IntegrationType.GIT },
   { label: "Cloud", value: IntegrationType.CLOUD },
   { label: "Notification", value: IntegrationType.NOTIFICATION },
+  { label: "Container Registry", value: IntegrationType.CONTAINER_REGISTRY },
 ];
 
 export const integrationColumns: EntityTableColumn[] = [

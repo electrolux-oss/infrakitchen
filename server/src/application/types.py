@@ -5,7 +5,7 @@ type GitProviderType = Literal["github", "gitlab", "bitbucket", "azure_devops", 
 type CodeLanguageType = Literal["opentofu"]
 type StorageProviderType = Literal["aws", "azurerm", "gcp", "postgresql"]
 type IacToolType = Literal["tofu"]
-type IntegrationType = Literal["git", "cloud", "notification"]
+type IntegrationType = Literal["git", "cloud", "notification", "container_registry"]
 
 type IntegrationProviderType = Literal[
     "aws",
@@ -23,6 +23,7 @@ type IntegrationProviderType = Literal[
     "datadog",
     "postgresql",
     "slack",
+    "aws_ecr",
 ]
 
 # integrations that only provide remote state storage (e.g. pg backend), they are used through

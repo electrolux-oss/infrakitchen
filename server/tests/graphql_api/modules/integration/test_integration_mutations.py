@@ -674,7 +674,9 @@ class TestIntegrationValidationMutations:
         assert result.errors is None
         assert result.data == {"validateIntegrationConfig": {"isValid": True, "message": "Validation successful"}}
         mock_has_access.assert_awaited_once_with(mocked_user, "integration", action="write")
-        mock_integration_service.validate.assert_awaited_once_with(integration_config=ANY, integration_provider="aws")
+        mock_integration_service.validate.assert_awaited_once_with(
+            integration_config=ANY, integration_provider="aws", requester=mocked_user
+        )
 
     @pytest.mark.asyncio
     @patch("graphql_api.modules.integration.mutations.user_has_access_to_api", new_callable=AsyncMock)

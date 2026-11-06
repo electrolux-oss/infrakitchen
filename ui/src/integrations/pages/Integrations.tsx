@@ -14,6 +14,7 @@ import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { ENTITY_CARD_GRID_CLASSES } from "../../common/utils/entityCardGrid";
 import {
+  HeroArchiveBoxIcon,
   HeroBellIcon,
   HeroCloudIcon,
   HeroCodeBracketSquareIcon,
@@ -111,6 +112,13 @@ const IntegrationsPage = () => {
           .filter((p) => p.type === IntegrationType.NOTIFICATION)
           .map((p) => ({ label: p.name, value: p.slug })),
       },
+      {
+        label: "Container Registry",
+        value: IntegrationType.CONTAINER_REGISTRY,
+        children: allProviders
+          .filter((p) => p.type === IntegrationType.CONTAINER_REGISTRY)
+          .map((p) => ({ label: p.name, value: p.slug })),
+      },
     ],
     [allProviders],
   );
@@ -165,6 +173,15 @@ const IntegrationsPage = () => {
           }}
         >
           Connect Notification
+        </Button>
+        <Button
+          startIcon={<HeroArchiveBoxIcon />}
+          onClick={(e) => {
+            setSubmenuAnchor(e.currentTarget);
+            setActiveCategory(String(IntegrationType.CONTAINER_REGISTRY));
+          }}
+        >
+          Connect Container Registry
         </Button>
       </div>
       <Menu

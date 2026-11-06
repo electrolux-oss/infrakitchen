@@ -115,6 +115,7 @@ const providerIcons = new Map<string, React.ElementType>([
   ["opentofu", OpenTofuIcon],
   ["kubernetes", KubernetesIcon],
   ["slack", SlackIcon],
+  ["aws_ecr", AwsIcon],
   ["guest", HeroUserCircleIcon],
 ]);
 

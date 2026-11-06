@@ -274,6 +274,44 @@ class SlackIntegrationConfig(BaseModel):
         return [("slack_bot_token", self.slack_bot_token)] if self.slack_bot_token else []
 
 
+class AWSECRIntegrationConfig(BaseModel):
+    """Amazon ECR private registry.
+
+    Authenticates either through an existing ``aws`` cloud integration (``aws_integration_id``)
+    or with its own AWS credentials (``aws_access_key_id`` + ``aws_secret_access_key``).
+    """
+
+    aws_account: str = Field(..., pattern=r"^\d{12}$")
+    aws_region: str = Field(default="us-east-1")
+    aws_integration_id: uuid.UUID | None = Field(default=None)
+    aws_access_key_id: str | None = Field(default=None)
+    aws_secret_access_key: EncryptedSecretStr | None = Field(default=None)
+    aws_assumed_role_name: str | None = Field(default=None)
+    aws_session_duration: int | None = Field(default=3600)
+    aws_partition: str | None = Field(default=None)
+    integration_provider: Literal["aws_ecr"] = Field(default="aws_ecr", frozen=True)
+
+    @model_validator(mode="after")
+    def validate_auth_source(self) -> "AWSECRIntegrationConfig":
+        has_own_credentials = bool(self.aws_access_key_id or self.aws_secret_access_key)
+        if self.aws_integration_id and has_own_credentials:
+            raise ValueError("Use either an AWS integration or AWS credentials for ECR, not both")
+        if not self.aws_integration_id and not (self.aws_access_key_id and self.aws_secret_access_key):
+            raise ValueError("ECR requires an AWS integration or an AWS access key ID and secret access key")
+        return self
+
+    @property
+    def registry_host(self) -> str:
+        return self.registry_host_for_partition(self.aws_partition)
+
+    def registry_host_for_partition(self, aws_partition: str | None) -> str:
+        suffix = "amazonaws.com.cn" if (aws_partition or "").strip() == "aws-cn" else "amazonaws.com"
+        return f"{self.aws_account}.dkr.ecr.{self.aws_region}.{suffix}"
+
+    def get_secrets(self) -> list[tuple[str, EncryptedSecretStr]]:
+        return [("aws_secret_access_key", self.aws_secret_access_key)] if self.aws_secret_access_key else []
+
+
 type IntegrationConfigType = Annotated[
     AWSIntegrationConfig
     | GCPIntegrationConfig
@@ -289,7 +327,8 @@ type IntegrationConfigType = Annotated[
     | DatadogIntegrationConfig
     | PostgreSQLIntegrationConfig
     | GitPublicIntegrationConfig
-    | SlackIntegrationConfig,
+    | SlackIntegrationConfig
+    | AWSECRIntegrationConfig,
     Field(discriminator="integration_provider"),
 ]
 

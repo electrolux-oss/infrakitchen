@@ -21,6 +21,7 @@ export enum IntegrationType {
   GIT = "git",
   CLOUD = "cloud",
   NOTIFICATION = "notification",
+  CONTAINER_REGISTRY = "container_registry",
 }
 
 export enum ConnectionType {
@@ -31,15 +32,17 @@ export enum ConnectionType {
 /**
  * Maps an integration type to the chip color used on integration cards and
  * overviews, so every type chip renders the same hue everywhere. Cloud is
- * info (blue), notification is warning (orange), and everything else (git)
- * falls back to secondary.
+ * info (blue), notification is warning (orange), container registry is
+ * success (green), and everything else (git) falls back to secondary.
  */
 export const integrationTypeChipColor = (integrationType: string): LabelTone =>
   integrationType === IntegrationType.CLOUD
     ? "info"
     : integrationType === IntegrationType.NOTIFICATION
       ? "warning"
-      : "secondary";
+      : integrationType === IntegrationType.CONTAINER_REGISTRY
+        ? "success"
+        : "secondary";
 
 export interface Provider {
   type: IntegrationType;

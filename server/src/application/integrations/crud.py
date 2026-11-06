@@ -101,7 +101,20 @@ class IntegrationCRUD:
             literal("executor").label("type"),
         ).where(Executor.integration_ids.any(Integration.id == existing_integration.id))
 
-        combined_statement = union_all(resource_statement, source_code_statement, storage_statement, executor_statement)
+        # container registries (e.g. ECR) that authenticate through this integration
+        linked_integration_statement = select(
+            Integration.id.label("id"),
+            Integration.name.label("name"),
+            literal("integration").label("type"),
+        ).where(Integration.configuration["aws_integration_id"].as_string() == str(existing_integration.id))
+
+        combined_statement = union_all(
+            resource_statement,
+            source_code_statement,
+            storage_statement,
+            executor_statement,
+            linked_integration_statement,
+        )
         result = await self.session.execute(combined_statement)
         return list(result.fetchall())
 
