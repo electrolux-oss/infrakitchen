@@ -1,0 +1,72 @@
+/*
+ * "Snake" theme: a green accent and a faint grid of cells on the page
+ * background, like the board of the classic snake game. Everything else
+ * (shape, type, density) stays as in the default theme. Tokens only, plus
+ * one background rule; see index.css for the format.
+ */
+
+/* The grid is an overlay so it also shows over the opaque header and menu. */
+:root[data-ik-theme="snake"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1250;
+  pointer-events: none;
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--ik-accent) 7%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--ik-accent) 7%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 20px 20px;
+}
+
+@media print {
+  :root[data-ik-theme="snake"] body::before {
+    display: none;
+  }
+}
+
+:root[data-ik-theme="snake"]:not([data-color-scheme="dark"]) {
+  --ik-accent: #2b7a4b;
+
+  --ik-canvas: #f6f9f7;
+  --ik-hover: color-mix(in srgb, var(--ik-accent) 8%, transparent);
+  --ik-selected: color-mix(in srgb, var(--ik-accent) 16%, transparent);
+  --ik-link: var(--ik-accent);
+  --ik-link-hover: var(--ik-primary-dark);
+
+  --ik-action-bg: var(--ik-primary);
+  --ik-action-bg-hover: var(--ik-primary-dark);
+  --ik-action-bg-active: color-mix(in srgb, var(--ik-accent) 60%, black);
+  --ik-action-fg: var(--ik-primary-contrast);
+
+  --ik-primary: var(--ik-accent);
+  --ik-primary-light: color-mix(in srgb, var(--ik-accent) 25%, white);
+  --ik-primary-dark: color-mix(in srgb, var(--ik-accent) 80%, black);
+  --ik-primary-contrast: #ffffff;
+}
+
+:root[data-ik-theme="snake"][data-color-scheme="dark"] {
+  --ik-accent: #5fbf86;
+
+  --ik-canvas: #121714;
+  --ik-hover: color-mix(in srgb, var(--ik-accent) 10%, transparent);
+  --ik-selected: color-mix(in srgb, var(--ik-accent) 20%, transparent);
+  --ik-link: var(--ik-accent);
+  --ik-link-hover: var(--ik-primary-dark);
+
+  --ik-action-bg: var(--ik-primary);
+  --ik-action-bg-hover: var(--ik-primary-dark);
+  --ik-action-bg-active: color-mix(in srgb, var(--ik-accent) 70%, white);
+  --ik-action-fg: var(--ik-primary-contrast);
+
+  --ik-primary: var(--ik-accent);
+  --ik-primary-light: color-mix(in srgb, var(--ik-accent) 25%, black);
+  --ik-primary-dark: color-mix(in srgb, var(--ik-accent) 75%, white);
+  --ik-primary-contrast: #0b1a12;
+}

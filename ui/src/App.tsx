@@ -15,6 +15,7 @@ import {
 } from "./app/base/data/DataProvider";
 import DashboardLayout from "./app/base/layout/DashboardLayout";
 import SignInSide from "./app/sign-in-side/SignInSide";
+import { SnakeBackground } from "./themes/SnakeBackground";
 
 import {
   ColorSchemeProvider,
@@ -135,6 +136,7 @@ export const AppWrapper = () => {
   );
   return (
     <ColorSchemeProvider>
+      <SnakeBackground />
       <AuthProvider>
         <AuthGate dataProvider={dataProvider} />
       </AuthProvider>
