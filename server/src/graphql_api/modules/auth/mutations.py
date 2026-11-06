@@ -45,11 +45,7 @@ class AuthMutation:
         session = info.context["session"]
         requester = info.context["request"].state.user
         service = get_personal_access_token_service(session=session)
-        token = await service.create_token(
-            requester.id,
-            input.to_pydantic(),
-            requester,
-        )
+        token = await service.create_token(input.to_pydantic(), requester)
         return PersonalAccessTokenCreateType(**token.model_dump())
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])

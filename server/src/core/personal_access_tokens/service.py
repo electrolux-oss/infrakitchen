@@ -81,7 +81,7 @@ class PersonalAccessTokenService:
         return tokens
 
     async def create_token(
-        self, user_id: str | UUID, body: PersonalAccessTokenCreate, requester: UserDTO
+        self, body: PersonalAccessTokenCreate, requester: UserDTO
     ) -> PersonalAccessTokenCreateResponse:
         # Granted scopes must be a subset of the requester's own effective API
         # permissions (write includes read). user_apis_permissions returns keys
@@ -104,7 +104,7 @@ class PersonalAccessTokenService:
         created = await self.crud.create(
             {
                 "id": token_id,
-                "user_id": user_id,
+                "user_id": requester.id,
                 "name": body.name,
                 "scopes": body.scopes,
                 "token_hash": EncryptedSecretStr(f"{salt}${hashed_token}").get_secret_value(),
