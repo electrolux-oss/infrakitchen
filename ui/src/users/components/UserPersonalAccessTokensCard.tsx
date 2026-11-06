@@ -197,7 +197,10 @@ const TokenDialog = ({
     scopes.length === selectedScopes.size &&
     scopes.every((scope) => selectedScopes.has(scope));
   const readOnlyActive = matchesSelection(readOnlyScopes);
-  const readWriteActive = matchesSelection(readWriteScopes);
+  const canGrantWrite = availableScopes.some(({ actions }) =>
+    actions.includes("write"),
+  );
+  const readWriteActive = canGrantWrite && matchesSelection(readWriteScopes);
   const groupLevel = (group: string) => {
     const levels = new Set(
       availableScopes
@@ -335,7 +338,11 @@ const TokenDialog = ({
                     >
                       <Switch
                         checked={active}
-                        disabled={label === "All read only" && readWriteActive}
+                        disabled={
+                          label === "All read only"
+                            ? readWriteActive
+                            : !canGrantWrite
+                        }
                         onChange={() =>
                           setSelectedScopes(new Set(active ? [] : scopes))
                         }

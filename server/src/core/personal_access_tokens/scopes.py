@@ -1,4 +1,4 @@
-"""Request-scoped agent-token scope enforcement.
+"""Request-scoped personal access token scope enforcement.
 
 Personal access tokens created with a non-null ``scopes`` list carry a subset
 of their owner's permissions. The list is resolved during authentication (see
@@ -6,13 +6,13 @@ of their owner's permissions. The list is resolved during authentication (see
 permission checks can clamp access to the granted scopes.
 
 Scope format: "<action>:<entity>", e.g. "read:resource", "write:template".
-A token with ``scopes = None`` (developer token) is unaffected: no clamping.
+A token with ``scopes = None`` (unscoped token) is unaffected: no clamping.
 """
 
 from contextvars import ContextVar
 
 # Holds the current request's granted scopes (set[str]) when the request was
-# authenticated with a scoped agent token; None otherwise.
+# authenticated with a scoped token; None otherwise.
 current_token_scopes: ContextVar[set[str] | None] = ContextVar("pat_token_scopes", default=None)
 
 current_token_identity: ContextVar[dict[str, str] | None] = ContextVar("pat_token_identity", default=None)
@@ -42,9 +42,9 @@ def scope_allows(scope_set: set[str] | None, action: str, entity: str) -> bool:
     """Check whether the current token's scopes permit ``action`` on ``entity``.
 
     Important semantics:
-    - ``None`` scopes (unscoped developer/service token) => allow unconditionally;
+    - ``None`` scopes (unscoped personal access or service account token) => allow unconditionally;
       this function only ever *restricts*, it never grants.
-    - "admin" requested via an agent token: an agent token can never perform
+    - "admin" requested via a scoped token: a scoped token can never perform
       admin actions.
 
     Returns True when unrestricted or when a matching scope grants it.
@@ -52,7 +52,7 @@ def scope_allows(scope_set: set[str] | None, action: str, entity: str) -> bool:
     if scope_set is None:
         return True
 
-    # Agent tokens cannot carry admin authority.
+    # Scoped tokens cannot carry admin authority.
     if action == "admin":
         return False
 
