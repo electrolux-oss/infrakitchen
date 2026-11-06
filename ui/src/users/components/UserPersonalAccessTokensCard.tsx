@@ -52,8 +52,8 @@ const formatDateTimeLocal = (value: Date) => {
 // carry admin authority.
 const SCOPE_ACTIONS = ["read", "write"] as const;
 
-// Only entities reachable from the sidebar menu are offered, labelled as in the
-// menu. Internal entities (not listed here) are never shown to the user.
+// Display hints only: the offered entities mirror the server's entity list
+// (as used for role policies). Entities not listed here go under "Other".
 // Grouped and ordered as in the menu.
 const SCOPE_GROUPS: { title: string; entities: [string, string][] }[] = [
   {
@@ -110,8 +110,21 @@ const SCOPE_ENTITY_GROUP: Record<string, string> = Object.fromEntries(
 const SCOPE_ENTITY_ORDER = SCOPE_GROUPS.flatMap((group) =>
   group.entities.map(([entity]) => entity),
 );
-const byMenuOrder = (a: string, b: string) =>
-  SCOPE_ENTITY_ORDER.indexOf(a) - SCOPE_ENTITY_ORDER.indexOf(b);
+const scopeEntityLabel = (entity: string) =>
+  SCOPE_ENTITY_LABELS[entity] ??
+  entity
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+const scopeEntityGroup = (entity: string) =>
+  SCOPE_ENTITY_GROUP[entity] ?? "Other";
+const byMenuOrder = (a: string, b: string) => {
+  const rank = (entity: string) => {
+    const index = SCOPE_ENTITY_ORDER.indexOf(entity);
+    return index === -1 ? SCOPE_ENTITY_ORDER.length : index;
+  };
+  return rank(a) - rank(b) || a.localeCompare(b);
+};
 
 const normalizeAction = (action: string | undefined) => {
   // "admin" implies both read and write for scoping purposes.
@@ -159,7 +172,6 @@ const TokenDialog = ({
         ...(entities ?? []),
       ]);
       return Array.from(entityNames)
-        .filter((entity) => entity in SCOPE_ENTITY_LABELS)
         .sort(byMenuOrder)
         .map((entity) => ({
           entity,
@@ -173,7 +185,6 @@ const TokenDialog = ({
         entity: stripApiPrefix(key),
         actions: normalizeAction(action).slice(),
       }))
-      .filter(({ entity }) => entity in SCOPE_ENTITY_LABELS)
       .sort((a, b) => byMenuOrder(a.entity, b.entity));
   }, [bootstrapPermissions, entities]);
 
@@ -202,7 +213,7 @@ const TokenDialog = ({
   const groupLevel = (group: string) => {
     const levels = new Set(
       availableScopes
-        .filter(({ entity }) => SCOPE_ENTITY_GROUP[entity] === group)
+        .filter(({ entity }) => scopeEntityGroup(entity) === group)
         .map(({ entity }) =>
           selectedScopes.has(`write:${entity}`)
             ? "write"
@@ -218,7 +229,7 @@ const TokenDialog = ({
     setSelectedScopes((previous) => {
       const updated = new Set(previous);
       availableScopes
-        .filter(({ entity }) => SCOPE_ENTITY_GROUP[entity] === group)
+        .filter(({ entity }) => scopeEntityGroup(entity) === group)
         .forEach(({ entity, actions }) => {
           updated.delete(`read:${entity}`);
           updated.delete(`write:${entity}`);
@@ -363,22 +374,22 @@ const TokenDialog = ({
                 {availableScopes.map(({ entity, actions }, index) => (
                   <div key={entity}>
                     {(index === 0 ||
-                      SCOPE_ENTITY_GROUP[entity] !==
-                        SCOPE_ENTITY_GROUP[
-                          availableScopes[index - 1].entity
-                        ]) && (
+                      scopeEntityGroup(entity) !==
+                        scopeEntityGroup(
+                          availableScopes[index - 1].entity,
+                        )) && (
                       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-divider bg-canvas px-3 py-0.5">
                         <span className="text-caption font-semibold tracking-wide text-fg-muted uppercase">
-                          {SCOPE_ENTITY_GROUP[entity]}
+                          {scopeEntityGroup(entity)}
                         </span>
                         <Select<string>
                           size="small"
                           className="w-40 shrink-0"
-                          aria-label={`${SCOPE_ENTITY_GROUP[entity]} access`}
-                          value={groupLevel(SCOPE_ENTITY_GROUP[entity])}
+                          aria-label={`${scopeEntityGroup(entity)} access`}
+                          value={groupLevel(scopeEntityGroup(entity))}
                           onChange={(event) =>
                             selectGroup(
-                              SCOPE_ENTITY_GROUP[entity],
+                              scopeEntityGroup(entity),
                               event.target.value as "none" | "read" | "write",
                             )
                           }
@@ -394,12 +405,12 @@ const TokenDialog = ({
                     )}
                     <div className="flex flex-row items-center justify-between gap-4 px-3 py-1">
                       <p className="m-0 text-body2">
-                        {SCOPE_ENTITY_LABELS[entity]}
+                        {scopeEntityLabel(entity)}
                       </p>
                       <Select<string>
                         size="small"
                         className="w-40 shrink-0"
-                        aria-label={`${SCOPE_ENTITY_LABELS[entity]} access`}
+                        aria-label={`${scopeEntityLabel(entity)} access`}
                         value={
                           selectedScopes.has(`write:${entity}`)
                             ? "write"
