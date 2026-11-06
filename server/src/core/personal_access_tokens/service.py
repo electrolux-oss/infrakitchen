@@ -83,19 +83,17 @@ class PersonalAccessTokenService:
     async def create_token(
         self, user_id: str | UUID, body: PersonalAccessTokenCreate, requester: UserDTO
     ) -> PersonalAccessTokenCreateResponse:
-        # "Agent cannot out-privilege its delegator": granted scopes must be a
-        # subset of the owner's own effective API permissions — for both token
-        # types, since developer tokens may carry scopes too.
-        # user_apis_permissions returns keys like "api:<entity>" (and "*" for
-        # super admins), so look up with the same prefix convention.
+        # Granted scopes must be a subset of the requester's own effective API
+        # permissions (write includes read). user_apis_permissions returns keys
+        # like "api:<entity>", and "*" for super admins.
         if body.scopes is not None:
-            owner_permissions = await user_apis_permissions(requester)
+            requester_permissions = await user_apis_permissions(requester)
             for scope in body.scopes:
                 action, _, entity = scope.partition(":")
-                owner_action = owner_permissions.get(f"api:{entity}", "")
-                if "admin" in owner_action or owner_permissions.get("*") == "admin":
+                requester_action = requester_permissions.get(f"api:{entity}", "")
+                if "admin" in requester_action or requester_permissions.get("*") == "admin":
                     continue
-                if owner_action != action and not (owner_action == "write" and action == "read"):
+                if requester_action != action and not (requester_action == "write" and action == "read"):
                     raise ValueError(f"Scope {scope!r} exceeds the creator's own permissions")
 
         token_id = uuid.uuid4()

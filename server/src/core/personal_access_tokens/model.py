@@ -18,10 +18,9 @@ class PersonalAccessToken(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     token_hash: Mapped[str] = mapped_column(nullable=False)
     token_prefix: Mapped[str] = mapped_column(String(32), nullable=False)
-    # NULL = full permissions of the owning user (developer token).
+    # NULL = full permissions of the owning user (unscoped token).
     # Non-NULL = granted scope list, e.g. ["read:resource", "write:resource"];
-    # the token is treated as an agent token and enforcement clamps access to
-    # these scopes (must be a subset of the owner's own permissions).
+    # enforcement clamps access to these scopes (must be a subset of the owner's own permissions).
     scopes: Mapped[list[str] | None] = mapped_column(JSON, default=None, nullable=True)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
