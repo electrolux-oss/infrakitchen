@@ -15,6 +15,11 @@ from .tf_summary import parse_apply_summary, parse_plan_summary
 
 logger = logging.getLogger(__name__)
 
+# CLI config written into the task workspace when a provider mirror is set
+PROVIDER_MIRROR_CONFIG_FILE = ".infrakitchen.tofurc"
+# registries whose providers are installed through the mirror
+PROVIDER_MIRROR_REGISTRIES = ("registry.opentofu.org", "registry.terraform.io")
+
 
 class OtfClient:
     """
@@ -34,6 +39,7 @@ class OtfClient:
         self.workspace_path: str = workspace_path
         self.environment_variables: dict[str, str] = environment_variables
         self._use_plugin_cache()
+        self._use_provider_mirror()
         self.backend_storage_config: str = backend_storage_config
         self.logger: EntityLogger = logger
         self.variables: dict[str, Any] = variables
@@ -53,6 +59,25 @@ class OtfClient:
         # without it, the cache is skipped for templates without a `.terraform.lock.hcl`;
         # the lock file it would "break" is thrown away with the task workspace
         _ = self.environment_variables.setdefault("TF_PLUGIN_CACHE_MAY_BREAK_DEPENDENCY_LOCK_FILE", "true")
+
+    def _use_provider_mirror(self) -> None:
+        """Install providers through the provider mirror (caching proxy) when one is configured."""
+        mirror_url = Settings().TF_PROVIDER_MIRROR_URL.strip()
+        if not mirror_url or "TF_CLI_CONFIG_FILE" in self.environment_variables:
+            return
+        if not mirror_url.endswith("/"):
+            mirror_url += "/"
+        config_path = os.path.join(self.workspace_path, PROVIDER_MIRROR_CONFIG_FILE)
+        registries = json.dumps([f"{host}/*/*" for host in PROVIDER_MIRROR_REGISTRIES])
+        with open(config_path, "w") as f:
+            _ = f.write(
+                "provider_installation {\n"
+                f"  network_mirror {{\n    url     = {json.dumps(mirror_url)}\n    include = {registries}\n  }}\n"
+                # providers of other (private) registries are installed directly
+                f"  direct {{\n    exclude = {registries}\n  }}\n"
+                "}\n"
+            )
+        self.environment_variables["TF_CLI_CONFIG_FILE"] = config_path
 
     async def init_tf_workspace(self):
         await self._generate_tfvar()

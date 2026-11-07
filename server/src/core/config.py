@@ -66,6 +66,9 @@ class Settings(BaseSettings):
     # provider again for each task. Keep the directory on local disk.
     TF_PLUGIN_CACHE_ENABLED: bool = True
     TF_PLUGIN_CACHE_DIR: str = os.path.join(tempfile.gettempdir(), "infrakitchen", "plugin-cache")
+    # HTTPS URL of a provider network mirror (e.g. the provider-proxy app); tofu falls back to the registries
+    # when it is down. Empty = providers are installed from the registries directly
+    TF_PROVIDER_MIRROR_URL: str = ""
     # Task queue / worker settings
     WORKER_POLL_INTERVAL: float = 5.0  # seconds between polls when no task notification arrives
     WORKER_LEASE_SECONDS: int = 90  # how long a claimed task stays owned without a heartbeat

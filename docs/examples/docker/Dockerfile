@@ -85,9 +85,12 @@ COPY --from=python_builder /usr/local/aws-cli/ /usr/local/aws-cli/
 COPY --from=python_builder /aws-cli-bin/ /usr/local/bin/
 COPY --from=python_builder /app/server/.env /app/.env
 COPY ./docs/examples/docker/entrypoint.sh /app/entrypoint.sh
+# provider proxy (caching proxy for tofu providers), started with `uvicorn provider_proxy:app`
+COPY ./provider-proxy/app.py /app/provider_proxy.py
 
 RUN chmod +x /app/entrypoint.sh && \
-  chown -R infrakitchen:infrakitchen /app /home/infrakitchen
+  mkdir -p /var/cache/provider-proxy && \
+  chown -R infrakitchen:infrakitchen /app /home/infrakitchen /var/cache/provider-proxy
 
 RUN chmod +x /usr/local/bin/tofu
 

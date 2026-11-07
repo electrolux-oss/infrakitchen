@@ -1,7 +1,7 @@
 .DEFAULT:
 	echo "No rule for target '$@'. Skipped."
 
-install: server-install ui-install
+install: server-install ui-install docs-install
 server-install:
 	cd server && uv sync
 ui-install:
@@ -24,10 +24,13 @@ format:
 	cd server && uv run ruff format && uv run ruff check --fix
 
 # --- Docs (Blume) ---
-docs-dev:
+docs-install:
+	yarn install
+
+docs-dev: docs-install
 	yarn dev
 
-docs-build:
+docs-build: docs-install
 	yarn build
 
 docs-validate:
