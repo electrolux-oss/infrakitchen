@@ -4,10 +4,11 @@ from collections.abc import Iterable
 from datetime import timedelta
 from typing import Any
 
-from sqlalchemy import ColumnElement, func, literal, select, text, update
+from sqlalchemy import ColumnElement, and_, func, literal, or_, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import core.pubsub as pubsub
+from core.constants.model import ModelActions
 from core.db_engine import engine
 
 from .model import TASK_QUEUE_CHANNEL, SupersededTask, TaskQueueItem, TaskQueueStatus
@@ -85,15 +86,18 @@ def task_target_sql() -> ColumnElement[str]:
     return func.coalesce(literal("step:") + step_id, literal("resource:") + resource_id, literal(""))
 
 
-def supersede_key(item: dict[str, Any]) -> tuple[str, uuid.UUID, str] | None:
+def supersede_key(item: dict[str, Any]) -> tuple[str, uuid.UUID, str, bool] | None:
     """Tasks with the same key replace each other while still queued.
 
-    Tasks without an entity (scheduler jobs) are never superseded.
+    Tasks without an entity (scheduler jobs) are never superseded. A drift check only replaces
+    other drift checks: it must not cancel a queued plan or apply. An apply also cancels the
+    queued drift checks of its entity, see ``cancel_queued``.
     """
     entity_id = item.get("entity_id")
     if entity_id is None:
         return None
-    return item["entity"], entity_id, task_target(item.get("payload") or {})
+    is_drift_check = item.get("action") == ModelActions.CHECK_DRIFT
+    return item["entity"], entity_id, task_target(item.get("payload") or {}), is_drift_check
 
 
 def collapse_batch(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -103,18 +107,26 @@ def collapse_batch(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 async def cancel_queued(session: AsyncSession, item: dict[str, Any]) -> list[SupersededTask]:
-    """Cancel tasks with the same key that no worker has claimed yet."""
+    """Cancel tasks with the same key that no worker has claimed yet.
+
+    An apply (or destroy) also cancels the queued drift checks of the entity: a check queued before
+    it would check a destroyed resource or a result the apply outdates. A plan changes nothing, so
+    the checks stay queued and run after it.
+    """
     key = supersede_key(item)
     if key is None:
         return []
-    entity, entity_id, target = key
+    entity, entity_id, target, is_drift_check = key
+    queued_drift_check = TaskQueueItem.action == ModelActions.CHECK_DRIFT
+    same_key = and_(task_target_sql() == target, queued_drift_check == is_drift_check)
+    outdates_drift_checks = item.get("action") == ModelActions.EXECUTE
     statement = (
         update(TaskQueueItem)
         .where(
             TaskQueueItem.status == TaskQueueStatus.QUEUED,
             TaskQueueItem.entity == entity,
             TaskQueueItem.entity_id == entity_id,
-            task_target_sql() == target,
+            or_(same_key, queued_drift_check) if outdates_drift_checks else same_key,
         )
         .values(
             status=TaskQueueStatus.CANCELLED,
