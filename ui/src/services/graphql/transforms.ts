@@ -9,7 +9,6 @@ import type {
 type GqlServiceShortFieldTypes = {
   id: string;
   name: string;
-  displayName: string | null;
   entityName: string;
   owners: GqlUserShort[] | null;
 };
@@ -22,10 +21,9 @@ export type GqlServiceShort = Pick<
 type GqlServiceDetailFieldTypes = {
   id: string;
   name: string;
-  displayName: string | null;
   description: string | null;
-  projectId: string;
-  repositoryUrl: string | null;
+  projectId: string | null;
+  sourceCodeId: string | null;
   labels: string[] | null;
   revisionNumber: number;
   createdAt: string;
@@ -37,6 +35,21 @@ type GqlServiceRelationFieldTypes = {
   creator: GqlUserShort | null;
   owners: GqlUserShort[] | null;
   project: { id: string; name: string } | null;
+  sourceCode: GqlServiceSourceCode | null;
+};
+
+export type GqlServiceSourceCode = {
+  id: string;
+  identifier: string;
+  sourceCodeUrl: string;
+  sourceCodeProvider: string;
+  defaultBranch: string | null;
+  commitCount: number;
+  gitTags: string[] | null;
+  gitTagShas: Record<string, string> | null;
+  status: string;
+  updatedAt: string;
+  entityName: string;
 };
 
 type GqlServiceFieldTypes = GqlServiceDetailFieldTypes &

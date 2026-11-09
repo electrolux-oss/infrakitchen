@@ -40,6 +40,7 @@ def mock_service_service(
         event_sender=mock_event_sender,
         audit_log_handler=mock_audit_log_handler,
         subscription_service=mock_subscription_service,
+        source_code_service=Mock(),
     )
 
 
@@ -48,7 +49,6 @@ def service_response(mocked_user_response, project_response):
     return ServiceResponse(
         id=uuid4(),
         name="test-service",
-        display_name="Test Service",
         description="A test service",
         project_id=project_response.id,
         creator=mocked_user_response,
@@ -64,7 +64,6 @@ def mocked_service(mocked_user, mocked_project):
     return Service(
         id=uuid4(),
         name="test-service",
-        display_name="Test Service",
         description="A test service",
         project_id=mocked_project.id,
         project=mocked_project,
