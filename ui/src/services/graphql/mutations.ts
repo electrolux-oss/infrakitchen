@@ -22,6 +22,16 @@ export const UPDATE_SERVICE_MUTATION = `
   }
 `;
 
+export const BUILD_SERVICE_MUTATION = `
+  mutation BuildService($serviceId: UUID!, $commitSha: String!, $tag: String) {
+    buildService(serviceId: $serviceId, commitSha: $commitSha, tag: $tag) {
+      id
+      commitSha
+      status
+    }
+  }
+`;
+
 export const SYNC_SERVICE_SOURCE_CODE_MUTATION = `
   mutation SyncServiceSourceCode($id: UUID!) {
     syncServiceSourceCode(id: $id) {

@@ -83,6 +83,14 @@ class Settings(BaseSettings):
     WORKER_AUTOSCALER_INTERVAL_SECONDS: int = 15  # how often the scheduler reconciles on-demand workers
     WORKER_START_TIMEOUT_SECONDS: int = 600  # a spawned worker still pending after this is deleted
     WORKER_FAILED_RETENTION_SECONDS: int = 3600  # failed workers are kept this long for their logs, then deleted
+    # Service image builds
+    IMAGE_BUILD_NAMESPACE: str = ""  # empty means the worker pod's namespace
+    IMAGE_BUILD_BUILDKIT_IMAGE: str = "moby/buildkit:v0.23.2-rootless"
+    IMAGE_BUILD_GIT_IMAGE: str = "alpine/git:2.49.1"
+    IMAGE_BUILD_TIMEOUT_SECONDS: int = 3600
+    IMAGE_BUILD_POLL_SECONDS: int = 10
+    IMAGE_BUILD_START_TIMEOUT_SECONDS: int = 600  # a build pod not started after this is failed
+    IMAGE_BUILD_FAILED_RETENTION_SECONDS: int = 3600  # failed build Jobs are kept this long for their logs
 
     class ConfigDict:
         env_file = ".env"

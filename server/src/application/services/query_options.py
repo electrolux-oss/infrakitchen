@@ -2,6 +2,7 @@ from typing import Any
 
 from sqlalchemy.orm import joinedload, raiseload, selectinload
 
+from application.integrations.query_options import build_integration_query_options
 from application.projects.query_options import build_project_query_options
 from application.source_codes.query_options import build_source_code_query_options
 from core.database import FieldSpec, build_load_only
@@ -15,6 +16,7 @@ def build_service_query_options(fields: FieldSpec | None = None) -> list[Any]:
         return [
             joinedload(Service.project),
             joinedload(Service.source_code),
+            joinedload(Service.registry_integration),
             joinedload(Service.creator),
             selectinload(Service.owners),
         ]
@@ -32,6 +34,12 @@ def build_service_query_options(fields: FieldSpec | None = None) -> list[Any]:
         opts.append(joinedload(Service.source_code).options(*build_source_code_query_options(nested)))
     else:
         opts.append(raiseload(Service.source_code))
+
+    if "registryIntegration" in fields:
+        nested = fields["registryIntegration"]
+        opts.append(joinedload(Service.registry_integration).options(*build_integration_query_options(nested)))
+    else:
+        opts.append(raiseload(Service.registry_integration))
 
     if "creator" in fields:
         nested = fields["creator"]

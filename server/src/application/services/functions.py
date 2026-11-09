@@ -1,10 +1,26 @@
 from uuid import UUID
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from application.integrations.model import Integration
 from application.services.model import Service
 from core.constants.model import ModelActions
-from core.users.functions import user_api_permission, user_entity_permissions
+from core.errors import EntityNotFound
+from core.users.functions import require_entity_write_access, user_api_permission, user_entity_permissions
 from core.users.functions import user_is_super_admin
 from core.users.model import UserDTO
+
+
+async def assert_registry_integration(session: AsyncSession, integration_id: str | UUID, requester: UserDTO) -> None:
+    integration_type = (
+        await session.execute(select(Integration.integration_type).where(Integration.id == integration_id))
+    ).scalar_one_or_none()
+    if integration_type is None:
+        raise EntityNotFound(f"Integration {integration_id} not found")
+    if integration_type != "container_registry":
+        raise ValueError("The image registry must be a container registry integration")
+    await require_entity_write_access(requester, "integration", [integration_id])
 
 
 def _requester_id(requester: UserDTO) -> str:
@@ -50,7 +66,7 @@ async def get_service_actions(
     if not is_service_admin:
         return []
 
-    return [ModelActions.EDIT, ModelActions.DELETE]
+    return [ModelActions.EDIT, ModelActions.DELETE, ModelActions.BUILD]
 
 
 async def requester_is_service_owner(requester: UserDTO, service: Service | None) -> bool:

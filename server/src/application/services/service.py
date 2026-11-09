@@ -23,7 +23,7 @@ from core.permissions.service import PermissionService
 from core.revisions.handler import RevisionHandler
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import has_field_changes, model_db_dump, to_json_serializable
-from .functions import get_service_actions
+from .functions import assert_registry_integration, get_service_actions
 from .crud import ServiceCRUD
 from .model import Service
 from .schema import ServiceCreate, ServiceResponse, ServiceUpdate
@@ -201,6 +201,12 @@ class ServiceService:
         body = model_db_dump(service, exclude_defaults=True, exclude_none=True)
         repository_url = body.pop("repository_url", None)
         repository_integration_id = body.pop("repository_integration_id", None)
+        if body.get("image_repository") == "":
+            body["image_repository"] = None
+        if body.get("registry_integration_id") == "":
+            body["registry_integration_id"] = None
+        elif body.get("registry_integration_id"):
+            body["registry_integration_id"] = UUID(body["registry_integration_id"])
 
         if repository_url == "":
             body["source_code_id"] = None
@@ -217,6 +223,11 @@ class ServiceService:
 
         if body.get("project_id"):
             await self._assert_project_exists(body["project_id"])
+
+        if service.registry_integration_id and UUID(service.registry_integration_id) != (
+            existing_service.registry_integration_id
+        ):
+            await assert_registry_integration(self.crud.session, service.registry_integration_id, requester)
 
         self.revision_handler.original_entity_instance_dump = to_dict(existing_service)
 
