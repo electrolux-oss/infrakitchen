@@ -6,6 +6,7 @@
  */
 export type SourceCodeUpdateFieldInput = Partial<{
   description: string | null;
+  repositoryType: string;
   integrationId: string | null;
   labels: string[];
 }>;

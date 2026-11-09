@@ -21,11 +21,13 @@ import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import { ProviderIcon } from "../../icons/Icons";
 import { IkEntity } from "../../types";
+import { MenuItem, TextField } from "../../ui";
 import { GqlSourceCode } from "../graphql";
 import {
   SourceCodeUpdateFieldInput,
   UPDATE_SOURCE_CODE_MUTATION,
 } from "../graphql/mutations";
+import { getRepositoryTypeLabel, SOURCE_CODE_REPOSITORY_TYPES } from "../types";
 
 export interface SourceCodeSidebarProps {
   sourceCode: GqlSourceCode;
@@ -85,6 +87,38 @@ export const SourceCodeSidebar = ({ sourceCode }: SourceCodeSidebarProps) => {
               {getRemoteUrlValue(sourceCode.sourceCodeUrl)}
             </div>
           }
+          span="full"
+        />
+        <CommonEditableField<string>
+          name={"Repository Type"}
+          canEdit={canEdit}
+          value={sourceCode.repositoryType}
+          ariaLabel="Edit repository type"
+          display={getRepositoryTypeLabel(sourceCode.repositoryType)}
+          onSave={(value) => saveField({ repositoryType: value })}
+          renderEditor={({ value, onChange }) => (
+            <TextField
+              select
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              helperText={
+                SOURCE_CODE_REPOSITORY_TYPES.find(
+                  (type) => type.value === value,
+                )?.description
+              }
+              fullWidth
+              margin="normal"
+              selectProps={{
+                inputProps: { "aria-label": "Repository type" },
+              }}
+            >
+              {SOURCE_CODE_REPOSITORY_TYPES.map((type) => (
+                <MenuItem key={type.value} value={type.value}>
+                  {type.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
           span="full"
         />
         <CommonField

@@ -233,6 +233,7 @@ const SourceCodeVersionCreatePageInner = () => {
                   {...field}
                   ikApi={ikApi}
                   entity_name="source_codes"
+                  filter={{ repository_type: "module_library" }}
                   fields={[
                     "identifier",
                     "gitTags",

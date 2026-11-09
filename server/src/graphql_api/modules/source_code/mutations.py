@@ -18,6 +18,7 @@ class SourceCodeCreateInput:
     source_code_url: str = strawberry.UNSET
     source_code_provider: str = strawberry.UNSET
     source_code_language: str = strawberry.UNSET
+    repository_type: str = "module_library"
     description: str = ""
     integration_id: uuid.UUID | None = None
     labels: list[str] = strawberry.field(default_factory=list)
@@ -26,6 +27,7 @@ class SourceCodeCreateInput:
 @strawberry_pydantic.input(model=SourceCodeUpdate, all_fields=False)
 class SourceCodeUpdateInput:
     description: str | None = None
+    repository_type: str | None = None
     integration_id: uuid.UUID | None = None
     labels: list[str] | None = None
 

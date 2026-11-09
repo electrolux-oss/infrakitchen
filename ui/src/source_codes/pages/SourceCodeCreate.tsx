@@ -1,10 +1,10 @@
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 
 import {
-  useForm,
   Controller,
-  useFormContext,
   FormProvider,
+  useForm,
+  useFormContext,
 } from "react-hook-form";
 import { useNavigate } from "react-router";
 
@@ -15,9 +15,9 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { IkEntity } from "../../types";
-import { Button, TextField, MenuItem } from "../../ui";
+import { Button, MenuItem, TextField } from "../../ui";
 import { CREATE_SOURCE_CODE_MUTATION } from "../graphql";
-import { SourceCodeCreate } from "../types";
+import { SOURCE_CODE_REPOSITORY_TYPES, SourceCodeCreate } from "../types";
 
 const SOURCE_CODE_LANGUAGES = ["opentofu"];
 
@@ -164,6 +164,36 @@ const SourceCodeCreatePageInner = () => {
               )}
             />
             <Controller
+              name="repositoryType"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  select
+                  label="Repository Type"
+                  required
+                  fullWidth
+                  margin="normal"
+                  helperText={
+                    SOURCE_CODE_REPOSITORY_TYPES.find(
+                      (type) => type.value === field.value,
+                    )?.description
+                  }
+                  selectProps={{
+                    inputProps: {
+                      "aria-label": "Repository type",
+                    },
+                  }}
+                >
+                  {SOURCE_CODE_REPOSITORY_TYPES.map((type) => (
+                    <MenuItem key={type.value} value={type.value}>
+                      {type.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+            />
+            <Controller
               name="sourceCodeLanguage"
               control={control}
               render={({ field }) => (
@@ -242,6 +272,7 @@ export const SourceCodeCreatePage = () => {
       sourceCodeProvider: prefill.source_code_provider ?? "",
       sourceCodeLanguage: "opentofu",
       integrationId: prefill.integration_id ?? null,
+      repositoryType: "module_library",
       labels: [],
     },
     mode: "onChange",

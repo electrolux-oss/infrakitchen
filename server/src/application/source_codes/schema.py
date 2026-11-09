@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validat
 from application.integrations.schema import IntegrationShort
 
 
-from application.types import CodeLanguageType, GitProviderType
+from application.types import CodeLanguageType, GitProviderType, SourceCodeRepositoryType
 from core.constants.model import ModelStatus
 from core.users.schema import UserShort
 
@@ -41,6 +41,7 @@ class SourceCodeResponse(BaseModel):
     )
     source_code_provider: GitProviderType = Field(..., frozen=True)
     source_code_language: CodeLanguageType = Field(..., frozen=True)
+    repository_type: SourceCodeRepositoryType = Field(default="module_library")
     integration: IntegrationShort | None = Field(default=None)
     git_tags: list[str] = Field(default_factory=list)
     git_tag_messages: dict[str, str] | None = Field(default_factory=dict)
@@ -69,12 +70,14 @@ class SourceCodeCreate(BaseModel):
     )
     source_code_provider: GitProviderType = Field(..., frozen=True)
     source_code_language: CodeLanguageType = Field(..., frozen=True)
+    repository_type: SourceCodeRepositoryType = Field(default="module_library")
     integration_id: str | uuid.UUID | None = Field(default=None)
     labels: list[str] = Field(default_factory=list)
 
 
 class SourceCodeUpdate(BaseModel):
     description: str | None = Field(default=None)
+    repository_type: SourceCodeRepositoryType | None = Field(default=None)
     integration_id: str | uuid.UUID | None = Field(default=None, frozen=True)
     labels: list[str] | None = Field(default=None)
 
@@ -109,6 +112,7 @@ class SourceCodeShort(BaseModel):
     source_code_url: str
     source_code_provider: GitProviderType
     source_code_language: CodeLanguageType
+    repository_type: SourceCodeRepositoryType = Field(default="module_library")
 
     model_config = ConfigDict(from_attributes=True)
 
