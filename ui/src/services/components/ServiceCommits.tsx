@@ -207,7 +207,7 @@ export const ServiceCommits = ({
           return (
             <button
               type="button"
-              className="flex min-w-0 cursor-pointer items-center gap-1.5 rounded-surface border-0 bg-transparent p-1 text-left text-inherit hover:bg-hover"
+              className="flex max-w-full min-w-0 cursor-pointer items-center gap-1.5 rounded-surface border-0 bg-transparent p-1 text-left text-inherit hover:bg-hover"
               aria-label={`Show images built from ${commit.shortSha}`}
               onClick={() => setBuildsCommit(commit)}
             >
