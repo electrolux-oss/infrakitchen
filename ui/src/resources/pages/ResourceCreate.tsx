@@ -66,7 +66,10 @@ import { buildValidationRuleMaps } from "../utils/validationRules";
 
 const CLONE_NAME_SUFFIX = "-copy";
 
-const toCloneDefaults = (source: GqlResource): Partial<ResourceCreate> => ({
+const toCloneDefaults = (
+  source: GqlResource,
+  canSelectWorkerTemplate: (template: GqlResource["workerTemplate"]) => boolean,
+): Partial<ResourceCreate> => ({
   name: `${source.name}${CLONE_NAME_SUFFIX}`,
   description: source.description ?? "",
   templateId: source.template?.id,
@@ -83,12 +86,13 @@ const toCloneDefaults = (source: GqlResource): Partial<ResourceCreate> => ({
   storageId: source.storage?.id ?? "",
   storagePath: "",
   toolId: source.tool?.id ?? "",
-  workerTemplateId: source.workerTemplate?.id ?? "",
+  workerTemplateId: canSelectWorkerTemplate(source.workerTemplate)
+    ? (source.workerTemplate?.id ?? "")
+    : "",
 });
 
 const ResourceCreatePageInner = () => {
   const { ikApi, linkPrefix } = useConfig();
-  const canSelectWorkerTemplate = useCanSelectWorkerTemplate();
   const {
     control,
     formState: { errors },
@@ -207,9 +211,7 @@ const ResourceCreatePageInner = () => {
         ...data,
         storageId: data.storageId || null,
         toolId: data.toolId || null,
-        // a cloned selection is only kept by users who may select one
-        workerTemplateId:
-          (canSelectWorkerTemplate && data.workerTemplateId) || null,
+        workerTemplateId: data.workerTemplateId || null,
         workspaceId: data.workspaceId || null,
         projectId: data.projectId || null,
         sourceCodeVersionId: data.sourceCodeVersionId || null,
@@ -233,7 +235,7 @@ const ResourceCreatePageInner = () => {
           setSaving(false);
         });
     },
-    [ikApi, navigate, setSaving, linkPrefix, canSelectWorkerTemplate],
+    [ikApi, navigate, setSaving, linkPrefix],
   );
 
   const handleInvalidSave = useCallback(
@@ -1346,10 +1348,11 @@ const ResourceCreatePage = () => {
   const template = location.state?.template as GqlTemplateShort | undefined;
   const cloneSource = location.state?.clone as GqlResource | undefined;
   const prefill = useCreatePrefill();
+  const { canSelect } = useCanSelectWorkerTemplate();
 
   const methods = useForm<ResourceCreate>({
     defaultValues: cloneSource
-      ? toCloneDefaults(cloneSource)
+      ? toCloneDefaults(cloneSource, canSelect)
       : {
           name: "",
           description: "",

@@ -282,6 +282,7 @@ class TestDefault:
             configuration=mocked_worker_template.configuration,
             status=ModelStatus.ENABLED,
             is_default=True,
+            is_public=False,
             creator=mocked_worker_template.creator,
             created_by=mocked_worker_template.created_by,
             created_at=mocked_worker_template.created_at,
@@ -391,6 +392,51 @@ class TestDefault:
 
         with pytest.raises(AccessDenied):
             _ = await mock_worker_template_service.validate_selectable(mocked_worker_template.id, mock_user_dto)
+
+    async def test_public_template_selectable_without_access(
+        self,
+        monkeypatch,
+        mock_worker_template_service,
+        mock_worker_template_crud,
+        mocked_worker_template,
+        mock_user_dto,
+    ):
+        import application.worker_templates.functions as functions_mod
+
+        monkeypatch.setattr(functions_mod, "user_api_permission", AsyncMock(return_value=None))
+        mocked_worker_template.is_public = True
+        mock_worker_template_crud.get_by_id.return_value = mocked_worker_template
+
+        result = await mock_worker_template_service.validate_selectable(mocked_worker_template.id, mock_user_dto)
+        assert result.id == mocked_worker_template.id
+
+        mocked_worker_template.status = ModelStatus.DISABLED
+        with pytest.raises(EntityWrongState):
+            _ = await mock_worker_template_service.validate_selectable(mocked_worker_template.id, mock_user_dto)
+
+        mock_worker_template_crud.get_by_id.return_value = None
+        with pytest.raises(AccessDenied):
+            _ = await mock_worker_template_service.validate_selectable(uuid4(), mock_user_dto)
+
+    @pytest.mark.parametrize(
+        "permission, expected",
+        [({"api:worker_template": "read"}, {"private", "public", "default"}), (None, {"public", "default"})],
+    )
+    async def test_options(
+        self, monkeypatch, mock_worker_template_service, mock_worker_template_crud, mock_user_dto, permission, expected
+    ):
+        import application.worker_templates.functions as functions_mod
+
+        monkeypatch.setattr(functions_mod, "user_api_permission", AsyncMock(return_value=permission))
+        mock_worker_template_crud.get_all.return_value = [
+            SimpleNamespace(name="private", is_public=False, is_default=False),
+            SimpleNamespace(name="public", is_public=True, is_default=False),
+            SimpleNamespace(name="default", is_public=False, is_default=True),
+        ]
+
+        options = await mock_worker_template_service.get_options(mock_user_dto)
+
+        assert {t.name for t in options} == expected
 
     @pytest.mark.parametrize(
         "status, is_default, expected",

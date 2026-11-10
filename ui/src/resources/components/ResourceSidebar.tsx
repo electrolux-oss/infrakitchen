@@ -73,7 +73,7 @@ export const ResourceSidebar = ({
   onSubscriptionChange,
 }: ResourceSidebarProps) => {
   const { ikApi } = useConfig();
-  const canSelectWorkerTemplate = useCanSelectWorkerTemplate();
+  const { canSelect: canSelectWorkerTemplate } = useCanSelectWorkerTemplate();
   const { canEdit, saveField, withPendingChange } =
     useResourceFieldEditor(resource);
   const { loading, isSubscribed, handleSubscribe, handleUnsubscribe } =
@@ -280,7 +280,9 @@ export const ResourceSidebar = ({
         {resource.storage && (
           <CommonEditableField<string | null>
             name="Worker Template"
-            canEdit={canEdit && canSelectWorkerTemplate}
+            canEdit={
+              canEdit && canSelectWorkerTemplate(resource.workerTemplate)
+            }
             value={resource.workerTemplate?.id ?? null}
             ariaLabel="Edit worker template"
             display={withPendingChange(

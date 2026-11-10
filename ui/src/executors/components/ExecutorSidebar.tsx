@@ -57,7 +57,7 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = userEntityPermissions.includes("admin");
   const canEditInfra = checkActionPermission("api:executor", "write");
-  const canSelectWorkerTemplate = useCanSelectWorkerTemplate();
+  const { canSelect: canSelectWorkerTemplate } = useCanSelectWorkerTemplate();
   // Storage edits can corrupt Terraform/OpenTofu state, so they stay behind an
   // admin permission and an explicit unlock.
   const canEditStorage = canEdit;
@@ -335,7 +335,9 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
         />
         <CommonEditableField<string | null>
           name="Worker Template"
-          canEdit={canEditInfra && canSelectWorkerTemplate}
+          canEdit={
+            canEditInfra && canSelectWorkerTemplate(executor.workerTemplate)
+          }
           value={executor.workerTemplate?.id ?? null}
           ariaLabel="Edit worker template"
           display={

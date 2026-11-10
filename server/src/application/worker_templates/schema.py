@@ -33,6 +33,7 @@ class WorkerTemplateShort(BaseModel):
     name: str = Field(...)
     status: str = Field(default=ModelStatus.ENABLED)
     is_default: bool = Field(default=False)
+    is_public: bool = Field(default=False)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -62,6 +63,7 @@ class WorkerTemplateResponse(BaseModel):
     max_workers: int = Field(default=3)
     idle_timeout_seconds: int = Field(default=300)
     is_default: bool = Field(default=False)
+    is_public: bool = Field(default=False)
     last_error: str | None = Field(default=None)
     labels: list[str] = Field(default_factory=list)
 
@@ -79,6 +81,7 @@ class WorkerTemplateCreate(BaseModel):
     configuration: WorkerProviderConfig = Field(...)
     max_workers: int = Field(default=3, ge=1)
     idle_timeout_seconds: int = Field(default=300, ge=30)
+    is_public: bool = Field(default=False)
     labels: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
@@ -94,6 +97,7 @@ class WorkerTemplateUpdate(BaseModel):
     configuration: WorkerProviderConfig | None = Field(default=None)
     max_workers: int | None = Field(default=None, ge=1)
     idle_timeout_seconds: int | None = Field(default=None, ge=30)
+    is_public: bool | None = Field(default=None)
 
     @model_validator(mode="before")
     @classmethod

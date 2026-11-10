@@ -99,13 +99,23 @@ class WorkerTemplateService:
         """Ensure the requester may select the template on an entity and that it is enabled.
 
         Templates differ in what their workers can reach (e.g. a ServiceAccount), so selecting one
-        needs access to worker templates; everyone else gets the global default.
+        that isn't public needs access to worker templates.
         """
-        if not await can_select_worker_template(requester):
-            raise AccessDenied("Selecting a worker template requires access to worker templates")
-        return WorkerTemplateResponse.model_validate(
-            self._ensure_enabled(await self.crud.get_by_id(worker_template_id))
+        worker_template = await self.crud.get_by_id(worker_template_id)
+        if not (worker_template and worker_template.is_public) and not await can_select_worker_template(requester):
+            raise AccessDenied("Selecting a worker template that isn't public requires access to worker templates")
+        return WorkerTemplateResponse.model_validate(self._ensure_enabled(worker_template))
+
+    async def get_options(self, requester: UserDTO) -> list[WorkerTemplate]:
+        """Templates shown to the requester for selection: all of them with access to worker templates,
+        otherwise the public ones and the global default."""
+        templates = await self.crud.get_all(
+            sort=("name", "ASC"),
+            fields={"id": None, "name": None, "status": None, "is_default": None, "is_public": None},
         )
+        if await can_select_worker_template(requester):
+            return templates
+        return [t for t in templates if t.is_public or t.is_default]
 
     @staticmethod
     def _ensure_enabled(worker_template: WorkerTemplate | None) -> WorkerTemplate:

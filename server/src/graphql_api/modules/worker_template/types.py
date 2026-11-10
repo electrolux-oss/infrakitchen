@@ -44,6 +44,7 @@ class WorkerTemplateShortType:
     name: str
     status: str
     is_default: bool
+    is_public: bool
 
     @strawberry.field
     def entity_name(self) -> str:
