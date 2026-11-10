@@ -55,6 +55,7 @@ if [ -f /secrets/ssh-key ]; then
   install -m 600 /secrets/ssh-key /tmp/ssh-key
   export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -i /tmp/ssh-key"
 fi
+git config --global --add safe.directory "$WORKSPACE"
 git init -q "$WORKSPACE"
 cd "$WORKSPACE"
 git remote add origin "$(cat /secrets/git-url)"
@@ -129,7 +130,11 @@ class KubernetesJobBuilder:
                     raise
                 job = await batch.read_namespaced_job(name, namespace)
 
-            secret_data = {"git-url": source.url, "config.json": _docker_config(request)}
+            secret_data = {
+                "git-url": source.url,
+                "config.json": _docker_config(request),
+                "passwd": f"build:x:{BUILD_USER_ID}:{BUILD_USER_ID}::/tmp:/bin/sh\n",
+            }
             if source.ssh_private_key:
                 secret_data["ssh-key"] = f"{source.ssh_private_key.strip()}\n"
             secret: Any = {
@@ -303,6 +308,7 @@ class KubernetesJobBuilder:
                         "restartPolicy": "Never",
                         "automountServiceAccountToken": False,
                         "securityContext": {
+                            "runAsNonRoot": True,
                             "runAsUser": BUILD_USER_ID,
                             "runAsGroup": BUILD_USER_ID,
                             "fsGroup": BUILD_USER_ID,
@@ -312,8 +318,6 @@ class KubernetesJobBuilder:
                                 "name": "clone",
                                 "image": self.settings.IMAGE_BUILD_GIT_IMAGE,
                                 "command": ["sh", "-c", CLONE_SCRIPT],
-                                # ssh needs a passwd entry and the git image only has root
-                                "securityContext": {"runAsUser": 0, "runAsGroup": 0},
                                 "env": [
                                     {"name": "HOME", "value": "/tmp"},
                                     {"name": "WORKSPACE", "value": JOB_WORKSPACE},
@@ -322,6 +326,13 @@ class KubernetesJobBuilder:
                                 "volumeMounts": [
                                     {"name": "workspace", "mountPath": JOB_WORKSPACE},
                                     {"name": "secrets", "mountPath": "/secrets", "readOnly": True},
+                                    # ssh refuses to run for a uid without a passwd entry, the git image only has root
+                                    {
+                                        "name": "secrets",
+                                        "mountPath": "/etc/passwd",
+                                        "subPath": "passwd",
+                                        "readOnly": True,
+                                    },
                                 ],
                             }
                         ],
@@ -342,6 +353,10 @@ class KubernetesJobBuilder:
                                     {"name": "BUILDKITD_FLAGS", "value": "--oci-worker-no-process-sandbox"},
                                     {"name": "DOCKER_CONFIG", "value": "/secrets"},
                                 ],
+                                "resources": {
+                                    "requests": {"cpu": "1", "memory": "2Gi"},
+                                    "limits": {"cpu": "2", "memory": "4Gi"},
+                                },
                                 "securityContext": {
                                     "seccompProfile": {"type": "Unconfined"},
                                     "appArmorProfile": {"type": "Unconfined"},
