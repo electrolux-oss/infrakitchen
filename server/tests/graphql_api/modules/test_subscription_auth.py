@@ -190,7 +190,7 @@ async def test_log_stream_requires_log_read_permission(monkeypatch, mock_user_dt
     hub = _FakeHub([{"lines": [{"data": "secret output"}]}])
     monkeypatch.setattr(log_module.pubsub, "hub", hub)
     monkeypatch.setattr(log_module, "_authenticate_subscription", AsyncMock(return_value=mock_user_dto))
-    monkeypatch.setattr(log_module, "check_api_permission", AsyncMock(side_effect=AccessDenied("Access denied")))
+    monkeypatch.setattr(log_module, "check_log_entity_access", AsyncMock(side_effect=AccessDenied("Access denied")))
 
     result = await schema.subscribe(
         'subscription { logStream(entityName: "resource", entityId: "r1") { data } }',
