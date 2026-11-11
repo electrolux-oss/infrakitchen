@@ -175,7 +175,8 @@ export function InputAdornment({
   return (
     <div
       className={cn(
-        "flex max-h-[2em] shrink-0 items-center whitespace-nowrap text-grey-500 dark:text-grey-400",
+        // Keep adornment controls (e.g. lock toggles) clickable when the input box is disabled.
+        "pointer-events-auto flex max-h-[2em] shrink-0 items-center whitespace-nowrap text-grey-500 dark:text-grey-400",
         position === "start" ? "mr-2" : "ml-2",
         className,
       )}
