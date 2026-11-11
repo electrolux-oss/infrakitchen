@@ -373,7 +373,7 @@ class IntegrationCreate(BaseModel):
     @field_validator("integration_provider")
     @classmethod
     def validate_name_and_integration_provider(cls, value: str) -> str:
-        pattern = r"[a-zA-Z0-9_]+"
+        pattern = r"[a-zA-Z0-9_-]+"
         if not re.fullmatch(pattern, value):
             raise ValueError(f"field has to match pattern {pattern}")
         return value.lower()
