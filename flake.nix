@@ -72,6 +72,23 @@
           cd ..
           '';
 
+        initProviderProxyScript = pkgs.writeText "init-provider-proxy.sh" ''
+          echo "Initializing provider proxy..."
+          # tofu accepts only HTTPS mirrors, so the proxy gets a self-signed certificate for localhost
+          CERT_DIR=ik_data/provider-proxy
+          mkdir -p "$CERT_DIR/cache"
+          if [ ! -f "$CERT_DIR/cert.pem" ]; then
+            ${pkgs.openssl}/bin/openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
+              -keyout "$CERT_DIR/key.pem" -out "$CERT_DIR/cert.pem" -subj "/CN=localhost" \
+              -addext "subjectAltName=DNS:localhost,IP:127.0.0.1" \
+              -addext "basicConstraints=critical,CA:TRUE" \
+              -addext "keyUsage=critical,digitalSignature,keyCertSign" \
+              -addext "extendedKeyUsage=serverAuth" 2>/dev/null
+          fi
+          # public CAs + the proxy certificate, used by the backend so tofu trusts the proxy
+          cat ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt "$CERT_DIR/cert.pem" > "$CERT_DIR/ca-bundle.crt"
+          '';
+
       in
       {
         devShells.default = pkgs.mkShell {
@@ -127,6 +144,14 @@
             # Init Node.js modules
             ${pkgs.bash}/bin/bash ${initNodeModulesScript}
 
+            # Init provider proxy (caching proxy for tofu providers), PROVIDER_PROXY_PORT=0 disables it
+            export PROVIDER_PROXY_PORT="''${PROVIDER_PROXY_PORT:-8090}"
+            if [ "$PROVIDER_PROXY_PORT" != "0" ]; then
+              ${pkgs.bash}/bin/bash ${initProviderProxyScript}
+              export TF_PROVIDER_MIRROR_URL="''${TF_PROVIDER_MIRROR_URL:-https://localhost:$PROVIDER_PROXY_PORT/}"
+              export SSL_CERT_FILE="$ROOT_DIR/ik_data/provider-proxy/ca-bundle.crt"
+            fi
+
             # Start InfraKitchen Services
 
             start_backend() {
@@ -143,6 +168,29 @@
               ./node_modules/.bin/vite &
               echo $! >>"$ROOT_DIR/ik_data/ik_frontend.pid"
               cd "$ROOT_DIR"
+            }
+
+            start_provider_proxy() {
+              if [ "$PROVIDER_PROXY_PORT" = "0" ]; then
+                return
+              fi
+              echo "Starting provider proxy on https://localhost:$PROVIDER_PROXY_PORT ..."
+              cd "$ROOT_DIR/provider-proxy"
+              # runs with the server venv, like in the InfraKitchen image
+              CACHE_DIR="$ROOT_DIR/ik_data/provider-proxy/cache" "$ROOT_DIR/server/.venv/bin/uvicorn" app:app \
+                --host 127.0.0.1 --port "$PROVIDER_PROXY_PORT" \
+                --ssl-keyfile "$ROOT_DIR/ik_data/provider-proxy/key.pem" \
+                --ssl-certfile "$ROOT_DIR/ik_data/provider-proxy/cert.pem" &
+              echo $! >>"$ROOT_DIR/ik_data/ik_provider_proxy.pid"
+              cd "$ROOT_DIR"
+            }
+
+            stop_provider_proxy() {
+              if [ -f "$ROOT_DIR/ik_data/ik_provider_proxy.pid" ]; then
+                echo "Stopping provider proxy..."
+                kill $(cat "$ROOT_DIR/ik_data/ik_provider_proxy.pid") || true
+                rm "$ROOT_DIR/ik_data/ik_provider_proxy.pid"
+              fi
             }
 
             stop_backend() {
@@ -165,10 +213,12 @@
               echo "Stopping development environment..."
               stop_backend
               stop_frontend
+              stop_provider_proxy
             }
 
             echo "Starting InfraKitchen services..."
             start_ik_services() {
+              start_provider_proxy
               start_backend
               start_frontend
               echo "Development environment started."

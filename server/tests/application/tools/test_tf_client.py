@@ -208,3 +208,35 @@ async def test_tf_client_init_selects_workspace(monkeypatch, mock_entity_logger,
     await otf_client.init()
 
     assert [call.kwargs["command_args"] for call in shell_client.call_args_list] == expected_commands
+
+
+def test_no_provider_mirror_by_default(monkeypatch):
+    monkeypatch.delenv("TF_PROVIDER_MIRROR_URL", raising=False)
+
+    client = make_client()
+
+    assert "TF_CLI_CONFIG_FILE" not in client.environment_variables
+    assert not os.path.exists(os.path.join(client.workspace_path, tf_client_module.PROVIDER_MIRROR_CONFIG_FILE))
+
+
+def test_providers_are_installed_through_the_provider_mirror(monkeypatch):
+    monkeypatch.setenv("TF_PROVIDER_MIRROR_URL", "https://mirror.example.com/providers")
+
+    client = make_client()
+
+    config_path = client.environment_variables["TF_CLI_CONFIG_FILE"]
+    assert config_path == os.path.join(client.workspace_path, tf_client_module.PROVIDER_MIRROR_CONFIG_FILE)
+    with open(config_path) as f:
+        config = f.read()
+    assert 'url     = "https://mirror.example.com/providers/"' in config
+    assert 'include = ["registry.opentofu.org/*/*", "registry.terraform.io/*/*"]' in config
+    assert 'exclude = ["registry.opentofu.org/*/*", "registry.terraform.io/*/*"]' in config
+
+
+def test_a_cli_config_set_by_the_task_is_kept(monkeypatch):
+    monkeypatch.setenv("TF_PROVIDER_MIRROR_URL", "https://mirror.example.com/")
+
+    client = make_client({"TF_CLI_CONFIG_FILE": "/etc/tofurc"})
+
+    assert client.environment_variables["TF_CLI_CONFIG_FILE"] == "/etc/tofurc"
+    assert not os.path.exists(os.path.join(client.workspace_path, tf_client_module.PROVIDER_MIRROR_CONFIG_FILE))

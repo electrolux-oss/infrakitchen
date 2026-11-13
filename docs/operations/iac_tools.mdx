@@ -139,6 +139,29 @@ even when a template has no `.terraform.lock.hcl`: the lock file is discarded wi
   time to time; workers download what they need again.
 - All tasks of a worker use the same cache, just as they use the same tool cache.
 
+### Provider proxy
+
+The provider cache is per worker host, so on-demand workers start with an empty cache. To download each provider
+version only once for all workers, run the [provider proxy](https://github.com/electrolux-oss/infrakitchen/tree/main/provider-proxy)
+(a separate app in this repository, files stored on disk) and point the workers at it. It is part of the
+InfraKitchen image: run the image with `/app/.venv/bin/uvicorn provider_proxy:app --host 0.0.0.0 --port 8090`
+(see the [Kubernetes example](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/k8s-manifest.yaml)).
+
+| Setting                  | Description                                        | Default |
+| :----------------------- | :------------------------------------------------- | :------ |
+| `TF_PROVIDER_MIRROR_URL` | HTTPS URL of the proxy (a provider network mirror) | empty   |
+
+When set, each task writes a CLI config file (`TF_CLI_CONFIG_FILE`) into its workspace:
+
+- Providers of `registry.opentofu.org` and `registry.terraform.io` are installed only through the proxy, so `init`
+  fails while the proxy is down. Providers of other registries are installed directly.
+- OpenTofu and Terraform accept only HTTPS mirror URLs. Inside a cluster, serve TLS from the proxy with a
+  certificate of an internal CA and let the workers trust it with `SSL_CERT_FILE` or `SSL_CERT_DIR` (both are
+  passed to tofu). On-demand worker templates need the same variables and CA volume in their Pod manifest.
+- A `TF_CLI_CONFIG_FILE` already set in the task environment is kept and the proxy is not used.
+- The file replaces the worker's own CLI config (`~/.tofurc`, `~/.terraformrc`), including its `credentials`.
+- The provider cache still works on top of the proxy.
+
 The InfraKitchen server (to list the available versions) and the workers (to download them) need outbound HTTPS
 access to the release sites listed above.
 
