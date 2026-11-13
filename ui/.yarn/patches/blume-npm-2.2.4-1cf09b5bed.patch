@@ -1,0 +1,49 @@
+diff --git a/dist/cli/chunk-vxdjss7f.js b/dist/cli/chunk-vxdjss7f.js
+index 6debc14931d7cf365c26939fc3f26af310808729..4ea3c316468753c66e2b8ab08695d6dbdb15799b 100644
+--- a/dist/cli/chunk-vxdjss7f.js
++++ b/dist/cli/chunk-vxdjss7f.js
+@@ -2195,6 +2195,8 @@ var relativizeOwnLinks = (markdown, site) => {
+   if (!origin) {
+     return markdown;
+   }
++  const sitePath = (URL.parse(site ?? "")?.pathname ?? "").replace(/\/+$/u, "");
++  const withoutBase = (pathname) => sitePath && (pathname === sitePath || pathname.startsWith(`${sitePath}/`)) ? pathname.slice(sitePath.length) || "/" : pathname;
+   const spans = [];
+   const visit = (node) => {
+     if (node.type === "link" || node.type === "definition") {
+@@ -2203,7 +2205,7 @@ var relativizeOwnLinks = (markdown, site) => {
+         spans.push({
+           end: node.position?.end.offset ?? 0,
+           start: node.position?.start.offset ?? 0,
+-          text: rewrittenLink(markdown, node, `${parsed.pathname}${parsed.search}${parsed.hash}`)
++          text: rewrittenLink(markdown, node, `${withoutBase(parsed.pathname)}${parsed.search}${parsed.hash}`)
+         });
+         return;
+       }
+diff --git a/src/core/sources/github-releases.ts b/src/core/sources/github-releases.ts
+index 97e29167d40080fde9d00112e32be2d3cbe5a51a..08b92d83c9f1af0767975b2ae596e6289810f07a 100644
+--- a/src/core/sources/github-releases.ts
++++ b/src/core/sources/github-releases.ts
+@@ -218,6 +218,13 @@ const relativizeOwnLinks = (markdown: string, site?: string): string => {
+   if (!origin) {
+     return markdown;
+   }
++  // A site served under a base (`https://acme.dev/docs/`) is linked as a root-relative path
++  // without it, since the base is added to every page link when the site is built.
++  const sitePath = (URL.parse(site ?? "")?.pathname ?? "").replace(/\/+$/u, "");
++  const withoutBase = (pathname: string): string =>
++    sitePath && (pathname === sitePath || pathname.startsWith(`${sitePath}/`))
++      ? pathname.slice(sitePath.length) || "/"
++      : pathname;
+   const spans: { end: number; start: number; text: string }[] = [];
+   const visit = (node: Nodes): void => {
+     if (node.type === "link" || node.type === "definition") {
+@@ -230,7 +237,7 @@ const relativizeOwnLinks = (markdown: string, site?: string): string => {
+           text: rewrittenLink(
+             markdown,
+             node,
+-            `${parsed.pathname}${parsed.search}${parsed.hash}`
++            `${withoutBase(parsed.pathname)}${parsed.search}${parsed.hash}`
+           ),
+         });
+         return;
