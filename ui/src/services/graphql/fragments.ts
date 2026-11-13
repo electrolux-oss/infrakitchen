@@ -6,11 +6,10 @@ import {
 import { USER_SHORT_FIELDS } from "../../users/graphql";
 
 export const SERVICE_GRAPHQL_FIELDS = {
-  short: ["id", "name", "displayName", "entityName"] as const,
+  short: ["id", "name", "entityName"] as const,
   list: [
     "id",
     "name",
-    "displayName",
     "description",
     "labels",
     "createdAt",
@@ -20,10 +19,9 @@ export const SERVICE_GRAPHQL_FIELDS = {
   detail: [
     "id",
     "name",
-    "displayName",
     "description",
     "projectId",
-    "repositoryUrl",
+    "sourceCodeId",
     "labels",
     "revisionNumber",
     "createdAt",
@@ -34,6 +32,7 @@ export const SERVICE_GRAPHQL_FIELDS = {
     creator: "creator",
     owners: "owners",
     project: "project",
+    sourceCode: "sourceCode",
   } as const,
 };
 
@@ -68,9 +67,24 @@ export const SERVICE_FIELD_MAP: GraphqlFieldMap = {
   ),
 };
 
+const SOURCE_CODE_FIELDS = `
+  id
+  identifier
+  sourceCodeUrl
+  sourceCodeProvider
+  defaultBranch
+  commitCount
+  gitTags
+  gitTagShas
+  status
+  updatedAt
+  entityName
+`;
+
 export const SERVICE_DETAIL_FIELDS = `
   ${buildSelection(SERVICE_GRAPHQL_FIELDS.detail)}
   ${buildNestedSelection(SERVICE_GRAPHQL_FIELDS.relations.creator, USER_SHORT_FIELDS)}
   ${buildNestedSelection(SERVICE_GRAPHQL_FIELDS.relations.owners, USER_SHORT_FIELDS)}
   ${buildNestedSelection(SERVICE_GRAPHQL_FIELDS.relations.project, PROJECT_SHORT_FIELDS)}
+  ${buildNestedSelection(SERVICE_GRAPHQL_FIELDS.relations.sourceCode, SOURCE_CODE_FIELDS)}
 `;

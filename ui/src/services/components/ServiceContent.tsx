@@ -7,9 +7,13 @@ import {
   TabbedContent,
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
+import { CountLabel } from "../../common/components/labels";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { Revision } from "../../revision/Revision";
+import { Alert } from "../../ui";
+import { GqlServiceSourceCode } from "../graphql/transforms";
 
+import { ServiceCommits } from "./ServiceCommits";
 import { ServiceNotificationSubscribersTable } from "./ServiceNotificationSubscribersTable";
 import { ServicePermissions } from "./ServicePermissions";
 import { ServiceSidebar } from "./ServiceSidebar";
@@ -20,7 +24,22 @@ export const ServiceContent = () => {
 
   if (!entity) return null;
 
+  const sourceCode: GqlServiceSourceCode | null = entity.sourceCode;
+
   const tabs: TabDefinition[] = [
+    {
+      label: "Commits",
+      tabLabel: sourceCode ? (
+        <CountLabel label="Commits" count={sourceCode.commitCount} />
+      ) : undefined,
+      content: sourceCode ? (
+        <ServiceCommits service={entity} sourceCode={sourceCode} />
+      ) : (
+        <Alert className="mt-2" severity="info">
+          Set a code repository on this service to see its commits.
+        </Alert>
+      ),
+    },
     {
       label: "Policies",
       content: <ServicePermissions service={entity} />,

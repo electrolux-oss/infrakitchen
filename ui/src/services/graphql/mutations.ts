@@ -22,6 +22,16 @@ export const UPDATE_SERVICE_MUTATION = `
   }
 `;
 
+export const SYNC_SERVICE_SOURCE_CODE_MUTATION = `
+  mutation SyncServiceSourceCode($id: UUID!) {
+    syncServiceSourceCode(id: $id) {
+      id
+      status
+      updatedAt
+    }
+  }
+`;
+
 export const CREATE_SERVICE_SUBSCRIPTION_MUTATION = `
   mutation CreateServiceSubscription($input: ServiceSubscriptionCreateInput!) {
     createServiceSubscription(input: $input) {
