@@ -75,6 +75,7 @@ def mocked_worker_template(mocked_user):
         max_workers=3,
         idle_timeout_seconds=300,
         is_default=False,
+        is_public=False,
         last_error=None,
         spawn_failures=0,
         spawn_blocked_until=None,

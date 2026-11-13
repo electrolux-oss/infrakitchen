@@ -64,14 +64,13 @@ class WorkerTemplateQuery:
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def worker_template_options(self, info: Info) -> list[WorkerTemplateShortType]:
-        """Templates that resources and executors can select, for users without access to worker templates."""
+        """Templates the requester can select on resources and executors, without their configuration."""
         service = _build_service(info)
-        templates = await service.query_all(
-            sort=("name", "ASC"),
-            fields={"id": None, "name": None, "status": None, "is_default": None},
-        )
+        templates = await service.get_options(info.context["request"].state.user)
         return [
-            WorkerTemplateShortType(id=t.id, name=t.name, status=str(t.status), is_default=t.is_default)
+            WorkerTemplateShortType(
+                id=t.id, name=t.name, status=str(t.status), is_default=t.is_default, is_public=t.is_public
+            )
             for t in templates
         ]
 

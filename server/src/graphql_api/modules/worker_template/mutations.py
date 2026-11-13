@@ -22,6 +22,7 @@ class WorkerTemplateCreateInput:
     configuration: JSON = strawberry.UNSET
     max_workers: int = 3
     idle_timeout_seconds: int = 300
+    is_public: bool = False
     labels: list[str] = strawberry.field(default_factory=list)
 
 
@@ -32,6 +33,7 @@ class WorkerTemplateUpdateInput:
     configuration: JSON | None = strawberry.UNSET
     max_workers: int | None = strawberry.UNSET
     idle_timeout_seconds: int | None = strawberry.UNSET
+    is_public: bool | None = strawberry.UNSET
 
 
 @strawberry.input
