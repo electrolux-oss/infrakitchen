@@ -22,6 +22,10 @@ export const SERVICE_GRAPHQL_FIELDS = {
     "description",
     "projectId",
     "sourceCodeId",
+    "registryIntegrationId",
+    "imageRepository",
+    "dockerfilePath",
+    "buildContext",
     "labels",
     "revisionNumber",
     "createdAt",
@@ -33,6 +37,7 @@ export const SERVICE_GRAPHQL_FIELDS = {
     owners: "owners",
     project: "project",
     sourceCode: "sourceCode",
+    registryIntegration: "registryIntegration",
   } as const,
 };
 
@@ -67,6 +72,13 @@ export const SERVICE_FIELD_MAP: GraphqlFieldMap = {
   ),
 };
 
+const REGISTRY_INTEGRATION_FIELDS = `
+  id
+  name
+  integrationProvider
+  entityName
+`;
+
 const SOURCE_CODE_FIELDS = `
   id
   identifier
@@ -87,4 +99,22 @@ export const SERVICE_DETAIL_FIELDS = `
   ${buildNestedSelection(SERVICE_GRAPHQL_FIELDS.relations.owners, USER_SHORT_FIELDS)}
   ${buildNestedSelection(SERVICE_GRAPHQL_FIELDS.relations.project, PROJECT_SHORT_FIELDS)}
   ${buildNestedSelection(SERVICE_GRAPHQL_FIELDS.relations.sourceCode, SOURCE_CODE_FIELDS)}
+  ${buildNestedSelection(SERVICE_GRAPHQL_FIELDS.relations.registryIntegration, REGISTRY_INTEGRATION_FIELDS)}
+`;
+
+export const SERVICE_BUILD_FIELDS = `
+  id
+  serviceId
+  commitSha
+  imageRepository
+  tag
+  image
+  imageDigest
+  status
+  startedAt
+  finishedAt
+  createdAt
+  entityName
+  ${buildNestedSelection("creator", USER_SHORT_FIELDS)}
+  ${buildNestedSelection("registryIntegration", REGISTRY_INTEGRATION_FIELDS)}
 `;

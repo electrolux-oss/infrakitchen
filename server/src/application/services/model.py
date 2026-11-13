@@ -4,6 +4,7 @@ import uuid
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from application.integrations.model import Integration
 from application.projects.model import Project
 from application.source_codes.model import SourceCode
 from core.base_models import Base, BaseRevision
@@ -41,6 +42,16 @@ class Service(BaseRevision):
     )
     source_code: Mapped["SourceCode | None"] = relationship("SourceCode", lazy="joined")
 
+    registry_integration_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("integrations.id", name="fk_service_registry_integration_id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    registry_integration: Mapped["Integration | None"] = relationship("Integration", lazy="joined")
+    image_repository: Mapped[str | None] = mapped_column(nullable=True)
+    dockerfile_path: Mapped[str] = mapped_column(default="Dockerfile", server_default="Dockerfile")
+    build_context: Mapped[str] = mapped_column(default=".", server_default=".")
+
     labels: Mapped[list[str]] = mapped_column(JSON, default=list)
 
     creator: Mapped[User] = relationship("User", lazy="joined")
@@ -69,6 +80,10 @@ class ServiceDTO(BaseModel):
     description: str = Field(default="")
     project_id: uuid.UUID | None = Field(default=None)
     source_code_id: uuid.UUID | None = Field(default=None)
+    registry_integration_id: uuid.UUID | None = Field(default=None)
+    image_repository: str | None = Field(default=None)
+    dockerfile_path: str = Field(default="Dockerfile")
+    build_context: str = Field(default=".")
     owners: list[UserDTO] = Field(default_factory=list)
     labels: list[str] = Field(default_factory=list)
 

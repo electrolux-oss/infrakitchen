@@ -20,10 +20,12 @@ import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import { notifyError } from "../../common/hooks/useNotification";
+import { HeroChevronDownIcon } from "../../icons";
 import { SubscribeNotificationButton } from "../../resources/components/notifications/SubscribeNotificationButton";
 import { IkEntity } from "../../types";
-import { TextField } from "../../ui";
+import { Button, Collapse, TextField } from "../../ui";
 import { GqlUserShort, USERS_SHORT_QUERY } from "../../users/graphql";
+import { cn } from "../../utils/cn";
 import { GqlService } from "../graphql";
 import {
   ServiceUpdateFieldInput,
@@ -91,6 +93,9 @@ export const ServiceSidebar = ({
     {},
   );
   const ownersLoadedRef = useRef(false);
+  const [showAdvanced, setShowAdvanced] = useState(
+    service.buildContext !== ".",
+  );
 
   const loadUsers = useCallback(async () => {
     if (ownersLoadedRef.current) {
@@ -258,6 +263,134 @@ export const ServiceSidebar = ({
           )}
           span="full"
         />
+      </SidebarSection>
+
+      <SidebarSection title="Image Build">
+        <CommonEditableField<string | null>
+          name={"Image Registry"}
+          canEdit={canEdit}
+          value={service.registryIntegrationId}
+          ariaLabel="Edit image registry"
+          display={
+            service.registryIntegration ? (
+              <EntityReference
+                id={service.registryIntegration.id}
+                entityName="integration"
+                name={service.registryIntegration.name}
+                provider={service.registryIntegration.integrationProvider}
+              />
+            ) : null
+          }
+          onSave={(value) => saveField({ registryIntegrationId: value ?? "" })}
+          renderEditor={({ value, onChange }) => (
+            <ReferenceInput
+              ikApi={ikApi}
+              buffer={buffer}
+              setBuffer={setBuffer}
+              entity_name="integrations"
+              filter={{ integration_type: "container_registry" }}
+              showFields={["integrationProvider", "name"]}
+              access="write"
+              includeIds={
+                service.registryIntegrationId
+                  ? [service.registryIntegrationId]
+                  : undefined
+              }
+              value={value}
+              onChange={onChange}
+              ariaLabel="Image registry"
+              placeholder="Select container registry…"
+              helpertext="Container registry integration the images are pushed to"
+            />
+          )}
+          span="full"
+        />
+        <CommonEditableField<string>
+          name={"Image Repository"}
+          canEdit={canEdit}
+          value={service.imageRepository ?? ""}
+          ariaLabel="Edit image repository"
+          display={
+            service.imageRepository || (
+              <span className="text-body2 text-fg-muted">Not set</span>
+            )
+          }
+          onSave={(value) => saveField({ imageRepository: value.trim() })}
+          renderEditor={({ value, onChange }) => (
+            <TextField
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder={service.name.toLowerCase()}
+              helperText="Repository path in the registry, e.g. team/api. It must already exist for registries like ECR."
+              aria-label="Image repository"
+              fullWidth
+              margin="normal"
+              autoFocus
+            />
+          )}
+          span="full"
+        />
+        <CommonEditableField<string>
+          name={"Dockerfile"}
+          canEdit={canEdit}
+          value={service.dockerfilePath}
+          ariaLabel="Edit Dockerfile path"
+          display={service.dockerfilePath}
+          onSave={(value) => saveField({ dockerfilePath: value.trim() })}
+          renderEditor={({ value, onChange }) => (
+            <TextField
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              helperText="Path from the repository root"
+              aria-label="Dockerfile path"
+              fullWidth
+              margin="normal"
+              autoFocus
+            />
+          )}
+          span="full"
+        />
+        <div className="col-span-full">
+          <Button
+            variant="text"
+            size="small"
+            endIcon={
+              <HeroChevronDownIcon
+                fontSize="small"
+                className={cn(
+                  "transition-transform",
+                  showAdvanced && "rotate-180",
+                )}
+              />
+            }
+            aria-expanded={showAdvanced}
+            onClick={() => setShowAdvanced((open) => !open)}
+          >
+            Advanced
+          </Button>
+          <Collapse in={showAdvanced} unmountOnExit>
+            <CommonEditableField<string>
+              name={"Build Context"}
+              canEdit={canEdit}
+              value={service.buildContext}
+              ariaLabel="Edit build context"
+              display={service.buildContext}
+              onSave={(value) => saveField({ buildContext: value.trim() })}
+              renderEditor={({ value, onChange }) => (
+                <TextField
+                  value={value}
+                  onChange={(e) => onChange(e.target.value)}
+                  helperText="Directory from the repository root, . for the root"
+                  aria-label="Build context"
+                  fullWidth
+                  margin="normal"
+                  autoFocus
+                />
+              )}
+              span="full"
+            />
+          </Collapse>
+        </div>
       </SidebarSection>
 
       <SidebarDetailsSection entity={service} />

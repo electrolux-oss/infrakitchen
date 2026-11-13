@@ -24,6 +24,10 @@ type GqlServiceDetailFieldTypes = {
   description: string | null;
   projectId: string | null;
   sourceCodeId: string | null;
+  registryIntegrationId: string | null;
+  imageRepository: string | null;
+  dockerfilePath: string;
+  buildContext: string;
   labels: string[] | null;
   revisionNumber: number;
   createdAt: string;
@@ -36,6 +40,31 @@ type GqlServiceRelationFieldTypes = {
   owners: GqlUserShort[] | null;
   project: { id: string; name: string } | null;
   sourceCode: GqlServiceSourceCode | null;
+  registryIntegration: GqlServiceRegistryIntegration | null;
+};
+
+export type GqlServiceRegistryIntegration = {
+  id: string;
+  name: string;
+  integrationProvider: string;
+  entityName: string;
+};
+
+export type GqlServiceBuild = {
+  id: string;
+  serviceId: string;
+  commitSha: string;
+  registryIntegration: GqlServiceRegistryIntegration | null;
+  imageRepository: string;
+  tag: string;
+  image: string | null;
+  imageDigest: string | null;
+  status: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+  createdAt: string;
+  entityName: string;
+  creator: GqlUserShort | null;
 };
 
 export type GqlServiceSourceCode = {
