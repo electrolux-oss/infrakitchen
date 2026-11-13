@@ -132,7 +132,7 @@
             start_backend() {
               echo "Starting Python backend..."
               cd "$ROOT_DIR/server"
-              ./.venv/bin/watchmedo auto-restart -d ./ -p '*.py' --recursive -- ./.venv/bin/python3 dev_server.py &
+              ./.venv/bin/watchmedo auto-restart -d ./src -p '*.py' --recursive -- ./.venv/bin/python3 dev_server.py &
               echo $! >>"$ROOT_DIR/ik_data/ik_backend.pid"
               cd "$ROOT_DIR"
             }
