@@ -490,12 +490,18 @@ const ResourceCreatePageInner = () => {
     };
   }, [resolvedLastParent]);
 
-  const lastAppliedParentIdRef = useRef<string | null>(null);
+  // A cloned resource already holds its own values, so its parent must not overwrite them.
+  const lastAppliedParentIdRef = useRef<string | null>(
+    cloneSource?.parents?.length
+      ? String(cloneSource.parents.at(-1)?.id)
+      : null,
+  );
   const lastAppliedProjectWorkspaceIdRef = useRef<string | null>(null);
   const lastHandledProjectIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (!resolvedLastParent) {
-      lastAppliedParentIdRef.current = null;
+      // Keep the ref while the selected parent is still loading.
+      if (watchedParentIds.length === 0) lastAppliedParentIdRef.current = null;
       return;
     }
     const parentId = String((resolvedLastParent as IkEntity).id);
@@ -530,7 +536,7 @@ const ResourceCreatePageInner = () => {
         };
       });
     }
-  }, [resolvedLastParent, inherited, setValue]);
+  }, [resolvedLastParent, inherited, setValue, watchedParentIds.length]);
 
   // undefined until the workspace picker has loaded its options
   const availableWorkspaces = buffer.workspaces as IkEntity[] | undefined;
