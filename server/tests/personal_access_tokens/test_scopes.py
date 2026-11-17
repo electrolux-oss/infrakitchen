@@ -269,3 +269,9 @@ def test_contextvar_roundtrip():
     assert get_current_token_scopes() == {"read:resource"}
     set_current_token_scopes(None)
     assert get_current_token_scopes() is None
+
+
+def test_readable_entities_includes_read_and_write_scopes():
+    from core.personal_access_tokens.scopes import readable_entities
+
+    assert readable_entities({"read:resource", "write:workflow"}) == {"resource", "workflow"}

@@ -59,6 +59,18 @@ async def check_api_permission(info: Info, entity_name: str, policies: list[str]
         # Fall through to the normal Casbin check so entity-level, project-
         # scoped and deactivated-user rules still apply.
 
+    await check_user_api_permission(info, entity_name, policies)
+
+
+async def check_user_api_permission(info: Info, entity_name: str, policies: list[str]) -> None:
+    """Casbin check of the authenticated user's own permissions, without the token scope clamp."""
+    user: UserDTO | None = info.context.get("user")
+    if user is None:
+        raise AccessUnauthorized("Not authenticated.")
+
+    token_scopes = get_current_token_scopes()
+    entity = entity_name.removesuffix("s")
+
     casbin_enforcer = CasbinEnforcer()
     if casbin_enforcer.enforcer is None:
         _ = await casbin_enforcer.get_enforcer()

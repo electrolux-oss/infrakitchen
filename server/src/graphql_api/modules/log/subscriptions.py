@@ -8,7 +8,7 @@ import core.pubsub as pubsub
 from core.config import InfrakitchenConfig
 from core.sso.functions import get_user_from_token
 from core.users.model import UserDTO
-from graphql_api.helpers import check_api_permission
+from graphql_api.modules.log.permissions import check_log_entity_access
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ class LogSubscription:
             raise ValueError("entity_name and entity_id are required")
 
         # Same permission as the logs query
-        await check_api_permission(info, "log", ["read"])
+        await check_log_entity_access(info, entity_name)
 
         topic = pubsub.logs_topic(entity_name, entity_id)
         logger.info("GraphQL subscription: listening on %s", topic)
