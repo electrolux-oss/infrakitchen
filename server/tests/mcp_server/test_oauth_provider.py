@@ -8,7 +8,7 @@ import httpx
 import jwt
 import pytest
 from mcp.server.auth.provider import AuthorizationParams, RegistrationError, TokenError
-from mcp.shared.auth import OAuthClientInformationFull
+from mcp.shared.auth import InvalidRedirectUriError, OAuthClientInformationFull
 from pydantic import AnyUrl
 
 from mcp_server import oauth_provider as op
@@ -217,3 +217,30 @@ async def test_refresh_keeps_granted_scopes(provider):
     refresh = await provider.load_refresh_token(client, new_tokens.refresh_token)
     with pytest.raises(TokenError):
         await provider.exchange_refresh_token(client, refresh, ["write:template"])
+
+
+@pytest.mark.asyncio
+async def test_loopback_redirect_accepts_any_port(provider):
+    await provider.register_client(_client("http://127.0.0.1:3334/callback"))
+    client = await provider.get_client("client-1")
+    assert client is not None
+
+    assert str(client.validate_redirect_uri(AnyUrl("http://127.0.0.1:51097/callback"))) == (
+        "http://127.0.0.1:51097/callback"
+    )
+    for uri in [
+        "http://127.0.0.1:51097/other",
+        "http://localhost:51097/callback",
+        "http://evil.example.com:3334/callback",
+    ]:
+        with pytest.raises(InvalidRedirectUriError):
+            client.validate_redirect_uri(AnyUrl(uri))
+
+
+@pytest.mark.asyncio
+async def test_https_redirect_still_requires_exact_match(provider):
+    await provider.register_client(_client("https://app.example.com/cb"))
+    client = await provider.get_client("client-1")
+    assert client is not None
+    with pytest.raises(InvalidRedirectUriError):
+        client.validate_redirect_uri(AnyUrl("https://app.example.com:8443/cb"))

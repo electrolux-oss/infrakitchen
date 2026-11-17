@@ -108,6 +108,30 @@ def _is_safe_redirect_uri(uri: AnyUrl) -> bool:
     return scheme.isascii() and scheme[:1].isalpha()
 
 
+def _is_loopback_http(uri: AnyUrl) -> bool:
+    return uri.scheme == "http" and (uri.host or "").lower() in _LOOPBACK_HOSTS
+
+
+class _ClientInformation(OAuthClientInformationFull):
+    """Registered client whose loopback redirect URIs accept any port (RFC 8252 section 7.3).
+
+    Native clients (OpenCode, Claude Code, ...) listen on a fresh ephemeral port for every
+    login but reuse their earlier registration.
+    """
+
+    def validate_redirect_uri(self, redirect_uri: AnyUrl | None) -> AnyUrl:
+        if redirect_uri is not None and _is_loopback_http(redirect_uri):
+            for registered in self.redirect_uris or []:
+                if (
+                    _is_loopback_http(registered)
+                    and registered.host == redirect_uri.host
+                    and (registered.path or "/") == (redirect_uri.path or "/")
+                    and registered.query == redirect_uri.query
+                ):
+                    return redirect_uri
+        return super().validate_redirect_uri(redirect_uri)
+
+
 class InfraKitchenOAuthProvider(OAuthProvider):
     def __init__(self, *, base_url: str, internal_client: httpx.AsyncClient):
         super().__init__(
@@ -128,7 +152,7 @@ class InfraKitchenOAuthProvider(OAuthProvider):
     # --- clients -----------------------------------------------------------------
 
     async def get_client(self, client_id: str) -> OAuthClientInformationFull | None:
-        return await store_get("client", client_id, OAuthClientInformationFull)
+        return await store_get("client", client_id, _ClientInformation)
 
     async def register_client(self, client_info: OAuthClientInformationFull) -> None:
         if client_info.client_id is None:
