@@ -7,6 +7,7 @@ from casbin.util.builtin_operators import key_match
 from core.casbin.enforcer import CasbinEnforcer
 from core.constants.model import ModelActions
 from core.errors import AccessDenied
+from core.personal_access_tokens.scopes import get_current_token_scopes, scope_allows
 
 
 from ..users.accounts import primary_user_id
@@ -19,6 +20,14 @@ ENTITY_ACCESS_ACTIONS: dict[str, tuple[str, ...]] = {
     "write": ("write", "admin"),
     "admin": ("admin",),
 }
+
+
+def _token_allows(action: str, entity_name: str | None) -> bool:
+    """Scoped tokens (PATs, MCP OAuth) never exceed their scopes and never act as admin."""
+    scopes = get_current_token_scopes()
+    if scopes is None:
+        return True
+    return entity_name is not None and scope_allows(scopes, action, entity_name)
 
 
 def _resolve_subject_id(user: UserDTO) -> UUID:
@@ -34,6 +43,8 @@ async def user_has_access_to_entity(
     user: UserDTO | None, entity_id: str | UUID, action: str, entity_name: str | None = "resource"
 ) -> bool:
     if user is None:
+        return False
+    if not _token_allows(action, entity_name):
         return False
 
     user_id = _resolve_subject_id(user)
@@ -118,15 +129,15 @@ async def user_entity_permissions(user: UserDTO | None, entity_id: str | UUID, e
     enforcer = await _get_casbin_enforcer()
 
     if enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", "admin") is True:
-        return ["read", "write", "admin"]
+        permissions = ["read", "write", "admin"]
+    elif enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", "write") is True:
+        permissions = ["read", "write"]
+    elif enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", "read") is True:
+        permissions = ["read"]
+    else:
+        return []
 
-    if enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", "write") is True:
-        return ["read", "write"]
-
-    if enforcer.enforce(f"user:{user_id}", f"{entity_name}:{entity_id}", "read") is True:
-        return ["read"]
-
-    return []
+    return [action for action in permissions if _token_allows(action, entity_name)]
 
 
 async def require_entity_write_access(
@@ -155,6 +166,8 @@ async def user_entity_ids(user: UserDTO | None, entity_name: str, action: str) -
         raise ValueError("User must not be None and must have an ID")
     if action not in ENTITY_ACCESS_ACTIONS:
         raise ValueError(f"Unknown action: {action}")
+    if not _token_allows(action, entity_name):
+        return set()
 
     user_id = _resolve_subject_id(user)
     enforcer = await _get_casbin_enforcer()
@@ -178,6 +191,8 @@ async def user_entity_ids(user: UserDTO | None, entity_name: str, action: str) -
 
 async def user_is_super_admin(user: UserDTO | None) -> bool:
     if user is None:
+        return False
+    if get_current_token_scopes() is not None:
         return False
 
     user_id = _resolve_subject_id(user)
