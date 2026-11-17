@@ -288,6 +288,10 @@ async def get_user_from_token(service: SSOService, token: str | None = Security(
                 raise AccessUnauthorized("User ID not found in token claims")
             # trusting JWT token, so no need to check if user exists in database
             user = UserDTO.model_validate(claims["pld"])
+            # Tokens minted for scoped MCP OAuth grants carry their scopes in "scp".
+            scp = claims.get("scp")
+            if isinstance(scp, list):
+                set_current_token_scopes([str(s) for s in scp])
             return user
         elif token_type == BACKSTAGE_TOKEN_TYPE:
             user_id = claims.get("sub")
@@ -352,7 +356,7 @@ async def get_logged_user(
     return user
 
 
-def create_user_token(user: UserDTO, expiration: datetime) -> str:
+def create_user_token(user: UserDTO, expiration: datetime, scopes: list[str] | None = None) -> str:
     JWT_KEY = Settings().JWT_KEY
     if not JWT_KEY:
         raise ValueError("JWT_KEY is not set")
@@ -369,6 +373,7 @@ def create_user_token(user: UserDTO, expiration: datetime) -> str:
             "exp": expiration,
             "sub": str(user.id),
             "aud": INFRAKITCHEN_TOKEN_AUDIENCE,
+            **({"scp": scopes} if scopes is not None else {}),
         },
         key=JWT_KEY,
         algorithm=INFRAKITCHEN_TOKEN_ALG,

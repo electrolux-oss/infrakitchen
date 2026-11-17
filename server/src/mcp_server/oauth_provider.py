@@ -50,6 +50,16 @@ FORWARDED_TOKEN_TTL = timedelta(minutes=10)
 
 CONSENT_PATH = "/api/mcp-oauth/consent"
 
+# Granted when the user picks "full access" on the consent page: the token then acts with the
+# user's own permissions, like an unscoped personal access token. Otherwise the grant holds
+# "<read|write>:<entity>" scopes, enforced like scoped personal access tokens.
+FULL_ACCESS_SCOPE = "full_access"
+
+
+def token_scopes_for_grant(scopes: list[str]) -> list[str] | None:
+    """Scopes to enforce for a grant; None means unrestricted (full access)."""
+    return None if FULL_ACCESS_SCOPE in scopes else scopes
+
 
 class PendingAuthorization(BaseModel):
     client_id: str
@@ -231,8 +241,11 @@ class InfraKitchenOAuthProvider(OAuthProvider):
             scope=" ".join(scopes) or None,
         )
 
-    async def create_authorization_code(self, txn: str, user_identifier: str) -> str | None:
-        """Called by the consent page once the user approved. Returns the client redirect URL."""
+    async def create_authorization_code(self, txn: str, user_identifier: str, scopes: list[str] | None) -> str | None:
+        """Called by the consent page once the user approved. Returns the client redirect URL.
+
+        `scopes` is what the user picked; None means full access.
+        """
         pending = await store_pop("pending", txn, PendingAuthorization)
         if pending is None:
             return None
@@ -242,7 +255,7 @@ class InfraKitchenOAuthProvider(OAuthProvider):
             _hash(code_value),
             AuthorizationCode(
                 code="",  # never persist the raw value
-                scopes=pending.scopes,
+                scopes=[FULL_ACCESS_SCOPE] if scopes is None else scopes,
                 expires_at=time.time() + AUTH_CODE_TTL.total_seconds(),
                 client_id=pending.client_id,
                 code_challenge=pending.code_challenge,
@@ -282,7 +295,10 @@ class InfraKitchenOAuthProvider(OAuthProvider):
             return None
         # MCP tools call the internal REST/GraphQL API, which only understands regular
         # InfraKitchen tokens; mint a short-lived one for this request.
-        forwarded = create_user_token(user, datetime.now(UTC) + FORWARDED_TOKEN_TTL)
+        granted = claims.get("scope", "").split()
+        forwarded = create_user_token(
+            user, datetime.now(UTC) + FORWARDED_TOKEN_TTL, scopes=token_scopes_for_grant(granted)
+        )
         return AccessToken(
             token=token,
             client_id=claims["client_id"],

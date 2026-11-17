@@ -44,8 +44,16 @@ def provider(monkeypatch, memory_store):
     monkeypatch.setenv("INFRAKITCHEN_URL", PUBLIC_URL)
     user = SimpleNamespace(identifier="alice@example.com", deactivated=False)
     monkeypatch.setattr(op, "_get_user", AsyncMock(return_value=user))
-    monkeypatch.setattr(op, "create_user_token", lambda u, exp: "forwarded-session-jwt")
-    return op.InfraKitchenOAuthProvider(base_url=f"{PUBLIC_URL}/api/mcp", internal_client=httpx.AsyncClient())
+    forwarded_scopes: list[list[str] | None] = []
+
+    def fake_create_user_token(u, exp, scopes=None):
+        forwarded_scopes.append(scopes)
+        return "forwarded-session-jwt"
+
+    monkeypatch.setattr(op, "create_user_token", fake_create_user_token)
+    p = op.InfraKitchenOAuthProvider(base_url=f"{PUBLIC_URL}/api/mcp", internal_client=httpx.AsyncClient())
+    p.forwarded_scopes = forwarded_scopes  # pyright: ignore[reportAttributeAccessIssue]
+    return p
 
 
 def _client(redirect_uri="http://127.0.0.1:3334/callback", auth_method="none"):
@@ -114,7 +122,7 @@ async def test_full_code_and_refresh_flow(provider, memory_store):
     await provider.register_client(client)
     txn = await _authorize(provider, client)
 
-    redirect = await provider.create_authorization_code(txn, "alice@example.com")
+    redirect = await provider.create_authorization_code(txn, "alice@example.com", ["read:resource", "write:resource"])
     assert redirect is not None and "state=xyz" in redirect
     code_value = redirect.split("code=")[1].split("&")[0]
 
@@ -133,6 +141,8 @@ async def test_full_code_and_refresh_flow(provider, memory_store):
     access = await provider.load_access_token(tokens.access_token)
     assert access is not None
     assert access.claims["ik_authorization"] == "Bearer forwarded-session-jwt"
+    assert tokens.scope == "read:resource write:resource"
+    assert provider.forwarded_scopes[-1] == ["read:resource", "write:resource"]
     assert jwt.decode(tokens.access_token, options={"verify_signature": False})["aud"] == op.MCP_TOKEN_AUDIENCE
 
     assert tokens.refresh_token is not None
@@ -149,7 +159,7 @@ async def test_code_bound_to_client(provider):
     client = _client()
     await provider.register_client(client)
     txn = await _authorize(provider, client)
-    redirect = await provider.create_authorization_code(txn, "alice@example.com")
+    redirect = await provider.create_authorization_code(txn, "alice@example.com", None)
     code_value = redirect.split("code=")[1].split("&")[0]
 
     other = _client().model_copy(update={"client_id": "client-2"})
@@ -173,3 +183,37 @@ async def test_session_jwt_is_not_an_mcp_token(provider, monkeypatch):
     monkeypatch.setattr(provider, "_load_legacy_token", legacy)
     assert await provider.load_access_token(session_token) is None
     legacy.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_full_access_grant_forwards_unscoped_token(provider):
+    client = _client()
+    await provider.register_client(client)
+    txn = await _authorize(provider, client)
+    redirect = await provider.create_authorization_code(txn, "alice@example.com", None)
+    code_value = redirect.split("code=")[1].split("&")[0]
+    code = await provider.load_authorization_code(client, code_value)
+    tokens = await provider.exchange_authorization_code(client, code)
+
+    assert tokens.scope == op.FULL_ACCESS_SCOPE
+    assert await provider.load_access_token(tokens.access_token) is not None
+    assert provider.forwarded_scopes[-1] is None
+
+
+@pytest.mark.asyncio
+async def test_refresh_keeps_granted_scopes(provider):
+    client = _client()
+    await provider.register_client(client)
+    txn = await _authorize(provider, client)
+    redirect = await provider.create_authorization_code(txn, "alice@example.com", ["read:template"])
+    code_value = redirect.split("code=")[1].split("&")[0]
+    tokens = await provider.exchange_authorization_code(
+        client, await provider.load_authorization_code(client, code_value)
+    )
+    refresh = await provider.load_refresh_token(client, tokens.refresh_token)
+    new_tokens = await provider.exchange_refresh_token(client, refresh, [])
+    assert new_tokens.scope == "read:template"
+
+    refresh = await provider.load_refresh_token(client, new_tokens.refresh_token)
+    with pytest.raises(TokenError):
+        await provider.exchange_refresh_token(client, refresh, ["write:template"])

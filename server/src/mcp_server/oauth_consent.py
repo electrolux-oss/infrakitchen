@@ -4,14 +4,17 @@ import hmac
 import logging
 import secrets
 from hashlib import sha256
-from html import escape
+from typing import Literal
+from urllib.parse import urlencode
 
 import jwt
-from fastapi import APIRouter, Depends, Form, Request, Response
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Depends, Request, Response
+from fastapi.responses import JSONResponse, RedirectResponse
+from pydantic import BaseModel
 
 from core.config import Settings
 from core.errors import AccessUnauthorized
+from core.personal_access_tokens.schema import validate_scopes
 from core.sso.dependencies import get_sso_service
 from core.sso.github import github_refresh_token
 from core.sso.google import google_refresh_token
@@ -24,6 +27,8 @@ from .oauth_provider import CONSENT_PATH, InfraKitchenOAuthProvider
 
 
 CONSENT_NONCE_COOKIE = "ik-mcp-consent"
+NONCE_PATH = "/api/mcp-oauth/requests/"
+CONSENT_UI_PATH = "/mcp-oauth/consent"
 
 logger = logging.getLogger(__name__)
 
@@ -93,25 +98,20 @@ def _same_origin(request: Request) -> bool:
     return origin.rstrip("/") == expected
 
 
-def _page(body: str, status_code: int = 200) -> HTMLResponse:
-    html = f"""<!doctype html><html><head><meta charset="utf-8"><title>InfraKitchen</title>
-<style>body{{font-family:system-ui,sans-serif;max-width:28rem;margin:4rem auto;padding:0 1rem}}
-button{{padding:.5rem 1.2rem;margin-right:.5rem;cursor:pointer}}code{{word-break:break-all}}</style>
-</head><body>{body}</body></html>"""
-    return HTMLResponse(
-        html,
-        status_code=status_code,
-        headers={"X-Frame-Options": "DENY", "Content-Security-Policy": "frame-ancestors 'none'"},
-    )
+class ConsentDecision(BaseModel):
+    csrf: str
+    decision: Literal["allow", "deny"]
+    # None = full access (same permissions as the user); otherwise "<read|write>:<entity>" entries.
+    scopes: list[str] | None = None
+
+
+def _expired() -> JSONResponse:
+    return JSONResponse({"detail": "This authorization request has expired. Please try again from your client."}, 404)
 
 
 @router.get("/consent")
-async def consent_page(request: Request, txn: str, service: SSOService = Depends(get_sso_service)):
-    provider = _get_provider()
-    pending = await provider.get_pending(txn)
-    if pending is None:
-        return _page("<h2>This authorization request has expired.</h2><p>Please try again from your client.</p>", 400)
-
+async def consent_entry(request: Request, txn: str, service: SSOService = Depends(get_sso_service)):
+    """Entry point from /authorize: make sure the user is signed in, then hand over to the UI."""
     cookies = Response()
     identifier = await _current_user_identifier(request, service, cookies)
     if identifier is None:
@@ -120,40 +120,47 @@ async def consent_page(request: Request, txn: str, service: SSOService = Depends
             RETURN_TO_COOKIE, f"{CONSENT_PATH}?txn={txn}", max_age=600, httponly=True, secure=True, samesite="lax"
         )
         return response
+    return _copy_cookies(cookies, RedirectResponse(url=f"{CONSENT_UI_PATH}?{urlencode({'txn': txn})}"))
+
+
+@router.get("/requests/{txn}")
+async def get_consent_request(request: Request, txn: str, service: SSOService = Depends(get_sso_service)):
+    provider = _get_provider()
+    cookies = Response()
+    identifier = await _current_user_identifier(request, service, cookies)
+    if identifier is None:
+        return _copy_cookies(cookies, JSONResponse({"detail": "Not signed in"}, 401))
+
+    pending = await provider.get_pending(txn)
+    if pending is None:
+        return _copy_cookies(cookies, _expired())
 
     nonce = secrets.token_urlsafe(32)
-    client_name = escape(pending.client_name or pending.client_id)
-    redirect_host = escape(pending.redirect_uri.host or str(pending.redirect_uri))
-    page = _page(f"""
-<h2>Authorize {client_name}</h2>
-<p><b>{client_name}</b> wants to access InfraKitchen as <b>{escape(identifier)}</b>
-via MCP, with the same permissions you have.</p>
-<p>You will be redirected to <code>{redirect_host}</code>.</p>
-<form method="post" action="{CONSENT_PATH}">
-  <input type="hidden" name="txn" value="{escape(txn)}">
-  <input type="hidden" name="csrf" value="{_csrf(txn, nonce, identifier)}">
-  <button type="submit" name="decision" value="allow">Allow</button>
-  <button type="submit" name="decision" value="deny">Deny</button>
-</form>""")
-    page.set_cookie(
-        CONSENT_NONCE_COOKIE, nonce, max_age=600, path=CONSENT_PATH, httponly=True, secure=True, samesite="strict"
+    response = JSONResponse(
+        {
+            "client_name": pending.client_name or pending.client_id,
+            "redirect_host": pending.redirect_uri.host or str(pending.redirect_uri),
+            "user": identifier,
+            "requested_scopes": pending.scopes,
+            "csrf": _csrf(txn, nonce, identifier),
+        },
+        headers={"Cache-Control": "no-store"},
     )
-    return _copy_cookies(cookies, page)
+    response.set_cookie(
+        CONSENT_NONCE_COOKIE, nonce, max_age=600, path=NONCE_PATH, httponly=True, secure=True, samesite="strict"
+    )
+    return _copy_cookies(cookies, response)
 
 
-@router.post("/consent")
-async def consent_submit(
-    request: Request,
-    txn: str = Form(...),
-    csrf: str = Form(...),
-    decision: str = Form(...),
-    service: SSOService = Depends(get_sso_service),
+@router.post("/requests/{txn}")
+async def submit_consent(
+    request: Request, txn: str, body: ConsentDecision, service: SSOService = Depends(get_sso_service)
 ):
     provider = _get_provider()
     cookies = Response()
     identifier = await _current_user_identifier(request, service, cookies)
     if identifier is None:
-        return _copy_cookies(cookies, _page("<h2>You are not signed in.</h2>", 401))
+        return _copy_cookies(cookies, JSONResponse({"detail": "Not signed in"}, 401))
 
     nonce = request.cookies.get(CONSENT_NONCE_COOKIE, "")
     reason = None
@@ -161,22 +168,21 @@ async def consent_submit(
         reason = f"origin mismatch: {request.headers.get('origin')!r}"
     elif not nonce:
         reason = "missing consent nonce cookie"
-    elif not hmac.compare_digest(csrf, _csrf(txn, nonce, identifier)):
+    elif not hmac.compare_digest(body.csrf, _csrf(txn, nonce, identifier)):
         reason = "csrf token mismatch"
     if reason:
         logger.warning("MCP OAuth consent rejected: %s", reason)
-        return _copy_cookies(cookies, _page("<h2>Invalid request.</h2>", 400))
+        return _copy_cookies(cookies, JSONResponse({"detail": "Invalid request"}, 400))
 
-    if decision == "allow":
-        target = await provider.create_authorization_code(txn, identifier)
+    if body.decision == "allow":
+        try:
+            scopes = validate_scopes(body.scopes)
+        except ValueError as e:
+            return _copy_cookies(cookies, JSONResponse({"detail": str(e)}, 400))
+        target = await provider.create_authorization_code(txn, identifier, scopes)
     else:
         target = await provider.deny_authorization(txn)
 
-    if target is None:
-        response: Response = _page(
-            "<h2>This authorization request has expired.</h2><p>Please try again from your client.</p>", 400
-        )
-    else:
-        response = RedirectResponse(url=target, status_code=303)
-    response.delete_cookie(CONSENT_NONCE_COOKIE, path=CONSENT_PATH)
+    response = _expired() if target is None else JSONResponse({"redirect_url": target})
+    response.delete_cookie(CONSENT_NONCE_COOKIE, path=NONCE_PATH)
     return _copy_cookies(cookies, response)

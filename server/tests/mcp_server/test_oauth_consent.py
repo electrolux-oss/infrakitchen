@@ -30,14 +30,16 @@ class FakeProvider:
             )
         }
         self.approved_for: str | None = None
+        self.approved_scopes: list[str] | None = None
 
     async def get_pending(self, txn):
         return self.pending.get(txn)
 
-    async def create_authorization_code(self, txn, identifier):
+    async def create_authorization_code(self, txn, identifier, scopes):
         if self.pending.pop(txn, None) is None:
             return None
         self.approved_for = identifier
+        self.approved_scopes = scopes
         return "http://127.0.0.1:3334/callback?code=abc&state=xyz"
 
     async def deny_authorization(self, txn):
@@ -78,98 +80,111 @@ def client(monkeypatch):
     oauth_consent.set_oauth_provider(None)
 
 
-def _csrf_from(html: str) -> str:
-    return html.split('name="csrf" value="')[1].split('"')[0]
+REQUEST_PATH = "/api/mcp-oauth/requests/txn-1"
 
 
-def test_consent_page_propagates_rotated_refresh_cookie(client):
-    r = client.get(f"{CONSENT_PATH}?txn=txn-1")
+def _csrf(client) -> str:
+    r = client.get(REQUEST_PATH)
     assert r.status_code == 200
-    assert "Test Client" in r.text
-    set_cookies = r.headers.get_list("set-cookie")
-    assert any(c.startswith("microsoft-refresh-token=rotated") for c in set_cookies)
-    assert any(c.startswith(f"{oauth_consent.CONSENT_NONCE_COOKIE}=") for c in set_cookies)
-    assert r.headers["x-frame-options"] == "DENY"
+    return r.json()["csrf"]
 
 
-def test_allow_issues_code_for_signed_in_user(client):
-    page = client.get(f"{CONSENT_PATH}?txn=txn-1")
-    r = client.post(
-        CONSENT_PATH,
-        data={"txn": "txn-1", "csrf": _csrf_from(page.text), "decision": "allow"},
-        headers={"Origin": PUBLIC_URL},
-        follow_redirects=False,
+def _submit(client, csrf, decision="allow", scopes=None, headers=None):
+    return client.post(
+        REQUEST_PATH,
+        json={"csrf": csrf, "decision": decision, "scopes": scopes},
+        headers={"Origin": PUBLIC_URL} if headers is None else headers,
     )
-    assert r.status_code == 303
-    assert r.headers["location"].startswith("http://127.0.0.1:3334/callback?code=")
-    assert client.provider.approved_for == "alice@example.com"
 
 
-def test_csrf_rejected_without_browser_nonce(client):
-    page = client.get(f"{CONSENT_PATH}?txn=txn-1")
-    client.cookies.delete(oauth_consent.CONSENT_NONCE_COOKIE)
-    r = client.post(
-        CONSENT_PATH,
-        data={"txn": "txn-1", "csrf": _csrf_from(page.text), "decision": "allow"},
-        headers={"Origin": PUBLIC_URL},
-        follow_redirects=False,
-    )
-    assert r.status_code == 400
-    assert client.provider.approved_for is None
+def test_entry_redirects_signed_in_user_to_ui(client):
+    r = client.get(f"{CONSENT_PATH}?txn=txn-1", follow_redirects=False)
+    assert r.status_code == 307
+    assert r.headers["location"] == "/mcp-oauth/consent?txn=txn-1"
+    assert any(c.startswith("microsoft-refresh-token=rotated") for c in r.headers.get_list("set-cookie"))
 
 
-def test_csrf_rejected_when_user_changed(client):
-    page = client.get(f"{CONSENT_PATH}?txn=txn-1")
-    client.current["identifier"] = "mallory@example.com"
-    r = client.post(
-        CONSENT_PATH,
-        data={"txn": "txn-1", "csrf": _csrf_from(page.text), "decision": "allow"},
-        headers={"Origin": PUBLIC_URL},
-        follow_redirects=False,
-    )
-    assert r.status_code == 400
-    assert client.provider.approved_for is None
-
-
-def test_cross_origin_post_rejected(client):
-    page = client.get(f"{CONSENT_PATH}?txn=txn-1")
-    r = client.post(
-        CONSENT_PATH,
-        data={"txn": "txn-1", "csrf": _csrf_from(page.text), "decision": "allow"},
-        headers={"Origin": "https://evil.example.com"},
-        follow_redirects=False,
-    )
-    assert r.status_code == 400
-
-
-def test_null_origin_from_same_site_is_allowed(client):
-    # Browsers send `Origin: null` after redirect chains such as the SSO login.
-    page = client.get(f"{CONSENT_PATH}?txn=txn-1")
-    r = client.post(
-        CONSENT_PATH,
-        data={"txn": "txn-1", "csrf": _csrf_from(page.text), "decision": "allow"},
-        headers={"Origin": "null", "Sec-Fetch-Site": "same-origin"},
-        follow_redirects=False,
-    )
-    assert r.status_code == 303
-    assert client.provider.approved_for == "alice@example.com"
-
-
-def test_null_origin_cross_site_rejected(client):
-    page = client.get(f"{CONSENT_PATH}?txn=txn-1")
-    r = client.post(
-        CONSENT_PATH,
-        data={"txn": "txn-1", "csrf": _csrf_from(page.text), "decision": "allow"},
-        headers={"Origin": "null", "Sec-Fetch-Site": "cross-site"},
-        follow_redirects=False,
-    )
-    assert r.status_code == 400
-    assert client.provider.approved_for is None
-
-
-def test_not_signed_in_redirects_to_login_with_return_to(client):
+def test_entry_not_signed_in_redirects_to_login_with_return_to(client):
     client.cookies.clear()
     r = client.get(f"{CONSENT_PATH}?txn=txn-1", follow_redirects=False)
     assert r.status_code == 307
     assert r.headers["location"] == "/"
     assert any(c.startswith("ik-return-to=") for c in r.headers.get_list("set-cookie"))
+
+
+def test_request_details_propagate_rotated_refresh_cookie(client):
+    r = client.get(REQUEST_PATH)
+    assert r.status_code == 200
+    data = r.json()
+    assert data["client_name"] == "Test Client"
+    assert data["redirect_host"] == "127.0.0.1"
+    assert data["user"] == "alice@example.com"
+    set_cookies = r.headers.get_list("set-cookie")
+    assert any(c.startswith("microsoft-refresh-token=rotated") for c in set_cookies)
+    assert any(c.startswith(f"{oauth_consent.CONSENT_NONCE_COOKIE}=") for c in set_cookies)
+
+
+def test_request_details_expired(client):
+    assert client.get("/api/mcp-oauth/requests/unknown").status_code == 404
+
+
+def test_request_details_require_sign_in(client):
+    client.cookies.clear()
+    assert client.get(REQUEST_PATH).status_code == 401
+
+
+def test_allow_with_scopes(client):
+    r = _submit(client, _csrf(client), scopes=["read:resource", "write:resource"])
+    assert r.status_code == 200
+    assert r.json()["redirect_url"].startswith("http://127.0.0.1:3334/callback?code=")
+    assert client.provider.approved_for == "alice@example.com"
+    assert client.provider.approved_scopes == ["read:resource", "write:resource"]
+
+
+def test_allow_full_access(client):
+    r = _submit(client, _csrf(client), scopes=None)
+    assert r.status_code == 200
+    assert client.provider.approved_scopes is None
+
+
+@pytest.mark.parametrize("scopes", [[], ["admin:resource"], ["read:*"], ["delete:resource"]])
+def test_invalid_scopes_rejected(client, scopes):
+    r = _submit(client, _csrf(client), scopes=scopes)
+    assert r.status_code == 400
+    assert client.provider.approved_for is None
+
+
+def test_deny(client):
+    r = _submit(client, _csrf(client), decision="deny")
+    assert r.status_code == 200
+    assert "error=access_denied" in r.json()["redirect_url"]
+    assert client.provider.approved_for is None
+
+
+def test_csrf_rejected_without_browser_nonce(client):
+    csrf = _csrf(client)
+    client.cookies.delete(oauth_consent.CONSENT_NONCE_COOKIE)
+    assert _submit(client, csrf).status_code == 400
+    assert client.provider.approved_for is None
+
+
+def test_csrf_rejected_when_user_changed(client):
+    csrf = _csrf(client)
+    client.current["identifier"] = "mallory@example.com"
+    assert _submit(client, csrf).status_code == 400
+    assert client.provider.approved_for is None
+
+
+def test_cross_origin_post_rejected(client):
+    assert _submit(client, _csrf(client), headers={"Origin": "https://evil.example.com"}).status_code == 400
+
+
+def test_null_origin_from_same_site_is_allowed(client):
+    r = _submit(client, _csrf(client), headers={"Origin": "null", "Sec-Fetch-Site": "same-origin"})
+    assert r.status_code == 200
+
+
+def test_null_origin_cross_site_rejected(client):
+    r = _submit(client, _csrf(client), headers={"Origin": "null", "Sec-Fetch-Site": "cross-site"})
+    assert r.status_code == 400
+    assert client.provider.approved_for is None
