@@ -15,6 +15,7 @@ import {
 } from "./app/base/data/DataProvider";
 import DashboardLayout from "./app/base/layout/DashboardLayout";
 import SignInSide from "./app/sign-in-side/SignInSide";
+import { McpConsentPage } from "./mcp_oauth/McpConsentPage";
 import { SnakeBackground } from "./themes/SnakeBackground";
 
 import {
@@ -47,6 +48,10 @@ const PermissionFilteredRouter = () => {
         {
           path: "/login",
           Component: SignInSide,
+        },
+        {
+          path: "/mcp-oauth/consent",
+          Component: McpConsentPage,
         },
         {
           element: <Outlet />,
