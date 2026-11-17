@@ -4,6 +4,8 @@ import jwt
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import RedirectResponse
 
+from core.sso.return_to import RETURN_TO_COOKIE, post_login_url
+
 from core.errors import AccessUnauthorized, EntityExistsError
 from core.sso.service import SSOService
 from core.users.schema import UserCreateWithProvider
@@ -59,7 +61,9 @@ async def guest_login(scope: Literal["default", "super", "infra"], service: SSOS
 
 
 @router.get("/guest/callback/{scope}")
-async def guest_callback(scope: Literal["default", "super", "infra"], service: SSOService = Depends(get_sso_service)):
+async def guest_callback(
+    request: Request, scope: Literal["default", "super", "infra"], service: SSOService = Depends(get_sso_service)
+):
     guest_provider = await service.auth_provider_service.get_all(filter={"auth_provider": "guest"})
     if len(guest_provider) == 0 or not guest_provider[0].enabled:
         raise AccessUnauthorized("Guest login is disabled")
@@ -90,7 +94,8 @@ async def guest_callback(scope: Literal["default", "super", "infra"], service: S
 
     expiration = datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=30)
     token = create_user_token(user, expiration)
-    response = RedirectResponse(url="/")
+    response = RedirectResponse(url=post_login_url(request))
+    response.delete_cookie(RETURN_TO_COOKIE)
     response.set_cookie(
         key="guest-token",
         value=token,

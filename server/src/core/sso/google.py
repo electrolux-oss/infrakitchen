@@ -4,6 +4,8 @@ import httpx
 import jwt
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import RedirectResponse
+
+from core.sso.return_to import RETURN_TO_COOKIE, post_login_url
 from fastapi_sso.sso.google import GoogleSSO
 from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error, InvalidGrantError
 
@@ -162,7 +164,8 @@ async def google_callback(request: Request, service: SSOService = Depends(get_ss
     except EntityExistsError:
         pass
 
-    response = RedirectResponse(url="/")
+    response = RedirectResponse(url=post_login_url(request))
+    response.delete_cookie(RETURN_TO_COOKIE)
     response.set_cookie(
         key="google-refresh-token",
         value=refresh_token,

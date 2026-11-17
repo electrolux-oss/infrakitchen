@@ -7,7 +7,7 @@ from graphql.utilities import print_type
 
 from fastmcp import FastMCP
 
-from .context import request_auth_token
+from .context import get_request_authorization
 
 
 GRAPHQL_PATH = "/api/graphql"
@@ -207,7 +207,7 @@ def register_graphql_tools(mcp: FastMCP, client: httpx.AsyncClient, schema: Grap
                 raise ValueError("Only `query` operations are allowed; mutations and subscriptions are not.")
 
         headers = {}
-        auth = request_auth_token.get(None)
+        auth = get_request_authorization()
         if auth:
             headers["Authorization"] = auth
 
@@ -267,7 +267,7 @@ source code, etc.), follow up with `graphql_query` on specific resource IDs.
     ) -> dict[str, Any]:
         """Fetch a resource's hierarchy via the GraphQL resourceTree query."""
         headers = {}
-        auth = request_auth_token.get(None)
+        auth = get_request_authorization()
         if auth:
             headers["Authorization"] = auth
 

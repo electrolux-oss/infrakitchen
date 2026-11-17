@@ -30,6 +30,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      "/.well-known": {
+        target: `http://${backendHost}:8000`,
+        changeOrigin: false,
+        secure: false,
+      },
     },
   },
   build: {

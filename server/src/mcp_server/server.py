@@ -11,10 +11,12 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from fastmcp import FastMCP
 
-from core.config import InfrakitchenConfig
+from core.config import InfrakitchenConfig, Settings
 from graphql_api.schema import schema as graphql_schema
 
 from .context import request_auth_token
+from .oauth_consent import set_oauth_provider
+from .oauth_provider import InfraKitchenOAuthProvider
 
 DEFAULT_DOCS_DIR = Path(__file__).parent.parent.parent.parent / "docs"
 AUTH_PROBE_PATH = "/api/auth/me"
@@ -85,6 +87,15 @@ def _auth_middleware_factory(client: httpx.AsyncClient):
     return _dispatch
 
 
+def _feature_flag_middleware():
+    async def _dispatch(request: Request, call_next):
+        if InfrakitchenConfig().mcp is False:
+            return JSONResponse({"detail": "Not Found"}, status_code=404)
+        return await call_next(request)
+
+    return _dispatch
+
+
 def setup_mcp_server(fastapi_app: FastAPI, mount_path: str = "/api/mcp") -> Starlette:
     # ASGITransport doesn't hold real resources - no cleanup needed
     internal_client = httpx.AsyncClient(
@@ -92,14 +103,29 @@ def setup_mcp_server(fastapi_app: FastAPI, mount_path: str = "/api/mcp") -> Star
         base_url="http://internal",
     )
 
-    mcp_server = FastMCP("InfraKitchen", instructions=MCP_INSTRUCTIONS)
+    public_url = Settings().INFRAKITCHEN_URL.rstrip("/")
+    oauth_provider = (
+        InfraKitchenOAuthProvider(base_url=f"{public_url}{mount_path}", internal_client=internal_client)
+        if public_url
+        else None
+    )
+
+    mcp_server = FastMCP("InfraKitchen", instructions=MCP_INSTRUCTIONS, auth=oauth_provider)
 
     register_graphql_tools(mcp_server, internal_client, graphql_schema._schema)
     register_rest_write_tools(mcp_server, internal_client)
     register_docs(mcp_server, DEFAULT_DOCS_DIR)
 
     mcp_http_app = mcp_server.http_app(path="/", stateless_http=True)
-    mcp_http_app.add_middleware(BaseHTTPMiddleware, dispatch=_auth_middleware_factory(internal_client))
+    if oauth_provider is None:
+        # No public URL configured: OAuth discovery can't work, keep plain bearer-token auth.
+        mcp_http_app.add_middleware(BaseHTTPMiddleware, dispatch=_auth_middleware_factory(internal_client))
+    else:
+        set_oauth_provider(oauth_provider)
+        mcp_http_app.add_middleware(BaseHTTPMiddleware, dispatch=_feature_flag_middleware())
+        # Clients look up OAuth metadata at the site root (RFC 8414 / RFC 9728 path-insertion).
+        for route in oauth_provider.get_well_known_routes(mcp_path="/"):
+            fastapi_app.router.routes.insert(0, route)
     fastapi_app.mount(mount_path, mcp_http_app)
 
     return mcp_http_app

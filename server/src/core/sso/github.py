@@ -4,6 +4,8 @@ import httpx
 from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error, InvalidGrantError
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import RedirectResponse
+
+from core.sso.return_to import RETURN_TO_COOKIE, post_login_url
 from fastapi_sso.sso.github import GithubSSO
 
 from core.config import Settings
@@ -172,7 +174,8 @@ async def github_callback(request: Request, service: SSOService = Depends(get_ss
     except EntityExistsError:
         pass  # User is already assigned to the role
 
-    response = RedirectResponse(url="/")
+    response = RedirectResponse(url=post_login_url(request))
+    response.delete_cookie(RETURN_TO_COOKIE)
     response.set_cookie(
         key="github-refresh-token",
         value=refresh_token,

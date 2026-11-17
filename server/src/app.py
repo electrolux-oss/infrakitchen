@@ -28,6 +28,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.config import Settings, setup_service_environment, validate_jwt_key
 from application.views import main_router
 from application.oidc import oidc_router
+from mcp_server.oauth_consent import router as mcp_oauth_router
 from graphql_api.error_handling import integrity_error_message
 from graphql_api.helpers import mask_sensitive_values
 from core.casbin.enforcer import CasbinEnforcer
@@ -198,6 +199,7 @@ if _cors_origins:
 
 
 app.include_router(main_router)
+app.include_router(mcp_oauth_router, prefix="/api")
 # OIDC public metadata is served at the domain root under /oidc.
 app.include_router(oidc_router)
 

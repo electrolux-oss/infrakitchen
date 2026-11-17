@@ -5,7 +5,7 @@ import httpx
 
 from fastmcp import FastMCP
 
-from .context import request_auth_token
+from .context import get_request_authorization
 
 GRAPHQL_PATH = "/api/graphql"
 GRAPHQL_JSON_SCALAR_FIELDS = {"configuration"}
@@ -392,7 +392,7 @@ async def _graphql_request(
 
 
 def _auth_headers() -> dict[str, str]:
-    auth = request_auth_token.get(None)
+    auth = get_request_authorization()
     return {"Authorization": auth} if auth else {}
 
 

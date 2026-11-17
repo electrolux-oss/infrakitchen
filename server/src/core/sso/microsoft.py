@@ -6,6 +6,8 @@ import jwt
 from oauthlib.oauth2.rfc6749.errors import InvalidGrantError
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import RedirectResponse
+
+from core.sso.return_to import RETURN_TO_COOKIE, post_login_url
 from fastapi_sso.sso.microsoft import MicrosoftSSO
 
 from core.errors import AccessUnauthorized, EntityExistsError
@@ -165,7 +167,8 @@ async def microsoft_callback(
     if not refresh_token:
         raise Exception("Refresh token is required. Check your app configuration.")
 
-    response = RedirectResponse(url="/")
+    response = RedirectResponse(url=post_login_url(request))
+    response.delete_cookie(RETURN_TO_COOKIE)
     response.set_cookie(
         key="microsoft-refresh-token",
         value=refresh_token,
