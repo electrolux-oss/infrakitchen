@@ -2,7 +2,7 @@
 title: Overview
 ---
 
-Integrations are the foundation of InfraKitchen's connectivity to external systems. They securely store credentials and configuration needed to interact with cloud providers, Git repositories, and authentication systems.
+Integrations are the foundation of InfraKitchen's connectivity to external systems. They securely store credentials and configuration needed to interact with cloud providers, Git repositories, container registries, notification channels, and authentication systems.
 
 ## What are Integrations?
 
@@ -21,7 +21,7 @@ All integrations share common properties:
 | Property          | Description                           | Required |
 | ----------------- | ------------------------------------- | -------- |
 | **Name**          | Human-readable identifier             | ✅       |
-| **Type**          | Cloud/Git/Auth provider               | ✅       |
+| **Type**          | Cloud, Git, Notification, or Container Registry | ✅       |
 | **Provider**      | Specific provider (AWS, GitHub, etc.) | ✅       |
 | **Configuration** | Provider-specific settings            | ✅       |
 | **Description**   | Purpose and usage notes               | ❌       |
@@ -107,6 +107,10 @@ Before deletion:
 - [Backstage Integration](./auth#backstage) - Plugin configuration
 - [Service Accounts](./auth#service-account) - API token management
 - [Guest Access](./auth#guest) - Development mode
+
+### Container Registry Providers
+
+- [Amazon ECR Setup Guide](./container-registry#amazon-ecr) - Authentication, IAM permissions, and cross-account access
 
 ### Notification Providers
 
