@@ -1,0 +1,69 @@
+---
+title: Container Registry Providers
+---
+
+Container registry integrations allow InfraKitchen to pull container images from private registries when resources and workflows need them.
+Each registry integration fetches short-lived registry credentials at run time, so you do not need to store long-lived registry passwords in InfraKitchen.
+
+## Amazon ECR
+
+Follow these steps to integrate **Amazon Elastic Container Registry (ECR)** with InfraKitchen. Fill the required fields in the integration form (see **Add the Credentials to InfraKitchen** below) and use **Test Connection** before saving.
+
+### Prepare an IAM Principal
+
+InfraKitchen authenticates to ECR with an AWS identity. You can either reuse an existing [AWS cloud integration](./cloud#aws) or provide AWS access keys for this registry only.
+
+Follow AWS's official guide to [create an IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html) or to [create an IAM role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create.html) if you plan to use role assumption.
+
+(Recommended) Create a dedicated IAM principal for InfraKitchen rather than using a personal or root account.
+
+### Attach Permissions
+
+The identity needs permission to request an ECR authorization token and to pull images from the repositories InfraKitchen uses:
+
+- `ecr:GetAuthorizationToken` (required, must be allowed on all resources)
+- Pull permissions on the repositories, for example `ecr:BatchCheckLayerAvailability`, `ecr:GetDownloadUrlForLayer`, and `ecr:BatchGetImage`
+
+The AWS managed policy **AmazonEC2ContainerRegistryReadOnly** includes these pull permissions. If InfraKitchen also needs to push images, add the push permissions (for example `ecr:PutImage` and the layer upload actions) to a custom policy scoped to the required repositories.
+
+### Cross-Account Registries
+
+If the registry lives in a different AWS account than the credentials, do one of the following:
+
+- Allow the account of the credentials in the registry's **repository policy** (Amazon ECR → Repositories → repository → **Permissions**), or
+- Create a role in the registry account that trusts the InfraKitchen principal, and enter its name in **AWS Assumed Role Name**. See the [Cloud Providers](./cloud#aws) guide for the role trust policy pattern.
+
+### Add the Credentials to InfraKitchen
+
+InfraKitchen path: `/integrations/aws_ecr/setup`
+
+| Field | Description | Example/Notes |
+| :--- | :--- | :--- |
+| **Integration Name** | A unique, descriptive name for the integration. | E.g., `ecr-production` |
+| **Description** | (Optional) A short text describing this integration. | |
+| **Labels** | (Optional) Tags to categorize the integration. | E.g., `production`, `images` |
+| **Registry AWS Account ID** | The 12-digit AWS account that owns the registry. | E.g., `123456789012` |
+| **Registry Region** | The region where the registry is located. Defaults to `us-east-1`. | E.g., `eu-west-1` |
+| **Authentication** | Choose **Use an AWS integration** or **AWS credentials**. | |
+| **AWS Integration** | (When using an AWS integration) The existing AWS cloud integration whose credentials are used to get ECR authorization tokens. | |
+| **AWS Access Key ID** | (When using AWS credentials) Access Key ID of an IAM user allowed to call `ecr:GetAuthorizationToken`. | E.g., `AKIA...` |
+| **AWS Secret Access Key** | (When using AWS credentials) The Secret Access Key for the Access Key ID. Stored encrypted. | |
+| **AWS Assumed Role Name** | (Optional) The role name to assume before requesting the token. | E.g., `InfraKitchenRegistryRole` |
+| **AWS Partition** | (Optional) The AWS partition of the registry, used to build the registry host. Defaults to `aws` if empty. | E.g., `aws-cn` (China), `aws-us-gov` (GovCloud) |
+
+:::note[Authentication choice]
+Use either an AWS integration or AWS credentials, not both. ECR requires one of the two sources to be configured.
+:::
+
+The registry host is built from the account ID, region, and partition, for example `123456789012.dkr.ecr.eu-west-1.amazonaws.com` (or `*.amazonaws.com.cn` for `aws-cn`).
+
+### Test the Connection
+
+After completing the fields, click <kbd>Test Connection</kbd>. InfraKitchen requests an authorization token from ECR to verify the credentials. If it fails:
+
+- Re-check the **Registry AWS Account ID** and **Registry Region**. They must match the registry you want to use.
+- Re-check the **Access Key ID / Secret** for typos, or confirm the linked AWS integration is valid.
+- Verify the IAM principal (or assumed role) has `ecr:GetAuthorizationToken`.
+- If you use **AWS Assumed Role Name**, confirm the role exists and its trust policy allows the principal to assume it.
+
+Save the integration once the test passes.
