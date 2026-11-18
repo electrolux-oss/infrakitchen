@@ -6,6 +6,7 @@ export const INTEGRATION_PROVIDER_OPTIONS: IntegrationProviderType[] = [
   "gcp",
   "mongodb_atlas",
   "datadog",
+  "cloudflare",
 ];
 
 export const TEMPLATE_STATUS = {

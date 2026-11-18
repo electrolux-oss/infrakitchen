@@ -3,6 +3,7 @@ import {
   AwsIcon,
   AzureIcon,
   BitbucketIcon,
+  CloudflareIcon,
   DatadogIcon,
   GitHubIcon,
   GitIcon,
@@ -385,6 +386,40 @@ export const providers: Provider[] = [
     slug: "datadog",
     instructions: [],
     tokenLink: "",
+  },
+  {
+    type: IntegrationType.CLOUD,
+    name: "Cloudflare",
+    icon: CloudflareIcon,
+    slug: "cloudflare",
+    instructions: [
+      <>
+        In the Cloudflare dashboard go to{" "}
+        <a
+          href="https://dash.cloudflare.com/profile/api-tokens"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <strong>My Profile &gt; API Tokens</strong>
+        </a>{" "}
+        (or <strong>Manage Account &gt; Account API Tokens</strong> for a token
+        that is not tied to a user) and click <strong>Create Token</strong>
+      </>,
+      "Grant only the permissions your OpenTofu modules need (e.g. Zone > DNS > Edit) and limit the token to the accounts and zones they manage",
+      <>
+        Optionally add the <strong>Account ID</strong> (shown on the account
+        overview page). It is required to test account-owned tokens and is
+        passed to your modules as{" "}
+        <InlineCode disableCopy>var.cloudflare_account_id</InlineCode>
+      </>,
+      <>
+        OpenTofu runs receive the token as{" "}
+        <InlineCode disableCopy>CLOUDFLARE_API_TOKEN</InlineCode>, so the{" "}
+        <InlineCode disableCopy>provider &quot;cloudflare&quot;</InlineCode>{" "}
+        block needs no credentials
+      </>,
+    ],
+    tokenLink: "https://dash.cloudflare.com/profile/api-tokens",
   },
   {
     type: IntegrationType.CLOUD,

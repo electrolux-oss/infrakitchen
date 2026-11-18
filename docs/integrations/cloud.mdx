@@ -436,3 +436,75 @@ InfraKitchen will attempt to connect to Datadog’s API endpoint using the keys 
 - The **API Key** and **Application Key** are correct.
 - The **Datadog Site URL** matches your region.
 - The Application Key user has sufficient permissions.
+
+## Cloudflare
+
+Follow these steps to integrate **Cloudflare** with **InfraKitchen**.
+This integration lets InfraKitchen's OpenTofu deploy resources with the [Cloudflare provider](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs) (DNS records, zones, rulesets, Workers, R2, Zero Trust, etc.).
+
+### Create an API Token
+
+Follow Cloudflare's guide to [creating an API token](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/). You can create either:
+
+- a **user API token** under [My Profile > API Tokens](https://dash.cloudflare.com/profile/api-tokens), or
+- an **account API token** under **Manage Account > Account API Tokens** (recommended for automation, since it is not tied to a user leaving the organization).
+
+Grant only the permissions your modules need, for example **Zone > DNS > Edit** for DNS records, and restrict the token to the relevant accounts and zones. Global API keys are not supported.
+
+### Collect Required Information
+
+| Required Value | Description |
+| -------------- | ----------- |
+| **API Token**  | The token created above |
+| **Account ID** | Optional. 32-character ID shown on the account overview page. Required to test account API tokens |
+
+### Add the Credentials to InfraKitchen
+
+InfraKitchen path: `/integrations/cloudflare/setup`
+
+| Field                     | Description                                                     |
+| ------------------------- | --------------------------------------------------------------- |
+| **Integration Name**      | A unique name for this integration (e.g., `cloudflare-prod`)    |
+| **Description**           | Brief description of the Cloudflare account                     |
+| **Labels**                | Add tags like `dns`, `cdn`, or `prod`                           |
+| **Cloudflare API Token**  | The API token you created above                                 |
+| **Cloudflare Account ID** | Optional account ID                                             |
+
+### Use It in Your Modules
+
+When a resource uses a Cloudflare integration, InfraKitchen sets these environment variables for every OpenTofu run:
+
+| Variable                       | Set when               | Purpose                                                  |
+| ------------------------------ | ---------------------- | -------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`         | always                 | Read by the Cloudflare provider for authentication       |
+| `CLOUDFLARE_ACCOUNT_ID`        | Account ID is set      | For scripts and tools that read it                       |
+| `TF_VAR_cloudflare_account_id` | Account ID is set      | Fills `var.cloudflare_account_id` if the module declares it |
+
+The provider block therefore needs no credentials:
+
+```hcl
+terraform {
+  required_providers {
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "cloudflare" {}
+
+variable "cloudflare_account_id" {
+  type = string
+}
+```
+
+A `cloudflare_account_id` value set on the resource itself takes precedence over the integration's account ID.
+
+### Test the Connection
+
+InfraKitchen verifies the token with Cloudflare's token verification API (the account endpoint when an Account ID is set, otherwise the user endpoint). If it fails, verify that:
+
+- The token was copied completely and has not expired or been revoked.
+- For an **account API token**, the **Account ID** is set and belongs to that account.
+- The token's client IP filtering (if any) allows the InfraKitchen workers.

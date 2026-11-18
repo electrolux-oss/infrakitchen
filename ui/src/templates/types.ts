@@ -1,7 +1,13 @@
 import { TEMPLATE_STATUS } from "./constants";
 
 export type IntegrationProviderType =
-  "aws" | "azurerm" | "gcp" | "mongodb_atlas" | "datadog" | "postgresql";
+  | "aws"
+  | "azurerm"
+  | "gcp"
+  | "mongodb_atlas"
+  | "datadog"
+  | "cloudflare"
+  | "postgresql";
 
 export type TemplateStatus =
   (typeof TEMPLATE_STATUS)[keyof typeof TEMPLATE_STATUS];
