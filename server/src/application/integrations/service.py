@@ -20,9 +20,17 @@ from core.constants import ModelStatus
 from core.database import FieldSpec
 from core.constants.model import ModelActions
 from core.database import to_dict
-from core.errors import CloudWrongCredentials, DependencyError, EntityNotFound, EntityWrongState
+from core.errors import (
+    AccessDenied,
+    CannotProceed,
+    CloudWrongCredentials,
+    DependencyError,
+    EntityNotFound,
+    EntityWrongState,
+)
 from core.permissions.schema import EntityPolicyCreate
 from core.permissions.service import PermissionService
+from core.adapters.provider_adapters import ContainerRegistryProvider, RegistryImage
 from core.revisions.handler import RevisionHandler
 from core.users.functions import user_has_access_to_entity
 from core.users.model import UserDTO
@@ -362,6 +370,32 @@ class IntegrationService:
             integration_is_valid = False
             message = f"Unexpected error: {str(e)}"
         return IntegrationValidationResponse(is_valid=integration_is_valid, message=message)
+
+    async def list_registry_images(
+        self,
+        integration_id: UUID,
+        repository_filter: str | None,
+        requester: UserDTO,
+    ) -> list[RegistryImage]:
+        """Return the images of a container registry integration. Read-only."""
+        integration = await self.get_by_id(integration_id)
+        if integration is None or integration.integration_type != "container_registry":
+            raise EntityNotFound("Container registry integration not found")
+        if not await user_has_access_to_entity(
+            requester, str(integration_id), action="read", entity_name="integration"
+        ):
+            raise AccessDenied("Access denied")
+
+        adapter_kwargs: dict[str, Any] = {}
+        aws_configuration = await self.resolve_linked_aws_configuration(integration.configuration, requester)
+        if aws_configuration:
+            adapter_kwargs["aws_configuration"] = aws_configuration
+        provider = await get_integration_adapter(
+            integration.integration_provider, integration.configuration, integration_id=integration_id, **adapter_kwargs
+        )
+        if not isinstance(provider, ContainerRegistryProvider):
+            raise CannotProceed(f"Provider {integration.integration_provider} does not support listing images")
+        return await provider.list_images(repository_filter=repository_filter)
 
     # PostgreSQL: one integration owns one database, created on integration creation
     @staticmethod

@@ -15,6 +15,7 @@ import { Revision } from "../../revision/Revision";
 import { EntityStorages } from "../../storages/components/EntityStorages";
 
 import { IntegrationConfiguration } from "./IntegrationConfiguration";
+import { IntegrationContainerRegistryImages } from "./IntegrationContainerRegistryImages";
 import { IntegrationPermissions } from "./IntegrationPermissions";
 import { IntegrationSidebar } from "./IntegrationSidebar";
 import { IntegrationSourceCodeDependencies } from "./IntegrationSourceCodeDependencies";
@@ -105,6 +106,16 @@ export const IntegrationContent = () => {
                 fixedFilters={{ integration_id: entity.id }}
                 filterStorageKey="filter_integration_storages"
               />
+            ),
+          },
+        ]
+      : []),
+    ...(isContainerRegistry
+      ? [
+          {
+            label: "Images",
+            content: (
+              <IntegrationContainerRegistryImages integrationId={entity.id} />
             ),
           },
         ]

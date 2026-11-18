@@ -1,15 +1,18 @@
 import base64
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
+import botocore.exceptions
 import pytest
 from pydantic import ValidationError
 
 from application.integrations.schema import AWSECRIntegrationConfig, AWSIntegrationConfig, IntegrationCreate
 from application.providers.container_registry.aws_ecr import AwsEcrProvider
-from core.errors import CannotProceed
+from core.errors import CannotProceed, CloudWrongCredentials
 
 AWS_INTEGRATION_ID = uuid4()
 
@@ -185,3 +188,113 @@ class TestAwsEcrProvider:
         assert aws_authentication.aws_access_key_id == "AKIALINKED"
         assert aws_authentication.aws_assumed_role_name == "ik-role"
         assert aws_authentication.aws_account == "210987654321"
+
+
+async def _async_pages(pages: list[dict[str, Any]]):
+    for page in pages:
+        yield page
+
+
+def ecr_listing_session(
+    repositories: list[str], images: dict[str, list[list[dict[str, Any]]]], error: Exception | None = None
+):
+    ecr_client = Mock()
+
+    def get_paginator(operation: str) -> Mock:
+        paginator = Mock()
+        if operation == "describe_repositories":
+            pages = [{"repositories": [{"repositoryName": name} for name in repositories]}]
+            paginator.paginate = Mock(side_effect=error or (lambda: _async_pages(pages)))
+        else:
+            paginator.paginate = Mock(
+                side_effect=lambda repositoryName: _async_pages(
+                    [{"imageDetails": detail} for detail in images.get(repositoryName, [])]
+                )
+            )
+        return paginator
+
+    ecr_client.get_paginator = Mock(side_effect=get_paginator)
+
+    @asynccontextmanager
+    async def create_client(*args, **kwargs):
+        yield ecr_client
+
+    session = Mock()
+    session.create_client = Mock(side_effect=create_client)
+    return session
+
+
+PUSHED_AT = datetime(2026, 1, 2, tzinfo=UTC)
+
+
+def image_detail(digest: str, tags: list[str] | None = None) -> dict[str, Any]:
+    detail: dict[str, Any] = {"imageDigest": digest, "imagePushedAt": PUSHED_AT, "imageSizeInBytes": 1024}
+    if tags is not None:
+        detail["imageTags"] = tags
+    return detail
+
+
+class TestAwsEcrListImages:
+    async def _list(self, session, repository_filter: str | None = None):
+        provider = AwsEcrProvider(configuration=OWN_CREDENTIALS)
+        provider._aws_authentication.environment_variables.update(  # pyright: ignore[reportPrivateUsage]
+            {"AWS_ACCESS_KEY_ID": "AKIATEST", "AWS_SECRET_ACCESS_KEY": "secret"}
+        )
+        with (
+            patch("application.providers.aws.aws_provider.AwsAuthentication.get_account_session", AsyncMock()),
+            patch("application.providers.container_registry.aws_ecr.get_session", return_value=session),
+        ):
+            return await provider.list_images(repository_filter=repository_filter)
+
+    async def test_lists_all_repositories_without_filter(self):
+        session = ecr_listing_session(
+            repositories=["api", "web"],
+            images={"api": [[image_detail("sha256:a", ["v1"])]], "web": [[image_detail("sha256:b", ["latest"])]]},
+        )
+
+        images = await self._list(session)
+
+        assert [(image.repository, image.tags) for image in images] == [("api", ["v1"]), ("web", ["latest"])]
+        assert all(image.registry_host == "123456789012.dkr.ecr.eu-west-1.amazonaws.com" for image in images)
+        assert images[0].digest == "sha256:a"
+        assert images[0].pushed_at == PUSHED_AT
+        assert images[0].size_bytes == 1024
+
+    async def test_filters_repositories_case_insensitively(self):
+        session = ecr_listing_session(
+            repositories=["Backend-API", "frontend", "api-worker"],
+            images={
+                "Backend-API": [[image_detail("sha256:a", ["v1"])]],
+                "frontend": [[image_detail("sha256:b", ["v1"])]],
+                "api-worker": [[image_detail("sha256:c", ["v1"])]],
+            },
+        )
+
+        images = await self._list(session, repository_filter="API")
+
+        assert [image.repository for image in images] == ["Backend-API", "api-worker"]
+
+    async def test_filter_matching_nothing_returns_empty_list(self):
+        session = ecr_listing_session(repositories=["api"], images={"api": [[image_detail("sha256:a", ["v1"])]]})
+
+        assert await self._list(session, repository_filter="missing") == []
+
+    async def test_untagged_images_and_multiple_pages(self):
+        session = ecr_listing_session(
+            repositories=["api"],
+            images={"api": [[image_detail("sha256:a", ["v1"])], [image_detail("sha256:b")]]},
+        )
+
+        images = await self._list(session)
+
+        assert [image.digest for image in images] == ["sha256:a", "sha256:b"]
+        assert images[1].tags == []
+
+    async def test_client_error_is_wrapped(self):
+        error = botocore.exceptions.ClientError(
+            {"Error": {"Code": "AccessDeniedException", "Message": "denied"}}, "DescribeRepositories"
+        )
+        session = ecr_listing_session(repositories=[], images={}, error=error)
+
+        with pytest.raises(CloudWrongCredentials, match="Failed to list ECR images"):
+            _ = await self._list(session)

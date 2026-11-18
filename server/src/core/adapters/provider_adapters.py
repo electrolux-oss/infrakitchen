@@ -127,6 +127,17 @@ class RegistryCredentials(BaseModel):
     expires_at: datetime | None = Field(default=None, description="When the credentials expire, if short-lived")
 
 
+class RegistryImage(BaseModel):
+    """One image in a container registry. An untagged image has no tags."""
+
+    registry_host: str = Field(..., description="Registry hostname the image is stored in")
+    repository: str = Field(..., description="Repository name, e.g. infrakitchen/api")
+    tags: list[str] = Field(default_factory=list)
+    digest: str = Field(...)
+    pushed_at: datetime | None = Field(default=None)
+    size_bytes: int | None = Field(default=None)
+
+
 class ContainerRegistryProvider:
     """Base adapter class for container registry providers like AWS ECR.
 
@@ -152,6 +163,16 @@ class ContainerRegistryProvider:
         Must be implemented by subclasses.
         """
         raise NotImplementedError("Subclasses must implement is_valid method.")
+
+    async def list_images(self, repository_filter: str | None = None) -> list[RegistryImage]:
+        """List images in the registry, read-only.
+
+        Args:
+            repository_filter: Optional case-insensitive substring; only repositories whose name contains it are listed.
+
+        Must be implemented by subclasses.
+        """
+        raise NotImplementedError("Subclasses must implement list_images method.")
 
 
 class IntegrationProvider:

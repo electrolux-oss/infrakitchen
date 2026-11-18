@@ -1,5 +1,7 @@
 import base64
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Any, override
 
 import botocore.exceptions
@@ -7,7 +9,12 @@ from aiobotocore.session import get_session
 
 from application.integrations.schema import AWSECRIntegrationConfig, AWSIntegrationConfig
 from application.providers.aws.aws_provider import AwsAuthentication
-from core.adapters.provider_adapters import ContainerRegistryProvider, IntegrationProvider, RegistryCredentials
+from core.adapters.provider_adapters import (
+    ContainerRegistryProvider,
+    IntegrationProvider,
+    RegistryCredentials,
+    RegistryImage,
+)
 from core.custom_entity_log_controller import EntityLogger
 from core.errors import CannotProceed, CloudWrongCredentials
 
@@ -54,18 +61,23 @@ class AwsEcrProvider(IntegrationProvider, ContainerRegistryProvider):
         self.registry_host: str = self.configuration.registry_host_for_partition(aws_configuration.aws_partition)
         self._aws_authentication = AwsAuthentication(logger=logger, configuration=aws_configuration)
 
-    @override
-    async def authenticate(self, **kwargs: Any) -> None:
+    @asynccontextmanager
+    async def _ecr_client(self) -> AsyncIterator[Any]:
         await self._aws_authentication.get_account_session()
         aws_env = self._aws_authentication.environment_variables
+        async with get_session().create_client(
+            "ecr",
+            region_name=self.configuration.aws_region,
+            aws_access_key_id=aws_env["AWS_ACCESS_KEY_ID"],
+            aws_secret_access_key=aws_env["AWS_SECRET_ACCESS_KEY"],
+            aws_session_token=aws_env.get("AWS_SESSION_TOKEN"),
+        ) as ecr_client:
+            yield ecr_client
+
+    @override
+    async def authenticate(self, **kwargs: Any) -> None:
         try:
-            async with get_session().create_client(
-                "ecr",
-                region_name=self.configuration.aws_region,
-                aws_access_key_id=aws_env["AWS_ACCESS_KEY_ID"],
-                aws_secret_access_key=aws_env["AWS_SECRET_ACCESS_KEY"],
-                aws_session_token=aws_env.get("AWS_SESSION_TOKEN"),
-            ) as ecr_client:
+            async with self._ecr_client() as ecr_client:
                 response: dict[str, Any] = await ecr_client.get_authorization_token()  # pyright: ignore[reportGeneralTypeIssues]
         except botocore.exceptions.ClientError as e:
             raise CloudWrongCredentials(
@@ -93,6 +105,41 @@ class AwsEcrProvider(IntegrationProvider, ContainerRegistryProvider):
             await self.authenticate()
         assert self._credentials is not None
         return self._credentials
+
+    @override
+    async def list_images(self, repository_filter: str | None = None) -> list[RegistryImage]:
+        needle = (repository_filter or "").strip().lower()
+        images: list[RegistryImage] = []
+        try:
+            async with self._ecr_client() as ecr_client:
+                repository_names: list[str] = []
+                async for page in ecr_client.get_paginator("describe_repositories").paginate():
+                    for repository in page.get("repositories", []):
+                        name: str = repository["repositoryName"]
+                        if not needle or needle in name.lower():
+                            repository_names.append(name)
+
+                for repository_name in repository_names:
+                    async for page in ecr_client.get_paginator("describe_images").paginate(
+                        repositoryName=repository_name
+                    ):
+                        for detail in page.get("imageDetails", []):
+                            images.append(
+                                RegistryImage(
+                                    registry_host=self.registry_host,
+                                    repository=repository_name,
+                                    tags=detail.get("imageTags", []),
+                                    digest=detail["imageDigest"],
+                                    pushed_at=detail.get("imagePushedAt"),
+                                    size_bytes=detail.get("imageSizeInBytes"),
+                                )
+                            )
+        except botocore.exceptions.ClientError as e:
+            raise CloudWrongCredentials(
+                "Failed to list ECR images",
+                metadata=[{"cloud_message": str(e)}],
+            ) from e
+        return images
 
     @override
     async def is_valid(self) -> bool:

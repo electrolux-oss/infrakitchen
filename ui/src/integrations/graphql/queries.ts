@@ -20,3 +20,12 @@ export const INTEGRATION_OIDC_QUERY = `
     }
   }
 `;
+
+export const CONTAINER_REGISTRY_IMAGES_QUERY = `
+  query ContainerRegistryImages($integrationId: UUID!, $repositoryFilter: String) {
+    containerRegistryImages(
+      integrationId: $integrationId
+      repositoryFilter: $repositoryFilter
+    )
+  }
+`;

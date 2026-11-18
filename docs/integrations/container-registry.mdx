@@ -23,6 +23,7 @@ The identity needs permission to request an ECR authorization token and to pull 
 
 - `ecr:GetAuthorizationToken` (required, must be allowed on all resources)
 - Pull permissions on the repositories, for example `ecr:BatchCheckLayerAvailability`, `ecr:GetDownloadUrlForLayer`, and `ecr:BatchGetImage`
+- To browse images in InfraKitchen, `ecr:DescribeRepositories` and `ecr:DescribeImages` (see [Browsing Images](#browsing-images))
 
 The AWS managed policy **AmazonEC2ContainerRegistryReadOnly** includes these pull permissions. If InfraKitchen also needs to push images, add the push permissions (for example `ecr:PutImage` and the layer upload actions) to a custom policy scoped to the required repositories.
 
@@ -67,3 +68,11 @@ After completing the fields, click <kbd>Test Connection</kbd>. InfraKitchen requ
 - If you use **AWS Assumed Role Name**, confirm the role exists and its trust policy allows the principal to assume it.
 
 Save the integration once the test passes.
+
+### Browsing Images
+
+Open the integration and select the **Images** tab to see the images in the registry. The list is read-only. Each row is one tag of an image, so an image with several tags appears in several rows. An untagged image appears once, with **Untagged** in the Tag column. Each row also shows the repository, a shortened digest, when the image was pushed, and its size.
+
+Click **Filter**, choose **Repository**, and type to narrow the list. The match is a case-insensitive substring of the repository name, for example `api` matches `Backend-API` and `api-worker`. Remove the filter with its chip or **Clear all** to list every repository in the registry.
+
+The tab needs `ecr:DescribeRepositories` and `ecr:DescribeImages` in addition to the permissions listed above. If the list fails with an error, check these actions first.

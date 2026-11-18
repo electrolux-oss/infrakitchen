@@ -119,3 +119,17 @@ class IntegrationQuery:
             jwks_filename="gcp-oidc-jwks.json",
             jwks_content_base64=b64encode(jwks_document.encode("utf-8")).decode("ascii"),
         )
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def container_registry_images(
+        self,
+        info: Info,
+        integration_id: uuid.UUID,
+        repository_filter: str | None = None,
+    ) -> list[JSON]:
+        """List the images of a container registry integration. Read-only."""
+        await check_api_permission(info, "integration", ["read"])
+        requester = info.context["request"].state.user
+        service = _build_service(info)
+        images = await service.list_registry_images(integration_id, repository_filter, requester)
+        return cast(list[JSON], [image.model_dump(mode="json") for image in images])
