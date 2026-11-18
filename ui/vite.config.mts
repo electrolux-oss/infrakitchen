@@ -18,6 +18,7 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: parseInt(port, 10),
+    allowedHosts: true,
     proxy: {
       "/api": {
         target: `http://${backendHost}:8000`,

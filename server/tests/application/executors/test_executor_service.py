@@ -529,9 +529,14 @@ class TestDelete:
         mock_executor_crud.delete.assert_awaited_once_with(existing_executor)
         mock_log_crud.delete_by_entity_id.assert_awaited_once_with(existing_executor.id)
         mock_revision_handler.delete_revisions.assert_awaited_once_with(existing_executor.id)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            existing_executor.id, mock_user_dto.id, ModelActions.DELETE
-        )
+        mock_audit_log_handler.create_log.assert_awaited_once()
+        log_args = mock_audit_log_handler.create_log.await_args
+        assert log_args.args == (existing_executor.id, mock_user_dto.id, ModelActions.DELETE)
+        # the executor and its revisions are deleted, so the row keeps a snapshot
+        snapshot = log_args.kwargs["action_metadata"]
+        assert snapshot["name"] == existing_executor.name
+        assert snapshot["entityName"] == "executor"
+        assert snapshot["id"] == str(existing_executor.id)
         mock_task_entity_crud.delete_by_entity_id.assert_awaited_once_with(existing_executor.id)
         mock_delete_policies.assert_awaited_once()
 
