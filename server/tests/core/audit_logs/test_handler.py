@@ -4,17 +4,15 @@ from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 from core.audit_logs.handler import AuditLogHandler
+from core.audit_logs.model import AuditLog
 
 
 def make_handler() -> tuple[AuditLogHandler, Mock]:
     session = Mock()
     session.flush = AsyncMock()
-    added: list = []
-
-    def add(row):
+    def add(row: AuditLog) -> None:
         # the database assigns the id on flush
         row.id = uuid4()
-        added.append(row)
 
     session.add = Mock(side_effect=add)
     return AuditLogHandler(session=session, entity_name="resource"), session
