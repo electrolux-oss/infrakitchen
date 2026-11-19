@@ -2,10 +2,12 @@ from datetime import datetime, timedelta
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import ColumnElement, case, delete, exists, func, literal, select, update
+from sqlalchemy import ColumnElement, ScalarSelect, case, delete, exists, func, literal, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
+from core.config import Settings
+from core.constants.model import ModelActions
 from core.database import (
     FieldSpec,
     evaluate_sqlalchemy_filters,
@@ -84,6 +86,16 @@ class TaskQueueCRUD:
         )
         return list((await self.session.execute(statement)).all())
 
+    async def count_active(self, action: str) -> int:
+        """Queued and running tasks of an action."""
+        count = await self.session.scalar(
+            select(func.count()).where(
+                TaskQueueItem.action == action,
+                TaskQueueItem.status.in_((TaskQueueStatus.QUEUED, TaskQueueStatus.RUNNING)),
+            )
+        )
+        return count or 0
+
     async def db_now(self) -> datetime:
         return (await self.session.execute(select(func.now()))).scalar_one()
 
@@ -112,6 +124,21 @@ class TaskQueueCRUD:
             TaskQueueItem.status == TaskQueueStatus.QUEUED,
             TaskQueueItem.available_at <= func.now(),
             ~entity_is_busy,
+            # drift checks are background work: only a few run at once, so they never take every worker
+            or_(
+                TaskQueueItem.action != ModelActions.CHECK_DRIFT,
+                TaskQueueCRUD._running_drift_checks() < Settings().DRIFT_MAX_RUNNING_CHECKS,
+            ),
+        )
+
+    @staticmethod
+    def _running_drift_checks() -> ScalarSelect[int]:
+        running = aliased(TaskQueueItem)
+        return (
+            select(func.count())
+            .select_from(running)
+            .where(running.status == TaskQueueStatus.RUNNING, running.action == ModelActions.CHECK_DRIFT)
+            .scalar_subquery()
         )
 
     @staticmethod
@@ -125,13 +152,14 @@ class TaskQueueCRUD:
         return (TaskQueueItem.status == TaskQueueStatus.RUNNING, TaskQueueItem.locked_until < func.now())
 
     async def _count_demand(self, *conditions: ColumnElement[bool]) -> dict[UUID | None, int]:
+        is_drift_check = TaskQueueItem.action == ModelActions.CHECK_DRIFT
+        entity_key = func.distinct(func.concat(TaskQueueItem.entity, ":", TaskQueueItem.entity_id))
         claimable = (
             select(
                 TaskQueueItem.worker_template_id,
-                func.count(func.distinct(func.concat(TaskQueueItem.entity, ":", TaskQueueItem.entity_id))).filter(
-                    TaskQueueItem.entity_id.is_not(None)
-                ),
+                func.count(entity_key).filter(TaskQueueItem.entity_id.is_not(None), ~is_drift_check),
                 func.count().filter(TaskQueueItem.entity_id.is_(None)),
+                func.count(entity_key).filter(is_drift_check),
             )
             .where(*self._claimable(), *conditions)
             .group_by(TaskQueueItem.worker_template_id)
@@ -142,8 +170,14 @@ class TaskQueueCRUD:
             .group_by(TaskQueueItem.worker_template_id)
         )
         demand: dict[UUID | None, int] = {}
-        for template_id, per_entity, without_entity in (await self.session.execute(claimable)).all():
-            demand[template_id] = (per_entity or 0) + (without_entity or 0)
+        rows = (await self.session.execute(claimable)).all()
+        # only the free drift check slots can keep a worker busy
+        drift_slots = 0
+        if any(drift_checks for *_, drift_checks in rows):
+            running_checks = await self.session.scalar(select(self._running_drift_checks())) or 0
+            drift_slots = max(0, Settings().DRIFT_MAX_RUNNING_CHECKS - running_checks)
+        for template_id, per_entity, without_entity, drift_checks in rows:
+            demand[template_id] = (per_entity or 0) + (without_entity or 0) + min(drift_checks or 0, drift_slots)
         for template_id, count in (await self.session.execute(expired)).all():
             demand[template_id] = demand.get(template_id, 0) + (count or 0)
         return demand

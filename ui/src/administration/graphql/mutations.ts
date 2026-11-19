@@ -54,3 +54,12 @@ export const DELETE_SCHEDULER_MUTATION = `
     deleteScheduler(id: $id)
   }
 `;
+
+export const UPDATE_DRIFT_SETTINGS_MUTATION = `
+  mutation UpdateDriftSettings($input: DriftSettingsInput!) {
+    updateDriftSettings(input: $input) {
+      enabled
+      intervalHours
+    }
+  }
+`;

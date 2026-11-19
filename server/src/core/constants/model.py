@@ -31,6 +31,7 @@ class ModelActions(StrEnum):
     SYNC = "sync"
     DRYRUN = "dryrun"
     DRYRUN_WITH_TEMP_STATE = "dryrun_with_temp_state"
+    CHECK_DRIFT = "check_drift"  # compare the real infrastructure with the state, no changes are made
     DISABLE = "disable"
     ENABLE = "enable"
     DOWNLOAD = "download"
@@ -64,6 +65,14 @@ class ModelState(StrEnum):
 
 
 @unique
+class DriftStatus(StrEnum):
+    UNKNOWN = "unknown"  # outdated by a failed apply; checked first once the resource is DONE again
+    IN_SYNC = "in_sync"
+    DRIFTED = "drifted"
+    ERROR = "error"  # no check succeeded yet, the last one failed
+
+
+@unique
 class WorkflowAction(StrEnum):
     CREATE = "create"
     DESTROY = "destroy"
@@ -77,6 +86,8 @@ class EventType(StrEnum):
     EXECUTE = "execute"
     APPROVAL_REQUIRED = "approval_required"
     APPROVAL_RESULT = "approval_result"
+    DRIFT_DETECTED = "drift_detected"
+    DRIFT_UPDATED = "drift_updated"  # the drift result of a resource changed, the body holds only the drift
 
 
 @unique

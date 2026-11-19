@@ -6,8 +6,20 @@ import { CommonEditableField } from "../../common/components/editors/CommonEdita
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
-import { FormControlLabel, Switch } from "../../ui";
-import { RESOURCE_UPDATE_APPROVAL_BYPASS_FIELD_OPTIONS } from "../constants";
+import {
+  FormControl,
+  FormControlLabel,
+  MenuItem,
+  Select,
+  Switch,
+} from "../../ui";
+import {
+  DRIFT_DETECTION_OPTIONS,
+  DriftDetectionMode,
+  fromDriftDetectionMode,
+  RESOURCE_UPDATE_APPROVAL_BYPASS_FIELD_OPTIONS,
+  toDriftDetectionMode,
+} from "../constants";
 import { GqlProject } from "../graphql";
 import {
   ProjectUpdateFieldInput,
@@ -40,6 +52,10 @@ export const ProjectSettings = ({ project }: ProjectSettingsProps) => {
         },
       }),
     [project.configuration, saveField],
+  );
+
+  const driftMode = toDriftDetectionMode(
+    project.configuration?.drift_detection,
   );
 
   return (
@@ -103,6 +119,42 @@ export const ProjectSettings = ({ project }: ProjectSettingsProps) => {
         isEqual={(a, b) =>
           a.length === b.length && a.every((value) => b.includes(value))
         }
+        span="half"
+      />
+      <CommonEditableField<DriftDetectionMode>
+        name={"Drift Detection"}
+        info="Turn scheduled drift checks on or off for this project regardless of the global setting. The check interval is set globally."
+        canEdit={canEdit}
+        value={driftMode}
+        ariaLabel="Edit drift detection"
+        display={
+          driftMode === "inherit" ? (
+            <PlaceholderText text="Global setting" />
+          ) : (
+            DRIFT_DETECTION_OPTIONS.find((option) => option.value === driftMode)
+              ?.label
+          )
+        }
+        onSave={(value) =>
+          saveConfiguration({ drift_detection: fromDriftDetectionMode(value) })
+        }
+        renderEditor={({ value, onChange }) => (
+          <FormControl fullWidth>
+            <Select
+              value={value}
+              variant="outlined"
+              onChange={(event) =>
+                onChange(event.target.value as DriftDetectionMode)
+              }
+            >
+              {DRIFT_DETECTION_OPTIONS.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
         span="half"
       />
     </BaseCard>

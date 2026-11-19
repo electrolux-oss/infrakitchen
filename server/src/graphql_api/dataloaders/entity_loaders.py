@@ -10,6 +10,8 @@ from application.executors.model import Executor
 from application.favorites.model import Favorite
 from application.integrations.model import Integration
 from application.projects.model import Project
+from application.resource_drifts.crud import ResourceDriftCRUD
+from application.resource_drifts.model import DRIFT_SETTINGS_ID, ResourceDrift
 from application.resource_temp_state.model import ResourceTempState
 from application.resources.model import Resource
 from application.services.model import Service
@@ -109,6 +111,11 @@ async def _load_resource_temp_states_by_resource(keys: list[str], session: Async
         }
         for row in result.scalars()
     }
+    return [mapping.get(key) for key in keys]
+
+
+async def _load_resource_drifts_by_resource(keys: list[str], session: AsyncSession) -> list[ResourceDrift | None]:
+    mapping = {str(row.resource_id): row for row in await ResourceDriftCRUD(session).get_by_resource_ids(keys)}
     return [mapping.get(key) for key in keys]
 
 
@@ -312,6 +319,19 @@ async def _load_feature_flags(keys: list[str], session: AsyncSession) -> list[di
     return [mapping.get(key) for key in keys]
 
 
+async def _load_drift_settings(keys: list[str]) -> list[dict[str, Any] | None]:
+    """Name the global drift settings in entity links (e.g. audit log rows).
+
+    Like feature flags, they are managed in the admin panel, not on a detail route.
+    They are a single row with a fixed id, so nothing has to be read.
+    """
+    settings_id = str(DRIFT_SETTINGS_ID)
+    return [
+        {"id": key, "name": "Drift detection settings", "entityName": "drift_settings"} if key == settings_id else None
+        for key in keys
+    ]
+
+
 async def _load_users(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
     stmt = select(User.id, User.identifier).where(User.id.in_(keys))
     result = await session.execute(stmt)
@@ -351,6 +371,10 @@ def get_resource_temp_state_loader(info: Info) -> DataLoader[str, dict[str, Any]
     return info.context["loaders"]["resource_temp_state_by_resource"]
 
 
+def get_resource_drift_loader(info: Info) -> DataLoader[str, ResourceDrift | None]:
+    return info.context["loaders"]["resource_drift_by_resource"]
+
+
 def get_scheduled_action_loader(info: Info, entity_type: str) -> DataLoader[str, TaskEntity | None]:
     return info.context["loaders"][f"scheduled_actions_by_{entity_type}"]
 
@@ -383,7 +407,7 @@ def get_task_queue_status_loader(info: Info, entity_type: str) -> DataLoader[str
     return loaders[loader_key]
 
 
-def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, dict[str, Any] | None]]:
+def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, Any]]:
     return {
         "integration": DataLoader[str, dict[str, Any] | None](
             load_fn=lambda keys: _load_integrations(list(keys), session)
@@ -393,6 +417,9 @@ def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, dict[str,
         "resource": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_resources(list(keys), session)),
         "resource_temp_state_by_resource": DataLoader[str, dict[str, Any] | None](
             load_fn=lambda keys: _load_resource_temp_states_by_resource(list(keys), session)
+        ),
+        "resource_drift_by_resource": DataLoader[str, ResourceDrift | None](
+            load_fn=lambda keys: _load_resource_drifts_by_resource(list(keys), session)
         ),
         "scheduled_actions_by_resource": DataLoader[str, dict[str, Any] | None](
             load_fn=lambda keys: _load_scheduled_actions_by_entity(list(keys), session, "resource")
@@ -423,6 +450,7 @@ def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, dict[str,
         "feature_flag": DataLoader[str, dict[str, Any] | None](
             load_fn=lambda keys: _load_feature_flags(list(keys), session)
         ),
+        "drift_settings": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_drift_settings(list(keys))),
     }
 
 

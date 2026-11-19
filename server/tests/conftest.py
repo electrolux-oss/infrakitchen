@@ -72,6 +72,7 @@ from .fixtures.test_resource_fixtures import (
     many_resource_response,
     mock_validation_rule_service,
 )
+from .fixtures.test_resource_drift_fixtures import fake_resource_drift_crud, resource_drift_service
 from .fixtures.test_resource_temp_state_fixtures import (
     mocked_resource_temp_state_response,
     mocked_resource_temp_state_crud,
@@ -268,6 +269,8 @@ __all__ = [
     "mocked_resource_temp_state_crud",
     "mocked_resource_temp_state",
     "mocked_resource_temp_state_service",
+    "fake_resource_drift_crud",
+    "resource_drift_service",
     "mocked_resource_temp_state_response",
     "mock_task_controller",
     "mock_task_controller_factory",

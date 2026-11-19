@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { Label } from "../../../ui/Label";
 import { cn } from "../../../utils/cn";
 import { useEntityProvider } from "../../context/EntityContext";
@@ -8,6 +10,8 @@ export interface EntityStatusChipProps {
   status: string;
   state?: string;
   className?: string;
+  /** Entity-specific labels shown after the status, e.g. the drift of a resource */
+  children?: ReactNode;
 }
 
 /**
@@ -21,6 +25,7 @@ export const EntityStatusChip = ({
   status,
   state,
   className,
+  children,
 }: EntityStatusChipProps) => {
   const { pendingChanges } = useEntityProvider();
   const pendingCount = pendingChanges ? Object.keys(pendingChanges).length : 0;
@@ -28,6 +33,7 @@ export const EntityStatusChip = ({
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
       <StatusLabel status={status} state={state} size="large" />
+      {children}
       {pendingCount > 0 && (
         <Label
           size="large"

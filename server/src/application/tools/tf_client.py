@@ -11,6 +11,7 @@ from core.errors import ShellExecutionError
 
 from core.tools.shell_client import ShellScriptClient
 
+from .tf_drift import DriftResult, parse_drift_json, parse_drift_text
 from .tf_summary import parse_apply_summary, parse_plan_summary
 
 logger = logging.getLogger(__name__)
@@ -86,7 +87,7 @@ class OtfClient:
             f"Backend config generated. {self.backend_storage_config} File path is {self.workspace_path}/backend.tfvars"
         )
 
-    async def _run_command(self, command_args: str | list[str]) -> str:
+    async def _run_command(self, command_args: str | list[str], log_stdout: bool = True) -> str:
         """
         Run Terraform command and print realtime output
         """
@@ -98,6 +99,7 @@ class OtfClient:
             workspace_path=self.workspace_path,
             environment_variables=self.environment_variables,
             logger=self.logger,
+            log_stdout=log_stdout,
         )
         try:
             return await ssp.run_shell_command()
@@ -143,6 +145,27 @@ class OtfClient:
         else:
             output = await self._run_command(f"plan {command_args}")
         self.logger.add_result(plan=parse_plan_summary(output))
+
+    async def drift_check(self) -> DriftResult:
+        """
+        Plan the configuration against the real infrastructure; the drift is what the next apply would change.
+        Nothing is changed. The state is not locked: a plan doesn't write it, and InfraKitchen never runs two
+        tasks of a resource at once, so a lock would only make an apply started outside of InfraKitchen fail
+        while the check runs. The drift is read from `tofu show -json`; when that fails, from the plan output.
+        """
+        self.logger.info("Checking Tofu drift...")
+        plan_file = "drift.tfplan"
+        output = await self._run_command(f"plan -lock=false -input=false -out={plan_file}")
+        try:
+            # not logged: large, and it holds the attribute values of every object
+            plan_json = await self._run_command(["show", "-json", plan_file], log_stdout=False)
+            result = parse_drift_json(json.loads(plan_json))
+        except Exception as e:
+            self.logger.warning(f"Could not read the drift details, using the plan output instead: {e}")
+            result = parse_drift_text(output)
+        # the per-attribute changes stay out of the task result, they are saved with the drift
+        self.logger.add_result(drift={key: value for key, value in result.summary.items() if key != "changes"})
+        return result
 
     async def get_output(self) -> dict[str, Any]:
         """

@@ -1536,6 +1536,11 @@ class TestSCVSchema:
 
 
 class TestGetResourceActions:
+    @pytest.fixture(autouse=True)
+    def opentofu_resource(self, monkeypatch):
+        # the mocked resource has no source code, drift checks need OpenTofu code
+        monkeypatch.setattr("application.resources.service.resource_supports_drift_check", lambda resource: True)
+
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "status,state,user_permissions,expected_actions",
@@ -1566,6 +1571,7 @@ class TestGetResourceActions:
                     ModelActions.EXECUTE,
                     ModelActions.DOWNLOAD,
                     ModelActions.DRYRUN,
+                    ModelActions.CHECK_DRIFT,
                 ],
             ),
             (
@@ -1743,6 +1749,7 @@ class TestGetResourceActions:
                     "has_temporary_state",
                     "dryrun_with_temp_state",
                     ModelActions.DRYRUN,
+                    ModelActions.CHECK_DRIFT,
                 ],
             ),
             (
@@ -1775,6 +1782,7 @@ class TestGetResourceActions:
                     ModelActions.APPROVE,
                     ModelActions.REJECT,
                     ModelActions.DRYRUN,
+                    ModelActions.CHECK_DRIFT,
                 ],
             ),
             (

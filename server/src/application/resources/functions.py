@@ -24,7 +24,7 @@ from application.source_code_versions.schema import (
     SourceConfigTemplateReferenceResponse,
 )
 from core.constants.model import ModelActions, ModelState, ModelStatus
-from core.errors import EntityExistsError
+from core.errors import EntityExistsError, EntityWrongState
 from core.notifications.service import SubscriptionService
 from core.permissions.schema import ActionLiteral, EntityPolicyCreate
 from core.permissions.service import PermissionService
@@ -49,6 +49,41 @@ def validate_not_state_backend_integrations(integrations: Sequence[IntegrationDT
             )
 
 
+def resource_supports_drift_check(resource: Resource) -> bool:
+    """Drift checks run a tofu plan, so only concrete resources with OpenTofu code support them."""
+    if resource.abstract:
+        return False
+    source_code = resource.source_code_version.source_code if resource.source_code_version else None
+    return source_code is not None and source_code.source_code_language == "opentofu"
+
+
+DRIFT_NOT_SUPPORTED = "Drift is supported only for concrete resources with OpenTofu source code"
+# the plan of a resource with changes that are not applied yet (READY) or not fully applied (ERROR)
+# would show those changes as drift
+DRIFT_NEEDS_DONE = "Drift checks need a provisioned resource in DONE: apply or discard the pending changes first"
+
+
+def resource_can_check_drift(state: ModelState | None, status: ModelStatus | None) -> bool:
+    return state == ModelState.PROVISIONED and status == ModelStatus.DONE
+
+
+def drift_check_blocker(resource: Resource) -> str | None:
+    """Why the resource can't run a drift check now, None when it can; the same rules as in `get_resource_actions`."""
+    if not resource_supports_drift_check(resource):
+        return DRIFT_NOT_SUPPORTED
+    if not resource_can_check_drift(resource.state, resource.status):
+        return DRIFT_NEEDS_DONE
+    return None
+
+
+def validate_drift_action(resource: Resource) -> None:
+    """Raise when the resource can't run a drift check."""
+    if not resource_supports_drift_check(resource):
+        raise ValueError(DRIFT_NOT_SUPPORTED)
+    if not resource_can_check_drift(resource.state, resource.status):
+        raise EntityWrongState(DRIFT_NEEDS_DONE)
+
+
 async def get_resource_actions(
     requester: UserDTO,
     resource_id: str | UUID,
@@ -58,6 +93,7 @@ async def get_resource_actions(
     project: Project | None = None,
     has_children: bool = False,
     created_by: str | UUID | None = None,
+    drift_check_supported: bool = False,
 ) -> list[str]:
     """
     Get all actions available for the resource.
@@ -66,6 +102,7 @@ async def get_resource_actions(
     :param resource_id: ID of the resource
     :param project_id: ID of the project the resource belongs to (optional)
     :param created_by: ID of the user who created the resource (optional)
+    :param drift_check_supported: the resource runs OpenTofu code, which drift checks need
     :return: List of actions
     """
 
@@ -128,6 +165,8 @@ async def get_resource_actions(
         actions.append(ModelActions.DOWNLOAD)
         actions.append(ModelActions.EDIT)
         actions.append(ModelActions.DRYRUN)
+        if drift_check_supported and resource_can_check_drift(state, status):
+            actions.append(ModelActions.CHECK_DRIFT)
 
         if temp_state_exists and user_is_admin:
             actions.append(ModelActions.APPROVE)

@@ -78,6 +78,8 @@ from graphql_api.modules.validation_rule.queries import ValidationRuleQuery
 from graphql_api.modules.auth.mutations import AuthMutation
 from graphql_api.modules.auth.queries import AuthQuery
 from graphql_api.modules.golden_state.queries import GoldenStateQuery
+from graphql_api.modules.drift.queries import DriftQuery
+from graphql_api.modules.drift.mutations import DriftMutation
 
 
 @strawberry.type
@@ -123,6 +125,7 @@ class Query(
     NotificationQuery,
     AuthQuery,
     GoldenStateQuery,
+    DriftQuery,
 ):
     pass
 
@@ -130,6 +133,7 @@ class Query(
 @strawberry.type
 class Mutation(
     AdministrationMutation,
+    DriftMutation,
     AuthMutation,
     AuthProviderMutation,
     SlackMutation,

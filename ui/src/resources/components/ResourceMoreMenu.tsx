@@ -5,11 +5,13 @@ import { useNavigate } from "react-router";
 import { useConfig, usePermissionProvider } from "../../common";
 import { CascadeActionDialog } from "../../common/components/dialogs/CascadeActionDialog";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { useEntityAction } from "../../common/hooks/useEntityAction";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import {
   HeroChevronDownIcon,
   HeroClipboardDocumentListIcon,
   HeroDocumentTextIcon,
+  HeroMagnifyingGlassIcon,
   HeroPlayCircleIcon,
   HeroRectangleGroupIcon,
 } from "../../icons";
@@ -51,8 +53,9 @@ const CASCADE_RUNS = {
  * Create Blueprint from the templates of the same tree).
  */
 export const ResourceMoreMenu = () => {
-  const { entity, actions } = useEntityProvider();
+  const { entity, actions, refreshActions } = useEntityProvider();
   const { ikApi, linkPrefix } = useConfig();
+  const { runAction } = useEntityAction();
   const { checkActionPermission } = usePermissionProvider();
   const navigate = useNavigate();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
@@ -69,8 +72,10 @@ export const ResourceMoreMenu = () => {
   const canApply =
     !entity.abstract && actions.includes(ENTITY_ACTION.CASCADE_EXECUTE);
   const canBlueprint = checkActionPermission("api:blueprint", "write");
+  // the server offers it only for resources a check can run on
+  const canCheckDrift = actions.includes(ENTITY_ACTION.CHECK_DRIFT);
   const hasCascade = canPlan || canApply || canBlueprint;
-  if (!canMetadata && !canClone && !hasCascade) return null;
+  if (!canMetadata && !canClone && !canCheckDrift && !hasCascade) return null;
   const entityName = entity.name || entity.identifier || entity.id;
 
   const openPage = (path: string) => {
@@ -81,6 +86,11 @@ export const ResourceMoreMenu = () => {
   const choose = (next: CascadeMenuMode) => {
     setAnchor(null);
     setMode(next);
+  };
+
+  const checkDrift = async () => {
+    setAnchor(null);
+    if (await runAction(ENTITY_ACTION.CHECK_DRIFT)) refreshActions?.();
   };
 
   const start = async (run: CascadeRunMode, excludeIds: string[]) => {
@@ -134,7 +144,17 @@ export const ResourceMoreMenu = () => {
           </MenuItem>
         )}
         {canClone && <CloneResourceButton onSelect={() => setAnchor(null)} />}
-        {(canMetadata || canClone) && hasCascade && <Divider />}
+        {canCheckDrift && (
+          <MenuItem onClick={() => void checkDrift()}>
+            <ListItemIcon>
+              <HeroMagnifyingGlassIcon />
+            </ListItemIcon>
+            <ListItemText>Check drift</ListItemText>
+          </MenuItem>
+        )}
+        {(canMetadata || canClone || canCheckDrift) && hasCascade && (
+          <Divider />
+        )}
         {canPlan && (
           <MenuItem onClick={() => choose("plan")}>
             <ListItemIcon>

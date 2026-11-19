@@ -13,9 +13,25 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { validateTagEntries } from "../../resources/utils/formValidation";
 import { IkEntity } from "../../types";
-import { FormControlLabel, Button, Switch, TextField } from "../../ui";
+import {
+  FormControl,
+  FormControlLabel,
+  FormHelperText,
+  FormLabel,
+  MenuItem,
+  Select,
+  Button,
+  Switch,
+  TextField,
+} from "../../ui";
 import { GqlUserShort, USERS_SHORT_QUERY } from "../../users/graphql";
-import { RESOURCE_UPDATE_APPROVAL_BYPASS_FIELD_OPTIONS } from "../constants";
+import {
+  DRIFT_DETECTION_OPTIONS,
+  DriftDetectionMode,
+  fromDriftDetectionMode,
+  RESOURCE_UPDATE_APPROVAL_BYPASS_FIELD_OPTIONS,
+  toDriftDetectionMode,
+} from "../constants";
 import { CREATE_PROJECT_MUTATION } from "../graphql";
 import { ProjectCreateRequest } from "../types";
 
@@ -37,6 +53,7 @@ export const ProjectCreatePage = () => {
       workspaceId: null,
       configuration: {
         always_use_workspace: false,
+        drift_detection: null,
         allow_unapproved_metadata_edits: [],
       },
       dependencyTags: [],
@@ -198,6 +215,36 @@ export const ProjectCreatePage = () => {
                   />
                   <FieldInfo text="Force resources in this project to use the assigned workspace." />
                 </div>
+              )}
+            />
+            <Controller
+              name="configuration.drift_detection"
+              control={control}
+              render={({ field }) => (
+                <FormControl fullWidth margin="normal">
+                  <FormLabel>Drift detection</FormLabel>
+                  <Select
+                    value={toDriftDetectionMode(field.value)}
+                    variant="outlined"
+                    onChange={(e) =>
+                      field.onChange(
+                        fromDriftDetectionMode(
+                          e.target.value as DriftDetectionMode,
+                        ),
+                      )
+                    }
+                  >
+                    {DRIFT_DETECTION_OPTIONS.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <FormHelperText>
+                    Regularly check the resources of this project for drift. The
+                    global setting is used unless turned on or off here.
+                  </FormHelperText>
+                </FormControl>
               )}
             />
             <Controller

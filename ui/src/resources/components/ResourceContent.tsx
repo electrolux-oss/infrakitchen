@@ -14,6 +14,7 @@ import { Revision } from "../../revision/Revision";
 import { EntityTaskQueueStatus } from "../../workers/components";
 
 import { DependencyConfiguration } from "./DependencyConfiguration";
+import { ResourceDriftTab } from "./ResourceDriftTab";
 import { ResourceNotificationSubscribersTable } from "./ResourceNotificationSubscribersTable";
 import { ResourcePermissions } from "./ResourcePermissions";
 import { ResourceReviewView } from "./ResourceReviewView";
@@ -55,6 +56,11 @@ export const ResourceContent = () => {
         <TopologyTab entity_id={entity.id} entity_name={entity.entityName} />
       ),
     },
+    // Hidden until the resource was first checked (More > Check drift, or the
+    // drift schedule); the result then stays until the resource is destroyed
+    ...(entity.drift
+      ? [{ label: "Drift", content: <ResourceDriftTab /> }]
+      : []),
     {
       label: "Policies",
       content: <ResourcePermissions resource={entity} />,

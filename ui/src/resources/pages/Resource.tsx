@@ -9,6 +9,7 @@ import { EntityProvider } from "../../common/context/EntityContext";
 import { TASK_QUEUE_STATUS_SELECTION } from "../../workers/graphql";
 import { ResourceContent } from "../components/ResourceContent";
 import { ResourceMoreMenu } from "../components/ResourceMoreMenu";
+import { ResourceStatusChip } from "../components/ResourceStatusChip";
 import { RESOURCE_DETAIL_FIELDS } from "../graphql";
 
 // Queue state is fetched with the entity in the same request
@@ -25,6 +26,7 @@ export const ResourcePage = () => {
     >
       <EntityContainer
         titleIcon={entityIcons.resource}
+        titleAdornment={<ResourceStatusChip />}
         actions={
           <>
             <ScheduleApplyButton entityType="resource" />

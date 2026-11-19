@@ -45,6 +45,7 @@ export const RESOURCE_GRAPHQL_FIELDS = {
     workerTemplate: "workerTemplate",
     creator: "creator",
     tempState: "tempState",
+    drift: "drift",
     scheduledActions: "scheduledActions",
     parents: "parents",
     children: "children",
@@ -61,6 +62,16 @@ export type ResourceGraphqlRelationKey =
   keyof typeof RESOURCE_GRAPHQL_FIELDS.relations;
 export type ResourceGraphqlRelationField =
   (typeof RESOURCE_GRAPHQL_FIELDS.relations)[ResourceGraphqlRelationKey];
+
+// the change list (summary) can be large: the Drift tab fetches it itself
+export const RESOURCE_DRIFT_FIELDS = `
+  status
+  checkedAt
+  firstDetectedAt
+  consecutiveFailures
+  lastError
+  lastErrorAt
+`;
 
 export const RESOURCE_SHORT_FIELDS = `
   ${buildSelection(RESOURCE_GRAPHQL_FIELDS.short)}
@@ -101,6 +112,7 @@ export const RESOURCE_DETAIL_FIELDS = `
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.tool, TOOL_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.workerTemplate, WORKER_TEMPLATE_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.tempState, RESOURCE_TEMP_STATE_FIELDS)}
+  ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.drift, RESOURCE_DRIFT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.scheduledActions, RESOURCE_SCHEDULED_ACTION_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.parents, RESOURCE_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.children, RESOURCE_SHORT_FIELDS)}
