@@ -175,5 +175,8 @@ class ShellScriptClient:
         return "\n".join(captured_stdout_lines).strip()
 
     def _default_env(self) -> dict[str, str]:
-        """Return forced environment variables such as PATH & proxy variables."""
-        return {key: os.getenv(key, "") for key in {"PATH", "HTTPS_PROXY", "HTTP_PROXY", "NO_PROXY"}}
+        """Return forced environment variables such as PATH, proxy and CA certificate variables."""
+        env = {key: os.getenv(key, "") for key in {"PATH", "HTTPS_PROXY", "HTTP_PROXY", "NO_PROXY"}}
+        # custom CA certificates (e.g. a corporate CA or the dev provider proxy), passed only when set
+        env.update({key: value for key in ("SSL_CERT_FILE", "SSL_CERT_DIR") if (value := os.getenv(key))})
+        return env
