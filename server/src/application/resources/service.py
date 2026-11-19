@@ -151,6 +151,27 @@ class ResourceService:
             _ = await self.worker_template_service.retarget_tasks("resource", existing_resource.id)
         return resource
 
+    async def _log_update(
+        self,
+        existing_resource: Resource,
+        before: ResourceDTO | ResourceResponse,
+        requester_id: str | UUID,
+        set_current: bool = True,
+    ) -> None:
+        """Snapshot an applied edit and write its UPDATE audit row.
+
+        ``before`` is the resource as it was before the edit. When nothing changed no
+        revision is written and the row keeps the previous revision number.
+        """
+        revision_number = await self.revision_handler.handle_revision(existing_resource)
+        await self.audit_log_handler.create_log(
+            before.id,
+            requester_id,
+            ModelActions.UPDATE,
+            revision_number=revision_number if revision_number is not None else before.revision_number,
+            set_current=set_current,
+        )
+
     async def get_dto_by_id(self, resource_id: str | UUID) -> ResourceDTO | None:
         if not is_valid_uuid(resource_id):
             raise ValueError(f"Invalid resource ID: {resource_id}")
@@ -698,19 +719,14 @@ class ResourceService:
             allowed_unapproved_fields
         )
 
-        if should_apply_metadata_update_directly:
-            await self._update(existing_resource, body)
-            existing_resource = await self.crud.get_by_id(existing_resource.id)
-            if not existing_resource:
-                raise EntityNotFound("Resource not found after update")
-            await self.publish_notification_event(existing_resource, ModelActions.UPDATE, requester)
-
-        elif (
+        if should_apply_metadata_update_directly or (
             existing_resource_pydantic.status == ModelStatus.APPROVAL_PENDING
             and existing_resource_pydantic.state == ModelState.PROVISION
             and body is not None
         ):
+            # Applied without approval: still a change, so it gets a revision and an audit row
             await self._update(existing_resource, body)
+            await self._log_update(existing_resource, existing_resource_pydantic, requester.id)
             existing_resource = await self.crud.get_by_id(existing_resource.id)
             if not existing_resource:
                 raise EntityNotFound("Resource not found after update")
@@ -828,14 +844,11 @@ class ResourceService:
             and resource_temp_state is not None
         ):
             # when resource edited after creation and first approval
-            await self.audit_log_handler.create_log(
-                pydantic_resource.id,
-                resource_temp_state.created_by,
-                ModelActions.UPDATE,
-                revision_number=pydantic_resource.revision_number,
-            )
             existing_resource = await self._update(existing_resource, resource_temp_state.value)
-            await self.revision_handler.handle_revision(existing_resource)
+            # the approve row stays the request's main row, so its tasks report there
+            await self._log_update(
+                existing_resource, pydantic_resource, resource_temp_state.created_by, set_current=False
+            )
             if resource_variables_differ():
                 await approve_entity(existing_resource, abstract=existing_resource.abstract)
             await self.resource_temp_state_handler.delete_by_resource_id(resource_id=pydantic_resource.id)
@@ -851,14 +864,10 @@ class ResourceService:
             # for DESTROY, the next apply runs destroy with the approved values
             if resource_variables_differ():
                 await approve_entity(existing_resource, abstract=existing_resource.abstract)
-            await self.audit_log_handler.create_log(
-                pydantic_resource.id,
-                resource_temp_state.created_by,
-                ModelActions.UPDATE,
-                revision_number=pydantic_resource.revision_number,
-            )
             existing_resource = await self._update(existing_resource, resource_temp_state.value)
-            await self.revision_handler.handle_revision(existing_resource)
+            await self._log_update(
+                existing_resource, pydantic_resource, resource_temp_state.created_by, set_current=False
+            )
             await self.resource_temp_state_handler.delete_by_resource_id(resource_id=pydantic_resource.id)
             await self.crud.refresh(existing_resource)
 

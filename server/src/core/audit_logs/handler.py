@@ -55,7 +55,14 @@ class AuditLogHandler:
         action: str,
         revision_number: int | None = None,
         action_metadata: dict[str, Any] | None = None,
-    ) -> None:
+        set_current: bool = True,
+    ) -> UUID:
+        """Write an audit row and return its id.
+
+        ``set_current`` makes the row the one ``audit_log_id`` points at, so tasks started by
+        the request record their result on it. Pass False for secondary rows, such as the
+        update row written while approving, so the request's main row stays current.
+        """
         audit_log = AuditLog(
             model=self.entity_name,
             user_id=requester_id,
@@ -66,7 +73,9 @@ class AuditLogHandler:
         )
         self.session.add(audit_log)
         await self.session.flush()
-        self.audit_log_id = audit_log.id
+        if set_current:
+            self.audit_log_id = audit_log.id
+        return audit_log.id
 
     async def get_last_actor_id(self, entity_id: str | UUID, actions: list[str]) -> UUID | None:
         """ID of the user who most recently performed one of the actions on the entity."""

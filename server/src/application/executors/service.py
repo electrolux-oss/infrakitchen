@@ -2,7 +2,11 @@ import logging
 from typing import Any
 from uuid import UUID
 
-from application.executors.functions import delete_executor_policies, get_executor_actions
+from application.executors.functions import (
+    build_executor_audit_snapshot,
+    delete_executor_policies,
+    get_executor_actions,
+)
 from application.favorites.service import FavoriteService
 from application.integrations.schema import IntegrationShort
 from application.integrations.service import IntegrationService
@@ -408,7 +412,13 @@ class ExecutorService:
         await self.favorite_service.delete_all_by_component(component_type="executor", component_id=executor_id)
 
         await delete_entity(existing_executor)
-        await self.audit_log_handler.create_log(executor_id, requester.id, ModelActions.DELETE)
+        # the executor and its revisions are gone afterwards, so the row keeps a snapshot
+        await self.audit_log_handler.create_log(
+            executor_id,
+            requester.id,
+            ModelActions.DELETE,
+            action_metadata=build_executor_audit_snapshot(existing_executor),
+        )
         await self.revision_handler.delete_revisions(executor_id)
         await self.log_service.delete_by_entity_id(executor_id)
         await self.task_service.delete_by_entity_id(executor_id)

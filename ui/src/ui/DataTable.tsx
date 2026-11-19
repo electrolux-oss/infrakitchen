@@ -111,6 +111,11 @@ const DEFAULT_PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const SELECT_COLUMN_WIDTH = 50;
 const DEFAULT_COLUMN_WIDTH = 100;
 const DEFAULT_MIN_WIDTH = 50;
+/**
+ * Floor for a flex or content-sized column when the container is narrow:
+ * below it the table scrolls sideways instead of crushing the cells.
+ */
+const MIN_SHARED_WIDTH = 120;
 /** Cap for a flex column sized from its content, so one long value can't take the whole row. */
 const MAX_AUTO_WIDTH = 480;
 const SKELETON_ROWS = 5;
@@ -436,7 +441,7 @@ export function DataTable<R extends RowData = any>({
     for (const index of flexIndexes) {
       const column = visibleColumns[index];
       result[index] = Math.max(
-        column.minWidth ?? DEFAULT_MIN_WIDTH,
+        column.minWidth ?? MIN_SHARED_WIDTH,
         Math.floor((free * (column.flex ?? 0)) / totalFlex),
       );
     }
@@ -453,11 +458,14 @@ export function DataTable<R extends RowData = any>({
         result[target] += leftover;
       } else if (leftover < 0) {
         // Too wide: shrink content-sized columns in proportion to their
-        // room above the minimum (cells wrap or truncate as before).
-        const room = autoIndexes.map(
-          (index) =>
+        // room above the minimum (cells wrap or truncate as before); past
+        // that the table scrolls.
+        const room = autoIndexes.map((index) =>
+          Math.max(
+            0,
             result[index] -
-            (visibleColumns[index].minWidth ?? DEFAULT_MIN_WIDTH),
+              (visibleColumns[index].minWidth ?? MIN_SHARED_WIDTH),
+          ),
         );
         const totalRoom = room.reduce((sum, value) => sum + value, 0);
         if (totalRoom > 0) {
@@ -803,7 +811,9 @@ export function DataTable<R extends RowData = any>({
                       key={column.field}
                       className={cn(
                         cellPadding,
-                        "align-middle leading-(--ik-table-line-height) break-words",
+                        // Long unbroken values (names, ids) wrap anywhere,
+                        // and nothing paints over the next column.
+                        "overflow-hidden align-middle leading-(--ik-table-line-height) wrap-anywhere",
                         ALIGN[column.align ?? "left"],
                         rowIndex > 0 && "border-t border-divider",
                       )}

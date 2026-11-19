@@ -1,9 +1,30 @@
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from core.constants.model import ModelActions, ModelState, ModelStatus
 from core.permissions.service import PermissionService
 from core.users.functions import user_entity_permissions
 from core.users.model import UserDTO
+
+if TYPE_CHECKING:
+    from application.executors.model import Executor
+
+
+def build_executor_audit_snapshot(executor: "Executor") -> dict[str, Any]:
+    """Snapshot stored on the delete audit row: the executor and its revisions are gone afterwards."""
+    return {
+        "id": str(executor.id),
+        "name": executor.name,
+        "entityName": "executor",
+        "status": executor.status,
+        "state": executor.state,
+        "description": executor.description,
+        "runtime": executor.runtime,
+        "labels": list(executor.labels or []),
+        "createdAt": executor.created_at.isoformat() if executor.created_at else None,
+        "updatedAt": executor.updated_at.isoformat() if executor.updated_at else None,
+        "revisionNumber": executor.revision_number,
+    }
 
 
 async def delete_executor_policies(
