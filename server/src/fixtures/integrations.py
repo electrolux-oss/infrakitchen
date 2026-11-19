@@ -92,6 +92,18 @@ integration_fixtures: list[IntegrationFixture] = [
         },
         "labels": ["datadog", "integration", "monitoring"],
     },
+    {
+        "name": "Cloudflare",
+        "description": get_sentence(),
+        "integration_type": "cloud",
+        "integration_provider": "cloudflare",
+        "configuration": {
+            "integration_provider": "cloudflare",
+            "cloudflare_api_token": "test_api_token",
+            "cloudflare_account_id": "0123456789abcdef0123456789abcdef",
+        },
+        "labels": ["cloudflare", "integration", "cdn"],
+    },
 ]
 
 

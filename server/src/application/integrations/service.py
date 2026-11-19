@@ -107,7 +107,7 @@ class IntegrationService:
         :param requester: User who creates the integration
         :return: Created integration ORM model
         """
-        cloud_providers = ["aws", "azurerm", "gcp", "mongodb_atlas", "datadog", "postgresql"]
+        cloud_providers = ["aws", "azurerm", "gcp", "mongodb_atlas", "datadog", "cloudflare", "postgresql"]
         source_code_providers = [
             "github",
             "gitlab",
