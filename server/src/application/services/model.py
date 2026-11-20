@@ -4,9 +4,11 @@ import uuid
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from application.integrations.model import Integration
 from application.projects.model import Project
+from application.source_codes.model import SourceCode
 from core.base_models import Base, BaseRevision
-from sqlalchemy import UUID, Column, DateTime, ForeignKey, Index, JSON, Table, func
+from sqlalchemy import UUID, Column, DateTime, ForeignKey, Index, JSON, Table, UniqueConstraint, func, text
 
 from core.users.model import User, UserDTO
 
@@ -19,22 +21,56 @@ service_owners = Table(
 )
 
 
+class ServiceRegistry(Base):
+    __tablename__: str = "service_registries"
+
+    service_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("services.id", name="fk_service_registry_service_id", ondelete="CASCADE"),
+    )
+    registry_integration_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("integrations.id", name="fk_service_registry_registry_integration_id", ondelete="CASCADE"),
+    )
+    registry_integration: Mapped["Integration"] = relationship("Integration", lazy="joined")
+    image_repository: Mapped[str] = mapped_column()
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+    created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+
+    __table_args__ = (
+        UniqueConstraint("service_id", "registry_integration_id", "image_repository", name="uq_service_registry"),
+    )
+
+
 class Service(BaseRevision):
     __tablename__: str = "services"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(index=True)
-    display_name: Mapped[str | None] = mapped_column(nullable=True)
     description: Mapped[str | None] = mapped_column()
 
-    project_id: Mapped[uuid.UUID] = mapped_column(
+    project_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("projects.id", name="fk_service_project_id"),
-        nullable=False,
+        nullable=True,
     )
-    project: Mapped["Project"] = relationship("Project", lazy="joined")
+    project: Mapped["Project | None"] = relationship("Project", lazy="joined")
 
-    repository_url: Mapped[str | None] = mapped_column(nullable=True)
+    source_code_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("source_codes.id", name="fk_service_source_code_id"),
+        nullable=True,
+    )
+    source_code: Mapped["SourceCode | None"] = relationship("SourceCode", lazy="joined")
+
+    registries: Mapped[list[ServiceRegistry]] = relationship(
+        lazy="selectin",
+        order_by=ServiceRegistry.created_at,
+        cascade="all, delete-orphan",
+    )
+    dockerfile_path: Mapped[str] = mapped_column(default="Dockerfile", server_default="Dockerfile")
+    build_context: Mapped[str] = mapped_column(default=".", server_default=".")
 
     labels: Mapped[list[str]] = mapped_column(JSON, default=list)
 
@@ -47,7 +83,10 @@ class Service(BaseRevision):
     created_by: Mapped[str | uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
 
     # Names are unique per project rather than globally, so two projects can each own an "api" service.
-    __table_args__ = (Index("ix_service_project_id_name", "project_id", "name", unique=True),)
+    __table_args__ = (
+        Index("ix_service_project_id_name", "project_id", "name", unique=True),
+        Index("ix_service_name_without_project", "name", unique=True, postgresql_where=text("project_id IS NULL")),
+    )
 
 
 class ServiceDTO(BaseModel):
@@ -58,10 +97,11 @@ class ServiceDTO(BaseModel):
     created_by: UserDTO | uuid.UUID = Field()
 
     name: str = Field(...)
-    display_name: str | None = Field(default=None)
     description: str = Field(default="")
-    project_id: uuid.UUID = Field(...)
-    repository_url: str | None = Field(default=None)
+    project_id: uuid.UUID | None = Field(default=None)
+    source_code_id: uuid.UUID | None = Field(default=None)
+    dockerfile_path: str = Field(default="Dockerfile")
+    build_context: str = Field(default=".")
     owners: list[UserDTO] = Field(default_factory=list)
     labels: list[str] = Field(default_factory=list)
 

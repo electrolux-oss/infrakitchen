@@ -6,11 +6,10 @@ import {
 import { USER_SHORT_FIELDS } from "../../users/graphql";
 
 export const SERVICE_GRAPHQL_FIELDS = {
-  short: ["id", "name", "displayName", "entityName"] as const,
+  short: ["id", "name", "entityName"] as const,
   list: [
     "id",
     "name",
-    "displayName",
     "description",
     "labels",
     "createdAt",
@@ -20,10 +19,11 @@ export const SERVICE_GRAPHQL_FIELDS = {
   detail: [
     "id",
     "name",
-    "displayName",
     "description",
     "projectId",
-    "repositoryUrl",
+    "sourceCodeId",
+    "dockerfilePath",
+    "buildContext",
     "labels",
     "revisionNumber",
     "createdAt",
@@ -34,6 +34,8 @@ export const SERVICE_GRAPHQL_FIELDS = {
     creator: "creator",
     owners: "owners",
     project: "project",
+    sourceCode: "sourceCode",
+    registries: "registries",
   } as const,
 };
 
@@ -68,9 +70,60 @@ export const SERVICE_FIELD_MAP: GraphqlFieldMap = {
   ),
 };
 
+const REGISTRY_INTEGRATION_FIELDS = `
+  id
+  name
+  integrationProvider
+  entityName
+`;
+
+const SERVICE_REGISTRY_FIELDS = `
+  id
+  imageRepository
+  ${buildNestedSelection("registryIntegration", REGISTRY_INTEGRATION_FIELDS)}
+`;
+
+const SERVICE_BUILD_IMAGE_FIELDS = `
+  id
+  imageRepository
+  image
+  ${buildNestedSelection("registryIntegration", REGISTRY_INTEGRATION_FIELDS)}
+`;
+
+const SOURCE_CODE_FIELDS = `
+  id
+  identifier
+  sourceCodeUrl
+  sourceCodeProvider
+  defaultBranch
+  commitCount
+  gitTags
+  gitTagShas
+  status
+  updatedAt
+  entityName
+`;
+
 export const SERVICE_DETAIL_FIELDS = `
   ${buildSelection(SERVICE_GRAPHQL_FIELDS.detail)}
   ${buildNestedSelection(SERVICE_GRAPHQL_FIELDS.relations.creator, USER_SHORT_FIELDS)}
   ${buildNestedSelection(SERVICE_GRAPHQL_FIELDS.relations.owners, USER_SHORT_FIELDS)}
   ${buildNestedSelection(SERVICE_GRAPHQL_FIELDS.relations.project, PROJECT_SHORT_FIELDS)}
+  ${buildNestedSelection(SERVICE_GRAPHQL_FIELDS.relations.sourceCode, SOURCE_CODE_FIELDS)}
+  ${buildNestedSelection(SERVICE_GRAPHQL_FIELDS.relations.registries, SERVICE_REGISTRY_FIELDS)}
+`;
+
+export const SERVICE_BUILD_FIELDS = `
+  id
+  serviceId
+  commitSha
+  tag
+  imageDigest
+  status
+  startedAt
+  finishedAt
+  createdAt
+  entityName
+  ${buildNestedSelection("creator", USER_SHORT_FIELDS)}
+  ${buildNestedSelection("images", SERVICE_BUILD_IMAGE_FIELDS)}
 `;

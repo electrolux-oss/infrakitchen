@@ -13,7 +13,7 @@ from core.database import (
 from core.users.model import User
 from core.utils.model_tools import is_valid_uuid
 
-from .model import Service
+from .model import Service, ServiceRegistry
 from .query_options import build_service_query_options
 
 
@@ -86,6 +86,16 @@ class ServiceCRUD:
             existing_service.owners = await self._resolve_users(body.pop("owners"))
 
         return existing_service
+
+    async def add_registry(self, service: Service, body: dict[str, Any]) -> ServiceRegistry:
+        registry = ServiceRegistry(**body)
+        service.registries.append(registry)
+        await self.session.flush()
+        return registry
+
+    async def remove_registry(self, service: Service, registry: ServiceRegistry) -> None:
+        service.registries.remove(registry)
+        await self.session.flush()
 
     async def delete(self, service: Service) -> None:
         await self.session.delete(service)

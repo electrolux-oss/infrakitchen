@@ -28,6 +28,7 @@ from fixtures.executors import insert_executors
 from fixtures.insert_secrets import insert_secrets
 from fixtures.integrations import insert_env_integrations, insert_integrations
 from fixtures.resources import insert_resources
+from fixtures.services import insert_services
 
 from fixtures.source_code import insert_source_code
 from fixtures.source_code_and_version import insert_source_code_version
@@ -125,6 +126,7 @@ async def create_fixtures(drop_tables: bool = False):
         await insert_executors(session, user)
         await insert_resources(session, envs, user)
         await insert_batch_operations(session, envs, user)
+        await insert_services(session, user)
         logger.info("Fixtures created successfully.")
 
 

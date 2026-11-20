@@ -23,6 +23,7 @@ from .blueprints import BlueprintShort
 from .workflows import Workflow
 from .favorites import Favorite
 from .services import ServiceDTO
+from .service_builds import ServiceBuild
 from .worker_templates import WorkerTemplateDTO
 from .worker_templates.routing import register_task_router
 
@@ -57,5 +58,6 @@ __all__ = [
     "Workflow",
     "Favorite",
     "ServiceDTO",
+    "ServiceBuild",
     "WorkerTemplateDTO",
 ]

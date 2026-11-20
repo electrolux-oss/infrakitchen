@@ -15,13 +15,17 @@ import {
   CommonField,
   EntityReference,
 } from "../../common/components/fields/CommonField";
+import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import { notifyError } from "../../common/hooks/useNotification";
+import { HeroChevronDownIcon } from "../../icons";
 import { SubscribeNotificationButton } from "../../resources/components/notifications/SubscribeNotificationButton";
-import { TextField, Link } from "../../ui";
+import { IkEntity } from "../../types";
+import { Button, Collapse, TextField } from "../../ui";
 import { GqlUserShort, USERS_SHORT_QUERY } from "../../users/graphql";
+import { cn } from "../../utils/cn";
 import { GqlService } from "../graphql";
 import {
   ServiceUpdateFieldInput,
@@ -29,7 +33,11 @@ import {
 } from "../graphql/mutations";
 import { useServiceNotificationDialog } from "../hooks";
 
+import { ServiceRegistries } from "./ServiceRegistries";
+
 type UserOption = GqlUserShort & { displayName?: string | null };
+
+type RepositoryValue = { url: string; integrationId: string | null };
 
 const getUserLabel = (user: UserOption) => user.displayName || user.identifier;
 
@@ -83,7 +91,13 @@ export const ServiceSidebar = ({
     });
 
   const [users, setUsers] = useState<UserOption[]>([]);
+  const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
+    {},
+  );
   const ownersLoadedRef = useRef(false);
+  const [showAdvanced, setShowAdvanced] = useState(
+    service.buildContext !== ".",
+  );
 
   const loadUsers = useCallback(async () => {
     if (ownersLoadedRef.current) {
@@ -146,25 +160,6 @@ export const ServiceSidebar = ({
           canEdit={canEdit}
           onSave={(value) => saveField({ name: value })}
         />
-        <CommonEditableField<string | null>
-          name={"Display Name"}
-          canEdit={canEdit}
-          value={service.displayName}
-          ariaLabel="Edit display name"
-          display={service.displayName || undefined}
-          onSave={(value) => saveField({ displayName: value })}
-          renderEditor={({ value, onChange }) => (
-            <TextField
-              value={value ?? ""}
-              onChange={(e) => onChange(e.target.value)}
-              aria-label="Display Name"
-              fullWidth
-              margin="normal"
-              autoFocus
-            />
-          )}
-          span="full"
-        />
         <EditableDescriptionField
           value={service.description}
           canEdit={canEdit}
@@ -211,39 +206,82 @@ export const ServiceSidebar = ({
           )}
           span="full"
         />
-        <CommonEditableField<string>
-          name={"Repository"}
+        <CommonEditableField<RepositoryValue>
+          name={"Code Repository"}
           canEdit={canEdit}
-          value={service.repositoryUrl ?? ""}
-          ariaLabel="Edit repository URL"
-          display={
-            service.repositoryUrl ? (
-              <Link
-                className="break-all"
-                href={service.repositoryUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {service.repositoryUrl}
-              </Link>
-            ) : null
-          }
-          onSave={async (value) => {
-            const trimmed = value.trim();
-            if (trimmed && !/^https?:\/\/\S+$/.test(trimmed)) {
-              notifyError(
-                new Error("Repository URL must start with https:// or http://"),
-              );
-              throw new Error("Invalid repository URL");
-            }
-            await saveField({ repositoryUrl: trimmed });
+          value={{
+            url: service.sourceCode?.sourceCodeUrl ?? "",
+            integrationId: null,
           }}
+          ariaLabel="Edit code repository"
+          isEqual={(a, b) =>
+            a.url.trim() === b.url.trim() && a.integrationId === b.integrationId
+          }
+          display={
+            service.sourceCode ? (
+              <span className="text-body2 break-all">
+                {service.sourceCode.sourceCodeUrl}
+              </span>
+            ) : (
+              <span className="text-body2 text-fg-muted">Not set</span>
+            )
+          }
+          onSave={(value) =>
+            saveField({
+              repositoryUrl: value.url.trim(),
+              repositoryIntegrationId: value.integrationId,
+            })
+          }
+          renderEditor={({ value, onChange }) => (
+            <>
+              <TextField
+                value={value.url}
+                onChange={(e) => onChange({ ...value, url: e.target.value })}
+                placeholder="git@github.com:org/repo.git"
+                helperText="Where the service's code lives. Leave empty to unlink."
+                aria-label="Repository URL"
+                fullWidth
+                margin="normal"
+                autoFocus
+              />
+              {value.url.trim() && (
+                <ReferenceInput
+                  ikApi={ikApi}
+                  buffer={buffer}
+                  setBuffer={setBuffer}
+                  entity_name="integrations"
+                  filter={{ integration_type: "git" }}
+                  value={value.integrationId}
+                  onChange={(integrationId: string | null) =>
+                    onChange({ ...value, integrationId })
+                  }
+                  ariaLabel="Git integration"
+                  label="Git Integration"
+                  required
+                  helpertext="Use Git Public for public HTTPS repositories"
+                />
+              )}
+            </>
+          )}
+          span="full"
+        />
+      </SidebarSection>
+
+      <SidebarSection title="Image Build">
+        <ServiceRegistries service={service} canEdit={canEdit} />
+        <CommonEditableField<string>
+          name={"Dockerfile"}
+          canEdit={canEdit}
+          value={service.dockerfilePath}
+          ariaLabel="Edit Dockerfile path"
+          display={service.dockerfilePath}
+          onSave={(value) => saveField({ dockerfilePath: value.trim() })}
           renderEditor={({ value, onChange }) => (
             <TextField
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              placeholder="https://github.com/org/repo"
-              aria-label="Repository URL"
+              helperText="Path from the repository root"
+              aria-label="Dockerfile path"
               fullWidth
               margin="normal"
               autoFocus
@@ -251,6 +289,47 @@ export const ServiceSidebar = ({
           )}
           span="full"
         />
+        <div className="col-span-full">
+          <Button
+            variant="text"
+            size="small"
+            endIcon={
+              <HeroChevronDownIcon
+                fontSize="small"
+                className={cn(
+                  "transition-transform",
+                  showAdvanced && "rotate-180",
+                )}
+              />
+            }
+            aria-expanded={showAdvanced}
+            onClick={() => setShowAdvanced((open) => !open)}
+          >
+            Advanced
+          </Button>
+          <Collapse in={showAdvanced} unmountOnExit>
+            <CommonEditableField<string>
+              name={"Build Context"}
+              canEdit={canEdit}
+              value={service.buildContext}
+              ariaLabel="Edit build context"
+              display={service.buildContext}
+              onSave={(value) => saveField({ buildContext: value.trim() })}
+              renderEditor={({ value, onChange }) => (
+                <TextField
+                  value={value}
+                  onChange={(e) => onChange(e.target.value)}
+                  helperText="Directory from the repository root, . for the root"
+                  aria-label="Build context"
+                  fullWidth
+                  margin="normal"
+                  autoFocus
+                />
+              )}
+              span="full"
+            />
+          </Collapse>
+        </div>
       </SidebarSection>
 
       <SidebarDetailsSection entity={service} />

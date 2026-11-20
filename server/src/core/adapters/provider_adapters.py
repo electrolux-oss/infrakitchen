@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from core.tools.kubernetes_client import KubernetesClient
+from core.tools.oci_registry import manifest_exists
 
 
 class SecretProviderAdapter:
@@ -145,6 +146,13 @@ class ContainerRegistryProvider:
         Must be implemented by subclasses.
         """
         raise NotImplementedError("Subclasses must implement get_registry_credentials method.")
+
+    async def image_tag_exists(self, repository: str, tag: str) -> bool:
+        """Whether repository:tag is already pushed. Uses the OCI distribution API unless overridden."""
+        credentials = await self.get_registry_credentials()
+        return await manifest_exists(
+            credentials.registry_host, credentials.username, credentials.password, repository, tag
+        )
 
     async def is_valid(self) -> bool:
         """Validate the connection to the registry.
