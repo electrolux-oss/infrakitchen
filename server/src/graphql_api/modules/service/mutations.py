@@ -7,6 +7,7 @@ from strawberry.experimental import pydantic as strawberry_pydantic
 
 from application.services.dependencies import get_service_service
 from application.services.schema import ServiceCreate, ServiceUpdate
+from application.services.service import ServiceService
 from application.source_codes.dependencies import get_source_code_service
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
@@ -39,6 +40,8 @@ class ServiceUpdateInput:
     project_id: uuid.UUID | None = None
     repository_url: str | None = None
     repository_integration_id: uuid.UUID | None = None
+    dockerfile_path: str | None = None
+    build_context: str | None = None
     labels: list[str] | None = None
     owners: list[uuid.UUID] | None = None
 
@@ -53,6 +56,14 @@ class ServiceSubscriptionCreateInput:
 class ServiceSubscriptionDeleteInput:
     service_id: str
     user_id: str | None = None
+
+
+async def _editable_service(info: Info, service_id: uuid.UUID) -> ServiceService:
+    service = get_service_service(info.context["session"])
+    actions = await service.get_actions(service_id=service_id, requester=info.context["request"].state.user)
+    if ModelActions.EDIT not in actions:
+        raise AccessDenied(f"Access denied for action {ModelActions.EDIT.value}")
+    return service
 
 
 @strawberry.type
@@ -75,6 +86,27 @@ class ServiceMutation:
             raise AccessDenied(f"Access denied for action {ModelActions.EDIT.value}")
 
         return await service.update_service(service_id=str(id), service=input.to_pydantic(), requester=requester)
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def add_service_registry(
+        self,
+        info: Info,
+        service_id: uuid.UUID,
+        registry_integration_id: uuid.UUID,
+        image_repository: str,
+    ) -> ServiceType:
+        service = await _editable_service(info, service_id)
+        return await service.add_registry(
+            service_id=service_id,
+            registry_integration_id=registry_integration_id,
+            image_repository=image_repository,
+            requester=info.context["request"].state.user,
+        )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def remove_service_registry(self, info: Info, service_id: uuid.UUID, id: uuid.UUID) -> ServiceType:
+        service = await _editable_service(info, service_id)
+        return await service.remove_registry(service_id, id, info.context["request"].state.user)
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def sync_service_source_code(self, info: Info, id: uuid.UUID) -> SourceCodeType:

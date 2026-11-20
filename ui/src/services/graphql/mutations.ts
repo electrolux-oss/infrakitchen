@@ -22,6 +22,40 @@ export const UPDATE_SERVICE_MUTATION = `
   }
 `;
 
+export const BUILD_SERVICE_MUTATION = `
+  mutation BuildService($serviceId: UUID!, $commitSha: String!, $tag: String) {
+    buildService(serviceId: $serviceId, commitSha: $commitSha, tag: $tag) {
+      id
+      commitSha
+      status
+    }
+  }
+`;
+
+export const ADD_SERVICE_REGISTRY_MUTATION = `
+  mutation AddServiceRegistry(
+    $serviceId: UUID!
+    $registryIntegrationId: UUID!
+    $imageRepository: String!
+  ) {
+    addServiceRegistry(
+      serviceId: $serviceId
+      registryIntegrationId: $registryIntegrationId
+      imageRepository: $imageRepository
+    ) {
+      id
+    }
+  }
+`;
+
+export const REMOVE_SERVICE_REGISTRY_MUTATION = `
+  mutation RemoveServiceRegistry($serviceId: UUID!, $id: UUID!) {
+    removeServiceRegistry(serviceId: $serviceId, id: $id) {
+      id
+    }
+  }
+`;
+
 export const SYNC_SERVICE_SOURCE_CODE_MUTATION = `
   mutation SyncServiceSourceCode($id: UUID!) {
     syncServiceSourceCode(id: $id) {

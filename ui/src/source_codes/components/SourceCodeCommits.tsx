@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { useSearchParams } from "react-router";
 
@@ -58,6 +65,10 @@ interface SourceCodeCommitsProps {
   total: number;
   tags: GqlSourceCodeTag[];
   lastSyncedAt?: string;
+  extraColumns?: DataTableColumn<GqlSourceCodeCommit>[];
+  renderActions?: (commit: GqlSourceCodeCommit) => ReactNode;
+  actionsWidth?: number;
+  onPageLoaded?: (commits: GqlSourceCodeCommit[]) => void;
 }
 
 export const SourceCodeCommits = ({
@@ -66,6 +77,10 @@ export const SourceCodeCommits = ({
   total,
   tags,
   lastSyncedAt,
+  extraColumns,
+  renderActions,
+  actionsWidth = 200,
+  onPageLoaded,
 }: SourceCodeCommitsProps) => {
   const { ikApi } = useConfig();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -103,6 +118,12 @@ export const SourceCodeCommits = ({
     },
     [setSearchParams],
   );
+
+  const onPageLoadedRef = useRef(onPageLoaded);
+  onPageLoadedRef.current = onPageLoaded;
+  useEffect(() => {
+    onPageLoadedRef.current?.(commits);
+  }, [commits]);
 
   useEffect(() => {
     let cancelled = false;
@@ -228,6 +249,7 @@ export const SourceCodeCommits = ({
           </div>
         ),
       },
+      ...(extraColumns ?? []),
       {
         field: "authoredAt",
         headerName: "Date",
@@ -248,8 +270,22 @@ export const SourceCodeCommits = ({
           );
         },
       },
+      ...(renderActions
+        ? [
+            {
+              field: "actions",
+              headerName: "",
+              width: actionsWidth,
+              sortable: false,
+              align: "right" as const,
+              headerAlign: "right" as const,
+              renderCell: (params: RenderCellParams<GqlSourceCodeCommit>) =>
+                renderActions(params.row),
+            },
+          ]
+        : []),
     ],
-    [tagsBySha],
+    [tagsBySha, extraColumns, renderActions, actionsWidth],
   );
 
   if (!branch) {

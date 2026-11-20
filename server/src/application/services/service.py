@@ -23,10 +23,10 @@ from core.permissions.service import PermissionService
 from core.revisions.handler import RevisionHandler
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import has_field_changes, model_db_dump, to_json_serializable
-from .functions import get_service_actions
+from .functions import assert_registry_integration, get_service_actions
 from .crud import ServiceCRUD
-from .model import Service
-from .schema import ServiceCreate, ServiceResponse, ServiceUpdate
+from .model import Service, ServiceRegistry
+from .schema import ServiceCreate, ServiceResponse, ServiceUpdate, validate_image_repository
 from core.users.model import UserDTO
 
 logger = logging.getLogger(__name__)
@@ -201,7 +201,6 @@ class ServiceService:
         body = model_db_dump(service, exclude_defaults=True, exclude_none=True)
         repository_url = body.pop("repository_url", None)
         repository_integration_id = body.pop("repository_integration_id", None)
-
         if repository_url == "":
             body["source_code_id"] = None
         elif repository_url:
@@ -233,6 +232,73 @@ class ServiceService:
         response = ServiceResponse.model_validate(existing_service)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
         return existing_service
+
+    async def add_registry(
+        self,
+        service_id: str | UUID,
+        registry_integration_id: str | UUID,
+        image_repository: str,
+        requester: UserDTO,
+    ) -> Service:
+        service = await self.crud.get_by_id(service_id)
+        if not service:
+            raise EntityNotFound("Service not found")
+        repository = validate_image_repository(image_repository)
+        if not repository:
+            raise ValueError("Choose the image repository")
+        if any(
+            str(r.registry_integration_id) == str(registry_integration_id) and r.image_repository == repository
+            for r in service.registries
+        ):
+            raise ValueError("The service already has this registry and repository")
+        await assert_registry_integration(self.crud.session, registry_integration_id, requester)
+
+        registry = await self.crud.add_registry(
+            service,
+            {
+                "registry_integration_id": UUID(str(registry_integration_id)),
+                "image_repository": repository,
+                "created_by": requester.id,
+            },
+        )
+        return await self._registries_changed(
+            service,
+            requester,
+            {
+                "registry_added": str(registry.id),
+                "registry_integration_id": str(registry.registry_integration_id),
+                "image_repository": repository,
+            },
+        )
+
+    async def remove_registry(self, service_id: str | UUID, registry_id: str | UUID, requester: UserDTO) -> Service:
+        service, registry = await self._get_registry(service_id, registry_id)
+        await self.crud.remove_registry(service, registry)
+        return await self._registries_changed(
+            service,
+            requester,
+            {
+                "registry_removed": str(registry.id),
+                "registry_integration_id": str(registry.registry_integration_id),
+                "image_repository": registry.image_repository,
+            },
+        )
+
+    async def _get_registry(self, service_id: str | UUID, registry_id: str | UUID) -> tuple[Service, ServiceRegistry]:
+        service = await self.crud.get_by_id(service_id)
+        if not service:
+            raise EntityNotFound("Service not found")
+        registry = next((r for r in service.registries if str(r.id) == str(registry_id)), None)
+        if registry is None:
+            raise EntityNotFound("Registry not found on this service")
+        return service, registry
+
+    async def _registries_changed(self, service: Service, requester: UserDTO, metadata: dict[str, Any]) -> Service:
+        await self.crud.session.flush()
+        await self.audit_log_handler.create_log(service.id, requester.id, ModelActions.UPDATE, action_metadata=metadata)
+        await self.crud.refresh(service)
+        await self.event_sender.send_event(ServiceResponse.model_validate(service), ModelActions.UPDATE)
+        return service
 
     async def delete(self, service_id: str, requester: UserDTO) -> None:
         existing_service = await self.crud.get_by_id(service_id)

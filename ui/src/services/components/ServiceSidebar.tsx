@@ -20,16 +20,20 @@ import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import { notifyError } from "../../common/hooks/useNotification";
+import { HeroChevronDownIcon } from "../../icons";
 import { SubscribeNotificationButton } from "../../resources/components/notifications/SubscribeNotificationButton";
 import { IkEntity } from "../../types";
-import { TextField } from "../../ui";
+import { Button, Collapse, TextField } from "../../ui";
 import { GqlUserShort, USERS_SHORT_QUERY } from "../../users/graphql";
+import { cn } from "../../utils/cn";
 import { GqlService } from "../graphql";
 import {
   ServiceUpdateFieldInput,
   UPDATE_SERVICE_MUTATION,
 } from "../graphql/mutations";
 import { useServiceNotificationDialog } from "../hooks";
+
+import { ServiceRegistries } from "./ServiceRegistries";
 
 type UserOption = GqlUserShort & { displayName?: string | null };
 
@@ -91,6 +95,9 @@ export const ServiceSidebar = ({
     {},
   );
   const ownersLoadedRef = useRef(false);
+  const [showAdvanced, setShowAdvanced] = useState(
+    service.buildContext !== ".",
+  );
 
   const loadUsers = useCallback(async () => {
     if (ownersLoadedRef.current) {
@@ -258,6 +265,71 @@ export const ServiceSidebar = ({
           )}
           span="full"
         />
+      </SidebarSection>
+
+      <SidebarSection title="Image Build">
+        <ServiceRegistries service={service} canEdit={canEdit} />
+        <CommonEditableField<string>
+          name={"Dockerfile"}
+          canEdit={canEdit}
+          value={service.dockerfilePath}
+          ariaLabel="Edit Dockerfile path"
+          display={service.dockerfilePath}
+          onSave={(value) => saveField({ dockerfilePath: value.trim() })}
+          renderEditor={({ value, onChange }) => (
+            <TextField
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              helperText="Path from the repository root"
+              aria-label="Dockerfile path"
+              fullWidth
+              margin="normal"
+              autoFocus
+            />
+          )}
+          span="full"
+        />
+        <div className="col-span-full">
+          <Button
+            variant="text"
+            size="small"
+            endIcon={
+              <HeroChevronDownIcon
+                fontSize="small"
+                className={cn(
+                  "transition-transform",
+                  showAdvanced && "rotate-180",
+                )}
+              />
+            }
+            aria-expanded={showAdvanced}
+            onClick={() => setShowAdvanced((open) => !open)}
+          >
+            Advanced
+          </Button>
+          <Collapse in={showAdvanced} unmountOnExit>
+            <CommonEditableField<string>
+              name={"Build Context"}
+              canEdit={canEdit}
+              value={service.buildContext}
+              ariaLabel="Edit build context"
+              display={service.buildContext}
+              onSave={(value) => saveField({ buildContext: value.trim() })}
+              renderEditor={({ value, onChange }) => (
+                <TextField
+                  value={value}
+                  onChange={(e) => onChange(e.target.value)}
+                  helperText="Directory from the repository root, . for the root"
+                  aria-label="Build context"
+                  fullWidth
+                  margin="normal"
+                  autoFocus
+                />
+              )}
+              span="full"
+            />
+          </Collapse>
+        </div>
       </SidebarSection>
 
       <SidebarDetailsSection entity={service} />
