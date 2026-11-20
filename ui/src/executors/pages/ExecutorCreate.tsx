@@ -25,7 +25,10 @@ import { EXECUTOR_CREATE_MUTATION } from "../graphql";
 import { GqlExecutor } from "../graphql/transforms";
 import { ExecutorCreate } from "../types";
 
-const toCloneDefaults = (source: GqlExecutor): Partial<ExecutorCreate> => ({
+const toCloneDefaults = (
+  source: GqlExecutor,
+  canSelectWorkerTemplate: (template: GqlExecutor["workerTemplate"]) => boolean,
+): Partial<ExecutorCreate> => ({
   name: `${source.name}-copy`,
   description: source.description ?? "",
   runtime: source.runtime,
@@ -40,12 +43,13 @@ const toCloneDefaults = (source: GqlExecutor): Partial<ExecutorCreate> => ({
   storageId: source.storage?.id ?? "",
   storagePath: "",
   toolId: source.tool?.id ?? "",
-  workerTemplateId: source.workerTemplate?.id ?? "",
+  workerTemplateId: canSelectWorkerTemplate(source.workerTemplate)
+    ? (source.workerTemplate?.id ?? "")
+    : "",
 });
 
 const ExecutorCreatePageInner = () => {
   const { ikApi, linkPrefix } = useConfig();
-  const canSelectWorkerTemplate = useCanSelectWorkerTemplate();
   const {
     control,
     formState: { errors },
@@ -173,9 +177,7 @@ const ExecutorCreatePageInner = () => {
             input: {
               ...data,
               toolId: data.toolId || null,
-              // a cloned selection is only kept by users who may select one
-              workerTemplateId:
-                (canSelectWorkerTemplate && data.workerTemplateId) || null,
+              workerTemplateId: data.workerTemplateId || null,
             },
           },
         )
@@ -193,7 +195,7 @@ const ExecutorCreatePageInner = () => {
           setSaving(false);
         });
     },
-    [ikApi, navigate, trigger, setSaving, linkPrefix, canSelectWorkerTemplate],
+    [ikApi, navigate, trigger, setSaving, linkPrefix],
   );
 
   const watchedIntegrationIds = watch("integrationIds");
@@ -557,10 +559,11 @@ const ExecutorCreatePage = () => {
   const location = useLocation();
   const cloneSource = location.state?.clone as GqlExecutor | undefined;
   const prefill = useCreatePrefill();
+  const { canSelect } = useCanSelectWorkerTemplate();
 
   const methods = useForm<ExecutorCreate>({
     defaultValues: cloneSource
-      ? toCloneDefaults(cloneSource)
+      ? toCloneDefaults(cloneSource, canSelect)
       : {
           name: "",
           runtime: "tofu",

@@ -31,6 +31,7 @@ class WorkerTemplate(BaseEntity):
     idle_timeout_seconds: Mapped[int] = mapped_column(default=300)
     # used by resources and executors that don't select a template, and by all other tasks
     is_default: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
+    is_public: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
     last_error: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
     # Autoscaler backoff after failed workers or spawn errors; kept here so every scheduler process shares it
     spawn_failures: Mapped[int] = mapped_column(default=0, server_default="0", nullable=False)
@@ -70,6 +71,7 @@ class WorkerTemplateDTO(BaseModel):
     max_workers: int = Field(default=3)
     idle_timeout_seconds: int = Field(default=300)
     is_default: bool = Field(default=False)
+    is_public: bool = Field(default=False)
     last_error: str | None = Field(default=None)
     spawn_failures: int = Field(default=0)
     spawn_blocked_until: datetime | None = Field(default=None)

@@ -11,6 +11,7 @@ export type WorkerTemplateUpdateFieldInput = Partial<{
   configuration: WorkerConfiguration;
   maxWorkers: number;
   idleTimeoutSeconds: number;
+  isPublic: boolean;
 }>;
 
 export const CREATE_WORKER_TEMPLATE_MUTATION = `

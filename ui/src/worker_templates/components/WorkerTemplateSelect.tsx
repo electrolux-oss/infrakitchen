@@ -18,8 +18,8 @@ type WorkerTemplateSelectProps = Omit<
 >;
 
 /**
- * Select of enabled worker templates, only shown to users with access to worker templates.
- * An empty value means the global default template is used,
+ * Select of enabled worker templates; users without access to worker templates
+ * can only pick public ones. An empty value means the global default template is used,
  * or static workers when no default is set.
  */
 export const WorkerTemplateSelect = forwardRef<
@@ -27,7 +27,7 @@ export const WorkerTemplateSelect = forwardRef<
   WorkerTemplateSelectProps
 >(({ helperText, ...props }, ref) => {
   const { ikApi } = useConfig();
-  if (!useCanSelectWorkerTemplate()) return null;
+  const { canSelect } = useCanSelectWorkerTemplate();
   return (
     <DefaultableSelect<GqlWorkerTemplateShort>
       {...props}
@@ -39,7 +39,9 @@ export const WorkerTemplateSelect = forwardRef<
           )
           .then((response) => response.workerTemplateOptions)
       }
-      isSelectable={isEnabledWorkerTemplate}
+      isSelectable={(template) =>
+        isEnabledWorkerTemplate(template) && canSelect(template)
+      }
       isDefault={(template) => template.isDefault}
       defaultLabel={defaultWorkerTemplateLabel}
       renderOption={(template) => (

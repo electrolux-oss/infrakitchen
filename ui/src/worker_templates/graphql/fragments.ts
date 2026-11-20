@@ -15,6 +15,7 @@ export const WORKER_TEMPLATE_GRAPHQL_FIELDS = {
     "maxWorkers",
     "idleTimeoutSeconds",
     "isDefault",
+    "isPublic",
     "lastError",
     "labels",
     "status",
@@ -52,6 +53,7 @@ export const WORKER_TEMPLATE_SHORT_FIELDS = `
   name
   status
   isDefault
+  isPublic
   entityName
 `;
 

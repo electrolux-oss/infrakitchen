@@ -15,7 +15,7 @@ import { Label } from "../../common/components/labels";
 import { Labels } from "../../common/components/labels/Labels";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
-import { Alert, TextField } from "../../ui";
+import { Alert, FormControlLabel, Switch, TextField } from "../../ui";
 import {
   GqlWorkerTemplate,
   UPDATE_WORKER_TEMPLATE_MUTATION,
@@ -109,6 +109,27 @@ export const WorkerTemplateSidebar = ({
           name="Revision"
           value={workerTemplate.revisionNumber}
           span="half"
+        />
+        <CommonEditableField<boolean>
+          name="Public"
+          span="full"
+          canEdit={canEdit}
+          value={workerTemplate.isPublic}
+          display={workerTemplate.isPublic ? "Yes" : "No"}
+          ariaLabel="Edit public"
+          onSave={(value) => saveField({ isPublic: value })}
+          renderEditor={({ value, onChange }) => (
+            <FormControlLabel
+              className="-ml-[3.5px]"
+              control={
+                <Switch
+                  checked={value}
+                  onChange={(e) => onChange(e.target.checked)}
+                />
+              }
+              label="Public"
+            />
+          )}
         />
         {workerTemplate.isDefault && (
           <CommonField

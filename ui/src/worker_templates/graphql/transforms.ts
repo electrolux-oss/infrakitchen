@@ -23,6 +23,7 @@ type GqlWorkerTemplateBaseFieldTypes = {
   maxWorkers: number;
   idleTimeoutSeconds: number;
   isDefault: boolean;
+  isPublic: boolean;
   lastError: string | null;
   labels: string[];
   status: string;
@@ -55,6 +56,7 @@ export interface GqlWorkerTemplateShort {
   name: string;
   status: string;
   isDefault: boolean;
+  isPublic: boolean;
   entityName?: string;
 }
 

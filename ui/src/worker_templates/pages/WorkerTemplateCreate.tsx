@@ -8,7 +8,14 @@ import { getProviderValue } from "../../common/components/fields/CommonField";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import { Autocomplete, Button, MenuItem, TextField } from "../../ui";
+import {
+  Autocomplete,
+  Button,
+  FormControlLabel,
+  MenuItem,
+  Switch,
+  TextField,
+} from "../../ui";
 import { WorkerConfigurationForm } from "../components/WorkerConfigurationForm";
 import {
   CREATE_WORKER_TEMPLATE_MUTATION,
@@ -24,6 +31,7 @@ interface WorkerTemplateForm {
   provider: string;
   maxWorkers: number;
   idleTimeoutSeconds: number;
+  isPublic: boolean;
   labels: string[];
 }
 
@@ -44,6 +52,7 @@ export const WorkerTemplateCreatePage = () => {
       provider: "kubernetes",
       maxWorkers: 3,
       idleTimeoutSeconds: 300,
+      isPublic: false,
       labels: [],
     },
   });
@@ -258,6 +267,22 @@ export const WorkerTemplateCreatePage = () => {
                 )}
               />
             </div>
+            <Controller
+              name="isPublic"
+              control={control}
+              render={({ field }) => (
+                <FormControlLabel
+                  className="mt-2 mr-0 -ml-[3.5px]"
+                  control={
+                    <Switch
+                      checked={field.value}
+                      onChange={(e) => field.onChange(e.target.checked)}
+                    />
+                  }
+                  label="Public"
+                />
+              )}
+            />
             <Controller
               name="labels"
               control={control}

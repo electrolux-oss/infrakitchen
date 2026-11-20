@@ -31,7 +31,7 @@ SET_DEFAULT_MUTATION = """
 """
 
 OPTIONS_QUERY = """
-    query { workerTemplateOptions { id name status isDefault entityName } }
+    query { workerTemplateOptions { id name status isDefault isPublic entityName } }
 """
 
 DEFAULT_CONFIGURATION_QUERY = """
@@ -142,7 +142,7 @@ class TestWorkerTemplateMutations:
         self, mock_get_service, mock_worker_template_service, mocked_worker_template, mocked_user
     ):
         mocked_worker_template.is_default = True
-        mock_worker_template_service.query_all = AsyncMock(return_value=[mocked_worker_template])
+        mock_worker_template_service.get_options = AsyncMock(return_value=[mocked_worker_template])
         mock_get_service.return_value = mock_worker_template_service
 
         result = await schema.execute(OPTIONS_QUERY, context_value=make_context(mocked_user))
@@ -155,6 +155,7 @@ class TestWorkerTemplateMutations:
                     "name": "default",
                     "status": "enabled",
                     "isDefault": True,
+                    "isPublic": False,
                     "entityName": "worker_template",
                 }
             ]
