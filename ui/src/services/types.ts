@@ -1,19 +1,19 @@
 export interface ServiceCreateRequest {
   name: string;
-  displayName: string | null;
   description: string;
-  projectId: string;
+  projectId: string | null;
   repositoryUrl: string | null;
+  repositoryIntegrationId: string | null;
   labels: string[];
   owners: string[];
 }
 
 export interface ServiceUpdateRequest {
   name?: string;
-  displayName?: string | null;
   description?: string;
   projectId?: string;
-  repositoryUrl?: string | null;
+  repositoryUrl?: string;
+  repositoryIntegrationId?: string | null;
   labels?: string[];
   owners?: string[];
 }
