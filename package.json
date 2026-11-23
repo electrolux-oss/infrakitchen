@@ -8,7 +8,7 @@
     "check": "blume check"
   },
   "dependencies": {
-    "blume": "^2.2.1"
+    "blume": "^2.2.7"
   },
   "packageManager": "yarn@4.4.1"
 }

@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 
-import { useStore } from "@xyflow/react";
+import { useViewportStore } from "@xyflow/react";
 
 import {
   HeroArrowDownIcon,
@@ -53,10 +53,10 @@ export function WirePopover({
   readOnly?: boolean;
 }) {
   // Follows the view from the store: panning re-renders only the popover
-  const [tx, ty, k] = useStore((s) => s.transform);
+  const [tx, ty, k] = useViewportStore((s) => s.transform);
   const bounds = {
-    width: useStore((s) => s.width),
-    height: useStore((s) => s.height),
+    width: useViewportStore((s) => s.width),
+    height: useViewportStore((s) => s.height),
   };
   const anchor = { x: at.x * k + tx, y: at.y * k + ty };
   const ref = useRef<HTMLDivElement>(null);

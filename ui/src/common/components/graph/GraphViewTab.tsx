@@ -1,4 +1,4 @@
-import "@xyflow/react/dist/base.css";
+import "@xyflow/react/base.css";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -11,11 +11,10 @@ import {
   Position,
   ReactFlow,
   ReactFlowProvider,
-  ReactFlowState,
-  applyNodeChanges,
   useReactFlow,
-  useStore,
+  useViewportStore,
   Viewport,
+  ViewportStore,
 } from "@xyflow/react";
 
 import {
@@ -63,7 +62,7 @@ interface TreeGraphNode {
   position: { x: number; y: number };
 }
 
-const zoomedIn = (s: ReactFlowState) => s.transform[2] >= DETAIL_ZOOM;
+const zoomedIn = (s: ViewportStore) => s.transform[2] >= DETAIL_ZOOM;
 
 // Links run from the right middle of a node to the left middle of the next;
 // the handles only anchor them
@@ -80,7 +79,7 @@ const HIDDEN_HANDLE = {
 function EntityNodeView({ data }: NodeProps<EntityFlowNode>) {
   // Full cards only where they can be read; off-screen nodes are not
   // rendered at all (`onlyRenderVisibleElements`)
-  const detail = useStore(zoomedIn);
+  const detail = useViewportStore(zoomedIn);
   return (
     <div
       className="transition-opacity duration-150"
@@ -213,7 +212,7 @@ function EntityGraphView({ entity_id, entity_name }: GraphViewProps) {
   const fit = useCallback(async () => {
     // Let the store pick up new nodes first
     await new Promise((resolve) => requestAnimationFrame(resolve));
-    await flow.fitView({ padding: 0.05, maxZoom: 1 });
+    await flow.fitView({ padding: "2.4%", maxZoom: 1 });
   }, [flow]);
 
   // Positions are reset when the tree changes; drags stick until then
@@ -232,7 +231,7 @@ function EntityGraphView({ entity_id, entity_name }: GraphViewProps) {
     if (data.nodes.length) void fit();
   }, [data, fit]);
   const onNodesChange: OnNodesChange<EntityFlowNode> = useCallback(
-    (changes) => setNodes((ns) => applyNodeChanges(changes, ns)),
+    (changes) => setNodes((ns) => changes.applyTo(ns)),
     [],
   );
 

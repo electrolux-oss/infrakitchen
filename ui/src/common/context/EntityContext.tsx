@@ -109,6 +109,8 @@ export const EntityProvider = ({
 }) => {
   const [actions, setActions] = useState<string[]>([]);
   const [entity, setEntity] = useState<Record<string, any>>();
+  const entityRef = useRef(entity);
+  entityRef.current = entity;
   const [userEntityPermissions, setUserEntityPermissions] = useState<string[]>(
     [],
   );
@@ -141,8 +143,16 @@ export const EntityProvider = ({
       // Events too big for the live stream keep only small top-level fields,
       // the rest has to be refetched
       const truncated = !!event._metadata?.truncated;
-      setEntity((prev) => ({ ...prev, ...camelizeKeys(event) }));
-      if (truncated) {
+      // Before the first fetch lands there is nothing to merge into: an event
+      // body alone (e.g. the create event of a new entity) is not a whole
+      // entity, so refetch instead
+      const loaded = !!entityRef.current;
+      if (loaded) {
+        setEntity((prev) =>
+          prev ? { ...prev, ...camelizeKeys(event) } : prev,
+        );
+      }
+      if (truncated || !loaded) {
         setSilentRefresh((prev) => prev + 1);
       }
     }

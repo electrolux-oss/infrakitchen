@@ -115,8 +115,9 @@ async def get_resource_actions(
     if state == ModelState.PROVISION and requester_is_creator:
         requester_permissions = [*requester_permissions, "write"]
 
-    # If resource has a project, also check project-level / owner permissions and merge
-    if project and ("write" not in requester_permissions and "admin" not in requester_permissions):
+    # If resource has a project, merge project-level / owner permissions unless the resource already grants admin:
+    # resource-level write (e.g. the creator in PROVISION) must not hide project admin rights such as approve
+    if project and "admin" not in requester_permissions:
         if await requester_is_project_owner(requester, project):
             requester_permissions.append("admin")
 

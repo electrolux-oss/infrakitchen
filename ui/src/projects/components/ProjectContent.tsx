@@ -24,8 +24,9 @@ import { ProjectSidebar } from "./ProjectSidebar";
 
 export const ProjectContent = () => {
   const [subscribersRefreshKey, setSubscribersRefreshKey] = useState(0);
-  const { entity, userEntityPermissions } = useEntityProvider();
+  const { entity, userEntityPermissions, actions } = useEntityProvider();
   const { globalConfig } = useConfig();
+  const canEdit = actions.includes("edit");
 
   const fixedFilters = useMemo(
     () => ({ project_id: [entity?.id] }),
@@ -79,7 +80,7 @@ export const ProjectContent = () => {
             dependencyTags: input.dependencyTags,
             dependencyConfig: input.dependencyConfig,
           })}
-          permissionEntity="api:project"
+          canEdit={canEdit}
         />
       ),
     },

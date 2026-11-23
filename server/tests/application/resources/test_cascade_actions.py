@@ -1,3 +1,4 @@
+from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
@@ -72,3 +73,63 @@ async def test_non_creator_without_permissions_cannot_edit(mock_user_dto, monkey
         mock_user_dto, uuid4(), ModelStatus.READY, ModelState.PROVISION, False, created_by=uuid4()
     )
     assert actions == []
+
+
+def _mock_permissions(monkeypatch, resource_perms, project_perms, is_owner=False):
+    calls: list[str] = []
+
+    async def fake_permissions(user, entity_id, entity_name):
+        calls.append(entity_name)
+        return list(resource_perms if entity_name == "resource" else project_perms)
+
+    async def fake_is_owner(requester, project):
+        return is_owner
+
+    monkeypatch.setattr("application.resources.functions.user_entity_permissions", fake_permissions)
+    monkeypatch.setattr("application.resources.functions.requester_is_project_owner", fake_is_owner)
+    return calls
+
+
+@pytest.mark.asyncio
+async def test_project_admin_with_resource_write_can_approve(mock_user_dto, monkeypatch):
+    _mock_permissions(monkeypatch, ["read", "write"], ["read", "write", "admin"])
+    actions = await get_resource_actions(
+        mock_user_dto, uuid4(), ModelStatus.APPROVAL_PENDING, ModelState.PROVISION, False, project=MagicMock(id=uuid4())
+    )
+    assert ModelActions.APPROVE in actions
+    assert ModelActions.REJECT in actions
+
+
+@pytest.mark.asyncio
+async def test_project_owner_who_created_resource_can_approve(mock_user_dto, monkeypatch):
+    _mock_permissions(monkeypatch, [], [], is_owner=True)
+    actions = await get_resource_actions(
+        mock_user_dto,
+        uuid4(),
+        ModelStatus.APPROVAL_PENDING,
+        ModelState.PROVISION,
+        False,
+        project=MagicMock(id=uuid4()),
+        created_by=mock_user_dto.id,
+    )
+    assert ModelActions.APPROVE in actions
+
+
+@pytest.mark.asyncio
+async def test_project_reader_with_resource_write_cannot_approve(mock_user_dto, monkeypatch):
+    _mock_permissions(monkeypatch, ["read", "write"], ["read"])
+    actions = await get_resource_actions(
+        mock_user_dto, uuid4(), ModelStatus.APPROVAL_PENDING, ModelState.PROVISION, False, project=MagicMock(id=uuid4())
+    )
+    assert ModelActions.EDIT in actions
+    assert ModelActions.APPROVE not in actions
+
+
+@pytest.mark.asyncio
+async def test_resource_admin_skips_project_lookup(mock_user_dto, monkeypatch):
+    calls = _mock_permissions(monkeypatch, ["read", "write", "admin"], [])
+    actions = await get_resource_actions(
+        mock_user_dto, uuid4(), ModelStatus.APPROVAL_PENDING, ModelState.PROVISION, False, project=MagicMock(id=uuid4())
+    )
+    assert ModelActions.APPROVE in actions
+    assert calls == ["resource"]
