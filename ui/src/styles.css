@@ -12,7 +12,7 @@
  * Preflight is not imported; the base layer below carries the small reset
  * the components are built against.
  */
-@layer theme, base, ik-themes, components, utilities;
+@layer theme, base, xyflow, ik-themes, components, utilities;
 
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
