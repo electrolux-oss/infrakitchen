@@ -10,12 +10,12 @@ import {
 } from "../../common/components/cards/TabbedContent";
 import { TopologyTab } from "../../common/components/graph/TopologyTab";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { EntityNotificationSubscribersTable } from "../../notifications/components/EntityNotificationSubscribersTable";
 import { Revision } from "../../revision/Revision";
 import { EntityTaskQueueStatus } from "../../workers/components";
 
 import { ResourceDependencyConfiguration } from "./DependencyConfiguration";
 import { ResourceDriftTab } from "./ResourceDriftTab";
-import { ResourceNotificationSubscribersTable } from "./ResourceNotificationSubscribersTable";
 import { ResourcePermissions } from "./ResourcePermissions";
 import { ResourceReviewView } from "./ResourceReviewView";
 import { ResourceSidebar } from "./ResourceSidebar";
@@ -68,9 +68,11 @@ export const ResourceContent = () => {
     {
       label: "Notifications",
       content: (
-        <ResourceNotificationSubscribersTable
-          resourceId={entity.id}
+        <EntityNotificationSubscribersTable
+          entityType="resource"
+          entityId={entity.id}
           projectId={entity.project?.id}
+          title="Resource Subscribers"
           key={subscribersRefreshKey}
         />
       ),

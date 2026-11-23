@@ -8,18 +8,28 @@ import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { Label } from "../../common/components/labels";
 import { useConfig } from "../../common/context";
-import { NOTIFICATION_SUBSCRIPTION_FIELD_MAP } from "../../notifications";
 import { RenderCellParams } from "../../ui";
+import { NOTIFICATION_SUBSCRIPTION_FIELD_MAP } from "../graphql";
 
-interface ResourceNotificationSubscribersTableProps {
-  resourceId: string;
+export interface EntityNotificationSubscribersTableProps {
+  /** Subscription entity type, e.g. "resource" or "executor". */
+  entityType: string;
+  entityId: string;
+  /** Project the entity belongs to: its subscribers are listed as inherited. */
   projectId?: string;
+  title: string;
 }
 
-export const ResourceNotificationSubscribersTable = ({
-  resourceId,
+/**
+ * Users subscribed to an entity, plus the subscribers of its project, who get
+ * the entity's notifications too.
+ */
+export const EntityNotificationSubscribersTable = ({
+  entityType,
+  entityId,
   projectId,
-}: ResourceNotificationSubscribersTableProps) => {
+  title,
+}: EntityNotificationSubscribersTableProps) => {
   const navigate = useNavigate();
   const { linkPrefix } = useConfig();
 
@@ -89,17 +99,17 @@ export const ResourceNotificationSubscribersTable = ({
 
   return (
     <EntityFetchTable
-      title="Resource Subscribers"
+      title={title}
       entityName="subscription"
       columns={columns}
       defaultFilter={
         projectId
           ? {
-              entity_id__in: [resourceId, projectId],
+              entity_id__in: [entityId, projectId],
             }
           : {
-              entity_type: "resource",
-              entity_id: resourceId,
+              entity_type: entityType,
+              entity_id: entityId,
             }
       }
       entityFieldMap={NOTIFICATION_SUBSCRIPTION_FIELD_MAP}

@@ -339,7 +339,8 @@ class TestDelete:
         await mock_project_service.delete(project_id=existing_project.id, requester=mock_user_dto)
 
         mock_project_crud.get_by_id.assert_awaited_once_with(existing_project.id)
-        mock_project_crud.session.execute.assert_awaited_once()
+        # one lookup for assigned resources, one for assigned executors
+        assert mock_project_crud.session.execute.await_count == 2
         mock_project_crud.delete.assert_awaited_once_with(existing_project)
         mock_revision_handler.delete_revisions.assert_awaited_once_with(existing_project.id)
         mock_audit_log_handler.create_log.assert_awaited_once_with(
@@ -368,6 +369,33 @@ class TestDelete:
 
         assert str(exc.value) == "Cannot delete project, it has 1 assigned resources"
         assert exc.value.metadata == [{"id": str(resource_id), "name": "Resource 1", "entityName": "resource"}]
+        mock_revision_handler.delete_revisions.assert_not_awaited()
+        mock_audit_log_handler.create_log.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_delete_error_has_assigned_executors(
+        self,
+        mock_project_service,
+        mock_project_crud,
+        mocked_project,
+        mocked_user,
+        mock_revision_handler,
+        mock_audit_log_handler,
+    ):
+        mocked_project.status = ModelStatus.DISABLED
+        mock_project_crud.get_by_id.return_value = mocked_project
+        executor_id = uuid4()
+        no_resources = Mock()
+        no_resources.all.return_value = []
+        executors = Mock()
+        executors.all.return_value = [(executor_id, "Executor 1")]
+        mock_project_crud.session.execute.side_effect = [no_resources, executors]
+
+        with pytest.raises(DependencyError) as exc:
+            await mock_project_service.delete(project_id=mocked_project.id, requester=mocked_user)
+
+        assert str(exc.value) == "Cannot delete project, it has 1 assigned executors"
+        assert exc.value.metadata == [{"id": str(executor_id), "name": "Executor 1", "entityName": "executor"}]
         mock_revision_handler.delete_revisions.assert_not_awaited()
         mock_audit_log_handler.create_log.assert_not_awaited()
 

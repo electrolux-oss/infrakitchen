@@ -7,7 +7,7 @@ from uuid import UUID
 
 
 from application.integrations.model import IntegrationDTO
-from application.projects.functions import requester_is_project_owner
+from application.projects.functions import merge_project_permissions
 from application.projects.model import Project
 from application.resources.model import Resource
 from application.resources.schema import (
@@ -117,14 +117,7 @@ async def get_resource_actions(
 
     # If resource has a project, merge project-level / owner permissions unless the resource already grants admin:
     # resource-level write (e.g. the creator in PROVISION) must not hide project admin rights such as approve
-    if project and "admin" not in requester_permissions:
-        if await requester_is_project_owner(requester, project):
-            requester_permissions.append("admin")
-
-        project_permissions = await user_entity_permissions(requester, project.id, "project")
-        # Merge: use the highest permission level from either source
-        all_permissions = set(requester_permissions) | set(project_permissions)
-        requester_permissions = list(all_permissions)
+    requester_permissions = await merge_project_permissions(requester, requester_permissions, project)
 
     if "write" not in requester_permissions and "admin" not in requester_permissions:
         return []

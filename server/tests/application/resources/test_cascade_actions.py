@@ -86,7 +86,8 @@ def _mock_permissions(monkeypatch, resource_perms, project_perms, is_owner=False
         return is_owner
 
     monkeypatch.setattr("application.resources.functions.user_entity_permissions", fake_permissions)
-    monkeypatch.setattr("application.resources.functions.requester_is_project_owner", fake_is_owner)
+    monkeypatch.setattr("application.projects.functions.user_entity_permissions", fake_permissions)
+    monkeypatch.setattr("application.projects.functions.requester_is_project_owner", fake_is_owner)
     return calls
 
 

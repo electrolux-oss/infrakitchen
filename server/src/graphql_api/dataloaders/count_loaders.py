@@ -228,4 +228,7 @@ def count_loaders(session: AsyncSession) -> dict[str, DataLoader[str, int]]:
         "project_service_count": DataLoader[str, int](
             load_fn=lambda keys: _count_services_by_project(list(keys), session)
         ),
+        "project_executor_count": DataLoader[str, int](
+            load_fn=lambda keys: _count_by(Executor.project_id, list(keys), session)
+        ),
     }

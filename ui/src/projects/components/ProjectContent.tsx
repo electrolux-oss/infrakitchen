@@ -10,6 +10,7 @@ import {
 import { CountLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { EntityExecutors } from "../../executors/components/EntityExecutors";
 import { GoldenStateWidget } from "../../golden_state/GoldenStateWidget";
 import { DependencyConfiguration } from "../../resources/components/DependencyConfiguration";
 import { EntityResources } from "../../resources/components/EntityResources";
@@ -67,6 +68,18 @@ export const ProjectContent = () => {
         <EntityResources
           fixedFilters={fixedFilters}
           filterStorageKey="filter_storage_resources"
+        />
+      ),
+    },
+    {
+      label: "Executors",
+      tabLabel: (
+        <CountLabel label="Executors" count={entity.executorsCount ?? 0} />
+      ),
+      content: (
+        <EntityExecutors
+          fixedFilters={fixedFilters}
+          filterStorageKey="filter_storage_executors"
         />
       ),
     },

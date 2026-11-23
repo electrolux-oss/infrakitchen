@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { Audit } from "../../common/components/activity/Audit";
 import { EntityLogs } from "../../common/components/activity/EntityLogs";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
@@ -7,6 +9,7 @@ import {
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { EntityNotificationSubscribersTable } from "../../notifications/components/EntityNotificationSubscribersTable";
 import { Revision } from "../../revision/Revision";
 import { EntityTaskQueueStatus } from "../../workers/components";
 
@@ -15,7 +18,9 @@ import { ExecutorPermissions } from "./ExecutorPermissions";
 import { ExecutorSidebar } from "./ExecutorSidebar";
 
 export const ExecutorContent = () => {
-  const { entity } = useEntityProvider();
+  const [subscribersRefreshKey, setSubscribersRefreshKey] = useState(0);
+  // userEntityPermissions includes what the executor inherits from its project
+  const { entity, userEntityPermissions } = useEntityProvider();
   if (!entity) return null;
 
   const tabs: TabDefinition[] = [
@@ -26,6 +31,18 @@ export const ExecutorContent = () => {
     {
       label: "Policies",
       content: <ExecutorPermissions executor={entity} />,
+    },
+    {
+      label: "Notifications",
+      content: (
+        <EntityNotificationSubscribersTable
+          entityType="executor"
+          entityId={entity.id}
+          projectId={entity.project?.id}
+          title="Executor Subscribers"
+          key={subscribersRefreshKey}
+        />
+      ),
     },
     {
       label: "Logs",
@@ -59,9 +76,21 @@ export const ExecutorContent = () => {
   ];
 
   return (
-    <EntitySidebarLayout sidebar={<ExecutorSidebar executor={entity} />}>
+    <EntitySidebarLayout
+      sidebar={
+        <ExecutorSidebar
+          executor={entity}
+          onSubscriptionChange={() =>
+            setSubscribersRefreshKey((currentKey) => currentKey + 1)
+          }
+        />
+      }
+    >
       <EntityTaskQueueStatus />
-      <TabbedContent tabs={tabs} />
+      <TabbedContent
+        tabs={tabs}
+        userEntityPermissions={userEntityPermissions}
+      />
     </EntitySidebarLayout>
   );
 };

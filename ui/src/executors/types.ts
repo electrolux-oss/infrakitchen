@@ -13,6 +13,7 @@ export interface ExecutorCreate {
   storagePath: string | null;
   toolId?: string | null;
   workerTemplateId?: string | null;
+  projectId?: string | null;
   labels: string[];
 }
 
@@ -30,4 +31,8 @@ export interface ExecutorUpdate {
   storageId: string | null;
   toolId?: string | null;
   workerTemplateId?: string | null;
+  projectId?: string | null;
 }
+
+export const EXECUTOR_PROJECT_HELPER_TEXT =
+  "Project owners, policies and notification subscribers also apply to this executor. Only projects you have write access to are shown.";

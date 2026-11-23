@@ -10,6 +10,7 @@ from core.audit_logs.model import AuditLog
 def make_handler() -> tuple[AuditLogHandler, Mock]:
     session = Mock()
     session.flush = AsyncMock()
+
     def add(row: AuditLog) -> None:
         # the database assigns the id on flush
         row.id = uuid4()

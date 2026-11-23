@@ -41,6 +41,8 @@ def mock_executor_service(
     mock_favorite_service,
     mock_tool_service,
     stub_worker_template_service,
+    mock_project_crud,
+    mock_subscription_service,
 ):
     return ExecutorService(
         crud=mock_executor_crud,
@@ -56,6 +58,8 @@ def mock_executor_service(
         favorite_service=mock_favorite_service,
         tool_service=mock_tool_service,
         worker_template_service=stub_worker_template_service,
+        project_crud=mock_project_crud,
+        subscription_service=mock_subscription_service,
     )
 
 
