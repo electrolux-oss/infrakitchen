@@ -13,7 +13,7 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { Revision } from "../../revision/Revision";
 import { EntityTaskQueueStatus } from "../../workers/components";
 
-import { DependencyConfiguration } from "./DependencyConfiguration";
+import { ResourceDependencyConfiguration } from "./DependencyConfiguration";
 import { ResourceDriftTab } from "./ResourceDriftTab";
 import { ResourceNotificationSubscribersTable } from "./ResourceNotificationSubscribersTable";
 import { ResourcePermissions } from "./ResourcePermissions";
@@ -46,7 +46,7 @@ export const ResourceContent = () => {
             resource={entity}
             onEditVariables={openVariablesDialog}
           />
-          <DependencyConfiguration resource={entity} />
+          <ResourceDependencyConfiguration resource={entity} />
         </div>
       ),
     },
