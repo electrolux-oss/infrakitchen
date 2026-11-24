@@ -152,6 +152,8 @@ class TestExecutorMutations:
             executor_id=str(executor_id),
             body=ANY,
             requester=mocked_user,
+            source_code_branch=None,
+            source_code_version=None,
         )
 
     @pytest.mark.asyncio

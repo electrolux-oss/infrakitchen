@@ -91,3 +91,17 @@ class AuditLogHandler:
         )
         user_id = (await self.session.execute(statement)).scalar_one_or_none()
         return UUID(str(user_id)) if user_id is not None else None
+
+    async def get_last_action_metadata(self, entity_id: str | UUID, actions: list[str]) -> dict[str, Any] | None:
+        """Metadata of the most recent audit row for one of the actions on the entity."""
+        statement = (
+            select(AuditLog.action_metadata)
+            .where(
+                AuditLog.model == self.entity_name,
+                AuditLog.entity_id == entity_id,
+                AuditLog.action.in_(actions),
+            )
+            .order_by(AuditLog.created_at.desc())
+            .limit(1)
+        )
+        return (await self.session.execute(statement)).scalar_one_or_none()

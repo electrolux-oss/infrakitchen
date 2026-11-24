@@ -13,7 +13,8 @@ const entityLabel = (entityName?: string) => {
 /**
  * Runs an action (apply, plan, drift check, ...) on the entity of the
  * surrounding EntityProvider and merges the returned status into it.
- * `runAction` resolves to whether the action was queued.
+ * `runAction` resolves to whether the action was queued. `extraInput` is merged
+ * into the mutation input, for entities whose action input takes more fields.
  */
 export const useEntityAction = () => {
   const { ikApi } = useConfig();
@@ -21,7 +22,10 @@ export const useEntityAction = () => {
   const [loading, setLoading] = useState(false);
 
   const runAction = useCallback(
-    async (action: string): Promise<boolean> => {
+    async (
+      action: string,
+      extraInput?: Record<string, unknown>,
+    ): Promise<boolean> => {
       if (!entity?.id || !entity?.entityName) {
         notifyError(
           new Error(
@@ -36,7 +40,7 @@ export const useEntityAction = () => {
           [key: string]: { id: string; status: string; entityName: string };
         }>(buildEntityActionMutation(entity.entityName), {
           id: entity.id,
-          input: { action },
+          input: { ...extraInput, action },
         });
         const result = Object.values(response)[0];
         notify(

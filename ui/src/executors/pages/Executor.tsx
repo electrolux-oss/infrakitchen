@@ -9,6 +9,7 @@ import { EntityProvider } from "../../common/context/EntityContext";
 import { TASK_QUEUE_STATUS_SELECTION } from "../../workers/graphql";
 import { CloneExecutorButton } from "../components/CloneExecutorButton";
 import { ExecutorContent } from "../components/ExecutorContent";
+import { RunFromRefButton } from "../components/RunFromRefButton";
 import { EXECUTOR_DETAIL_FIELDS } from "../graphql";
 
 // Queue state is fetched with the entity in the same request
@@ -27,6 +28,7 @@ export const ExecutorPage = () => {
         titleIcon={entityIcons.executor}
         actions={
           <>
+            <RunFromRefButton />
             <ScheduleApplyButton entityType="executor" />
             <CloneExecutorButton />
             <EntityRefreshButton />

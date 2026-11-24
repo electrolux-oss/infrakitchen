@@ -200,6 +200,8 @@ async def get_executor_task(
     action: ModelActions,
     trace_id: str | None = None,
     audit_log_id: UUID | None = None,
+    source_code_ref: str | None = None,
+    source_code_ref_type: str | None = None,
 ) -> ExecutorTask:
     crud_executor = ExecutorCRUD(session=session)
     event_sender = EventSender(entity_name="executor")
@@ -234,6 +236,8 @@ async def get_executor_task(
         user=user,
         event_sender=event_sender,
         action=action,
+        run_ref=source_code_ref,
+        run_ref_type=source_code_ref_type,
     )
 
 

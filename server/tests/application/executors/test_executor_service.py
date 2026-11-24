@@ -1025,6 +1025,7 @@ class TestPatchAction:
         existing_executor.status = ModelStatus.QUEUED
         existing_executor.state = ModelState.PROVISIONED
         mock_executor_crud.get_by_id.return_value = existing_executor
+        mock_audit_log_handler.get_last_action_metadata.return_value = None
 
         result = await mock_executor_service.patch_action_executor(
             executor_id=executor_id, body=patch_body, requester=mocked_user

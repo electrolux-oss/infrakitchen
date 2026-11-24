@@ -457,6 +457,8 @@ class TaskWorker:
             step_id=item.payload.get("step_id"),
             resource_id=item.payload.get("resource_id"),
             step_status=item.payload.get("step_status"),
+            source_code_ref=item.payload.get("source_code_ref"),
+            source_code_ref_type=item.payload.get("source_code_ref_type"),
         )
 
     async def process_scheduler_job(self, session: AsyncSession, item: TaskQueueItemDTO) -> None:
@@ -515,6 +517,8 @@ class TaskWorker:
         step_id: str | None = None,
         resource_id: str | None = None,
         step_status: str | None = None,
+        source_code_ref: str | None = None,
+        source_code_ref_type: str | None = None,
     ) -> TaskController:
         match entity_controller:
             case "source_code":
@@ -570,6 +574,8 @@ class TaskWorker:
                     action=action,
                     trace_id=trace_id,
                     audit_log_id=audit_log_id,
+                    source_code_ref=source_code_ref,
+                    source_code_ref_type=source_code_ref_type,
                 )
             case "workflow":
                 return await get_workflow_task(

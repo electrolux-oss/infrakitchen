@@ -79,6 +79,9 @@ class ExecutorUpdateInput:
 @strawberry.input
 class ExecutorActionInput:
     action: str
+    # run once from another git branch or tag instead of the configured one (execute and dry run only)
+    source_code_branch: str | None = None
+    source_code_version: str | None = None
 
 
 @strawberry.type
@@ -115,6 +118,8 @@ class ExecutorMutation:
             executor_id=str(id),
             body=PatchBodyModel(action=input.action),
             requester=requester,
+            source_code_branch=input.source_code_branch,
+            source_code_version=input.source_code_version,
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 from uuid import UUID
 
 from application.projects.functions import merge_project_permissions
@@ -10,6 +10,39 @@ from core.users.model import UserDTO
 if TYPE_CHECKING:
     from application.executors.model import Executor
     from application.projects.model import Project
+
+
+RunRefType = Literal["branch", "tag"]
+
+
+def resolve_run_ref(
+    executor: "Executor", source_code_branch: str | None, source_code_version: str | None
+) -> tuple[str, RunRefType] | None:
+    """
+    The git ref a single run should use instead of the executor's configured one.
+    None when no ref is given or it is the configured ref, so the run is a normal one.
+    The ref must be a branch or tag known to the executor's source code. The known refs are the ones
+    stored by the last source code sync, so a ref pushed after it is not found until the next sync.
+    """
+    if source_code_branch and source_code_version:
+        raise ValueError("Only one of source code tag or branch is allowed")
+    if source_code_branch:
+        if source_code_branch == executor.source_code_branch:
+            return None
+        if source_code_branch not in (executor.source_code.git_branches or []):
+            raise ValueError(
+                f"Branch {source_code_branch} not found in the source code, sync the source code if it was just pushed"
+            )
+        return source_code_branch, "branch"
+    if source_code_version:
+        if source_code_version == executor.source_code_version:
+            return None
+        if source_code_version not in (executor.source_code.git_tags or []):
+            raise ValueError(
+                f"Tag {source_code_version} not found in the source code, sync the source code if it was just pushed"
+            )
+        return source_code_version, "tag"
+    return None
 
 
 def build_executor_audit_snapshot(executor: "Executor") -> dict[str, Any]:

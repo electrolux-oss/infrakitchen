@@ -53,6 +53,8 @@ class ExecutorTask:
         event_sender: EventSender,
         action: ModelActions,
         workspace_root: str | None = None,
+        run_ref: str | None = None,
+        run_ref_type: str | None = None,
     ) -> None:
         self.session: AsyncSession = session
         self.crud_executor: ExecutorCRUD = crud_executor
@@ -76,6 +78,9 @@ class ExecutorTask:
         self.secret_manager: SecretManager = secret_manager
         self.environment_variables: dict[str, str] = {}
         self.workspace_path: str | None = None
+        # a branch or tag to run once instead of the configured one
+        self.run_ref: str | None = run_ref
+        self.run_ref_type: str | None = run_ref_type
 
     # workflow states
     async def start_pipeline(self):
@@ -180,12 +185,19 @@ class ExecutorTask:
         if self.git_client is None:
             raise CannotProceed("Git client is not defined, cannot proceed with source code operations")
 
-        branch = (
+        configured_ref = (
             self.executor_instance.source_code_branch
             if self.executor_instance.source_code_branch
             else self.executor_instance.source_code_version
         )
+        branch = self.run_ref or configured_ref
         assert branch is not None, "Branch is not defined"
+        # the ref that actually ran, recorded under the same key as resources so the audit log shows it
+        self.logger.add_result(source_code_version=branch)
+        if self.run_ref:
+            self.logger.warning(
+                f"Running from {self.run_ref_type or 'ref'} {self.run_ref} instead of configured {configured_ref}"
+            )
         await self.git_client.clone_branch(branch=branch)
 
         self.workspace_path = (

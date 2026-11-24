@@ -7,6 +7,7 @@ from application.executors.functions import (
     delete_executor_policies,
     get_executor_actions,
     get_executor_permissions,
+    resolve_run_ref,
 )
 from application.favorites.service import FavoriteService
 from application.integrations.schema import IntegrationShort
@@ -360,14 +361,34 @@ class ExecutorService:
     async def action_recreate(self, existing_executor: Executor, requester: UserDTO):
         await recreate_entity(existing_executor, is_resource=False)
 
+    async def _last_run_ref_metadata(self, executor_id: UUID | str) -> dict[str, str] | None:
+        """The ref of the last execute or retry when it ran from another ref, None when it used the configured one."""
+        metadata = await self.audit_log_handler.get_last_action_metadata(
+            executor_id, [ModelActions.EXECUTE, ModelActions.RETRY]
+        )
+        if not metadata or not metadata.get("source_code_ref"):
+            return None
+        return {
+            "source_code_ref": metadata["source_code_ref"],
+            "source_code_ref_type": metadata.get("source_code_ref_type") or "ref",
+        }
+
     async def patch_action_executor(
-        self, executor_id, body: PatchBodyModel, requester: UserDTO, trace_id: str | None = None
+        self,
+        executor_id,
+        body: PatchBodyModel,
+        requester: UserDTO,
+        trace_id: str | None = None,
+        source_code_branch: str | None = None,
+        source_code_version: str | None = None,
     ) -> Executor:
         """
         Patch an existing executor.
         :param executor_id: ID of the executor to patch
         :param body: PatchBodyModel to patch
         :param requester: User who patches the executor
+        :param source_code_branch: run once from this branch instead of the configured ref (execute and dry run)
+        :param source_code_version: run once from this tag instead of the configured ref (execute and dry run)
         :return: ORM model of the patched executor
         """
         existing_executor = await self.crud.get_by_id(executor_id)
@@ -377,8 +398,36 @@ class ExecutorService:
         # wrap existing_executor to pydantic model to avoid sqlalchemy object state issues
         pydantic_executor = ExecutorDTO.model_validate(existing_executor)
 
+        run_ref = resolve_run_ref(existing_executor, source_code_branch, source_code_version)
+        run_ref_metadata: dict[str, str] | None = None
+        if run_ref is not None:
+            if body.action not in [ModelActions.EXECUTE, ModelActions.DRYRUN]:
+                raise ValueError("Another branch or tag can only be used to execute or dry run the executor")
+            # a dry run runs the ref's code too (providers, data sources) with the executor's credentials and
+            # secrets, and only admins choose which code the executor runs
+            requester_permissions = await get_executor_permissions(
+                requester, existing_executor.id, existing_executor.project
+            )
+            if "admin" not in requester_permissions:
+                raise AccessDenied("Only executor admins can run the executor from another branch or tag")
+            run_ref_metadata = {"source_code_ref": run_ref[0], "source_code_ref_type": run_ref[1]}
+        elif body.action == ModelActions.RETRY:
+            # the executor is queued by an execute (or an earlier retry), retry it from the same ref
+            run_ref_metadata = await self._last_run_ref_metadata(existing_executor.id)
+
+        # kwargs for the audit row and the task, only set when running from another ref
+        audit_ref_kwargs: dict[str, Any] = {}
+        task_ref_kwargs: dict[str, Any] = {}
+        if run_ref_metadata:
+            audit_ref_kwargs["action_metadata"] = run_ref_metadata
+            task_ref_kwargs["extra_metadata"] = run_ref_metadata
+
         await self.audit_log_handler.create_log(
-            pydantic_executor.id, requester.id, body.action, revision_number=pydantic_executor.revision_number
+            pydantic_executor.id,
+            requester.id,
+            body.action,
+            revision_number=pydantic_executor.revision_number,
+            **audit_ref_kwargs,
         )
 
         match body.action:
@@ -390,6 +439,7 @@ class ExecutorService:
                         trace_id=trace_id or self.audit_log_handler.trace_id,
                         audit_log_id=self.audit_log_handler.audit_log_id,
                         action=ModelActions.EXECUTE,
+                        **task_ref_kwargs,
                     )
                 else:
                     raise EntityWrongState("Only executors in QUEUED status can be retried")
@@ -403,6 +453,7 @@ class ExecutorService:
                     requester=requester,
                     trace_id=trace_id or self.audit_log_handler.trace_id,
                     audit_log_id=self.audit_log_handler.audit_log_id,
+                    **task_ref_kwargs,
                 )
             case ModelActions.DRYRUN:
                 if existing_executor.status not in [
@@ -419,6 +470,7 @@ class ExecutorService:
                     action=ModelActions.DRYRUN,
                     trace_id=trace_id or self.audit_log_handler.trace_id,
                     audit_log_id=self.audit_log_handler.audit_log_id,
+                    **task_ref_kwargs,
                 )
             case ModelActions.RECREATE:
                 await self.action_recreate(existing_executor, requester)
