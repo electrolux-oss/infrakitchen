@@ -64,3 +64,9 @@ def scope_allows(scope_set: set[str] | None, action: str, entity: str) -> bool:
         return True
 
     return False
+
+
+def readable_entities(scope_set: set[str]) -> set[str]:
+    """Entity types a scoped token may read: every scoped entity, since write implies read."""
+    entities = {scope.partition(":")[2] for scope in scope_set}
+    return {entity for entity in entities if scope_allows(scope_set, "read", entity)}
