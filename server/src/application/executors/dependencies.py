@@ -2,6 +2,7 @@ from fastapi import Depends
 
 from application.favorites.dependencies import get_favorite_service
 from application.integrations.dependencies import get_integration_service
+from application.projects.crud import ProjectCRUD
 from application.source_codes.dependencies import get_source_code_service
 from application.storages.dependencies import get_storage_service
 from core.audit_logs.handler import AuditLogHandler
@@ -9,6 +10,7 @@ from application.worker_templates.dependencies import get_worker_template_servic
 from core.tools.dependencies import get_tool_service
 from core.dependencies import get_db_session
 from core.logs.dependencies import get_log_service
+from core.notifications.dependencies import get_subscription_service
 from core.permissions.dependencies import get_permission_service
 from core.revisions.handler import RevisionHandler
 from core.tasks.dependencies import get_task_service
@@ -41,4 +43,6 @@ def get_executor_service(
         favorite_service=favorite_service,
         tool_service=get_tool_service(session=session),
         worker_template_service=get_worker_template_service(session=session),
+        project_crud=ProjectCRUD(session=session),
+        subscription_service=get_subscription_service(session=session),
     )

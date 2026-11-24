@@ -38,6 +38,7 @@ class ExecutorCreateInput:
     storage_path: str | None = None
     tool_id: uuid.UUID | None = None
     worker_template_id: uuid.UUID | None = None
+    project_id: uuid.UUID | None = None
     labels: list[str] = strawberry.field(default_factory=list)
 
 
@@ -58,9 +59,11 @@ class ExecutorUpdateInput:
     tool_id: Maybe[uuid.UUID | None] = None
     # explicit null resets to the global default worker template
     worker_template_id: Maybe[uuid.UUID | None] = None
+    # explicit null detaches the executor from its project
+    project_id: Maybe[uuid.UUID | None] = None
 
     def to_pydantic(self) -> ExecutorUpdate:
-        maybe_fields = ("tool_id", "worker_template_id")
+        maybe_fields = ("tool_id", "worker_template_id", "project_id")
         data: dict[str, Any] = {
             field_name: value
             for field_name, value in vars(self).items()

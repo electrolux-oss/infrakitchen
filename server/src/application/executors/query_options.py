@@ -4,6 +4,7 @@ from sqlalchemy.orm import joinedload, raiseload, selectinload
 
 from application.executors.model import Executor
 from application.integrations.query_options import build_integration_query_options
+from application.projects.query_options import build_project_query_options
 from application.secrets.query_options import build_secret_query_options
 from application.source_codes.query_options import build_source_code_query_options
 from application.storages.query_options import build_storage_query_options
@@ -23,6 +24,7 @@ def build_executor_query_options(fields: FieldSpec | None = None) -> list[Any]:
             joinedload(Executor.storage),
             joinedload(Executor.tool),
             joinedload(Executor.worker_template),
+            joinedload(Executor.project),
             joinedload(Executor.creator),
         ]
 
@@ -63,6 +65,12 @@ def build_executor_query_options(fields: FieldSpec | None = None) -> list[Any]:
         opts.append(joinedload(Executor.worker_template).options(*build_worker_template_query_options(nested)))
     else:
         opts.append(raiseload(Executor.worker_template))
+
+    if "project" in fields:
+        nested = fields["project"]
+        opts.append(joinedload(Executor.project).options(*build_project_query_options(nested)))
+    else:
+        opts.append(raiseload(Executor.project))
 
     if "creator" in fields:
         nested = fields["creator"]

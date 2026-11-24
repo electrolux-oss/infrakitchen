@@ -27,6 +27,7 @@ import { CountLabel, StatusLabel } from "../../common/components/labels";
 import { Labels } from "../../common/components/labels/Labels";
 import { useConfig } from "../../common/context";
 import { usePendingScheduledAction } from "../../common/hooks/usePendingScheduledAction";
+import { SubscribeNotificationButton } from "../../notifications/components/SubscribeNotificationButton";
 import { ToolSelect, toolLabel } from "../../tools";
 import { IkEntity } from "../../types";
 import { WorkerTemplateSelect } from "../../worker_templates/components/WorkerTemplateSelect";
@@ -35,7 +36,6 @@ import { GqlResource } from "../graphql";
 import { useResourceFieldEditor } from "../hooks/useResourceFieldEditor";
 import { useResourceNotificationDialog } from "../hooks/useResourceNotificationDialog";
 
-import { SubscribeNotificationButton } from "./notifications/SubscribeNotificationButton";
 import { ResourceInfrastructureSection } from "./ResourceInfrastructureSection";
 
 export interface ResourceSidebarProps {

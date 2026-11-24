@@ -1255,7 +1255,7 @@ class TestToolSelection:
         editable_executor,
         mocked_user_response,
     ):
-        mock_user_permissions(["admin"], monkeypatch, "application.executors.service.user_entity_permissions")
+        mock_user_permissions(["admin"], monkeypatch, "application.executors.functions.user_entity_permissions")
         editable_executor.source_code_folder = "executors/01-db-migration"
 
         _ = await mock_executor_service.update_executor(
@@ -1276,7 +1276,7 @@ class TestToolSelection:
         editable_executor,
         mocked_user_response,
     ):
-        mock_user_permissions(["write"], monkeypatch, "application.executors.service.user_entity_permissions")
+        mock_user_permissions(["write"], monkeypatch, "application.executors.functions.user_entity_permissions")
         editable_executor.source_code_folder = "executors/01-db-migration"
 
         with pytest.raises(ValueError, match="Only admin can change source code folder"):

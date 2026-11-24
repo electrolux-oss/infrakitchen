@@ -6,6 +6,7 @@ from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from application.integrations.service import IntegrationService
+from application.projects.functions import merge_project_permissions, require_enabled_project
 from application.projects.service import ProjectService
 from core.notifications.controller import NotificationEvent
 from core.notifications.model import Subscription
@@ -268,6 +269,9 @@ class ResourceService:
 
         if template.status != ModelStatus.ENABLED:
             raise EntityWrongState("Template is not enabled")
+
+        if resource.project_id is not None:
+            _ = require_enabled_project(await self.project_service.crud.get_by_id(resource.project_id))
 
         parent_resources = await self.crud.get_all(filter={"id": resource.parents})
         if len(template.parents) != len(parent_resources):
@@ -556,6 +560,14 @@ class ResourceService:
         if existing_resource.status in [ModelStatus.DISABLED, ModelStatus.QUEUED, ModelStatus.IN_PROGRESS]:
             raise ValueError(f"Entity cannot be updated, has wrong status {existing_resource.status}")
 
+        # moving to another project (None detaches the resource from its project)
+        if (
+            "project_id" in resource.model_fields_set
+            and resource.project_id is not None
+            and resource.project_id != existing_resource.project_id
+        ):
+            _ = require_enabled_project(await self.project_service.crud.get_by_id(resource.project_id))
+
         # a destroy that failed or is waiting to run can still be fixed before it is applied
         if existing_resource.state == ModelState.DESTROYED or (
             existing_resource.state == ModelState.DESTROY
@@ -566,7 +578,11 @@ class ResourceService:
         existing_resource_pydantic = ResourceResponse.model_validate(existing_resource)
         if existing_resource_pydantic.abstract is False:
             if check_critical_fields_changed(existing_resource, resource):
-                requester_permissions = await user_entity_permissions(requester, resource_id, "resource")
+                requester_permissions = await merge_project_permissions(
+                    requester,
+                    await user_entity_permissions(requester, resource_id, "resource"),
+                    existing_resource.project,
+                )
                 if "admin" not in requester_permissions:
                     raise ValueError("Only admin can change storage or storage path of the resource")
 

@@ -19,7 +19,7 @@ import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import { notifyError } from "../../common/hooks/useNotification";
-import { SubscribeNotificationButton } from "../../resources/components/notifications/SubscribeNotificationButton";
+import { SubscribeNotificationButton } from "../../notifications/components/SubscribeNotificationButton";
 import { TextField, Link } from "../../ui";
 import { GqlUserShort, USERS_SHORT_QUERY } from "../../users/graphql";
 import { GqlService } from "../graphql";

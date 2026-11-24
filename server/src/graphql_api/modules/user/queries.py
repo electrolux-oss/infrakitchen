@@ -5,6 +5,7 @@ import strawberry
 from strawberry.scalars import JSON
 from strawberry.types import Info
 
+from application.common.entity_permissions import entity_permissions_with_project
 from core.users.dependencies import get_user_service
 from core.users.service import UserService
 from graphql_api.helpers import (
@@ -98,6 +99,8 @@ class UserQuery:
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def user_entity_permissions(self, info: Info, entity_id: uuid.UUID, entity_name: str) -> list[str]:
-        service = _build_service(info)
+        # resources and executors also get the permissions inherited from their project
         requester = info.context["request"].state.user
-        return await service.get_user_entity_permissions(requester, entity_id, entity_name)
+        return await entity_permissions_with_project(
+            info.context["session"], requester, entity_id=entity_id, entity_name=entity_name
+        )

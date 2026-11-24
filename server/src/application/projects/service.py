@@ -4,6 +4,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 
+from application.executors.model import Executor
 from application.resources.model import Resource
 from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions
@@ -188,6 +189,22 @@ class ProjectService:
                 metadata=[
                     {"id": str(resource_id), "name": resource_name, "entityName": "resource"}
                     for resource_id, resource_name in assigned_resources
+                ],
+            )
+
+        assigned_executors = list(
+            (
+                await self.crud.session.execute(
+                    select(Executor.id, Executor.name).where(Executor.project_id == existing_project.id)
+                )
+            ).all()
+        )
+        if assigned_executors:
+            raise DependencyError(
+                message=f"Cannot delete project, it has {len(assigned_executors)} assigned executors",
+                metadata=[
+                    {"id": str(executor_id), "name": executor_name, "entityName": "executor"}
+                    for executor_id, executor_name in assigned_executors
                 ],
             )
 

@@ -30,6 +30,10 @@ class ProjectType:
         return await info.context["loaders"]["project_resource_count"].load(str(self.id))
 
     @strawberry.field
+    async def executors_count(self, info: Info) -> int:
+        return await info.context["loaders"]["project_executor_count"].load(str(self.id))
+
+    @strawberry.field
     async def services_count(self, info: Info) -> int:
         return await info.context["loaders"]["project_service_count"].load(str(self.id))
 

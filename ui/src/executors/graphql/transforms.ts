@@ -1,4 +1,5 @@
 import { GqlIntegrationShort } from "../../integrations/graphql";
+import { GqlProjectShort } from "../../projects/graphql";
 import { GqlScheduledResourceAction } from "../../resources/graphql";
 import { GqlSecretShort } from "../../secrets/graphql";
 import { GqlSourceCodeShort } from "../../source_codes/graphql";
@@ -24,6 +25,7 @@ export interface GqlExecutor {
   storagePath: string | null;
   tool: ToolShort | null;
   workerTemplate: GqlWorkerTemplateShort | null;
+  project: GqlProjectShort | null;
   labels: string[] | null;
   state: string;
   status: string;

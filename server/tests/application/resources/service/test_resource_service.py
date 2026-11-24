@@ -1959,3 +1959,73 @@ class TestSyncWorkspace:
             audit_log_id=mock_audit_log_handler.audit_log_id,
         )
         assert result == mocked_resource
+
+
+class TestResourceProjectMustBeEnabled:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("project_status", "error", "message"),
+        [
+            (ModelStatus.DISABLED, EntityWrongState, "Project is not enabled"),
+            (None, EntityNotFound, "Project not found"),
+        ],
+    )
+    async def test_create_requires_enabled_project(
+        self,
+        mock_resource_service,
+        mock_project_crud,
+        mock_resource_crud,
+        mock_template_crud,
+        mocked_template,
+        mocked_project,
+        mocked_user,
+        project_status,
+        error,
+        message,
+    ):
+        mock_template_crud.get_by_id.return_value = mocked_template
+        if project_status is None:
+            mock_project_crud.get_by_id.return_value = None
+        else:
+            mocked_project.status = project_status
+            mock_project_crud.get_by_id.return_value = mocked_project
+
+        resource_create = ResourceCreate(name="r", template_id=mocked_template.id, project_id=mocked_project.id)
+
+        with pytest.raises(error, match=message):
+            await mock_resource_service.create(resource_create, mocked_user)
+        mock_resource_crud.create.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_update_cannot_move_to_disabled_project(
+        self, mock_resource_service, mock_project_crud, mock_resource_crud, mocked_resource, mocked_project, mocked_user
+    ):
+        mocked_resource.state = ModelState.PROVISION
+        mocked_resource.status = ModelStatus.READY
+        mocked_resource.project_id = None
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        mocked_project.status = ModelStatus.DISABLED
+        mock_project_crud.get_by_id.return_value = mocked_project
+
+        with pytest.raises(EntityWrongState, match="Project is not enabled"):
+            await mock_resource_service.update_resource(
+                str(mocked_resource.id), ResourceUpdate(project_id=mocked_project.id), mocked_user
+            )
+        mock_resource_crud.update.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_update_keeping_disabled_project_is_not_blocked(
+        self, mock_resource_service, mock_project_crud, mock_resource_crud, mocked_resource, mocked_project, mocked_user
+    ):
+        # a resource already in a project that got disabled can still be edited
+        mocked_resource.state = ModelState.PROVISION
+        mocked_resource.status = ModelStatus.READY
+        mocked_resource.project_id = mocked_project.id
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        mocked_project.status = ModelStatus.DISABLED
+        mock_project_crud.get_by_id.return_value = mocked_project
+
+        await mock_resource_service.update_resource(
+            str(mocked_resource.id), ResourceUpdate(project_id=mocked_project.id), mocked_user
+        )
+        mock_project_crud.get_by_id.assert_not_awaited()

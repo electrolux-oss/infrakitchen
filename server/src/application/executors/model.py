@@ -1,5 +1,5 @@
 from datetime import datetime, UTC
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 import uuid
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -19,6 +19,10 @@ from ..storages.model import Storage, StorageDTO
 
 from sqlalchemy import UUID, ForeignKey, Table
 from sqlalchemy import Column, JSON
+
+if TYPE_CHECKING:
+    # by name only: application.projects imports the resources, which import the executors
+    from application.projects.model import Project
 
 
 executor_integrations = Table(
@@ -70,6 +74,13 @@ class Executor(BaseEntity):
         nullable=True,
     )
     worker_template: Mapped[WorkerTemplate | None] = relationship("WorkerTemplate", lazy="joined")
+    project_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("projects.id", name="fk_executor_project_id"),
+        nullable=True,
+        index=True,
+    )
+    project: Mapped["Project | None"] = relationship("Project", lazy="joined")
 
     labels: Mapped[list[str]] = mapped_column(JSON, default=list)
     creator: Mapped[User] = relationship("User", lazy="joined")
@@ -121,6 +132,7 @@ class ExecutorDTO(BaseModel):
     storage_path: str | None = Field(default=None)
     tool_id: uuid.UUID | None = Field(default=None)
     worker_template_id: uuid.UUID | None = Field(default=None)
+    project_id: uuid.UUID | None = Field(default=None)
     labels: list[str] = Field(default_factory=list)
     revision_number: int = Field(default=1)
 

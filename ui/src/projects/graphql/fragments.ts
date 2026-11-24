@@ -31,6 +31,7 @@ export const PROJECT_GRAPHQL_FIELDS = {
     "status",
     "revisionNumber",
     "resourcesCount",
+    "executorsCount",
     "servicesCount",
     "createdAt",
     "updatedAt",
