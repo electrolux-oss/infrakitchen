@@ -1,14 +1,19 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import String, case, cast, exists, func, select, text
+from sqlalchemy import ColumnElement, Integer, String, and_, case, cast, exists, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from application.integrations.model import Integration
+from application.projects.model import Project
+from application.resource_drifts.model import ResourceDrift
 from application.secrets.model import Secret
 from application.source_code_versions.model import SourceCodeVersion
+from application.source_codes.model import SourceCode
+from core.constants.model import DriftStatus, ModelState, ModelStatus
 from core.permissions.model import Permission
+from core.task_queue.model import TaskQueueItem, TaskQueueStatus
 
 from core.database import (
     FieldSpec,
@@ -335,6 +340,67 @@ class ResourceCRUD:
 
     async def refresh(self, resource: Resource) -> None:
         await self.session.refresh(resource)
+
+    @staticmethod
+    def drift_check_supported() -> tuple[ColumnElement[bool], ...]:
+        """Resources a drift check can run on, the SQL of `functions.resource_supports_drift_check`."""
+        return (
+            Resource.state == ModelState.PROVISIONED,
+            Resource.abstract.is_(False),
+            # a check runs a tofu plan, which needs OpenTofu code
+            Resource.source_code_version_id.in_(
+                select(SourceCodeVersion.id)
+                .join(SourceCode, SourceCode.id == SourceCodeVersion.source_code_id)
+                .where(SourceCode.source_code_language == "opentofu")
+            ),
+        )
+
+    @staticmethod
+    def drift_detection_enabled(enabled_globally: bool) -> ColumnElement[bool]:
+        """
+        Scheduled drift checks are on for the resource: a project can turn them on or off against the
+        global setting. Needs the Project joined (outer join: a resource without a project follows the setting).
+        """
+        project_drift = Project.configuration["drift_detection"].as_boolean()
+        return or_(project_drift.is_(None), project_drift.is_(True)) if enabled_globally else project_drift.is_(True)
+
+    async def get_due_for_drift_check(self, enabled_globally: bool, interval_hours: int, limit: int) -> list[UUID]:
+        """
+        Resources whose scheduled drift check is due: never checked or outdated by a failed apply first, then
+        the least recently checked or applied. Failed checks are retried after 1, 2, 4, ... hours, never later
+        than the interval.
+        """
+        failing = ResourceDrift.consecutive_failures > 0
+        # the exponent is capped, so the power can't overflow; the interval is at most a year anyway
+        backoff_hours = func.least(
+            interval_hours, cast(func.power(2, func.least(ResourceDrift.consecutive_failures, 15) - 1), Integer)
+        )
+        hours = case((failing, backoff_hours), else_=interval_hours)
+        last_attempt = case((failing, ResourceDrift.last_error_at), else_=ResourceDrift.checked_at)
+        outdated = or_(ResourceDrift.id.is_(None), and_(ResourceDrift.status == DriftStatus.UNKNOWN, ~failing))
+        statement = (
+            select(Resource.id)
+            .select_from(Resource)
+            .outerjoin(Project, Project.id == Resource.project_id)
+            .outerjoin(ResourceDrift, ResourceDrift.resource_id == Resource.id)
+            .where(
+                *self.drift_check_supported(),
+                # a check plans the configuration: the changes of a READY resource are not applied yet, and an
+                # ERROR one may be half applied, so their plans would show those changes as drift
+                Resource.status == ModelStatus.DONE,
+                # a check queued now would wait for (or replace) the task that is already there
+                ~exists().where(
+                    TaskQueueItem.entity == "resource",
+                    TaskQueueItem.entity_id == Resource.id,
+                    TaskQueueItem.status.in_((TaskQueueStatus.QUEUED, TaskQueueStatus.RUNNING)),
+                ),
+                self.drift_detection_enabled(enabled_globally),
+                or_(outdated, last_attempt < func.now() - func.make_interval(0, 0, 0, 0, hours)),
+            )
+            .order_by(case((outdated, 0), else_=1), last_attempt.asc().nulls_first())
+            .limit(limit)
+        )
+        return list((await self.session.execute(statement)).scalars().all())
 
     async def get_resource_policies_by_role(
         self,

@@ -81,6 +81,27 @@ export const executorColumns: EntityTableColumn[] = [
     },
   },
   {
+    field: "project",
+    headerName: "Project",
+    flex: 1,
+    fetchFields: ["project"],
+    sortField: "project.name",
+    filter: {
+      field: "project_id",
+      operators: ["eq", "in", "is_none"],
+      valueType: "reference",
+      defaultOperator: "eq",
+      makeReferenceLoader: serverSearchReference({
+        entityPlural: "projects",
+        labelField: "name",
+      }),
+    },
+    valueGetter: (value: any) => value?.name || "",
+    renderCell: (params: RenderCellParams) => (
+      <Entity entity={params.row.project} />
+    ),
+  },
+  {
     field: "state",
     fetchFields: ["state", "status"],
     headerName: "State",

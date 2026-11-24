@@ -14,6 +14,7 @@ from graphql_api.dataloaders.entity_loaders import (
 from graphql_api.modules.tool.types import ToolType
 from graphql_api.modules.worker_template.types import WorkerTemplateShortType
 from graphql_api.modules.integration.types import IntegrationType
+from graphql_api.modules.project.types import ProjectType
 from graphql_api.modules.secret.types import SecretType
 from graphql_api.modules.source_code.types import SourceCodeType
 from graphql_api.modules.storage.types import StorageType
@@ -26,7 +27,15 @@ executor_mapper = StrawberrySQLAlchemyMapper()
 
 @executor_mapper.type(Executor)
 class ExecutorType:
-    __exclude__ = ["integration_ids", "secret_ids", "created_by", "tool_id", "worker_template_id"]
+    __exclude__ = [
+        "integration_ids",
+        "secret_ids",
+        "created_by",
+        "tool_id",
+        "worker_template_id",
+        "project_id",
+        "project",
+    ]
 
     id: uuid.UUID = strawberry.UNSET
     integration_ids: list[IntegrationType] | None = None
@@ -36,6 +45,7 @@ class ExecutorType:
     tool: ToolType | None = None
     # not the full type: its configuration is only for worker template admins
     worker_template: WorkerTemplateShortType | None = None
+    project: ProjectType | None = None
     creator: UserType | None = None
 
     @strawberry.field

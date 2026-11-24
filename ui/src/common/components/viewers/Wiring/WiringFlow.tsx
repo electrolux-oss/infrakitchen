@@ -1,4 +1,4 @@
-import "@xyflow/react/dist/base.css";
+import "@xyflow/react/base.css";
 
 import {
   MouseEvent as ReactMouseEvent,
@@ -12,13 +12,12 @@ import {
 } from "react";
 
 import {
-  applyNodeChanges,
   Connection,
   Edge,
   OnNodesChange,
   ReactFlow,
   useReactFlow,
-  useStoreApi,
+  useReactFlowStoreApi,
   Viewport as FlowViewport,
 } from "@xyflow/react";
 
@@ -338,7 +337,7 @@ export function WiringFlow({
   ref,
 }: WiringFlowProps) {
   const flow = useReactFlow<WiringFlowNode, WiringFlowEdge>();
-  const store = useStoreApi<WiringFlowNode, WiringFlowEdge>();
+  const store = useReactFlowStoreApi<WiringFlowNode, WiringFlowEdge>();
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
 
@@ -492,11 +491,11 @@ export function WiringFlow({
       // Picking a node drops the wire selection
       if (
         selectedWireRef.current &&
-        changes.some((c) => c.type === "select" && c.selected)
+        changes.getByType("select").some((c) => c.selected)
       ) {
         selectWire(null);
       }
-      setNodes((ns) => applyNodeChanges(changes, ns));
+      setNodes((ns) => changes.applyTo(ns));
     },
     [selectWire],
   );
@@ -667,7 +666,7 @@ export function WiringFlow({
 
           // The others go to a free spot in view, nearest its centre;
           // ancestors last, so the nodes the user added sit in the middle
-          const { width, height } = store.getState();
+          const { width, height } = store.viewportStore.getState();
           const { x, y, zoom } = flow.getViewport();
           const margin = VIEW_MARGIN / zoom;
           const view = {
@@ -707,7 +706,7 @@ export function WiringFlow({
             await flow.setViewport({ x: 0, y: 0, zoom: 1 });
             return;
           }
-          await flow.fitView({ padding: 0.1, maxZoom: 1 });
+          await flow.fitView({ padding: "4.5%", maxZoom: 1 });
         }),
 
       zoomBy: async (factor) => {

@@ -10,6 +10,7 @@ import {
 import { CountLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { EntityExecutors } from "../../executors/components/EntityExecutors";
 import { GoldenStateWidget } from "../../golden_state/GoldenStateWidget";
 import { DependencyConfiguration } from "../../resources/components/DependencyConfiguration";
 import { EntityResources } from "../../resources/components/EntityResources";
@@ -24,8 +25,9 @@ import { ProjectSidebar } from "./ProjectSidebar";
 
 export const ProjectContent = () => {
   const [subscribersRefreshKey, setSubscribersRefreshKey] = useState(0);
-  const { entity, userEntityPermissions } = useEntityProvider();
+  const { entity, userEntityPermissions, actions } = useEntityProvider();
   const { globalConfig } = useConfig();
+  const canEdit = actions.includes("edit");
 
   const fixedFilters = useMemo(
     () => ({ project_id: [entity?.id] }),
@@ -70,6 +72,18 @@ export const ProjectContent = () => {
       ),
     },
     {
+      label: "Executors",
+      tabLabel: (
+        <CountLabel label="Executors" count={entity.executorsCount ?? 0} />
+      ),
+      content: (
+        <EntityExecutors
+          fixedFilters={fixedFilters}
+          filterStorageKey="filter_storage_executors"
+        />
+      ),
+    },
+    {
       label: "Dependencies",
       content: (
         <DependencyConfiguration
@@ -79,7 +93,7 @@ export const ProjectContent = () => {
             dependencyTags: input.dependencyTags,
             dependencyConfig: input.dependencyConfig,
           })}
-          permissionEntity="api:project"
+          canEdit={canEdit}
         />
       ),
     },

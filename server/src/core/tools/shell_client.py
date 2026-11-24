@@ -8,6 +8,8 @@ from core.errors import ShellExecutionError
 
 log = logging.getLogger("sh_client")
 
+_CHUNK_SIZE = 64 * 1024
+
 
 async def _read_stream(stream: asyncio.StreamReader, cb):
     """Reads lines from an async stream and calls a callback for each line."""
@@ -17,6 +19,16 @@ async def _read_stream(stream: asyncio.StreamReader, cb):
             cb(line.decode("utf-8").rstrip())  # Decode and rstrip before calling callback
         else:
             break
+
+
+async def _read_chunks(stream: asyncio.StreamReader, cb):
+    """
+    Reads an async stream in chunks and calls a callback with each chunk (bytes).
+    For machine-readable output such as `tofu show -json`, which prints one line longer
+    than the line limit of `readline()` (64 KiB).
+    """
+    while chunk := await stream.read(_CHUNK_SIZE):
+        cb(chunk)
 
 
 async def _terminate(process: asyncio.subprocess.Process, grace_seconds: float = 10) -> None:
@@ -30,23 +42,31 @@ async def _terminate(process: asyncio.subprocess.Process, grace_seconds: float =
 
 
 async def _stream_subprocess(
-    cmd: list[str], stdout_cb, stderr_cb, cwd: str | None = None, env: dict[str, str] | None = None
+    cmd: list[str],
+    stdout_cb,
+    stderr_cb,
+    cwd: str | None = None,
+    env: dict[str, str] | None = None,
+    raw_stdout: bool = False,
 ) -> tuple[int, int | None]:
     """
     Executes a subprocess, streaming its stdout and stderr to callbacks.
 
     Args:
         cmd (list[str]): The command and its arguments as a list.
-        stdout_cb (callable): Callback function for stdout lines. Takes one string argument (the line).
+        stdout_cb (callable): Callback function for stdout lines. Takes one string argument (the line),
+            or one bytes argument (a chunk) with `raw_stdout`.
         stderr_cb (callable): Callback function for stderr lines. Takes one string argument (the line).
         cwd (str, optional): The current working directory for the subprocess.
         env (dict, optional): The environment variables for the subprocess.
+        raw_stdout (bool): Pass stdout in chunks instead of lines, for output with very long lines.
 
     Returns:
         tuple[int, int]: A tuple containing the process PID and its return code.
-                         If an OSError occurs, it returns (None, -1) and logs the error.
+                         If the process can't be started or its output can't be read, the return code is -1.
     """
     process = None
+    readers: list[asyncio.Task[None]] = []
     try:
         process = await asyncio.create_subprocess_exec(
             *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, cwd=cwd, env=env
@@ -54,9 +74,10 @@ async def _stream_subprocess(
         assert process.stdout is not None, "Subprocess stdout is None"
         assert process.stderr is not None, "Subprocess stderr is None"
 
-        # Create tasks for reading stdout and stderr
-        stdout_task = asyncio.create_task(_read_stream(process.stdout, stdout_cb))
+        read_stdout = _read_chunks if raw_stdout else _read_stream
+        stdout_task = asyncio.create_task(read_stdout(process.stdout, stdout_cb))
         stderr_task = asyncio.create_task(_read_stream(process.stderr, stderr_cb))
+        readers = [stdout_task, stderr_task]
 
         # Wait for both stream readers to complete and the process to finish
         # We wait for ALL tasks to complete, including the process itself
@@ -75,11 +96,16 @@ async def _stream_subprocess(
         return 0, -1  # Indicate an error that prevented subprocess creation
     except Exception as e:
         log.error(f"An unexpected error occurred during subprocess streaming: {e}")
-        if process:
-            # If process started but something else failed, try to get its return code
-            rc = process.returncode if process.returncode is not None else -1
-            return process.pid, rc
-        return 0, -1
+        if process is None:
+            return 0, -1
+        # The output is incomplete, so the command failed. Nobody reads its pipes anymore:
+        # stop the process, or it may block on a full pipe forever
+        if process.returncode is None:
+            await _terminate(process)
+        return process.pid, -1
+    finally:
+        for reader in readers:
+            _ = reader.cancel()
 
 
 class ShellScriptClient:
@@ -94,8 +120,12 @@ class ShellScriptClient:
         logger: EntityLogger | None = None,
         workspace_path: str | None = None,
         environment_variables: dict[str, str] | None = None,
+        log_stdout: bool = True,
     ):
         self.logger: EntityLogger | logging.Logger = logger if logger else log
+        # off for machine-readable output (e.g. `tofu show -json`): large, and it holds attribute values.
+        # Unlogged stdout is captured in chunks, as it may be a single line of any length
+        self.log_stdout: bool = log_stdout
         self.environment_variables: dict[str, str] = environment_variables or {}
         self.command: str = command
 
@@ -123,6 +153,7 @@ class ShellScriptClient:
         )
 
         captured_stdout_lines: list[str] = []
+        captured_stdout_chunks: list[bytes] = []
         captured_stderr_lines: list[str] = []
         environment_variables: dict[str, str] = {**self._default_env(), **self.environment_variables}
 
@@ -141,6 +172,9 @@ class ShellScriptClient:
             self.logger.info(line)
             _ = asyncio.create_task(trigger_save_if_needed())
 
+        def stdout_chunk_callback(chunk: bytes):
+            captured_stdout_chunks.append(chunk)
+
         def stderr_callback(line: str):
             # Capture stderr lines, but defer logging until we know the exit code
             # Many tools (like git) write informational messages to stderr even on success
@@ -149,10 +183,11 @@ class ShellScriptClient:
 
         _, return_code = await _stream_subprocess(
             cmd=self._command_parts,
-            stdout_cb=stdout_callback,
+            stdout_cb=stdout_callback if self.log_stdout else stdout_chunk_callback,
             stderr_cb=stderr_callback,
             cwd=self.workspace_path,
             env=environment_variables,
+            raw_stdout=not self.log_stdout,
         )
 
         # Log stderr lines with appropriate level based on exit code
@@ -172,6 +207,9 @@ class ShellScriptClient:
             self.logger.error(f"Command '{self.command}' failed with exit code {return_code}")
             raise ShellExecutionError(f"Command '{self.command}' failed with exit code {return_code}.")
 
+        if not self.log_stdout:
+            # decoded once joined: a chunk may end in the middle of a multi-byte character
+            return b"".join(captured_stdout_chunks).decode("utf-8").strip()
         return "\n".join(captured_stdout_lines).strip()
 
     def _default_env(self) -> dict[str, str]:

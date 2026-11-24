@@ -130,7 +130,7 @@ export function Dialog({
     <DialogTitleIdContext.Provider value={titleId}>
       <div
         className={cn(
-          "d-modal d-modal-open z-[1300] bg-grey-900/35 backdrop-blur-[4px] transition-opacity duration-200 dark:bg-grey-900/55 starting:opacity-0",
+          "d-modal-open d-modal z-[1300] bg-grey-900/35 backdrop-blur-[4px] transition-opacity duration-200 dark:bg-grey-900/55 starting:opacity-0",
           fullScreen && "place-items-stretch",
         )}
         onMouseDown={onBackdropMouseDown}

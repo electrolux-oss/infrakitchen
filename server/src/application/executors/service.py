@@ -2,11 +2,18 @@ import logging
 from typing import Any
 from uuid import UUID
 
-from application.executors.functions import delete_executor_policies, get_executor_actions
+from application.executors.functions import (
+    build_executor_audit_snapshot,
+    delete_executor_policies,
+    get_executor_actions,
+    get_executor_permissions,
+)
 from application.favorites.service import FavoriteService
 from application.integrations.schema import IntegrationShort
 from application.integrations.service import IntegrationService
 from application.executors.model import Executor, ExecutorDTO
+from application.projects.crud import ProjectCRUD
+from application.projects.functions import get_project_permissions, require_enabled_project
 from application.source_code_versions.service import SourceCodeService
 from application.storages.service import StorageService
 from application.worker_templates.service import WorkerTemplateService
@@ -16,12 +23,13 @@ from core.tools.service import ToolService
 from core.constants import ModelStatus, ModelState
 from core.constants.model import ModelActions
 from core.database import FieldSpec, to_dict
-from core.errors import EntityNotFound, EntityWrongState
+from core.errors import AccessDenied, EntityNotFound, EntityWrongState
 from core.logs.service import LogService
+from core.notifications.service import SubscriptionService
 from core.permissions.service import PermissionService
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
-from core.users.functions import require_entity_write_access, user_entity_permissions
+from core.users.functions import require_entity_write_access
 from core.users.model import UserDTO
 from core.utils.entity_state_handler import (
     delete_entity,
@@ -62,6 +70,8 @@ class ExecutorService:
         favorite_service: FavoriteService,
         tool_service: ToolService,
         worker_template_service: WorkerTemplateService,
+        project_crud: ProjectCRUD,
+        subscription_service: SubscriptionService,
     ):
         self.crud: ExecutorCRUD = crud
         self.integration_service: IntegrationService = integration_service
@@ -76,6 +86,8 @@ class ExecutorService:
         self.favorite_service: FavoriteService = favorite_service
         self.tool_service: ToolService = tool_service
         self.worker_template_service: WorkerTemplateService = worker_template_service
+        self.project_crud: ProjectCRUD = project_crud
+        self.subscription_service: SubscriptionService = subscription_service
 
     async def get_dto_by_id(self, executor_id: str | UUID) -> ExecutorDTO | None:
         if not is_valid_uuid(executor_id):
@@ -117,10 +129,20 @@ class ExecutorService:
         return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
 
     async def get_actions(self, executor_id: str | UUID, requester: UserDTO) -> list[str]:
-        executor = await self.crud.get_by_id(executor_id, fields={"status": None, "state": None})
+        executor = await self.crud.get_by_id(
+            executor_id,
+            fields={"status": None, "state": None, "project": {"id": None, "owners": {"id": None}}},
+        )
         if not executor:
             raise EntityNotFound("Executor not found")
-        return await get_executor_actions(requester, executor.id, executor.status, executor.state)
+        return await get_executor_actions(requester, executor.id, executor.status, executor.state, executor.project)
+
+    async def validate_project(self, project_id: str | UUID, requester: UserDTO) -> None:
+        """An executor can only be added to an enabled project the requester can write to or owns."""
+        project = require_enabled_project(await self.project_crud.get_by_id(project_id))
+        permissions = await get_project_permissions(requester, project)
+        if "write" not in permissions and "admin" not in permissions:
+            raise AccessDenied(f"You don't have write access to project {project.id}")
 
     async def create_executor(
         self,
@@ -169,6 +191,9 @@ class ExecutorService:
 
         if executor.worker_template_id is not None:
             _ = await self.worker_template_service.validate_selectable(executor.worker_template_id, requester)
+
+        if executor.project_id is not None:
+            await self.validate_project(executor.project_id, requester)
 
         body = executor.model_dump(exclude_unset=True)
 
@@ -224,7 +249,7 @@ class ExecutorService:
             executor.source_code_folder is not None
             and existing_executor.source_code_folder != executor.source_code_folder
         ):
-            requester_permissions = await user_entity_permissions(requester, executor_id, "executor")
+            requester_permissions = await get_executor_permissions(requester, executor_id, existing_executor.project)
             if "admin" not in requester_permissions:
                 raise ValueError("Only admin can change source code folder of the executor")
 
@@ -270,6 +295,11 @@ class ExecutorService:
             ):
                 _ = await self.worker_template_service.validate_selectable(executor.worker_template_id, requester)
             body["worker_template_id"] = executor.worker_template_id
+        if "project_id" in executor.model_fields_set:
+            # None detaches the executor from its project
+            if executor.project_id is not None and executor.project_id != existing_executor.project_id:
+                await self.validate_project(executor.project_id, requester)
+            body["project_id"] = executor.project_id
 
         if not body:
             raise ValueError("No fields to update")
@@ -284,7 +314,7 @@ class ExecutorService:
             body["source_code_version"] = None
 
         if check_critical_fields_changed(existing_executor, executor):
-            requester_permissions = await user_entity_permissions(requester, executor_id, "executor")
+            requester_permissions = await get_executor_permissions(requester, executor_id, existing_executor.project)
             if "admin" not in requester_permissions:
                 raise ValueError("Only admin can change storage or storage path of the executor")
 
@@ -408,9 +438,16 @@ class ExecutorService:
         await self.favorite_service.delete_all_by_component(component_type="executor", component_id=executor_id)
 
         await delete_entity(existing_executor)
-        await self.audit_log_handler.create_log(executor_id, requester.id, ModelActions.DELETE)
+        # the executor and its revisions are gone afterwards, so the row keeps a snapshot
+        await self.audit_log_handler.create_log(
+            executor_id,
+            requester.id,
+            ModelActions.DELETE,
+            action_metadata=build_executor_audit_snapshot(existing_executor),
+        )
         await self.revision_handler.delete_revisions(executor_id)
         await self.log_service.delete_by_entity_id(executor_id)
         await self.task_service.delete_by_entity_id(executor_id)
+        await self.subscription_service.delete_many_by_entity_id("executor", executor_id)
         await delete_executor_policies(executor_id, self.permission_service)
         await self.crud.delete(existing_executor)

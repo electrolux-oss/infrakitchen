@@ -144,7 +144,7 @@ export const TemplateConfiguration = ({
     <>
       <BaseCard
         name={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col items-start gap-1">
             {/* Inherit the card-title styling so this header matches the
                     plain-string titles used by the other overview cards. */}
             <CountLabel

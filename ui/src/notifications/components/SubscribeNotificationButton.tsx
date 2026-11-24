@@ -2,9 +2,9 @@ import React, { useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import { useConfig } from "../../../common/context/ConfigContext";
-import { HeroBellAlertIcon, HeroBellSlashIcon } from "../../../icons";
-import { HeroAdjustmentsHorizontalIcon } from "../../../icons";
+import { useConfig } from "../../common/context/ConfigContext";
+import { HeroBellAlertIcon, HeroBellSlashIcon } from "../../icons";
+import { HeroAdjustmentsHorizontalIcon } from "../../icons";
 import {
   Divider,
   Switch,
@@ -12,8 +12,8 @@ import {
   IconButton,
   Tooltip,
   Popover,
-} from "../../../ui";
-import { cn } from "../../../utils/cn";
+} from "../../ui";
+import { cn } from "../../utils/cn";
 
 interface SubscribeNotificationButtonProps {
   isSubscribed: boolean;

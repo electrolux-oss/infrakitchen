@@ -1,6 +1,6 @@
 import { ReactNode, Ref } from "react";
 
-import { ReactFlowState, useStore } from "@xyflow/react";
+import { useViewportStore, ViewportStore } from "@xyflow/react";
 
 import {
   HeroArrowsPointingInIcon,
@@ -237,7 +237,7 @@ export function ZoomToolbar({
   );
 }
 
-const zoomOf = (s: ReactFlowState) => s.transform[2];
+const zoomOf = (s: ViewportStore) => s.transform[2];
 
 /**
  * `ZoomToolbar` that reads the zoom from the React Flow store, so zooming
@@ -247,7 +247,7 @@ export function FlowZoomToolbar(props: {
   onZoomIn: () => void;
   onZoomOut: () => void;
 }) {
-  const zoom = useStore(zoomOf);
+  const zoom = useViewportStore(zoomOf);
   return <ZoomToolbar zoom={zoom} {...props} />;
 }
 

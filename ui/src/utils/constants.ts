@@ -32,12 +32,20 @@ export enum ENTITY_ACTION {
   SYNC = "sync",
   DRYRUN = "dryrun",
   DRYRUN_WITH_TEMP_STATE = "dryrun_with_temp_state",
+  CHECK_DRIFT = "check_drift",
   DISABLE = "disable",
   ENABLE = "enable",
   HAS_TEMPORARY_STATE = "has_temporary_state",
   CASCADE_DESTROY = "cascade_destroy",
   CASCADE_DRYRUN = "cascade_dryrun",
   CASCADE_EXECUTE = "cascade_execute",
+}
+
+export enum DRIFT_STATUS {
+  UNKNOWN = "unknown",
+  IN_SYNC = "in_sync",
+  DRIFTED = "drifted",
+  ERROR = "error",
 }
 
 export enum INTEGRATION_STATUS {

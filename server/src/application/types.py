@@ -21,6 +21,7 @@ type IntegrationProviderType = Literal[
     "git_public",
     "mongodb_atlas",
     "datadog",
+    "cloudflare",
     "postgresql",
     "slack",
     "aws_ecr",

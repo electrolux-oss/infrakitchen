@@ -283,6 +283,7 @@ export const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   azure_devops: "Azure Repos",
   azure_devops_ssh: "Azure Repos",
   datadog: "Datadog",
+  cloudflare: "Cloudflare",
   postgresql: "PostgreSQL",
 };
 

@@ -347,6 +347,8 @@ class TestPatch:
         mocked_user_response,
         mocked_resource_temp_state_handler,
         mock_event_sender,
+        mock_audit_log_handler,
+        mock_revision_handler,
     ):
         mock_resource_service.publish_notification_event = AsyncMock()
         resource_id = uuid4()
@@ -356,6 +358,8 @@ class TestPatch:
         updated_resource.project.configuration = {"allow_unapproved_metadata_edits": ["description", "labels"]}
         updated_resource.state = ModelState.PROVISIONED
         updated_resource.status = ModelStatus.DONE
+        updated_resource.revision_number = 4
+        mock_revision_handler.handle_revision.return_value = 5
 
         resource_patch = ResourceUpdate(description="Updated description", labels=["ops", "documented"])
 
@@ -371,6 +375,15 @@ class TestPatch:
             model_db_dump(resource_patch, exclude_unset=True, exclude_defaults=True),
         )
         mocked_resource_temp_state_handler.set_resource_temp_state.assert_not_awaited()
+        # An edit applied without approval is still a change: it gets a revision and an audit row
+        mock_revision_handler.handle_revision.assert_awaited_once_with(updated_resource)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(
+            resource_id,
+            mocked_user_response.id,
+            ModelActions.UPDATE,
+            revision_number=5,
+            set_current=True,
+        )
 
         response = ResourceResponse.model_validate(updated_resource)
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.UPDATE)
@@ -630,6 +643,8 @@ class TestPatchAction:
 
         mock_resource_crud.update.return_value = existing_resource
         mocked_resource_temp_state_handler.get_by_resource_id.return_value = mocked_resource_temp_state
+        # the approved edit writes revision 2 on top of revision 1
+        mock_revision_handler.handle_revision.return_value = 2
 
         result = await mock_resource_service.patch_action(
             resource_id=resource_id, body=patch_body, requester=mocked_user
@@ -642,7 +657,13 @@ class TestPatchAction:
             [
                 call(existing_resource.id, mocked_user.id, ModelActions.APPROVE, revision_number=1),
                 call(
-                    existing_resource.id, mocked_resource_temp_state.created_by, ModelActions.UPDATE, revision_number=1
+                    existing_resource.id,
+                    mocked_resource_temp_state.created_by,
+                    ModelActions.UPDATE,
+                    # logged after the edit is applied, against the new revision
+                    revision_number=2,
+                    # the approve row stays the request's main row
+                    set_current=False,
                 ),
             ]
         )
@@ -705,6 +726,8 @@ class TestPatchAction:
 
         mock_resource_crud.update.return_value = existing_resource
         mocked_resource_temp_state_handler.get_by_resource_id.return_value = mocked_resource_temp_state
+        # the approved edit writes revision 2 on top of revision 1
+        mock_revision_handler.handle_revision.return_value = 2
 
         result = await mock_resource_service.patch_action(
             resource_id=resource_id, body=patch_body, requester=mocked_user
@@ -717,7 +740,13 @@ class TestPatchAction:
             [
                 call(existing_resource.id, mocked_user.id, ModelActions.APPROVE, revision_number=1),
                 call(
-                    existing_resource.id, mocked_resource_temp_state.created_by, ModelActions.UPDATE, revision_number=1
+                    existing_resource.id,
+                    mocked_resource_temp_state.created_by,
+                    ModelActions.UPDATE,
+                    # logged after the edit is applied, against the new revision
+                    revision_number=2,
+                    # the approve row stays the request's main row
+                    set_current=False,
                 ),
             ]
         )
@@ -777,6 +806,8 @@ class TestPatchAction:
 
         mock_resource_crud.update.return_value = existing_resource
         mocked_resource_temp_state_handler.get_by_resource_id.return_value = mocked_resource_temp_state
+        # the approved edit writes revision 2 on top of revision 1
+        mock_revision_handler.handle_revision.return_value = 2
 
         result = await mock_resource_service.patch_action(
             resource_id=resource_id, body=patch_body, requester=mocked_user
@@ -789,7 +820,13 @@ class TestPatchAction:
             [
                 call(existing_resource.id, mocked_user.id, ModelActions.APPROVE, revision_number=1),
                 call(
-                    existing_resource.id, mocked_resource_temp_state.created_by, ModelActions.UPDATE, revision_number=1
+                    existing_resource.id,
+                    mocked_resource_temp_state.created_by,
+                    ModelActions.UPDATE,
+                    # logged after the edit is applied, against the new revision
+                    revision_number=2,
+                    # the approve row stays the request's main row
+                    set_current=False,
                 ),
             ]
         )
@@ -1488,3 +1525,53 @@ class TestToolSelection:
 
         assert result.state == ModelState.PROVISIONED
         assert result.status == ModelStatus.READY
+
+
+@pytest.mark.asyncio
+async def test_check_drift_queues_the_task(
+    monkeypatch, mock_resource_service, mock_resource_crud, mock_event_sender, mocked_user, mocked_resource
+):
+    monkeypatch.setattr("application.resources.functions.resource_supports_drift_check", lambda resource: True)
+    mocked_resource.state = ModelState.PROVISIONED
+    mocked_resource.status = ModelStatus.DONE
+    mock_resource_crud.get_by_id.return_value = mocked_resource
+
+    await mock_resource_service.patch_action(
+        resource_id=mocked_resource.id, body=PatchBodyModel(action=ModelActions.CHECK_DRIFT), requester=mocked_user
+    )
+
+    assert mock_event_sender.send_task.call_args.kwargs["action"] == ModelActions.CHECK_DRIFT
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status", [ModelStatus.IN_PROGRESS, ModelStatus.READY, ModelStatus.ERROR])
+async def test_check_drift_needs_a_resource_without_pending_changes(
+    monkeypatch, mock_resource_service, mock_resource_crud, mock_event_sender, mocked_user, mocked_resource, status
+):
+    # the plan would report the changes waiting for an apply, or left by a failed one, as drift
+    monkeypatch.setattr("application.resources.functions.resource_supports_drift_check", lambda resource: True)
+    mocked_resource.state = ModelState.PROVISIONED
+    mocked_resource.status = status
+    mock_resource_crud.get_by_id.return_value = mocked_resource
+
+    with pytest.raises(EntityWrongState):
+        await mock_resource_service.patch_action(
+            resource_id=mocked_resource.id, body=PatchBodyModel(action=ModelActions.CHECK_DRIFT), requester=mocked_user
+        )
+
+    mock_event_sender.send_task.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_check_drift_needs_opentofu_code(
+    mock_resource_service, mock_resource_crud, mock_event_sender, mocked_user, mocked_resource
+):
+    mocked_resource.state = ModelState.PROVISIONED
+    mocked_resource.status = ModelStatus.DONE
+    mocked_resource.abstract = True
+    mock_resource_crud.get_by_id.return_value = mocked_resource
+
+    with pytest.raises(ValueError, match="OpenTofu"):
+        await mock_resource_service.patch_action(
+            resource_id=mocked_resource.id, body=PatchBodyModel(action=ModelActions.CHECK_DRIFT), requester=mocked_user
+        )

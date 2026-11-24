@@ -1,7 +1,7 @@
 import uuid
 from typing import Any
 
-from core.constants.model import EventType
+from core.constants.model import EventType, ModelActions
 from core.notifications.in_app import deliver_in_app_notification
 from core.notifications.text import action_label, entity_reference, notification_message, notification_title
 
@@ -27,6 +27,9 @@ async def _send_in_app(user_id: uuid.UUID, title: str, message: str, task: Super
 
 async def notify_superseded(task: SupersededTask) -> None:
     """Tell the new requester (and the previous one, if different) that a queued action was replaced."""
+    if task.action == ModelActions.CHECK_DRIFT:
+        # mostly queued by the scheduler, nobody waits for it
+        return
     entity = entity_reference(task.entity, entity_id=task.entity_id)
     title = notification_title(task.entity, "action replaced")
     queued, newer = action_label(task.action), action_label(task.replaced_by_action)

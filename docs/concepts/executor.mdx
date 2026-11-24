@@ -48,6 +48,7 @@ Each executor in InfraKitchen contains the following core properties:
 | **Storage**              | Backend for OpenTofu/Terraform state           | S3, Azure Blob, GCS, etc.                |
 | **Storage Path**         | Path to state file in storage                  | Auto-generated or custom                 |
 | **IaC Tool**           | OpenTofu/Terraform version used to run it      | Global default when empty, see [IaC Tools](../operations/iac_tools) |
+| **Project**              | Project the executor belongs to                | Optional, see [Project Permissions and Notifications](#project-permissions-and-notifications) |
 | **Labels**               | Tags for organizing and filtering              | E.g., `migration`, `cleanup`, `one-time` |
 | **Revision Number**      | Version tracking for executor changes          | Auto-incremented on updates              |
 | **Creator**              | User who created the executor                  | Used for permissions and audit           |
@@ -72,6 +73,7 @@ Go to **Executors** in the sidebar and click <kbd>Create</kbd>.
 - Add description explaining the task
 - Select runtime (`opentofu`)
 - Specify command arguments
+- Optionally select a project (only projects you have write access to or own)
 
 </Step>
 
@@ -139,7 +141,7 @@ Executors can be associated with multiple integrations to access various cloud p
 
 ### Integration Types
 
-- **Cloud Providers**: AWS, Azure, GCP, MongoDB Atlas, Datadog
+- **Cloud Providers**: AWS, Azure, GCP, MongoDB Atlas, Datadog, Cloudflare
 - **Required for**: Accessing cloud resources during execution
 - **Multiple integrations**: Can use several at once if task spans multiple clouds
 
@@ -227,6 +229,17 @@ Executor actions are controlled by role-based access control:
 | **Execute**          | Write access                 |
 | **Destroy**          | Admin access                 |
 | **Delete**           | Admin access                 |
+
+### Project Permissions and Notifications
+
+An executor that belongs to a project inherits the project's access and notification subscribers, the same way resources do:
+
+- **Project policies** apply to the executor. A user with write access to the project can plan and apply its executors; a project admin is an executor admin.
+- **Project owners** are executor admins.
+- The executor's own policies still apply. The higher of the executor and project permission wins.
+- **Project subscribers** get the executor's notifications (for example a finished or failed apply), in addition to users subscribed to the executor itself.
+
+Only an enabled project you have write access to (or own) can be selected. The **Policies** and **Notifications** tabs of the executor show what is inherited from the project. A project can't be deleted while executors are assigned to it.
 
 ## Integration with Other Features
 

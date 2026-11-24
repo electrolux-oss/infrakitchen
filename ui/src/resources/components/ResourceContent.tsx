@@ -10,11 +10,12 @@ import {
 } from "../../common/components/cards/TabbedContent";
 import { TopologyTab } from "../../common/components/graph/TopologyTab";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { EntityNotificationSubscribersTable } from "../../notifications/components/EntityNotificationSubscribersTable";
 import { Revision } from "../../revision/Revision";
 import { EntityTaskQueueStatus } from "../../workers/components";
 
-import { DependencyConfiguration } from "./DependencyConfiguration";
-import { ResourceNotificationSubscribersTable } from "./ResourceNotificationSubscribersTable";
+import { ResourceDependencyConfiguration } from "./DependencyConfiguration";
+import { ResourceDriftTab } from "./ResourceDriftTab";
 import { ResourcePermissions } from "./ResourcePermissions";
 import { ResourceReviewView } from "./ResourceReviewView";
 import { ResourceSidebar } from "./ResourceSidebar";
@@ -45,7 +46,7 @@ export const ResourceContent = () => {
             resource={entity}
             onEditVariables={openVariablesDialog}
           />
-          <DependencyConfiguration resource={entity} />
+          <ResourceDependencyConfiguration resource={entity} />
         </div>
       ),
     },
@@ -55,6 +56,11 @@ export const ResourceContent = () => {
         <TopologyTab entity_id={entity.id} entity_name={entity.entityName} />
       ),
     },
+    // Hidden until the resource was first checked (More > Check drift, or the
+    // drift schedule); the result then stays until the resource is destroyed
+    ...(entity.drift
+      ? [{ label: "Drift", content: <ResourceDriftTab /> }]
+      : []),
     {
       label: "Policies",
       content: <ResourcePermissions resource={entity} />,
@@ -62,9 +68,11 @@ export const ResourceContent = () => {
     {
       label: "Notifications",
       content: (
-        <ResourceNotificationSubscribersTable
-          resourceId={entity.id}
+        <EntityNotificationSubscribersTable
+          entityType="resource"
+          entityId={entity.id}
           projectId={entity.project?.id}
+          title="Resource Subscribers"
           key={subscribersRefreshKey}
         />
       ),

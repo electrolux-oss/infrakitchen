@@ -10,7 +10,7 @@ from core.database import FieldSpec
 from core.casbin.enforcer import CasbinEnforcer
 from core.errors import DependencyError, EntityNotFound
 from core.models.encrypted_secret import EncryptedSecretStr
-from core.users.functions import get_user_actions, user_entity_permissions
+from core.users.functions import get_user_actions
 from core.utils.model_tools import model_db_dump
 from core.utils.password_manager import hash_new_password
 from .crud import UserCRUD
@@ -241,11 +241,6 @@ class UserService:
         if user.provider != SERVICE_ACCOUNT_PROVIDER or str(user.id) == str(requester.id):
             actions = [action for action in actions if action != ModelActions.DELETE]
         return actions
-
-    async def get_user_entity_permissions(
-        self, requester: UserDTO, entity_id: str | UUID, entity_name: str
-    ) -> list[str]:
-        return await user_entity_permissions(requester, entity_id, entity_name)
 
     async def link_accounts(
         self, primary_user_id: str | UUID, secondary_user_id: str | UUID, requester: UserDTO

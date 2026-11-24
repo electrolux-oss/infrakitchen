@@ -70,3 +70,23 @@ export interface GoldenStateSummary {
   overallScore: number;
   projects: GoldenStateProjectReport[];
 }
+
+export interface DriftCounts {
+  total: number;
+  inSync: number;
+  drifted: number;
+  error: number;
+  /** never checked, or outdated by a failed apply */
+  unchecked: number;
+  /** resources whose last drift check failed, whatever their result */
+  failing: number;
+}
+
+export interface DriftProjectReport extends DriftCounts {
+  projectId: string | null;
+  projectName: string;
+}
+
+export interface DriftSummary extends DriftCounts {
+  projects: DriftProjectReport[];
+}

@@ -9,7 +9,8 @@ from core.errors import AccessDenied, EntityNotFound, EntityWrongState
 from core.task_queue.crud import TaskQueueCRUD
 from core.task_queue.model import TaskQueueStatus
 from core.task_queue.service import TaskQueueService
-from core.users.functions import user_entity_permissions, user_is_super_admin
+from application.common.entity_permissions import entity_permissions_with_project
+from core.users.functions import user_is_super_admin
 from core.users.model import UserDTO
 from graphql_api.helpers import IsAuthenticated
 from graphql_api.modules.task_queue.types import ENTITY_DATA_LOADER, TaskQueueItemType
@@ -17,14 +18,16 @@ from graphql_api.modules.task_queue.types import ENTITY_DATA_LOADER, TaskQueueIt
 logger = logging.getLogger(__name__)
 
 
-async def _can_cancel(requester: UserDTO, created_by: uuid.UUID | None, entity: str, entity_id: uuid.UUID) -> bool:
-    """The user who requested the run, or an admin of its entity, may cancel it."""
+async def _can_cancel(
+    session: AsyncSession, requester: UserDTO, created_by: uuid.UUID | None, entity: str, entity_id: uuid.UUID
+) -> bool:
+    """The user who requested the run, or an admin of its entity (or of its project), may cancel it."""
     # Primary and secondary accounts are the same person
     linked_accounts = [*requester.primary_account, *requester.secondary_accounts]
     requester_ids = {requester.id, *(account.id for account in linked_accounts)}
     if created_by is not None and created_by in requester_ids:
         return True
-    if "admin" in await user_entity_permissions(requester, entity_id, entity):
+    if "admin" in await entity_permissions_with_project(session, requester, entity, entity_id):
         return True
     return await user_is_super_admin(requester)
 
@@ -46,7 +49,7 @@ class TaskQueueMutation:
 
         # Tasks queued under another controller (e.g. a workspace sync) belong to the entity they point to
         entity = ENTITY_DATA_LOADER.get(task.entity, task.entity)
-        if not await _can_cancel(requester, task.created_by, entity, task.entity_id):
+        if not await _can_cancel(session, requester, task.created_by, entity, task.entity_id):
             raise AccessDenied("Only the user who requested the task or an admin can cancel it")
 
         if await service.cancel_queued(id, reason=f"Cancelled by {requester.identifier}") is None:

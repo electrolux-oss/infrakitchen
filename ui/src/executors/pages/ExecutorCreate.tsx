@@ -23,7 +23,7 @@ import { WorkerTemplateSelect } from "../../worker_templates/components/WorkerTe
 import { useCanSelectWorkerTemplate } from "../../worker_templates/hooks/useCanSelectWorkerTemplate";
 import { EXECUTOR_CREATE_MUTATION } from "../graphql";
 import { GqlExecutor } from "../graphql/transforms";
-import { ExecutorCreate } from "../types";
+import { EXECUTOR_PROJECT_HELPER_TEXT, ExecutorCreate } from "../types";
 
 const toCloneDefaults = (source: GqlExecutor): Partial<ExecutorCreate> => ({
   name: `${source.name}-copy`,
@@ -173,6 +173,7 @@ const ExecutorCreatePageInner = () => {
             input: {
               ...data,
               toolId: data.toolId || null,
+              projectId: data.projectId || null,
               // a cloned selection is only kept by users who may select one
               workerTemplateId:
                 (canSelectWorkerTemplate && data.workerTemplateId) || null,
@@ -276,6 +277,26 @@ const ExecutorCreatePageInner = () => {
               control={control}
               defaultValue={[]}
               render={({ field }) => <LabelInput errors={errors} {...field} />}
+            />
+            <Controller
+              name="projectId"
+              control={control}
+              render={({ field }) => (
+                <ReferenceInput
+                  {...field}
+                  ikApi={ikApi}
+                  entity_name="projects"
+                  buffer={buffer}
+                  setBuffer={setBuffer}
+                  showFields={["name"]}
+                  access="write"
+                  error={false}
+                  helpertext={EXECUTOR_PROJECT_HELPER_TEXT}
+                  value={field.value}
+                  label="Select Project"
+                  onChange={(value: any) => field.onChange(value)}
+                />
+              )}
             />
           </div>
         </PropertyCard>

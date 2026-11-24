@@ -11,6 +11,7 @@ import deviconPlainMongodbData from "@iconify-icons/devicon-plain/mongodb";
 import deviconPlainPostgresqlData from "@iconify-icons/devicon-plain/postgresql";
 import deviconPlainSlackData from "@iconify-icons/devicon-plain/slack";
 import simpleIconsBitbucketData from "@iconify-icons/simple-icons/bitbucket";
+import simpleIconsCloudflareData from "@iconify-icons/simple-icons/cloudflare";
 import simpleIconsDatadogData from "@iconify-icons/simple-icons/datadog";
 import simpleIconsGithubData from "@iconify-icons/simple-icons/github";
 import simpleIconsKubernetesData from "@iconify-icons/simple-icons/kubernetes";
@@ -85,6 +86,10 @@ export const DatadogIcon: React.FC<IconProps> = (props) => (
   <Icon icon={simpleIconsDatadogData} ssr {...props} />
 );
 
+export const CloudflareIcon: React.FC<IconProps> = (props) => (
+  <Icon icon={simpleIconsCloudflareData} ssr {...props} />
+);
+
 export const OpenTofuIcon: React.FC<IconProps> = (props) => (
   <Icon icon={simpleIconsOpentofuData} ssr {...props} />
 );
@@ -111,6 +116,7 @@ const providerIcons = new Map<string, React.ElementType>([
   ["gcp", GoogleCloudIcon],
   ["mongodb_atlas", MongoDBIcon],
   ["datadog", DatadogIcon],
+  ["cloudflare", CloudflareIcon],
   ["postgresql", PostgreSQLIcon],
   ["opentofu", OpenTofuIcon],
   ["kubernetes", KubernetesIcon],

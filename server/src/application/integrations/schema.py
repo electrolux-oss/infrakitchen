@@ -201,6 +201,24 @@ class DatadogIntegrationConfig(BaseModel):
         return secrets
 
 
+class CloudflareIntegrationConfig(BaseModel):
+    cloudflare_api_token: EncryptedSecretStr = Field(...)
+    # optional; when set, account-owned API tokens are verified against this account and modules
+    # can read it as var.cloudflare_account_id
+    cloudflare_account_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{32}$")
+    integration_provider: Literal["cloudflare"] = Field(default="cloudflare", frozen=True)
+
+    @field_validator("cloudflare_account_id", mode="before")
+    @classmethod
+    def empty_account_id_to_none(cls, value: str | None) -> str | None:
+        if isinstance(value, str):
+            value = value.strip().lower()
+        return value or None
+
+    def get_secrets(self) -> list[tuple[str, EncryptedSecretStr]]:
+        return [("cloudflare_api_token", self.cloudflare_api_token)]
+
+
 class PostgreSQLIntegrationConfig(BaseModel):
     pg_host: str = Field(...)
     pg_port: int = Field(default=5432, ge=1, le=65535)
@@ -325,6 +343,7 @@ type IntegrationConfigType = Annotated[
     | BitbucketIntegrationConfig
     | BitbucketSshIntegrationConfig
     | DatadogIntegrationConfig
+    | CloudflareIntegrationConfig
     | PostgreSQLIntegrationConfig
     | GitPublicIntegrationConfig
     | SlackIntegrationConfig
@@ -373,7 +392,7 @@ class IntegrationCreate(BaseModel):
     @field_validator("integration_provider")
     @classmethod
     def validate_name_and_integration_provider(cls, value: str) -> str:
-        pattern = r"[a-zA-Z0-9_]+"
+        pattern = r"[a-zA-Z0-9_-]+"
         if not re.fullmatch(pattern, value):
             raise ValueError(f"field has to match pattern {pattern}")
         return value.lower()

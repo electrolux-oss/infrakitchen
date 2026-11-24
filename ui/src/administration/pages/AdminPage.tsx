@@ -7,6 +7,7 @@ import PageContainer from "../../common/PageContainer";
 import { HeroCog6ToothIcon } from "../../icons";
 import { Tab, Tabs } from "../../ui";
 import {
+  DriftSettingsSection,
   FeatureFlagSection,
   PermissionsSection,
   SchedulerJobsSection,
@@ -16,6 +17,7 @@ const ADMIN_TABS = [
   { path: "permissions", label: "Permissions" },
   { path: "feature-flags", label: "Feature Flags" },
   { path: "scheduler", label: "Scheduler" },
+  { path: "drift", label: "Drift Detection" },
 ] as const;
 
 type AdminTab = (typeof ADMIN_TABS)[number]["path"];
@@ -49,7 +51,7 @@ export const AdminPage = () => {
     <PageContainer
       title="Settings"
       icon={<HeroCog6ToothIcon />}
-      description="Manage permissions, feature flags, and scheduled jobs."
+      description="Manage permissions, feature flags, scheduled jobs, and drift detection."
     >
       <div className="w-full">
         <div className="mt-4">
@@ -73,6 +75,9 @@ export const AdminPage = () => {
         </div>
         <div role="tabpanel" hidden={activeTab !== "scheduler"}>
           <SchedulerJobsSection />
+        </div>
+        <div role="tabpanel" hidden={activeTab !== "drift"}>
+          <DriftSettingsSection />
         </div>
       </div>
     </PageContainer>

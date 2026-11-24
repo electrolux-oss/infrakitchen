@@ -179,3 +179,75 @@ class TestExecutorMutations:
         assert result.errors is None
         assert result.data == {"deleteExecutor": True}
         service.delete.assert_awaited_once_with(executor_id=str(executor_id), requester=mocked_user)
+
+
+class TestExecutorProjectInput:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "project_input,expected",
+        [
+            ({}, "unset"),
+            ({"projectId": None}, None),
+            ({"projectId": "set"}, "set"),
+        ],
+    )
+    @patch("graphql_api.modules.executor.mutations.get_executor_service")
+    @patch("graphql_api.modules.executor.mutations.get_favorite_service")
+    async def test_update_project_id(
+        self,
+        mock_get_favorite_service,
+        mock_get_service,
+        project_input,
+        expected,
+        mocked_executor,
+        mocked_user,
+    ):
+        project_id = uuid4()
+        if project_input.get("projectId") == "set":
+            project_input = {"projectId": str(project_id)}
+            expected = project_id
+        service = Mock()
+        service.get_actions = AsyncMock(return_value=[ModelActions.EDIT])
+        service.update_executor = AsyncMock(return_value=mocked_executor)
+        mock_get_service.return_value = service
+        mock_get_favorite_service.return_value = Mock()
+
+        result = await schema.execute(
+            UPDATE_EXECUTOR_MUTATION,
+            variable_values={"id": str(uuid4()), "input": {"description": "Updated", **project_input}},
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.errors is None
+        update = service.update_executor.call_args.kwargs["executor"]
+        if expected == "unset":
+            assert "project_id" not in update.model_fields_set
+        else:
+            assert update.project_id == expected
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.executor.mutations.get_executor_service")
+    @patch("graphql_api.modules.executor.mutations.get_favorite_service")
+    async def test_create_passes_project_id(
+        self,
+        mock_get_favorite_service,
+        mock_get_service,
+        mocked_executor,
+        mocked_user,
+    ):
+        project_id = uuid4()
+        service = Mock()
+        service.create_executor = AsyncMock(return_value=mocked_executor)
+        mock_get_service.return_value = service
+        mock_get_favorite_service.return_value = Mock()
+
+        result = await schema.execute(
+            CREATE_EXECUTOR_MUTATION,
+            variable_values={
+                "input": {"name": "In Project", "sourceCodeId": str(uuid4()), "projectId": str(project_id)}
+            },
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.errors is None
+        assert service.create_executor.call_args.kwargs["executor"].project_id == project_id

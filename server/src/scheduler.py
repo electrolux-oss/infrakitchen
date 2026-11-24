@@ -9,10 +9,14 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
+from sqlalchemy import func, select
+
 from application.logger import change_logger
+from application.resource_drifts.dependencies import get_drift_settings_service
+from application.resources.crud import ResourceCRUD
 from application.worker_templates.autoscaler import listen_for_queued_tasks, reconcile_workers
 
-from core.constants.model import ModelState, ModelStatus
+from core.constants.model import ModelActions, ModelState, ModelStatus
 from core.dependencies import get_async_session
 from core.errors import EntityNotFound
 from core.notifications.dependencies import get_user_notification_service
@@ -20,6 +24,7 @@ from core.notifications.outbox import NotificationOutboxCRUD
 from core.scheduler.crud import SchedulerJobCRUD
 from core.scheduler.model import JobType
 from core.config import Settings
+from core.task_queue.crud import TaskQueueCRUD
 from core.task_queue.functions import task_queue_service
 from core.task_queue.service import worker_alive_seconds
 from core.tasks.crud import TaskEntityCRUD
@@ -28,8 +33,11 @@ from core.tasks.model import TaskEntity
 from core.workers.crud import WorkerCRUD
 from core.workers.service import WorkerService
 from core.users.crud import UserCRUD
+from core.users.model import UserDTO
+from core.users.schema import UserCreateWithProvider
 from core.users.service import UserService
 from core.utils.event_sender import EventSender
+from core.utils.model_tools import model_db_dump
 from core.pubsub import EVENTS_RESYNC
 from core.utils.event_stream_manager import consume_events
 
@@ -42,7 +50,25 @@ POLL_JOB_ID = "poll_new_jobs"
 TASK_QUEUE_CLEANUP_JOB_ID = "task_queue_cleanup"
 WORKER_AUTOSCALER_JOB_ID = "worker_autoscaler"
 WORKER_OFFLINE_JOB_ID = "worker_offline_check"
-INTERNAL_JOB_IDS = {POLL_JOB_ID, TASK_QUEUE_CLEANUP_JOB_ID, WORKER_AUTOSCALER_JOB_ID, WORKER_OFFLINE_JOB_ID}
+DRIFT_CHECK_JOB_ID = "drift_check"
+INTERNAL_JOB_IDS = {
+    POLL_JOB_ID,
+    TASK_QUEUE_CLEANUP_JOB_ID,
+    WORKER_AUTOSCALER_JOB_ID,
+    WORKER_OFFLINE_JOB_ID,
+    DRIFT_CHECK_JOB_ID,
+}
+# How often the drift job looks for resources that are due; the check interval is a drift setting
+DRIFT_CHECK_JOB_MINUTES = 15
+# Scheduled checks run after the tasks users wait for (priority 0). How many run at once is limited when
+# a worker claims a task (DRIFT_MAX_RUNNING_CHECKS); this only bounds the backlog, so the queue doesn't
+# fill with checks that are outdated before they run
+DRIFT_CHECK_PRIORITY = -1
+DRIFT_MAX_ACTIVE_CHECKS = 50
+DRIFT_SYSTEM_USER_IDENTIFIER = "drift_detection"
+DRIFT_SYSTEM_USER_PROVIDER = "system"
+# two scheduler replicas must not queue the same checks
+DRIFT_SCHEDULER_LOCK = "drift_check_scheduler"
 ENTITY_ACTION_JOB_PREFIX = "entity_action:"
 
 # Serializes reconciliation so the event-driven reload and the periodic poll
@@ -333,6 +359,89 @@ async def start_worker_autoscaler_listener(scheduler: AsyncIOScheduler):
     await listen_for_queued_tasks(on_task_queued)
 
 
+async def get_drift_system_user() -> UserDTO:
+    """
+    The user that owns scheduled drift checks; it has no auth provider, so nobody can log in as it.
+    Created when the first check is due, so it doesn't exist while drift detection is unused. Looked up
+    on every run (at most every DRIFT_CHECK_JOB_MINUTES), so a changed or recreated user is picked up.
+    """
+    async with get_async_session() as session:
+        crud = UserCRUD(session=session)
+        # looked up with its provider: a user of a real provider may have the same identifier
+        user = await crud.get_one(
+            filter={"identifier": DRIFT_SYSTEM_USER_IDENTIFIER, "provider": DRIFT_SYSTEM_USER_PROVIDER}
+        )
+        if user is None:
+            created = await crud.create(
+                model_db_dump(
+                    UserCreateWithProvider(
+                        identifier=DRIFT_SYSTEM_USER_IDENTIFIER,
+                        email=None,
+                        first_name="Drift",
+                        last_name="Detection",
+                        display_name="Drift detection (system)",
+                        description="Runs the scheduled drift checks",
+                        provider=DRIFT_SYSTEM_USER_PROVIDER,
+                    )
+                )
+            )
+            user = await crud.get_by_id(created.id)
+            await session.commit()
+        if user is None:
+            raise RuntimeError("The drift detection user was not created")
+        return UserDTO.model_validate(user)
+
+
+async def enqueue_drift_checks(event_sender: EventSender) -> int:
+    """Queue a drift check for the resources that are due, topping the queue up to DRIFT_MAX_ACTIVE_CHECKS."""
+    queued = 0
+    async with get_async_session() as session:
+        # held until the commit below, after the checks were queued; it also serializes creating the system user
+        locked = await session.scalar(select(func.pg_try_advisory_xact_lock(func.hashtext(DRIFT_SCHEDULER_LOCK))))
+        if not locked:
+            logger.info("Drift checks are being queued by another scheduler")
+            return 0
+        settings = await get_drift_settings_service(session=session).get()
+        free_slots = DRIFT_MAX_ACTIVE_CHECKS - await TaskQueueCRUD(session=session).count_active(
+            ModelActions.CHECK_DRIFT
+        )
+        if free_slots > 0:
+            resource_ids = await ResourceCRUD(session=session).get_due_for_drift_check(
+                settings.enabled, settings.interval_hours, free_slots
+            )
+            if resource_ids:
+                system_user = await get_drift_system_user()
+                for resource_id in resource_ids:
+                    await event_sender.send_task(
+                        entity_id=resource_id,
+                        requester=system_user,
+                        action=ModelActions.CHECK_DRIFT,
+                        extra_metadata={"entity_controller": "resource"},
+                        delay_seconds=0,
+                        priority=DRIFT_CHECK_PRIORITY,
+                    )
+                queued = len(resource_ids)
+                await event_sender.flush()
+        await session.commit()
+
+    if queued:
+        logger.info(f"Queued drift checks for {queued} resources")
+    return queued
+
+
+def schedule_drift_check_job(scheduler: AsyncIOScheduler, event_sender: EventSender):
+    """Schedules the job that queues due drift checks; it queues nothing while drift detection is off."""
+    scheduler.add_job(
+        enqueue_drift_checks,
+        trigger=IntervalTrigger(minutes=DRIFT_CHECK_JOB_MINUTES),
+        kwargs={"event_sender": event_sender},
+        id=DRIFT_CHECK_JOB_ID,
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+    )
+
+
 async def start_reload_consumer(scheduler: AsyncIOScheduler, event_sender: EventSender):
     """Re-sync jobs whenever a ``reload_scheduler_jobs`` event is broadcast."""
 
@@ -379,6 +488,7 @@ async def setup_scheduler() -> tuple[AsyncIOScheduler, list["asyncio.Task[None]"
     schedule_task_queue_cleanup_job(scheduler=scheduler)
     schedule_worker_autoscaler_job(scheduler=scheduler)
     schedule_worker_offline_job(scheduler=scheduler)
+    schedule_drift_check_job(scheduler=scheduler, event_sender=event_sender)
 
     scheduler.start()
     logger.info("Scheduler started")

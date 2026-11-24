@@ -68,7 +68,7 @@ class TemplateCreate(BaseModel):
     @field_validator("template")
     @classmethod
     def validate_template(cls, value: str) -> str:
-        pattern = r"[a-zA-Z0-9_]+"
+        pattern = r"[a-zA-Z0-9_-]+"
         if not re.fullmatch(pattern, value):
             raise ValueError(f"field has to match pattern {pattern}")
         return value.lower()

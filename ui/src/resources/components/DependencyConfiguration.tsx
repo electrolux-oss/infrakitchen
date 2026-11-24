@@ -7,27 +7,33 @@ import TagInput from "../../common/components/inputs/TagInput";
 import { CountLabel } from "../../common/components/labels";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { dashedAddButtonClass } from "../../common/utils/dashedAddButton";
 import { HeroPlusCircleIcon } from "../../icons";
 import { Switch, Button, Tooltip } from "../../ui";
 import { DataTable, DataTableColumn } from "../../ui";
+import { GqlResource } from "../graphql";
 import {
   ResourceUpdateFieldInput,
   UPDATE_RESOURCE_MUTATION,
 } from "../graphql/mutations";
+import { useResourceFieldEditor } from "../hooks/useResourceFieldEditor";
 import { DependencyVariable } from "../types";
+
+// GraphQL types these loosely (and old data may differ), every read goes
+// through `asVariableList`
+type RawDependencyVariables =
+  DependencyVariable[] | Record<string, any>[] | null;
 
 export interface DependencyConfigurationProps {
   resource: {
     id: string;
-    dependencyTags: DependencyVariable[] | null;
-    dependencyConfig: DependencyVariable[] | null;
+    dependencyTags: RawDependencyVariables;
+    dependencyConfig: RawDependencyVariables;
   };
   updateMutation?: string;
   toUpdateInput?: (input: ResourceUpdateFieldInput) => Record<string, any>;
-  permissionEntity?: string;
+  canEdit: boolean;
 }
 
 const DependencyVariablesTable = ({
@@ -130,12 +136,10 @@ export const DependencyConfiguration = ({
   resource,
   updateMutation = UPDATE_RESOURCE_MUTATION,
   toUpdateInput = (input) => input,
-  permissionEntity = "api:resource",
+  canEdit,
 }: DependencyConfigurationProps) => {
   const { ikApi } = useConfig();
   const { refreshEntity } = useEntityProvider();
-  const { checkActionPermission } = usePermissionProvider();
-  const canEdit = checkActionPermission(permissionEntity, "write");
 
   type DependencySection = "tags" | "configs";
   const [editingSection, setEditingSection] =
@@ -227,7 +231,7 @@ export const DependencyConfiguration = ({
   const renderSection = (
     section: DependencySection,
     label: string,
-    values: DependencyVariable[] | null,
+    values: RawDependencyVariables,
   ) => {
     const entries = asVariableList(values);
     const editing = editingSection === section;
@@ -309,4 +313,14 @@ export const DependencyConfiguration = ({
       </BaseCard>
     </div>
   );
+};
+
+// Resource page variant: same edit rule as the other resource sections.
+export const ResourceDependencyConfiguration = ({
+  resource,
+}: {
+  resource: GqlResource;
+}) => {
+  const { canEdit } = useResourceFieldEditor(resource);
+  return <DependencyConfiguration resource={resource} canEdit={canEdit} />;
 };

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { UserAvatarList } from "../../common";
 import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
 import {
   EntitySidebar,
@@ -14,6 +15,7 @@ import {
   CommonField,
   EntityReference,
 } from "../../common/components/fields/CommonField";
+import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import { ScheduledApplyValue } from "../../common/components/fields/ScheduledApplyValue";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
@@ -24,6 +26,8 @@ import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import { usePendingScheduledAction } from "../../common/hooks/usePendingScheduledAction";
 import { sameStringSet } from "../../common/utils";
+import { SubscribeNotificationButton } from "../../notifications/components/SubscribeNotificationButton";
+import { useEntitySubscription } from "../../notifications/hooks";
 import { ToolSelect, toolLabel } from "../../tools";
 import { IkEntity } from "../../types";
 import { TextField } from "../../ui";
@@ -34,6 +38,7 @@ import {
   EXECUTOR_UPDATE_MUTATION,
   GqlExecutor,
 } from "../graphql";
+import { EXECUTOR_PROJECT_HELPER_TEXT } from "../types";
 
 const STORAGE_DANGER_HELPER =
   "Changing storage can cause OpenTofu/Terraform state issues. Only change it when intentionally migrating state.";
@@ -43,6 +48,7 @@ const INTEGRATION_STORAGE_WARNING =
 
 export interface ExecutorSidebarProps {
   executor: GqlExecutor;
+  onSubscriptionChange?: () => void;
 }
 
 /**
@@ -50,12 +56,16 @@ export interface ExecutorSidebarProps {
  * executor's description, status, infrastructure bindings and history so the main
  * column can focus on its source configuration and activity.
  */
-export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
+export const ExecutorSidebar = ({
+  executor,
+  onSubscriptionChange,
+}: ExecutorSidebarProps) => {
   const { ikApi } = useConfig();
-  const { userEntityPermissions } = useEntityProvider();
+  const { actions } = useEntityProvider();
   const { pendingScheduledAction } = usePendingScheduledAction();
   const { checkActionPermission } = usePermissionProvider();
-  const canEdit = userEntityPermissions.includes("admin");
+  // EDIT is offered to executor admins, including admins and owners of its project
+  const canEdit = actions.includes("edit");
   const canEditInfra = checkActionPermission("api:executor", "write");
   const canSelectWorkerTemplate = useCanSelectWorkerTemplate();
   // Storage edits can corrupt Terraform/OpenTofu state, so they stay behind an
@@ -85,6 +95,18 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
     () => executor.integrationIds?.map((i) => String(i.id)) ?? [],
     [executor.integrationIds],
   );
+  const projectId = executor.project?.id;
+  const attachedProjectIds = useMemo(
+    () => (projectId ? [String(projectId)] : []),
+    [projectId],
+  );
+  const projectOwners = executor.project?.owners ?? [];
+  const { loading, isSubscribed, handleSubscribe, handleUnsubscribe } =
+    useEntitySubscription({
+      entityType: "executor",
+      entityId: String(executor.id),
+      onSubscriptionChange,
+    });
   const attachedSecretIds = useMemo(
     () => executor.secretIds?.map((s) => String(s.id)) ?? [],
     [executor.secretIds],
@@ -101,12 +123,22 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
       <SidebarSection
         title="About"
         action={
-          <FavoriteButton
-            componentId={String(executor.id)}
-            componentType="executor"
-            ariaLabel="Add executor to favorites"
-            isFavorite={executor.isFavorite}
-          />
+          <div className="flex items-center">
+            <FavoriteButton
+              componentId={String(executor.id)}
+              componentType="executor"
+              ariaLabel="Add executor to favorites"
+              isFavorite={executor.isFavorite}
+            />
+            <SubscribeNotificationButton
+              isSubscribed={isSubscribed}
+              isLoading={loading}
+              onSubscribeClick={() => void handleSubscribe()}
+              onUnsubscribeClick={() => void handleUnsubscribe()}
+              entityName="executor"
+              showIncludeChildren={false}
+            />
+          </div>
         }
       >
         <EditableDescriptionField
@@ -131,6 +163,49 @@ export const ExecutorSidebar = ({ executor }: ExecutorSidebarProps) => {
             name="Next Scheduled Apply"
             value={
               <ScheduledApplyValue scheduledAction={pendingScheduledAction} />
+            }
+            span="full"
+          />
+        )}
+      </SidebarSection>
+
+      <SidebarSection title="Project">
+        <CommonEditableField<string | null>
+          name="Project"
+          canEdit={canEdit}
+          value={executor.project?.id ?? null}
+          ariaLabel="Edit project"
+          display={
+            executor.project ? <EntityReference {...executor.project} /> : null
+          }
+          onSave={(value) => saveField({ projectId: value })}
+          renderEditor={({ value, onChange }) => (
+            <ReferenceInput
+              ikApi={ikApi}
+              buffer={buffer}
+              setBuffer={setBuffer}
+              entity_name="projects"
+              showFields={["name"]}
+              access="write"
+              includeIds={attachedProjectIds}
+              value={value}
+              onChange={onChange}
+              ariaLabel="Project"
+              placeholder="Select project…"
+              helpertext={EXECUTOR_PROJECT_HELPER_TEXT}
+            />
+          )}
+          span="full"
+        />
+        {executor.project && (
+          <CommonField
+            name="Owners"
+            value={
+              projectOwners.length ? (
+                <UserAvatarList users={projectOwners} max={8} />
+              ) : (
+                <PlaceholderText />
+              )
             }
             span="full"
           />

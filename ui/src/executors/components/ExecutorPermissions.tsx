@@ -10,6 +10,11 @@ export const ExecutorPermissions = ({ executor }: AdvancedSettingsProps) => {
     <EntityPoliciesTab
       entityId={executor.id}
       entityName={executor.entityName}
+      inheritedEntityIds={
+        executor.project
+          ? [`${executor.project.entityName}:${executor.project.id}`]
+          : []
+      }
     />
   );
 };

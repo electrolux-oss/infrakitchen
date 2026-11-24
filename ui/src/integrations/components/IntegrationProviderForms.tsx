@@ -1184,6 +1184,66 @@ export const renderFieldsForProvider = (
         </>
       );
 
+    case "cloudflare":
+      return (
+        <>
+          <Controller
+            name="configuration.cloudflare_api_token"
+            control={control}
+            defaultValue=""
+            rules={{ required: "Cloudflare API Token is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Cloudflare API Token"
+                fullWidth
+                margin="normal"
+                type="password"
+                error={
+                  !!(errors.configuration as FieldErrors)?.cloudflare_api_token
+                }
+                helperText={
+                  (errors.configuration as any)?.cloudflare_api_token
+                    ?.message ||
+                  "API token with the permissions your OpenTofu modules need"
+                }
+                required
+                readOnly={readonly}
+              />
+            )}
+          />
+
+          <Controller
+            name="configuration.cloudflare_account_id"
+            control={control}
+            defaultValue=""
+            rules={{
+              pattern: {
+                value: /^\s*[0-9a-fA-F]{32}\s*$/,
+                message: "Account ID must be 32 hexadecimal characters",
+              },
+            }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Cloudflare Account ID"
+                fullWidth
+                margin="normal"
+                error={
+                  !!(errors.configuration as FieldErrors)?.cloudflare_account_id
+                }
+                helperText={
+                  (errors.configuration as any)?.cloudflare_account_id
+                    ?.message ||
+                  "Optional. Required for account-owned tokens; available to modules as var.cloudflare_account_id"
+                }
+                readOnly={readonly}
+              />
+            )}
+          />
+        </>
+      );
+
     case "github":
       return (
         <>

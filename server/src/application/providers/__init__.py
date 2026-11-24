@@ -9,6 +9,7 @@ from .github.github_provider import GithubProvider, GithubSshProvider
 from .gitlab.gitlab_provider import GitLabProvider
 from .azurerm.azure_devops_repo_provider import AzureRepoSourceCode
 from .datadog.datadog_provider import DatadogProvider
+from .cloudflare import CloudflareProvider
 from .mongo_atlas import MongodbAtlasProvider
 from .postgresql import PostgresqlProvider
 from .public.public_provider import PublicProvider
@@ -42,6 +43,7 @@ __all__ = [
     "PostgresqlTfStorage",
     "AzurermProvider",
     "DatadogProvider",
+    "CloudflareProvider",
     "SlackProvider",
     "AwsEcrProvider",
     "AzureStorage",

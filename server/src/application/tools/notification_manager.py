@@ -5,8 +5,10 @@ from dataclasses import dataclass
 from typing import Any, cast
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from application.executors.model import Executor
 from application.integrations.model import Integration
 from application.resources.dependencies import get_resource_service
 from application.resources.functions import get_resource_approver_ids
@@ -209,10 +211,8 @@ async def _approval_recipients(
     return approvers
 
 
-async def _subscriber_recipients(
-    event: NotificationEvent, session: AsyncSession, resource: ResourceResponse | None
-) -> list[Any]:
-    """Active users subscribed to the entity, to every entity of its type, or to the resource's project."""
+async def _subscriber_recipients(event: NotificationEvent, session: AsyncSession, project_id: UUID | None) -> list[Any]:
+    """Active users subscribed to the entity, to every entity of its type, or to the entity's project."""
     subscription_service = get_subscription_service(session)
     sub_fields: FieldSpec = {
         "entity_type": None,
@@ -221,9 +221,9 @@ async def _subscriber_recipients(
     }
 
     project_specific = []
-    if resource and resource.project_id:
+    if project_id:
         project_specific = await subscription_service.query_all(
-            filter={"entity_type": "project", "entity_id": resource.project_id}, fields=sub_fields
+            filter={"entity_type": "project", "entity_id": project_id}, fields=sub_fields
         )
     specific = await subscription_service.query_all(
         filter={"entity_type": event.entity_type, "entity_id": event.entity_id}, fields=sub_fields
@@ -236,6 +236,16 @@ async def _subscriber_recipients(
     if not users:
         logger.debug(f"No subscriptions found for {event.entity_type}:{event.entity_id}")
     return users
+
+
+async def _executor_project(session: AsyncSession, executor_id: UUID | str) -> tuple[UUID | None, str | None]:
+    """The project and the name of the executor, (None, None) when it doesn't exist."""
+    if not is_valid_uuid(str(executor_id)):
+        return None, None
+    row = (
+        await session.execute(select(Executor.project_id, Executor.name).where(Executor.id == UUID(str(executor_id))))
+    ).first()
+    return (row.project_id, row.name) if row is not None else (None, None)
 
 
 async def _route_notification_event(
@@ -256,6 +266,13 @@ async def _route_notification_event(
             return
 
     entity_name = event.entity_name or (resource.name if resource else None)
+    project_id = resource.project_id if resource else None
+
+    # executors inherit the subscribers of their project, like resources
+    if event.entity_type == "executor" and event.entity_id is not None:
+        executor_project_id, executor_name = await _executor_project(session, event.entity_id)
+        project_id = executor_project_id
+        entity_name = entity_name or executor_name
 
     if event.event_type == EventType.APPROVAL_REQUIRED:
         if resource is None:
@@ -269,7 +286,7 @@ async def _route_notification_event(
         excluded: list[UUID | str | None] = [event.actor_id, *event.exclude_user_ids]
         if event.exclude_approvers and resource is not None:
             excluded += [user.id for user in await _approval_recipients(session, resource, event.actor_id)]
-        recipients = await _without(session, await _subscriber_recipients(event, session, resource), excluded)
+        recipients = await _without(session, await _subscriber_recipients(event, session, project_id), excluded)
 
     await _notify_users(event, session, recipients, entity_name, outbox_id)
 
