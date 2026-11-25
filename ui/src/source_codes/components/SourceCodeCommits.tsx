@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { useSearchParams } from "react-router";
 
@@ -58,6 +65,11 @@ interface SourceCodeCommitsProps {
   total: number;
   tags: GqlSourceCodeTag[];
   lastSyncedAt?: string;
+  extraColumns?: DataTableColumn<GqlSourceCodeCommit>[];
+  renderActions?: (commit: GqlSourceCodeCommit) => ReactNode;
+  actionsWidth?: number;
+  onPageLoaded?: (commits: GqlSourceCodeCommit[]) => void;
+  syncing?: boolean;
 }
 
 export const SourceCodeCommits = ({
@@ -66,6 +78,11 @@ export const SourceCodeCommits = ({
   total,
   tags,
   lastSyncedAt,
+  extraColumns,
+  renderActions,
+  actionsWidth = 200,
+  onPageLoaded,
+  syncing = false,
 }: SourceCodeCommitsProps) => {
   const { ikApi } = useConfig();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -103,6 +120,12 @@ export const SourceCodeCommits = ({
     },
     [setSearchParams],
   );
+
+  const onPageLoadedRef = useRef(onPageLoaded);
+  onPageLoadedRef.current = onPageLoaded;
+  useEffect(() => {
+    onPageLoadedRef.current?.(commits);
+  }, [commits]);
 
   useEffect(() => {
     let cancelled = false;
@@ -210,6 +233,7 @@ export const SourceCodeCommits = ({
         field: "message",
         headerName: "Message",
         flex: 1,
+        minWidth: 200,
         sortable: false,
         renderCell: (params: RenderCellParams<GqlSourceCodeCommit>) => (
           <SourceCodeCommitMessage commit={params.row} />
@@ -218,7 +242,7 @@ export const SourceCodeCommits = ({
       {
         field: "tags",
         headerName: "Tags",
-        width: 160,
+        width: 110,
         sortable: false,
         renderCell: (params: RenderCellParams<GqlSourceCodeCommit>) => (
           <div className="flex flex-wrap gap-2">
@@ -228,10 +252,11 @@ export const SourceCodeCommits = ({
           </div>
         ),
       },
+      ...(extraColumns ?? []),
       {
         field: "authoredAt",
         headerName: "Date",
-        width: 150,
+        width: 130,
         sortable: false,
         align: "right",
         headerAlign: "right",
@@ -248,14 +273,30 @@ export const SourceCodeCommits = ({
           );
         },
       },
+      ...(renderActions
+        ? [
+            {
+              field: "actions",
+              headerName: "",
+              width: actionsWidth,
+              sortable: false,
+              align: "right" as const,
+              headerAlign: "right" as const,
+              renderCell: (params: RenderCellParams<GqlSourceCodeCommit>) =>
+                renderActions(params.row),
+            },
+          ]
+        : []),
     ],
-    [tagsBySha],
+    [tagsBySha, extraColumns, renderActions, actionsWidth],
   );
 
   if (!branch) {
     return (
       <Alert className="mt-2" severity="info">
-        This repository has not been synced yet. Trigger a sync to load commits.
+        {syncing
+          ? "Syncing the repository; its commits appear here when it finishes."
+          : "This repository has not been synced yet. Trigger a sync to load commits."}
       </Alert>
     );
   }
@@ -264,14 +305,16 @@ export const SourceCodeCommits = ({
     <PropertyCard
       title={null}
       subtitle={
-        <div className="inline-flex items-baseline gap-1">
-          <span>{`${total} commits on the ${branch} branch, synced`}</span>
-          {lastSyncedAt && (
-            <span>
-              <RelativeTime date={lastSyncedAt} />.
-            </span>
+        <span>
+          {`${total} commits on ${branch}`}
+          {lastSyncedAt ? (
+            <>
+              , synced <RelativeTime date={lastSyncedAt} />.
+            </>
+          ) : (
+            "."
           )}
-        </div>
+        </span>
       }
     >
       {error && <Alert severity="error">{error}</Alert>}
@@ -286,6 +329,7 @@ export const SourceCodeCommits = ({
           paginationModel={paginationModel}
           onPaginationModelChange={setPaginationModel}
           pageSizeOptions={ROWS_PER_PAGE_OPTIONS}
+          mobileCards
         />
       </div>
     </PropertyCard>

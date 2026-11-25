@@ -10,6 +10,7 @@ from application.providers.aws.aws_provider import AwsAuthentication
 from core.adapters.provider_adapters import ContainerRegistryProvider, IntegrationProvider, RegistryCredentials
 from core.custom_entity_log_controller import EntityLogger
 from core.errors import CannotProceed, CloudWrongCredentials
+from core.tools.oci_registry import repository_exists as oci_repository_exists
 
 log = logging.getLogger("aws_ecr_provider")
 
@@ -52,6 +53,15 @@ class AwsEcrProvider(IntegrationProvider, ContainerRegistryProvider):
                 aws_partition=self.configuration.aws_partition,
             )
         self.registry_host: str = self.configuration.registry_host_for_partition(aws_configuration.aws_partition)
+        self._identity: str = ":".join(
+            [
+                aws_configuration.aws_partition or "",
+                self.configuration.aws_region or "",
+                aws_configuration.aws_access_key_id or "",
+                aws_configuration.aws_account or "",
+                aws_configuration.aws_assumed_role_name or "",
+            ]
+        )
         self._aws_authentication = AwsAuthentication(logger=logger, configuration=aws_configuration)
 
     @override
@@ -88,11 +98,22 @@ class AwsEcrProvider(IntegrationProvider, ContainerRegistryProvider):
         self.logger.info(f"Fetched ECR authorization token for {self.registry_host}")
 
     @override
+    def credential_identity(self) -> str | None:
+        return self._identity
+
+    @override
     async def get_registry_credentials(self) -> RegistryCredentials:
         if self._credentials is None:
             await self.authenticate()
         assert self._credentials is not None
         return self._credentials
+
+    @override
+    async def repository_exists(self, repository: str) -> bool | None:
+        credentials = await self.get_registry_credentials()
+        return await oci_repository_exists(
+            credentials.registry_host, credentials.username, credentials.password, repository
+        )
 
     @override
     async def is_valid(self) -> bool:

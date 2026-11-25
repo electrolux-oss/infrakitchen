@@ -7,8 +7,8 @@ import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context";
 import { IkEntity } from "../../types";
 import {
-  FormControlLabel,
   FormControl,
+  FormControlLabel,
   FormHelperText,
   InputLabel,
   MenuItem,
@@ -321,8 +321,7 @@ const AwsEcrProviderFields = ({
             placeholder="us-east-1"
             error={!!configErrors?.aws_region}
             helperText={
-              configErrors?.aws_region?.message ||
-              "Region of the registry, e.g. eu-west-1"
+              configErrors?.aws_region?.message || "Region of the registry"
             }
             readOnly={readonly}
           />

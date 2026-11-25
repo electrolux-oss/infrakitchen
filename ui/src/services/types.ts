@@ -14,6 +14,8 @@ export interface ServiceUpdateRequest {
   projectId?: string;
   repositoryUrl?: string;
   repositoryIntegrationId?: string | null;
+  dockerfilePath?: string;
+  buildContext?: string;
   labels?: string[];
   owners?: string[];
 }

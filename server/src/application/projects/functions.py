@@ -83,7 +83,7 @@ async def merge_project_permissions(
     requester: UserDTO, entity_permissions: Iterable[str], project: Project | None
 ) -> list[str]:
     """
-    Permissions on an entity that belongs to a project (resource, executor): the entity's own permissions
+    Permissions on an entity that belongs to a project (resource, executor, service): the entity's own permissions
     merged with the project's, the higher level wins. Project owners are entity admins.
     """
     permissions = set(entity_permissions)

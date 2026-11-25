@@ -277,6 +277,7 @@ export const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   bitbucket: "Bitbucket",
   bitbucket_ssh: "Bitbucket",
   aws: "AWS",
+  aws_ecr: "Amazon ECR",
   gcp: "Google Cloud",
   mongodb_atlas: "MongoDB Atlas",
   azurerm: "Azure",

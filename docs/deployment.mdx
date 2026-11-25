@@ -123,6 +123,21 @@ The manifest references the secret created in the previous step:
 kubectl apply -f docs/examples/podman/k8s-manifest.yaml
 ```
 
+To run service image builds, uncomment the `infrakitchen-image-builds` Role and
+RoleBinding. Builds run as Jobs in the worker's namespace (override with
+`IMAGE_BUILD_NAMESPACE`) and execute the repository's Dockerfile, so keep the
+`infrakitchen-image-builds` NetworkPolicy: it blocks build pods from reaching
+the cluster, private networks and cloud metadata. NetworkPolicies need a CNI
+that enforces them (e.g. Calico, Cilium, or the AWS VPC CNI with network
+policies enabled); if you set `IMAGE_BUILD_NAMESPACE`, put the Role, RoleBinding
+and NetworkPolicy in that namespace.
+
+A worker follows a build until its Job ends and handles no other task
+meanwhile, so size the worker replicas for concurrent builds. If a worker stops
+during a build, the build fails once the worker's lease expires and its Job is
+deleted; build the commit again. To cancel a build, delete its Job
+(`kubectl delete job ik-build-<build id>`).
+
 The UI and API are served from one origin through nginx, so the API sends no
 CORS headers. To let another browser origin call the API, set
 `CORS_ALLOW_ORIGINS` to a comma-separated list of exact origins (e.g.

@@ -300,7 +300,7 @@ class AWSECRIntegrationConfig(BaseModel):
     """
 
     aws_account: str = Field(..., pattern=r"^\d{12}$")
-    aws_region: str = Field(default="us-east-1")
+    aws_region: str = Field(default="us-east-1", pattern=r"^[a-z]{2}(-[a-z]+)+-\d+$")
     aws_integration_id: uuid.UUID | None = Field(default=None)
     aws_access_key_id: str | None = Field(default=None)
     aws_secret_access_key: EncryptedSecretStr | None = Field(default=None)
