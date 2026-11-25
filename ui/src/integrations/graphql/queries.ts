@@ -20,3 +20,13 @@ export const INTEGRATION_OIDC_QUERY = `
     }
   }
 `;
+
+export const LINKED_INTEGRATION_QUERY = `
+  query LinkedIntegration($id: UUID!) {
+    integration(id: $id) {
+      id
+      name
+      integrationProvider
+    }
+  }
+`;

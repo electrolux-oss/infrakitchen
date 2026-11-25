@@ -15,6 +15,7 @@ from sqlalchemy.exc import IntegrityError
 
 from application.executors.task import ExecutorTask
 from application.resources.task import ResourceTask
+from application.service_builds.task import ServiceBuildTask, get_service_build_task
 from application.source_code_versions.task import SourceCodeVersionTask
 from application.source_codes.task import SourceCodeTask
 from application.storages.task import StorageTask
@@ -90,6 +91,7 @@ TaskController = (
     | ExecutorTask
     | WorkflowTask
     | ToolTask
+    | ServiceBuildTask
 )
 
 SessionFactory = Callable[[], AbstractAsyncContextManager[AsyncSession]]
@@ -584,6 +586,15 @@ class TaskWorker:
                 )
             case "tool":
                 return await get_tool_task(
+                    session=session,
+                    obj_id=obj_id,
+                    user=user,
+                    action=action,
+                    trace_id=trace_id,
+                    audit_log_id=audit_log_id,
+                )
+            case "service_build":
+                return await get_service_build_task(
                     session=session,
                     obj_id=obj_id,
                     user=user,

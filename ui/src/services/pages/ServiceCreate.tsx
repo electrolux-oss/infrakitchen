@@ -13,6 +13,7 @@ import { IkEntity } from "../../types";
 import { Button, TextField } from "../../ui";
 import { GqlUserShort, USERS_SHORT_QUERY } from "../../users/graphql";
 import { CREATE_SERVICE_MUTATION } from "../graphql";
+import { gitIntegrationHint } from "../repositoryUrl";
 import { ServiceCreateRequest } from "../types";
 
 type UserOption = GqlUserShort & { displayName?: string | null };
@@ -30,6 +31,7 @@ export const ServiceCreatePage = () => {
     control,
     handleSubmit,
     watch,
+    clearErrors,
     formState: { errors },
   } = useForm<ServiceCreateRequest>({
     defaultValues: {
@@ -48,7 +50,12 @@ export const ServiceCreatePage = () => {
     {},
   );
   const watchedRepositoryUrl = watch("repositoryUrl");
+  const hasRepositoryUrl = !!watchedRepositoryUrl?.trim();
   const [users, setUsers] = useState<UserOption[]>([]);
+
+  useEffect(() => {
+    if (!hasRepositoryUrl) clearErrors("repositoryIntegrationId");
+  }, [hasRepositoryUrl, clearErrors]);
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -202,31 +209,34 @@ export const ServiceCreatePage = () => {
                 />
               )}
             />
-            {watchedRepositoryUrl && (
-              <Controller
-                name="repositoryIntegrationId"
-                control={control}
-                rules={{ required: "Choose the git integration" }}
-                render={({ field }) => (
-                  <ReferenceInput
-                    ikApi={ikApi}
-                    buffer={buffer}
-                    setBuffer={setBuffer}
-                    {...field}
-                    entity_name="integrations"
-                    filter={{ integration_type: "git" }}
-                    required
-                    error={!!errors.repositoryIntegrationId}
-                    helpertext={
-                      errors.repositoryIntegrationId?.message ??
-                      "Use Git Public for public HTTPS repositories"
-                    }
-                    value={field.value}
-                    label="Git Integration"
-                  />
-                )}
-              />
-            )}
+            <Controller
+              name="repositoryIntegrationId"
+              control={control}
+              rules={{
+                validate: (value, values) =>
+                  !values.repositoryUrl?.trim() ||
+                  !!value ||
+                  "Choose the git integration",
+              }}
+              render={({ field }) => (
+                <ReferenceInput
+                  ikApi={ikApi}
+                  buffer={buffer}
+                  setBuffer={setBuffer}
+                  {...field}
+                  entity_name="integrations"
+                  filter={{ integration_type: "git" }}
+                  required={hasRepositoryUrl}
+                  error={!!errors.repositoryIntegrationId}
+                  helpertext={
+                    errors.repositoryIntegrationId?.message ??
+                    gitIntegrationHint(watchedRepositoryUrl)
+                  }
+                  value={field.value}
+                  label="Git Integration"
+                />
+              )}
+            />
             <Controller
               name="labels"
               control={control}

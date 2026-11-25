@@ -1,4 +1,4 @@
-import { SERVICE_LIST_FIELDS } from "./fragments";
+import { SERVICE_BUILD_FIELDS, SERVICE_LIST_FIELDS } from "./fragments";
 
 // Needs only the service read permission
 export const SERVICE_SOURCE_CODE_STATUS_QUERY = `
@@ -11,6 +11,15 @@ export const SERVICE_SOURCE_CODE_STATUS_QUERY = `
         updatedAt
       }
     }
+  }
+`;
+
+export const SERVICE_BUILDS_QUERY = `
+  query ServiceBuilds($serviceId: UUID!, $commitShas: [String!], $range: [Int!]) {
+    serviceBuilds(serviceId: $serviceId, commitShas: $commitShas, range: $range) {
+      ${SERVICE_BUILD_FIELDS}
+    }
+    serviceBuildsCount(serviceId: $serviceId)
   }
 `;
 

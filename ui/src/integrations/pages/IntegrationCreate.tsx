@@ -26,6 +26,7 @@ import {
 } from "../graphql";
 import {
   ConnectionType,
+  IntegrationType,
   IntegrationValidationResult,
   IntegrationWithStorageCreate,
 } from "../types";
@@ -239,7 +240,11 @@ const IntegrationCreatePage = () => {
       <Card className="w-full min-w-80 rounded-surface border border-divider shadow-none">
         <CardHeader
           title="Integration Details"
-          subheader={`Provide your integration name and ${providerObject.name} ${connectionType === ConnectionType.SSH ? "SSH key" : "token"}`}
+          subheader={
+            providerObject.type === IntegrationType.CONTAINER_REGISTRY
+              ? `Provide your integration name and ${providerObject.name} registry details`
+              : `Provide your integration name and ${providerObject.name} ${connectionType === ConnectionType.SSH ? "SSH key" : "token"}`
+          }
         />
 
         <CardContent>

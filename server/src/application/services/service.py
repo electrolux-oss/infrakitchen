@@ -2,10 +2,12 @@ import logging
 from typing import Any
 from uuid import UUID
 
+import httpx
 from sqlalchemy import select
 
 from application.integrations.model import Integration
 from application.projects.model import Project
+from application.service_builds.registry import get_container_registry
 from application.source_codes.model import SourceCode
 from application.source_codes.repository import is_ssh_url, repository_key, repository_provider
 from application.source_codes.schema import SourceCodeCreate
@@ -15,6 +17,7 @@ from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions, ModelStatus
 from core.database import FieldSpec, to_dict
 from core.errors import EntityNotFound
+from core.users.functions import require_entity_write_access
 from core.notifications.model import Subscription
 from core.notifications.service import SubscriptionService
 from core.permissions.model import Permission
@@ -23,10 +26,10 @@ from core.permissions.service import PermissionService
 from core.revisions.handler import RevisionHandler
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import has_field_changes, model_db_dump, to_json_serializable
-from .functions import get_service_actions
+from .functions import assert_registry_integration, get_service_actions, get_service_permissions
 from .crud import ServiceCRUD
-from .model import Service
-from .schema import ServiceCreate, ServiceResponse, ServiceUpdate
+from .model import Service, ServiceRegistry
+from .schema import ServiceCreate, ServiceResponse, ServiceUpdate, validate_image_repository
 from core.users.model import UserDTO
 
 logger = logging.getLogger(__name__)
@@ -83,14 +86,20 @@ class ServiceService:
         if project is None:
             raise EntityNotFound(f"Project {project_id} not found")
 
-    async def _assert_source_code_exists(self, source_code_id: str | UUID) -> None:
+    async def _assert_source_code_usable(self, source_code_id: str | UUID, requester: UserDTO) -> None:
         source_code = (
-            await self.crud.session.execute(select(SourceCode.id).where(SourceCode.id == source_code_id))
-        ).scalar_one_or_none()
+            await self.crud.session.execute(
+                select(SourceCode.id, SourceCode.integration_id).where(SourceCode.id == source_code_id)
+            )
+        ).one_or_none()
         if source_code is None:
             raise EntityNotFound(f"Source code {source_code_id} not found")
+        if source_code.integration_id:
+            await require_entity_write_access(requester, "integration", [source_code.integration_id])
 
-    async def _assert_git_integration(self, repository_url: str, integration_id: UUID | None) -> UUID:
+    async def _assert_git_integration(
+        self, repository_url: str, integration_id: UUID | None, requester: UserDTO
+    ) -> UUID:
         if not integration_id:
             raise ValueError("Choose the git integration to clone the repository with")
         integration = (
@@ -115,12 +124,18 @@ class ServiceService:
                 f"A {integration.integration_provider} integration cannot clone {repository_url}; "
                 f"use one of: {', '.join(sorted(allowed))}"
             )
+        await require_entity_write_access(requester, "integration", [integration_id])
         return integration_id
 
     async def _link_repository_by_url(
-        self, repository_url: str, integration_id: UUID | None, service_name: str, requester: UserDTO
+        self,
+        repository_url: str,
+        integration_id: UUID | None,
+        service_name: str,
+        labels: list[str],
+        requester: UserDTO,
     ) -> UUID:
-        integration_id = await self._assert_git_integration(repository_url, integration_id)
+        integration_id = await self._assert_git_integration(repository_url, integration_id, requester)
         key = repository_key(repository_url)
         repo_name = (key or "").rsplit("/", 1)[-1]
         candidates = (
@@ -135,6 +150,8 @@ class ServiceService:
         source_code = next((c for c in candidates if repository_key(c.source_code_url) == key), None)
 
         if source_code is not None:
+            if source_code.integration_id:
+                await require_entity_write_access(requester, "integration", [source_code.integration_id])
             if not source_code.default_branch and source_code.status in (
                 ModelStatus.READY,
                 ModelStatus.ERROR,
@@ -152,6 +169,7 @@ class ServiceService:
                 source_code_provider=repository_provider(repository_url),
                 source_code_language="opentofu",
                 integration_id=integration_id,
+                labels=labels,
             ),
             requester=requester,
         )
@@ -171,10 +189,10 @@ class ServiceService:
         if body.get("source_code_id") == "":
             body["source_code_id"] = None
         if body.get("source_code_id"):
-            await self._assert_source_code_exists(body["source_code_id"])
+            await self._assert_source_code_usable(body["source_code_id"], requester)
         if service.repository_url:
             source_code_id = await self._link_repository_by_url(
-                service.repository_url, service.repository_integration_id, service.name, requester
+                service.repository_url, service.repository_integration_id, service.name, service.labels, requester
             )
             body["source_code_id"] = str(source_code_id)
 
@@ -199,9 +217,12 @@ class ServiceService:
             raise EntityNotFound("Service not found")
 
         body = model_db_dump(service, exclude_defaults=True, exclude_none=True)
+        if "owners" in body or "project_id" in body:
+            requester_permissions = await get_service_permissions(requester, service_id, existing_service)
+            if "admin" not in requester_permissions:
+                raise ValueError("Only admin can change owners or project of the service")
         repository_url = body.pop("repository_url", None)
         repository_integration_id = body.pop("repository_integration_id", None)
-
         if repository_url == "":
             body["source_code_id"] = None
         elif repository_url:
@@ -209,6 +230,7 @@ class ServiceService:
                 repository_url,
                 UUID(str(repository_integration_id)) if repository_integration_id else None,
                 existing_service.name,
+                body.get("labels", existing_service.labels),
                 requester,
             )
 
@@ -233,6 +255,123 @@ class ServiceService:
         response = ServiceResponse.model_validate(existing_service)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
         return existing_service
+
+    async def add_registry(
+        self,
+        service_id: str | UUID,
+        registry_integration_id: str | UUID,
+        image_repository: str,
+        requester: UserDTO,
+    ) -> Service:
+        service = await self.crud.get_by_id(service_id)
+        if not service:
+            raise EntityNotFound("Service not found")
+        repository = validate_image_repository(image_repository)
+        if not repository:
+            raise ValueError("Choose the image repository")
+        if any(
+            str(r.registry_integration_id) == str(registry_integration_id) and r.image_repository == repository
+            for r in service.registries
+        ):
+            raise ValueError("The service already has this registry and repository")
+        if any(str(i.id) == str(registry_integration_id) for i in service.base_image_registries):
+            raise ValueError(
+                "The service pulls base images with this integration; remove it from the base image registries "
+                "or push with a separate integration"
+            )
+        await assert_registry_integration(self.crud.session, registry_integration_id, requester)
+        await self._ensure_repository_exists(registry_integration_id, repository)
+
+        registry = await self.crud.add_registry(
+            service,
+            {
+                "registry_integration_id": UUID(str(registry_integration_id)),
+                "image_repository": repository,
+            },
+        )
+        return await self._registries_changed(
+            service,
+            requester,
+            {
+                "registry_added": str(registry.id),
+                "registry_integration_id": str(registry.registry_integration_id),
+                "image_repository": repository,
+            },
+        )
+
+    async def _ensure_repository_exists(self, registry_integration_id: str | UUID, repository: str) -> None:
+        integration = await self.crud.session.get(Integration, UUID(str(registry_integration_id)))
+        if integration is None:
+            raise EntityNotFound(f"Integration {registry_integration_id} not found")
+        try:
+            registry = await get_container_registry(self.crud.session, integration)
+            exists = await registry.repository_exists(repository)
+        except httpx.HTTPError as e:
+            logger.warning(f"Could not check {repository} in {integration.name}: {e}")
+            return
+        if exists is False:
+            raise ValueError(
+                f"Repository {repository} doesn't exist in {integration.name}; create it first, or check the path"
+            )
+
+    async def remove_registry(self, service_id: str | UUID, registry_id: str | UUID, requester: UserDTO) -> Service:
+        service, registry = await self._get_registry(service_id, registry_id)
+        await self.crud.remove_registry(service, registry)
+        return await self._registries_changed(
+            service,
+            requester,
+            {
+                "registry_removed": str(registry.id),
+                "registry_integration_id": str(registry.registry_integration_id),
+                "image_repository": registry.image_repository,
+            },
+        )
+
+    async def add_base_image_registry(
+        self, service_id: str | UUID, integration_id: str | UUID, requester: UserDTO
+    ) -> Service:
+        service = await self.crud.get_by_id(service_id)
+        if not service:
+            raise EntityNotFound("Service not found")
+        if any(str(i.id) == str(integration_id) for i in service.base_image_registries):
+            raise ValueError("The service already pulls base images from this registry")
+        if any(str(r.registry_integration_id) == str(integration_id) for r in service.registries):
+            raise ValueError(
+                "The service pushes with this integration; pull base images with a separate, read-only integration"
+            )
+        await assert_registry_integration(self.crud.session, integration_id, requester)
+
+        await self.crud.add_base_image_registry(service, integration_id)
+        return await self._registries_changed(service, requester, {"base_image_registry_added": str(integration_id)})
+
+    async def remove_base_image_registry(
+        self, service_id: str | UUID, integration_id: str | UUID, requester: UserDTO
+    ) -> Service:
+        service = await self.crud.get_by_id(service_id)
+        if not service:
+            raise EntityNotFound("Service not found")
+        integration = next((i for i in service.base_image_registries if str(i.id) == str(integration_id)), None)
+        if integration is None:
+            raise EntityNotFound("The service doesn't pull base images from this registry")
+
+        service.base_image_registries.remove(integration)
+        return await self._registries_changed(service, requester, {"base_image_registry_removed": str(integration_id)})
+
+    async def _get_registry(self, service_id: str | UUID, registry_id: str | UUID) -> tuple[Service, ServiceRegistry]:
+        service = await self.crud.get_by_id(service_id)
+        if not service:
+            raise EntityNotFound("Service not found")
+        registry = next((r for r in service.registries if str(r.id) == str(registry_id)), None)
+        if registry is None:
+            raise EntityNotFound("Registry not found on this service")
+        return service, registry
+
+    async def _registries_changed(self, service: Service, requester: UserDTO, metadata: dict[str, Any]) -> Service:
+        await self.crud.session.flush()
+        await self.audit_log_handler.create_log(service.id, requester.id, ModelActions.UPDATE, action_metadata=metadata)
+        await self.crud.refresh(service)
+        await self.event_sender.send_event(ServiceResponse.model_validate(service), ModelActions.UPDATE)
+        return service
 
     async def delete(self, service_id: str, requester: UserDTO) -> None:
         existing_service = await self.crud.get_by_id(service_id)

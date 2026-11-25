@@ -99,7 +99,7 @@ class UserQuery:
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def user_entity_permissions(self, info: Info, entity_id: uuid.UUID, entity_name: str) -> list[str]:
-        # resources and executors also get the permissions inherited from their project
+        # resources, executors and services also get the permissions inherited from their project
         requester = info.context["request"].state.user
         return await entity_permissions_with_project(
             info.context["session"], requester, entity_id=entity_id, entity_name=entity_name

@@ -24,7 +24,7 @@ from core.errors import CloudWrongCredentials, DependencyError, EntityNotFound, 
 from core.permissions.schema import EntityPolicyCreate
 from core.permissions.service import PermissionService
 from core.revisions.handler import RevisionHandler
-from core.users.functions import user_has_access_to_entity
+from core.users.functions import require_entity_write_access, user_has_access_to_entity
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import has_field_changes, model_db_dump
@@ -319,7 +319,8 @@ class IntegrationService:
         """Return the configuration of the AWS integration an ECR registry authenticates through.
 
         Returns None when the configuration is not an ECR registry linked to an AWS integration.
-        With a requester, the requester must be able to read the linked integration.
+        With a requester, the requester must have write access to the linked integration: the registry
+        hands out tokens with all of its permissions.
         """
         if not isinstance(config, AWSECRIntegrationConfig) or not config.aws_integration_id:
             return None
@@ -331,6 +332,8 @@ class IntegrationService:
             requester, config.aws_integration_id, action="read", entity_name="integration"
         ):
             raise ValueError(f"AWS integration {config.aws_integration_id} not found")
+        if requester:
+            await require_entity_write_access(requester, "integration", [config.aws_integration_id])
 
         aws_configuration = IntegrationDTO.model_validate(aws_integration).configuration
         if not isinstance(aws_configuration, AWSIntegrationConfig):

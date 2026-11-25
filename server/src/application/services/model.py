@@ -4,10 +4,11 @@ import uuid
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from application.integrations.model import Integration
 from application.projects.model import Project
 from application.source_codes.model import SourceCode
 from core.base_models import Base, BaseRevision
-from sqlalchemy import UUID, Column, DateTime, ForeignKey, Index, JSON, Table, func, text
+from sqlalchemy import UUID, Column, DateTime, ForeignKey, Index, JSON, Table, UniqueConstraint, func, text
 
 from core.users.model import User, UserDTO
 
@@ -18,6 +19,34 @@ service_owners = Table(
     Column("service_id", ForeignKey("services.id"), primary_key=True),
     Column("user_id", ForeignKey("users.id"), primary_key=True),
 )
+
+service_base_image_registries = Table(
+    "service_base_image_registries",
+    Base.metadata,
+    Column("service_id", ForeignKey("services.id", ondelete="CASCADE"), primary_key=True),
+    Column("integration_id", ForeignKey("integrations.id", ondelete="CASCADE"), primary_key=True),
+)
+
+
+class ServiceRegistry(Base):
+    __tablename__: str = "service_registries"
+
+    service_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("services.id", name="fk_service_registry_service_id", ondelete="CASCADE"),
+    )
+    registry_integration_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("integrations.id", name="fk_service_registry_registry_integration_id", ondelete="CASCADE"),
+    )
+    registry_integration: Mapped["Integration"] = relationship("Integration", lazy="joined")
+    image_repository: Mapped[str] = mapped_column()
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("service_id", "registry_integration_id", "image_repository", name="uq_service_registry"),
+    )
 
 
 class Service(BaseRevision):
@@ -40,6 +69,17 @@ class Service(BaseRevision):
         nullable=True,
     )
     source_code: Mapped["SourceCode | None"] = relationship("SourceCode", lazy="joined")
+
+    registries: Mapped[list[ServiceRegistry]] = relationship(
+        lazy="selectin",
+        order_by=ServiceRegistry.created_at,
+        cascade="all, delete-orphan",
+    )
+    base_image_registries: Mapped[list[Integration]] = relationship(
+        secondary=service_base_image_registries, lazy="selectin"
+    )
+    dockerfile_path: Mapped[str] = mapped_column(default="Dockerfile", server_default="Dockerfile")
+    build_context: Mapped[str] = mapped_column(default=".", server_default=".")
 
     labels: Mapped[list[str]] = mapped_column(JSON, default=list)
 
@@ -69,6 +109,8 @@ class ServiceDTO(BaseModel):
     description: str = Field(default="")
     project_id: uuid.UUID | None = Field(default=None)
     source_code_id: uuid.UUID | None = Field(default=None)
+    dockerfile_path: str = Field(default="Dockerfile")
+    build_context: str = Field(default=".")
     owners: list[UserDTO] = Field(default_factory=list)
     labels: list[str] = Field(default_factory=list)
 

@@ -1,11 +1,15 @@
+import { useEffect, useState } from "react";
+
 import { formatLabel } from "../../common";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import {
   CommonField,
+  EntityReference,
   getProviderValue,
 } from "../../common/components/fields/CommonField";
+import { useConfig } from "../../common/context/ConfigContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
-import { GqlIntegration } from "../graphql";
+import { GqlIntegration, LINKED_INTEGRATION_QUERY } from "../graphql";
 
 import { IntegrationConfigurationEditor } from "./IntegrationConfigurationEditor";
 import { IntegrationOidcSection } from "./IntegrationOidcSection";
@@ -21,6 +25,32 @@ const HIDDEN_CONFIG_KEYS = new Set([
   "gcp_oidc_signing_public_jwk",
   "gcp_oidc_signing_private_key",
 ]);
+
+const LinkedIntegration = ({ id }: { id: string }) => {
+  const { ikApi } = useConfig();
+  const [integration, setIntegration] = useState<{
+    name: string;
+    integrationProvider: string;
+  } | null>(null);
+
+  useEffect(() => {
+    ikApi
+      .graphqlRequest<{
+        integration: { name: string; integrationProvider: string } | null;
+      }>(LINKED_INTEGRATION_QUERY, { id })
+      .then((response) => setIntegration(response.integration))
+      .catch(() => setIntegration(null));
+  }, [ikApi, id]);
+
+  return (
+    <EntityReference
+      id={id}
+      entityName="integration"
+      name={integration?.name ?? id}
+      provider={integration?.integrationProvider}
+    />
+  );
+};
 
 export const IntegrationConfiguration = ({
   integration,
@@ -49,8 +79,10 @@ export const IntegrationConfiguration = ({
       />
       {Object.entries(integration.configuration || {}).map(([k, v]) => {
         const value =
-          k === "gcp_wif_pool_provider_audience" ||
-          k === "gcp_wif_service_account_impersonation_url" ? (
+          k === "aws_integration_id" && typeof v === "string" ? (
+            <LinkedIntegration id={v} />
+          ) : k === "gcp_wif_pool_provider_audience" ||
+            k === "gcp_wif_service_account_impersonation_url" ? (
             <div className="font-mono wrap-anywhere [word-break:break-word] text-fg-muted">
               {String(v)}
             </div>

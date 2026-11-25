@@ -33,7 +33,11 @@ export const ServiceContent = () => {
         <CountLabel label="Commits" count={sourceCode.commitCount} />
       ) : undefined,
       content: sourceCode ? (
-        <ServiceCommits service={entity} sourceCode={sourceCode} />
+        <ServiceCommits
+          key={sourceCode.id}
+          service={entity}
+          sourceCode={sourceCode}
+        />
       ) : (
         <Alert className="mt-2" severity="info">
           Set a code repository on this service to see its commits.

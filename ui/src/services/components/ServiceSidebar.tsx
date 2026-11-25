@@ -20,16 +20,21 @@ import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { useEntityFieldSaver } from "../../common/hooks/useEntityFieldSaver";
 import { notifyError } from "../../common/hooks/useNotification";
+import { HeroChevronDownIcon } from "../../icons";
 import { SubscribeNotificationButton } from "../../notifications/components/SubscribeNotificationButton";
 import { IkEntity } from "../../types";
-import { TextField } from "../../ui";
+import { Button, Collapse, TextField } from "../../ui";
 import { GqlUserShort, USERS_SHORT_QUERY } from "../../users/graphql";
+import { cn } from "../../utils/cn";
 import { GqlService } from "../graphql";
 import {
   ServiceUpdateFieldInput,
   UPDATE_SERVICE_MUTATION,
 } from "../graphql/mutations";
 import { useServiceNotificationDialog } from "../hooks";
+import { gitIntegrationHint } from "../repositoryUrl";
+
+import { BaseImageRegistries, ServiceRegistries } from "./ServiceRegistries";
 
 type UserOption = GqlUserShort & { displayName?: string | null };
 
@@ -77,8 +82,9 @@ export const ServiceSidebar = ({
   onSubscriptionChange,
 }: ServiceSidebarProps) => {
   const { ikApi } = useConfig();
-  const { actions } = useEntityProvider();
+  const { actions, userEntityPermissions } = useEntityProvider();
   const canEdit = actions.includes("edit");
+  const canEditOwners = userEntityPermissions.includes("admin");
 
   const { loading, isSubscribed, handleSubscribe, handleUnsubscribe } =
     useServiceNotificationDialog({
@@ -91,6 +97,9 @@ export const ServiceSidebar = ({
     {},
   );
   const ownersLoadedRef = useRef(false);
+  const [showAdvanced, setShowAdvanced] = useState(
+    service.buildContext !== ".",
+  );
 
   const loadUsers = useCallback(async () => {
     if (ownersLoadedRef.current) {
@@ -177,7 +186,7 @@ export const ServiceSidebar = ({
         />
         <CommonEditableField<UserOption[]>
           name={"Owners"}
-          canEdit={canEdit}
+          canEdit={canEditOwners}
           value={ownerValues}
           ariaLabel="Edit owners"
           isEqual={sameUserSet}
@@ -204,7 +213,7 @@ export const ServiceSidebar = ({
           canEdit={canEdit}
           value={{
             url: service.sourceCode?.sourceCodeUrl ?? "",
-            integrationId: null,
+            integrationId: service.sourceCode?.integration?.id ?? null,
           }}
           ariaLabel="Edit code repository"
           isEqual={(a, b) =>
@@ -251,13 +260,84 @@ export const ServiceSidebar = ({
                   ariaLabel="Git integration"
                   label="Git Integration"
                   required
-                  helpertext="Use Git Public for public HTTPS repositories"
+                  helpertext={gitIntegrationHint(value.url)}
                 />
               )}
             </>
           )}
           span="full"
         />
+      </SidebarSection>
+
+      <SidebarSection title="Image Build">
+        <ServiceRegistries service={service} canEdit={canEdit} />
+        <BaseImageRegistries service={service} canEdit={canEdit} />
+        <CommonEditableField<string>
+          name={"Dockerfile"}
+          canEdit={canEdit}
+          value={service.dockerfilePath}
+          ariaLabel="Edit Dockerfile path"
+          display={service.dockerfilePath}
+          onSave={(value) => saveField({ dockerfilePath: value.trim() })}
+          renderEditor={({ value, onChange }) => (
+            <TextField
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              helperText="Path from the repository root"
+              aria-label="Dockerfile path"
+              fullWidth
+              margin="normal"
+              autoFocus
+            />
+          )}
+          span="full"
+        />
+        <div className="col-span-full">
+          <Button
+            variant="text"
+            size="small"
+            className="-ml-2"
+            endIcon={
+              <HeroChevronDownIcon
+                fontSize="small"
+                className={cn(
+                  "transition-transform",
+                  showAdvanced && "rotate-180",
+                )}
+              />
+            }
+            aria-expanded={showAdvanced}
+            onClick={() => setShowAdvanced((open) => !open)}
+          >
+            Advanced
+          </Button>
+          <Collapse in={showAdvanced} unmountOnExit>
+            <CommonEditableField<string>
+              name={"Build Context"}
+              canEdit={canEdit}
+              value={service.buildContext}
+              ariaLabel="Edit build context"
+              display={
+                service.buildContext === "."
+                  ? ". (repository root)"
+                  : service.buildContext
+              }
+              onSave={(value) => saveField({ buildContext: value.trim() })}
+              renderEditor={({ value, onChange }) => (
+                <TextField
+                  value={value}
+                  onChange={(e) => onChange(e.target.value)}
+                  helperText="Directory from the repository root, . for the root"
+                  aria-label="Build context"
+                  fullWidth
+                  margin="normal"
+                  autoFocus
+                />
+              )}
+              span="full"
+            />
+          </Collapse>
+        </div>
       </SidebarSection>
 
       <SidebarDetailsSection entity={service} />

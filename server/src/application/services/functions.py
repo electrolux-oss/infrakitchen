@@ -1,10 +1,26 @@
 from uuid import UUID
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from application.integrations.model import Integration
+from application.projects.functions import merge_project_permissions
 from application.services.model import Service
 from core.constants.model import ModelActions
-from core.users.functions import user_api_permission, user_entity_permissions
-from core.users.functions import user_is_super_admin
+from core.errors import EntityNotFound
+from core.users.functions import require_entity_write_access, user_entity_permissions
 from core.users.model import UserDTO
+
+
+async def assert_registry_integration(session: AsyncSession, integration_id: str | UUID, requester: UserDTO) -> None:
+    integration_type = (
+        await session.execute(select(Integration.integration_type).where(Integration.id == integration_id))
+    ).scalar_one_or_none()
+    if integration_type is None:
+        raise EntityNotFound(f"Integration {integration_id} not found")
+    if integration_type != "container_registry":
+        raise ValueError("The image registry must be a container registry integration")
+    await require_entity_write_access(requester, "integration", [integration_id])
 
 
 def _requester_id(requester: UserDTO) -> str:
@@ -23,34 +39,31 @@ def _get_project_owner_ids(service: Service) -> list[str]:
     return [str(owner.id) for owner in service.project.owners]
 
 
+async def get_service_permissions(requester: UserDTO, service_id: str | UUID, service: Service | None) -> list[str]:
+    """
+    Permissions are calculated from both service-level and project-level policies.
+    Service owners are service admins.
+    """
+    requester_permissions = await user_entity_permissions(requester, service_id, "service")
+    if await requester_is_service_owner(requester, service):
+        requester_permissions = [*requester_permissions, "admin"]
+    return await merge_project_permissions(requester, requester_permissions, service.project if service else None)
+
+
 async def get_service_actions(
     requester: UserDTO,
     service_id: str | UUID,
     service: Service | None = None,
 ) -> list[str]:
-    if await user_is_super_admin(requester):
-        is_service_admin = True
-    else:
-        is_service_admin = False
+    requester_permissions = await get_service_permissions(requester, service_id, service)
 
-    requester_permissions = await user_entity_permissions(requester, service_id, "service")
-
-    if "admin" in requester_permissions:
-        is_service_admin = True
-
-    apis = await user_api_permission(requester, "service")
-    requester_permissions = [apis["api:service"]] if apis else []
-
-    if "admin" in requester_permissions:
-        is_service_admin = True
-
-    if await requester_is_service_owner(requester, service):
-        is_service_admin = True
-
-    if not is_service_admin:
+    if "write" not in requester_permissions and "admin" not in requester_permissions:
         return []
 
-    return [ModelActions.EDIT, ModelActions.DELETE]
+    actions: list[str] = [ModelActions.EDIT, ModelActions.BUILD]
+    if "admin" in requester_permissions:
+        actions.append(ModelActions.DELETE)
+    return actions
 
 
 async def requester_is_service_owner(requester: UserDTO, service: Service | None) -> bool:

@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from application.integrations.schema import AWSECRIntegrationConfig, AWSIntegrationConfig, IntegrationCreate
 from application.providers.container_registry.aws_ecr import AwsEcrProvider
-from core.errors import CannotProceed
+from core.errors import AccessDenied, CannotProceed
 
 AWS_INTEGRATION_ID = uuid4()
 
@@ -88,13 +88,32 @@ class TestResolveLinkedAwsConfiguration:
             "application.integrations.service.IntegrationDTO.model_validate",
             Mock(return_value=SimpleNamespace(configuration=AWSIntegrationConfig.model_validate(AWS_CONFIGURATION))),
         )
-        with patch("application.integrations.service.user_has_access_to_entity", AsyncMock(return_value=True)):
+        with (
+            patch("application.integrations.service.user_has_access_to_entity", AsyncMock(return_value=True)),
+            patch("application.integrations.service.require_entity_write_access", AsyncMock()) as write_access,
+        ):
+            requester = Mock()
             result = await mock_integration_service.resolve_linked_aws_configuration(
-                AWSECRIntegrationConfig.model_validate(LINKED), requester=Mock()
+                AWSECRIntegrationConfig.model_validate(LINKED), requester=requester
             )
         assert isinstance(result, AWSIntegrationConfig)
         assert result.aws_account == "210987654321"
         mock_integration_crud.get_by_id.assert_awaited_once_with(AWS_INTEGRATION_ID)
+        write_access.assert_awaited_once_with(requester, "integration", [AWS_INTEGRATION_ID])
+
+    async def test_rejects_integration_without_write_access(self, mock_integration_service, mock_integration_crud):
+        mock_integration_crud.get_by_id.return_value = SimpleNamespace(integration_provider="aws")
+        with (
+            patch("application.integrations.service.user_has_access_to_entity", AsyncMock(return_value=True)),
+            patch(
+                "application.integrations.service.require_entity_write_access",
+                AsyncMock(side_effect=AccessDenied("no write")),
+            ),
+            pytest.raises(AccessDenied),
+        ):
+            await mock_integration_service.resolve_linked_aws_configuration(
+                AWSECRIntegrationConfig.model_validate(LINKED), requester=Mock()
+            )
 
     async def test_rejects_non_aws_integration(self, mock_integration_service, mock_integration_crud):
         mock_integration_crud.get_by_id.return_value = SimpleNamespace(integration_provider="gcp")
