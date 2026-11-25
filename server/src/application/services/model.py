@@ -5,8 +5,9 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from application.projects.model import Project
+from application.source_codes.model import SourceCode
 from core.base_models import Base, BaseRevision
-from sqlalchemy import UUID, Column, DateTime, ForeignKey, Index, JSON, Table, func
+from sqlalchemy import UUID, Column, DateTime, ForeignKey, Index, JSON, Table, func, text
 
 from core.users.model import User, UserDTO
 
@@ -24,17 +25,21 @@ class Service(BaseRevision):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(index=True)
-    display_name: Mapped[str | None] = mapped_column(nullable=True)
     description: Mapped[str | None] = mapped_column()
 
-    project_id: Mapped[uuid.UUID] = mapped_column(
+    project_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("projects.id", name="fk_service_project_id"),
-        nullable=False,
+        nullable=True,
     )
-    project: Mapped["Project"] = relationship("Project", lazy="joined")
+    project: Mapped["Project | None"] = relationship("Project", lazy="joined")
 
-    repository_url: Mapped[str | None] = mapped_column(nullable=True)
+    source_code_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("source_codes.id", name="fk_service_source_code_id"),
+        nullable=True,
+    )
+    source_code: Mapped["SourceCode | None"] = relationship("SourceCode", lazy="joined")
 
     labels: Mapped[list[str]] = mapped_column(JSON, default=list)
 
@@ -47,7 +52,10 @@ class Service(BaseRevision):
     created_by: Mapped[str | uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
 
     # Names are unique per project rather than globally, so two projects can each own an "api" service.
-    __table_args__ = (Index("ix_service_project_id_name", "project_id", "name", unique=True),)
+    __table_args__ = (
+        Index("ix_service_project_id_name", "project_id", "name", unique=True),
+        Index("ix_service_name_without_project", "name", unique=True, postgresql_where=text("project_id IS NULL")),
+    )
 
 
 class ServiceDTO(BaseModel):
@@ -58,10 +66,9 @@ class ServiceDTO(BaseModel):
     created_by: UserDTO | uuid.UUID = Field()
 
     name: str = Field(...)
-    display_name: str | None = Field(default=None)
     description: str = Field(default="")
-    project_id: uuid.UUID = Field(...)
-    repository_url: str | None = Field(default=None)
+    project_id: uuid.UUID | None = Field(default=None)
+    source_code_id: uuid.UUID | None = Field(default=None)
     owners: list[UserDTO] = Field(default_factory=list)
     labels: list[str] = Field(default_factory=list)
 
