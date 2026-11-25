@@ -18,11 +18,14 @@ class GeneralSettingsMutation:
             raise PermissionError("Access denied")
 
         try:
-            settings = GeneralSettingsDTO(
-                name=input.name,
-                banner_enabled=input.banner_enabled,
-                banner_message=input.banner_message,
-                banner_color=input.banner_color,
+            # the color is a plain string in GraphQL; the DTO accepts only the known colors
+            settings = GeneralSettingsDTO.model_validate(
+                {
+                    "name": input.name,
+                    "banner_enabled": input.banner_enabled,
+                    "banner_message": input.banner_message,
+                    "banner_color": input.banner_color,
+                }
             )
         except ValidationError as error:
             raise ValueError(error.errors()[0]["msg"]) from error

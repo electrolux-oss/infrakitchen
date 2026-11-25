@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from typing import cast
 from typing import Any
 from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
@@ -6,6 +7,7 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
+from core.users.model import UserDTO
 from application.general_settings.crud import GeneralSettingsCRUD
 from application.general_settings.model import (
     BANNER_MESSAGE_MAX_LENGTH,
@@ -54,8 +56,8 @@ async def test_save_updates_the_row_and_writes_an_audit_log():
         GeneralSettingsDTO(
             name="  production ", banner_enabled=True, banner_message=" Maintenance ", banner_color="orange"
         ),
-        requester,
-    )  # pyright: ignore[reportArgumentType]
+        cast(UserDTO, cast(object, requester)),
+    )
 
     assert (row.name, row.banner_enabled, row.banner_message, row.updated_by) == (
         "production",
