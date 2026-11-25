@@ -29,14 +29,15 @@ export const ServiceCreatePage = () => {
   const {
     control,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<ServiceCreateRequest>({
     defaultValues: {
       name: "",
-      displayName: "",
       description: "",
       projectId: presetProjectId ?? "",
       repositoryUrl: "",
+      repositoryIntegrationId: null,
       labels: [],
       owners: [],
     },
@@ -46,6 +47,7 @@ export const ServiceCreatePage = () => {
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
     {},
   );
+  const watchedRepositoryUrl = watch("repositoryUrl");
   const [users, setUsers] = useState<UserOption[]>([]);
 
   useEffect(() => {
@@ -75,7 +77,16 @@ export const ServiceCreatePage = () => {
             id: string;
             name: string;
           };
-        }>(CREATE_SERVICE_MUTATION, { input: data });
+        }>(CREATE_SERVICE_MUTATION, {
+          input: {
+            ...data,
+            projectId: data.projectId || null,
+            repositoryUrl: data.repositoryUrl?.trim() || null,
+            repositoryIntegrationId: data.repositoryUrl?.trim()
+              ? data.repositoryIntegrationId
+              : null,
+          },
+        });
 
         const createdService = response.createService;
         if (createdService?.id) {
@@ -128,21 +139,6 @@ export const ServiceCreatePage = () => {
               )}
             />
             <Controller
-              name="displayName"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  value={field.value ?? ""}
-                  label="Display Name"
-                  helperText="Optional human-friendly name"
-                  fullWidth
-                  margin="normal"
-                  inputProps={{ "aria-label": "Service display name" }}
-                />
-              )}
-            />
-            <Controller
               name="description"
               control={control}
               render={({ field }) => (
@@ -164,7 +160,6 @@ export const ServiceCreatePage = () => {
             <Controller
               name="projectId"
               control={control}
-              rules={{ required: "Project is required" }}
               render={({ field }) => (
                 <ReferenceInput
                   ikApi={ikApi}
@@ -173,12 +168,7 @@ export const ServiceCreatePage = () => {
                   {...field}
                   entity_name="projects"
                   showFields={["name"]}
-                  error={!!errors.projectId}
-                  helpertext={
-                    errors.projectId
-                      ? errors.projectId.message
-                      : "The project this service belongs to"
-                  }
+                  helpertext="Optional. The project this service belongs to"
                   value={field.value}
                   label="Select Project"
                 />
@@ -189,8 +179,9 @@ export const ServiceCreatePage = () => {
               control={control}
               rules={{
                 pattern: {
-                  value: /^https?:\/\/\S+$/,
-                  message: "Must be a URL starting with https:// or http://",
+                  value: /^(https?:\/\/|ssh:\/\/|[^@\s/]+@[^:\s]+:)\S+$/,
+                  message:
+                    "Use a git URL like https://github.com/org/repo or git@github.com:org/repo.git",
                 },
               }}
               render={({ field }) => (
@@ -198,19 +189,44 @@ export const ServiceCreatePage = () => {
                   {...field}
                   value={field.value ?? ""}
                   label="Repository URL"
-                  placeholder="https://github.com/org/repo"
+                  placeholder="git@github.com:org/repo.git"
                   error={!!errors.repositoryUrl}
                   helperText={
                     errors.repositoryUrl
                       ? errors.repositoryUrl.message
-                      : "Where this service's source code lives"
+                      : "Where the service's code lives. It is linked if already imported, otherwise imported and synced."
                   }
                   fullWidth
                   margin="normal"
-                  inputProps={{ "aria-label": "Service repository URL" }}
+                  inputProps={{ "aria-label": "Repository URL" }}
                 />
               )}
             />
+            {watchedRepositoryUrl && (
+              <Controller
+                name="repositoryIntegrationId"
+                control={control}
+                rules={{ required: "Choose the git integration" }}
+                render={({ field }) => (
+                  <ReferenceInput
+                    ikApi={ikApi}
+                    buffer={buffer}
+                    setBuffer={setBuffer}
+                    {...field}
+                    entity_name="integrations"
+                    filter={{ integration_type: "git" }}
+                    required
+                    error={!!errors.repositoryIntegrationId}
+                    helpertext={
+                      errors.repositoryIntegrationId?.message ??
+                      "Use Git Public for public HTTPS repositories"
+                    }
+                    value={field.value}
+                    label="Git Integration"
+                  />
+                )}
+              />
+            )}
             <Controller
               name="labels"
               control={control}

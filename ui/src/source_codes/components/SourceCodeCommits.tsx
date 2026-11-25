@@ -6,13 +6,17 @@ import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { UserAvatar } from "../../common/components/entities/UserAvatar";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context";
-import { useEntityProvider } from "../../common/context/EntityContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import { usePersistedPagination } from "../../common/hooks/usePersistedPagination";
 import { CODE_FONT_FAMILY } from "../../common/theme";
 import { HeroTagIcon } from "../../icons";
-import { Alert, Link } from "../../ui";
-import { DataTable, DataTableColumn, RenderCellParams } from "../../ui";
+import {
+  Alert,
+  DataTable,
+  DataTableColumn,
+  Link,
+  RenderCellParams,
+} from "../../ui";
 import { cn } from "../../utils/cn";
 import {
   GqlSourceCodeCommit,
@@ -39,11 +43,21 @@ export const TagChip = ({ tag }: { tag: string }) => {
   );
 };
 
+export const getCommitTags = (
+  gitTags: string[] | null,
+  gitTagShas: Record<string, string> | null,
+): GqlSourceCodeTag[] =>
+  (gitTags ?? []).flatMap((name) => {
+    const sha = gitTagShas?.[name];
+    return sha ? [{ name, sha }] : [];
+  });
+
 interface SourceCodeCommitsProps {
   sourceCodeId: string;
   branch: string | null;
   total: number;
   tags: GqlSourceCodeTag[];
+  lastSyncedAt?: string;
 }
 
 export const SourceCodeCommits = ({
@@ -51,6 +65,7 @@ export const SourceCodeCommits = ({
   branch,
   total,
   tags,
+  lastSyncedAt,
 }: SourceCodeCommitsProps) => {
   const { ikApi } = useConfig();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -167,8 +182,6 @@ export const SourceCodeCommits = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const lastSyncedAt = useEntityProvider().entity?.updatedAt;
 
   const columns: DataTableColumn<GqlSourceCodeCommit>[] = useMemo(
     () => [

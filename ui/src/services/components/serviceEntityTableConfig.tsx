@@ -11,7 +11,7 @@ export const serviceTableColumns: EntityTableColumn[] = [
   {
     field: "name",
     headerName: "Name",
-    fetchFields: ["name", "displayName", "id", "entityName"],
+    fetchFields: ["name", "id", "entityName"],
     flex: 1,
     hideable: false,
     filter: {
@@ -22,11 +22,7 @@ export const serviceTableColumns: EntityTableColumn[] = [
       defaultSelected: true,
     },
     renderCell: (params: RenderCellParams) => (
-      <EntityReference
-        {...params.row}
-        display_name={params.row.displayName}
-        entityName="service"
-      />
+      <EntityReference {...params.row} entityName="service" />
     ),
   },
   {
