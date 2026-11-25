@@ -144,7 +144,7 @@ class ConfigQuery:
             demo_mode=config.demo_mode,
             instance_name=general_settings.name,
             announcement=general_settings.announcement,
-            announcement_color=general_settings.banner_color,
+            announcement_color=general_settings.banner.color,
             websocket=config.websocket,
             services=config.services,
             cloud_provider_registry=cloud_provider_registry,

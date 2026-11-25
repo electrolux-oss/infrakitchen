@@ -1,42 +1,32 @@
 from typing import Any
+from uuid import UUID
 
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .model import DEFAULT_BANNER_COLOR, GENERAL_SETTINGS_ID, GeneralSettings
+from .model import GeneralSettings
 
 
 class GeneralSettingsCRUD:
-    """The global general settings: a single row with a fixed id, created on the first save."""
+    """The global general settings: one name/metadata row per setting."""
 
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
-    async def get(self) -> GeneralSettings | None:
-        return await self.session.get(GeneralSettings, GENERAL_SETTINGS_ID)
+    async def get_all(self) -> dict[str, Any]:
+        rows = await self.session.scalars(select(GeneralSettings))
+        return {row.name: row.setting_metadata for row in rows}
 
-    async def get_or_create(self) -> GeneralSettings:
-        # insert-if-missing keeps a single row even when two admins save the first settings at the same time
-        _ = await self.session.execute(
-            insert(GeneralSettings)
-            .values(
-                id=GENERAL_SETTINGS_ID,
-                name="",
-                banner_enabled=False,
-                banner_message="",
-                banner_color=DEFAULT_BANNER_COLOR,
-            )
-            .on_conflict_do_nothing(index_elements=[GeneralSettings.id])
+    async def upsert(self, values: dict[str, Any], updated_by: UUID | None) -> None:
+        if not values:
+            return
+        stmt = insert(GeneralSettings).values(
+            [{"name": name, "metadata": value, "updated_by": updated_by} for name, value in values.items()]
         )
-        row = await self.get()
-        if row is None:
-            raise RuntimeError("General settings row was not created")
-        return row
-
-    async def update(self, row: GeneralSettings, body: dict[str, Any]) -> GeneralSettings:
-        for key, value in body.items():
-            setattr(row, key, value)
-        await self.session.flush()
-        # updated_at is set by the database
-        await self.session.refresh(row)
-        return row
+        # ON CONFLICT keeps this safe when two admins save at the same time
+        stmt = stmt.on_conflict_do_update(
+            index_elements=[GeneralSettings.name],
+            set_={"metadata": stmt.excluded.metadata, "updated_by": stmt.excluded.updated_by, "updated_at": func.now()},
+        )
+        _ = await self.session.execute(stmt)

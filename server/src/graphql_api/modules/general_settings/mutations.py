@@ -22,9 +22,11 @@ class GeneralSettingsMutation:
             settings = GeneralSettingsDTO.model_validate(
                 {
                     "name": input.name,
-                    "banner_enabled": input.banner_enabled,
-                    "banner_message": input.banner_message,
-                    "banner_color": input.banner_color,
+                    "banner": {
+                        "enabled": input.banner_enabled,
+                        "message": input.banner_message,
+                        "color": input.banner_color,
+                    },
                 }
             )
         except ValidationError as error:

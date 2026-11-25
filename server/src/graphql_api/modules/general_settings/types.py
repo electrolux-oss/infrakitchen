@@ -14,9 +14,9 @@ class GeneralSettingsType:
     def from_pydantic(cls, settings: GeneralSettingsDTO) -> "GeneralSettingsType":
         return cls(
             name=settings.name,
-            banner_enabled=settings.banner_enabled,
-            banner_message=settings.banner_message,
-            banner_color=settings.banner_color,
+            banner_enabled=settings.banner.enabled,
+            banner_message=settings.banner.message,
+            banner_color=settings.banner.color,
         )
 
 
