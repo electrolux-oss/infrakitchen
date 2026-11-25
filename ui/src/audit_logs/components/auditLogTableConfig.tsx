@@ -152,7 +152,8 @@ export const auditLogColumns: EntityTableColumn[] = [
               isDeleted ||
               params.row.model === "personal_access_token" ||
               params.row.model === "feature_flag" ||
-              params.row.model === "drift_settings"
+              params.row.model === "drift_settings" ||
+              params.row.model === "general_settings"
             }
           />
           {uuidLine}

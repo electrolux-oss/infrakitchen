@@ -63,3 +63,14 @@ export const UPDATE_DRIFT_SETTINGS_MUTATION = `
     }
   }
 `;
+
+export const UPDATE_GENERAL_SETTINGS_MUTATION = `
+  mutation UpdateGeneralSettings($input: GeneralSettingsInput!) {
+    updateGeneralSettings(input: $input) {
+      name
+      bannerEnabled
+      bannerMessage
+      bannerColor
+    }
+  }
+`;

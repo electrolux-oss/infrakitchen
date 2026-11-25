@@ -21,6 +21,17 @@ export const SCHEDULERS_QUERY = `
   }
 `;
 
+export const GENERAL_SETTINGS_QUERY = `
+  query GeneralSettings {
+    generalSettings {
+      name
+      bannerEnabled
+      bannerMessage
+      bannerColor
+    }
+  }
+`;
+
 export const DRIFT_SETTINGS_QUERY = `
   query DriftSettings {
     driftSettings {

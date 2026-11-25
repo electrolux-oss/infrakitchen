@@ -8,6 +8,7 @@ from strawberry.types import Info
 
 from core.adapters.provider_adapters import IntegrationProvider, SecretProviderAdapter, StorageProviderAdapter
 from core.auth_providers.dependencies import get_auth_provider_service
+from application.general_settings.dependencies import get_general_settings_service
 from core.config import InfrakitchenConfig
 from core.utils.entities import get_all_entities
 from core.workers.functions import get_host_metadata
@@ -18,6 +19,9 @@ from graphql_api.helpers import IsAuthenticated
 class GlobalConfigType:
     approval_flow: bool
     demo_mode: bool
+    instance_name: str
+    announcement: str
+    announcement_color: str
     websocket: bool
     services: bool
     cloud_provider_registry: list[str]
@@ -133,9 +137,14 @@ class ConfigQuery:
             elif provider_cls.__integration_provider_type__ == "container_registry":
                 container_registry_provider_registry.append(provider_name)
 
+        general_settings = await get_general_settings_service(info.context["session"]).get()
+
         return GlobalConfigType(
             approval_flow=config.approval_flow,
             demo_mode=config.demo_mode,
+            instance_name=general_settings.name,
+            announcement=general_settings.announcement,
+            announcement_color=general_settings.banner_color,
             websocket=config.websocket,
             services=config.services,
             cloud_provider_registry=cloud_provider_registry,

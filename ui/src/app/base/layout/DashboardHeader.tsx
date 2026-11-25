@@ -21,6 +21,7 @@ import { HeroBars3Icon, HeroBars3BottomLeftIcon } from "@/index";
 export interface DashboardHeaderProps {
   logo?: React.ReactNode;
   title?: string;
+  subtitle?: string;
   menuOpen: boolean;
   onToggleMenu: (open: boolean) => void;
 }
@@ -28,6 +29,7 @@ export interface DashboardHeaderProps {
 export default function DashboardHeader({
   logo,
   title,
+  subtitle,
   menuOpen,
   onToggleMenu,
 }: DashboardHeaderProps) {
@@ -95,6 +97,11 @@ export default function DashboardHeader({
                     className="m-0 ml-0 text-[1.125rem] leading-[1] font-semibold tracking-[-0.02em] whitespace-nowrap text-fg sm:text-[1.375rem]"
                   >
                     {title}
+                    {subtitle ? (
+                      <span className="ml-2 text-[0.875rem] font-medium tracking-normal text-fg-muted sm:text-[1rem]">
+                        {subtitle}
+                      </span>
+                    ) : null}
                   </h5>
                 </Link>
               ) : null}

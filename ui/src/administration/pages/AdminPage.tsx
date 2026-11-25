@@ -9,11 +9,13 @@ import { Tab, Tabs } from "../../ui";
 import {
   DriftSettingsSection,
   FeatureFlagSection,
+  GeneralSettingsSection,
   PermissionsSection,
   SchedulerJobsSection,
 } from "../components";
 
 const ADMIN_TABS = [
+  { path: "general", label: "General" },
   { path: "permissions", label: "Permissions" },
   { path: "feature-flags", label: "Feature Flags" },
   { path: "scheduler", label: "Scheduler" },
@@ -22,7 +24,7 @@ const ADMIN_TABS = [
 
 type AdminTab = (typeof ADMIN_TABS)[number]["path"];
 
-const DEFAULT_TAB: AdminTab = "permissions";
+const DEFAULT_TAB: AdminTab = "general";
 
 const isAdminTab = (value: string | undefined): value is AdminTab =>
   ADMIN_TABS.some((tab) => tab.path === value);
@@ -51,7 +53,7 @@ export const AdminPage = () => {
     <PageContainer
       title="Settings"
       icon={<HeroCog6ToothIcon />}
-      description="Manage permissions, feature flags, scheduled jobs, and drift detection."
+      description="Manage the instance name, permissions, feature flags, scheduled jobs, and drift detection."
     >
       <div className="w-full">
         <div className="mt-4">
@@ -67,6 +69,9 @@ export const AdminPage = () => {
           </Tabs>
         </div>
 
+        <div role="tabpanel" hidden={activeTab !== "general"}>
+          <GeneralSettingsSection />
+        </div>
         <div role="tabpanel" hidden={activeTab !== "permissions"}>
           <PermissionsSection />
         </div>
