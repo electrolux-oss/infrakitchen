@@ -322,7 +322,7 @@ const AddBaseImageRegistryDialog = ({
           access="write"
           value={integrationId}
           onChange={setIntegrationId}
-          optionFilter={(option) => !unusable.has(option.id)}
+          optionFilter={(option: IkEntity) => !unusable.has(option.id)}
           label="Registry"
           placeholder="Select container registry…"
           disabled={noneLeft}
@@ -412,11 +412,11 @@ const AddRegistryDialog = ({
           showFields={["integrationProvider", "name"]}
           access="write"
           value={registryId}
-          onChange={(id) => {
+          onChange={(id: string | null) => {
             setRegistryId(id);
             setAddError(null);
           }}
-          optionFilter={(option) => !pullIds.has(option.id)}
+          optionFilter={(option: IkEntity) => !pullIds.has(option.id)}
           label="Registry"
           placeholder="Select container registry…"
           required
