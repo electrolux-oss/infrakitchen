@@ -7,7 +7,6 @@ export default defineMeta({
   pages: [
     "overview",
     "template",
-    "template-version-lifecycle",
     "resource",
     "resource-workflows",
     "project",
