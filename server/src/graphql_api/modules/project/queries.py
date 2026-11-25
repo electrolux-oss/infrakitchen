@@ -31,9 +31,9 @@ async def _project_access_restriction(
 ) -> set[str] | None:
     """Like resolve_access_restriction, but owners have write and admin on their projects without a policy."""
     restrict_ids = await resolve_access_restriction(info, "project", access, include_ids)
-    if restrict_ids is None or access == EntityAccess.READ:
+    if restrict_ids is None or access is None or access == EntityAccess.READ:
         return restrict_ids
-    return restrict_ids | await owned_project_ids(info.context["session"], info.context["user"])
+    return restrict_ids | await owned_project_ids(info.context["session"], info.context["user"], access.value)
 
 
 @strawberry.type

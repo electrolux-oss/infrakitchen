@@ -45,7 +45,7 @@ async def get_executor_permissions(
     policies of the executor's project, and the project owners are executor admins.
     """
     return await merge_project_permissions(
-        requester, await user_entity_permissions(requester, executor_id, "executor"), project
+        requester, await user_entity_permissions(requester, executor_id, "executor"), project, "executor"
     )
 
 

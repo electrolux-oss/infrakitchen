@@ -140,7 +140,7 @@ class ExecutorService:
     async def validate_project(self, project_id: str | UUID, requester: UserDTO) -> None:
         """An executor can only be added to an enabled project the requester can write to or owns."""
         project = require_enabled_project(await self.project_crud.get_by_id(project_id))
-        permissions = await get_project_permissions(requester, project)
+        permissions = await get_project_permissions(requester, project, "executor")
         if "write" not in permissions and "admin" not in permissions:
             raise AccessDenied(f"You don't have write access to project {project.id}")
 

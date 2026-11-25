@@ -42,4 +42,4 @@ async def entity_permissions_with_project(
     if "admin" in permissions or entity_name not in PROJECT_SCOPED_ENTITIES:
         return permissions
     project = await get_entity_project(session, entity_name, entity_id)
-    return await merge_project_permissions(requester, permissions, project)
+    return await merge_project_permissions(requester, permissions, project, entity_name)

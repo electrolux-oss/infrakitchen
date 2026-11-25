@@ -22,7 +22,7 @@ ENTITY_ACCESS_ACTIONS: dict[str, tuple[str, ...]] = {
 }
 
 
-def _token_allows(action: str, entity_name: str | None) -> bool:
+def token_allows(action: str, entity_name: str | None) -> bool:
     """Scoped tokens (PATs, MCP OAuth) never exceed their scopes and never act as admin."""
     scopes = get_current_token_scopes()
     if scopes is None:
@@ -44,7 +44,7 @@ async def user_has_access_to_entity(
 ) -> bool:
     if user is None:
         return False
-    if not _token_allows(action, entity_name):
+    if not token_allows(action, entity_name):
         return False
 
     user_id = _resolve_subject_id(user)
@@ -113,11 +113,17 @@ async def user_api_permission(user: UserDTO | None, api: str) -> dict[str, str] 
     apis_permissions = await user_apis_permissions(user)
     if apis_permissions.get("*") == "admin":
         # User has super admin access
-        return {f"api:{api}": "admin"}
-
-    if apis_permissions.get(f"api:{api}") is not None:
-        return {f"api:{api}": apis_permissions[f"api:{api}"]}
-    return None
+        level = "admin"
+    else:
+        level = apis_permissions.get(f"api:{api}")
+    if level is None:
+        return None
+    levels = ["read", "write", "admin"]
+    if level not in levels:
+        return {f"api:{api}": level}
+    # the highest level up to the policy's that the requester's token allows
+    allowed = [action for action in levels[: levels.index(level) + 1] if token_allows(action, api)]
+    return {f"api:{api}": allowed[-1]} if allowed else None
 
 
 async def user_entity_permissions(user: UserDTO | None, entity_id: str | UUID, entity_name: str) -> list[str]:
@@ -137,7 +143,7 @@ async def user_entity_permissions(user: UserDTO | None, entity_id: str | UUID, e
     else:
         return []
 
-    return [action for action in permissions if _token_allows(action, entity_name)]
+    return [action for action in permissions if token_allows(action, entity_name)]
 
 
 async def require_entity_write_access(
@@ -166,7 +172,7 @@ async def user_entity_ids(user: UserDTO | None, entity_name: str, action: str) -
         raise ValueError("User must not be None and must have an ID")
     if action not in ENTITY_ACCESS_ACTIONS:
         raise ValueError(f"Unknown action: {action}")
-    if not _token_allows(action, entity_name):
+    if not token_allows(action, entity_name):
         return set()
 
     user_id = _resolve_subject_id(user)

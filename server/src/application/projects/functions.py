@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from application.projects.model import Project, project_owners
 from core.constants.model import ModelActions, ModelStatus
 from core.errors import EntityNotFound, EntityWrongState
-from core.users.functions import user_api_permission, user_entity_permissions
+from core.users.functions import token_allows, user_api_permission, user_entity_permissions
 from core.users.functions import user_is_super_admin
 from core.users.model import UserDTO
 
@@ -28,25 +28,17 @@ async def get_project_actions(
     project: Project | None = None,
 ) -> list[str]:
     """Get all actions available for a project based on user permissions and project status."""
-    if await user_is_super_admin(requester):
-        is_project_admin = True
+    if project is not None:
+        project_permissions = await get_project_permissions(requester, project)
     else:
-        is_project_admin = False
-
-    requester_permissions = await user_entity_permissions(requester, project_id, "project")
-
-    if "admin" in requester_permissions:
-        is_project_admin = True
-
+        project_permissions = set(await user_entity_permissions(requester, project_id, "project"))
     apis = await user_api_permission(requester, "project")
-    requester_permissions = [apis["api:project"]] if apis else []
 
-    if "admin" in requester_permissions:
-        is_project_admin = True
-
-    if await requester_is_project_owner(requester, project):
-        is_project_admin = True
-
+    is_project_admin = (
+        await user_is_super_admin(requester)
+        or "admin" in project_permissions
+        or (apis is not None and apis.get("api:project") == "admin")
+    )
     if not is_project_admin:
         return []
 
@@ -72,15 +64,20 @@ async def requester_is_project_owner(requester: UserDTO, project: Project | None
     return _requester_id(requester) in owner_ids
 
 
-async def get_project_permissions(requester: UserDTO, project: Project) -> set[str]:
-    """The requester's permissions on the project: its policies, and admin for the project owners."""
+async def get_project_permissions(requester: UserDTO, project: Project, entity_name: str = "project") -> set[str]:
+    """
+    The requester's permissions on the project, or inherited from it by an `entity_name` in the project:
+    its policies, and admin for the project owners. Clamped to the scopes of the requester's token.
+    """
     if await requester_is_project_owner(requester, project):
-        return {"admin", "write", "read"}
-    return set(await user_entity_permissions(requester, project.id, "project"))
+        permissions = ["admin", "write", "read"]
+    else:
+        permissions = await user_entity_permissions(requester, project.id, "project")
+    return {action for action in permissions if token_allows(action, entity_name)}
 
 
 async def merge_project_permissions(
-    requester: UserDTO, entity_permissions: Iterable[str], project: Project | None
+    requester: UserDTO, entity_permissions: Iterable[str], project: Project | None, entity_name: str
 ) -> list[str]:
     """
     Permissions on an entity that belongs to a project (resource, executor): the entity's own permissions
@@ -88,12 +85,14 @@ async def merge_project_permissions(
     """
     permissions = set(entity_permissions)
     if project is not None and "admin" not in permissions:
-        permissions |= await get_project_permissions(requester, project)
+        permissions |= await get_project_permissions(requester, project, entity_name)
     return sorted(permissions)
 
 
-async def owned_project_ids(session: AsyncSession, requester: UserDTO) -> set[str]:
-    """IDs of the projects the requester owns: owners have admin on them without a policy."""
+async def owned_project_ids(session: AsyncSession, requester: UserDTO, action: str) -> set[str]:
+    """IDs of the projects the requester owns: owners have `action` on them without a policy."""
+    if not token_allows(action, "project"):
+        return set()
     stmt = select(project_owners.c.project_id).where(project_owners.c.user_id == UUID(_requester_id(requester)))
     return {str(project_id) for project_id in (await session.execute(stmt)).scalars()}
 

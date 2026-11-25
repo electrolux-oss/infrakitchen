@@ -8,8 +8,11 @@ import casbin
 import pytest
 
 import core.casbin.enforcer as enforcer_module
+from application.projects.functions import get_project_actions, get_project_permissions, merge_project_permissions
+from core.constants.model import ModelStatus
 from core.personal_access_tokens.scopes import set_current_token_scopes
 from core.users.functions import (
+    user_api_permission,
     user_entity_ids,
     user_entity_permissions,
     user_has_access_to_entity,
@@ -97,3 +100,40 @@ async def test_scope_cannot_exceed_role(enforcer):
 async def test_scoped_token_is_never_super_admin():
     set_current_token_scopes(["write:resource"])
     assert await user_is_super_admin(make_user()) is False  # pyright: ignore[reportArgumentType]
+
+
+@pytest.mark.asyncio
+async def test_api_permission_clamped_to_scopes(enforcer):
+    user = make_user()
+    await enforcer.add_policy(f"user:{user.id}", "api:project", "admin")
+
+    assert await user_api_permission(user, "project") == {"api:project": "admin"}
+    set_current_token_scopes(["write:project"])
+    assert await user_api_permission(user, "project") == {"api:project": "write"}
+    set_current_token_scopes(["read:resource"])
+    assert await user_api_permission(user, "project") is None
+
+
+def owned_project(user: Any) -> Any:
+    return SimpleNamespace(id=uuid4(), owners=[SimpleNamespace(id=user.id)])
+
+
+@pytest.mark.asyncio
+async def test_project_owner_inheritance_clamped_to_scopes(enforcer):
+    user = make_user()
+    project = owned_project(user)
+
+    assert await merge_project_permissions(user, [], project, "resource") == ["admin", "read", "write"]
+    set_current_token_scopes(["write:resource"])
+    assert await merge_project_permissions(user, [], project, "resource") == ["read", "write"]
+    assert await merge_project_permissions(user, [], project, "executor") == []
+    assert await get_project_permissions(user, project) == set()
+
+
+@pytest.mark.asyncio
+async def test_scoped_project_owner_gets_no_project_admin_actions(enforcer):
+    user = make_user()
+    project = owned_project(user)
+    set_current_token_scopes(["write:project"])
+
+    assert await get_project_actions(user, project.id, ModelStatus.ENABLED, project) == []

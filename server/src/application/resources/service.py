@@ -582,6 +582,7 @@ class ResourceService:
                     requester,
                     await user_entity_permissions(requester, resource_id, "resource"),
                     existing_resource.project,
+                    "resource",
                 )
                 if "admin" not in requester_permissions:
                     raise ValueError("Only admin can change storage or storage path of the resource")

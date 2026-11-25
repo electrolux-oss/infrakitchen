@@ -117,7 +117,7 @@ async def get_resource_actions(
 
     # If resource has a project, merge project-level / owner permissions unless the resource already grants admin:
     # resource-level write (e.g. the creator in PROVISION) must not hide project admin rights such as approve
-    requester_permissions = await merge_project_permissions(requester, requester_permissions, project)
+    requester_permissions = await merge_project_permissions(requester, requester_permissions, project, "resource")
 
     if "write" not in requester_permissions and "admin" not in requester_permissions:
         return []
