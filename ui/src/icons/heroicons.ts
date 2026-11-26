@@ -69,6 +69,7 @@ import heroLinkSlashData from "@iconify-icons/heroicons/link-slash";
 import heroLockClosedData from "@iconify-icons/heroicons/lock-closed";
 import heroLockOpenData from "@iconify-icons/heroicons/lock-open";
 import heroMagnifyingGlassData from "@iconify-icons/heroicons/magnifying-glass";
+import heroMegaphoneData from "@iconify-icons/heroicons/megaphone";
 import heroMinusCircleData from "@iconify-icons/heroicons/minus-circle";
 import heroMoonData from "@iconify-icons/heroicons/moon";
 import heroNoSymbolData from "@iconify-icons/heroicons/no-symbol";
@@ -297,6 +298,10 @@ export const HeroBars3BottomLeftIcon = /* @__PURE__ */ createIcon(
 export const HeroBoltIcon = /* @__PURE__ */ createIcon(
   heroBoltData,
   "HeroBolt",
+);
+export const HeroMegaphoneIcon = /* @__PURE__ */ createIcon(
+  heroMegaphoneData,
+  "HeroMegaphone",
 );
 export const HeroBellIcon = /* @__PURE__ */ createIcon(
   heroBellData,

@@ -177,7 +177,13 @@ export default function DashboardSidebar({
             : undefined
         }
       >
-        <div className="h-14 shrink-0 sm:h-16 max-sm:landscape:h-12" />
+        <div
+          // the docked drawer starts below the header, the phone drawer slides over it
+          className={cn(
+            "shrink-0",
+            viewport === "phone" ? "h-14 max-sm:landscape:h-12" : "h-2 sm:h-4",
+          )}
+        />
         <div
           className={cn(
             mini ? "[scrollbar-gutter:stable]" : "[scrollbar-gutter:auto]",

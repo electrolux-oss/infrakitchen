@@ -11,6 +11,7 @@ from application.favorites.model import Favorite
 from application.integrations.model import Integration
 from application.projects.model import Project
 from application.resource_drifts.crud import ResourceDriftCRUD
+from application.general_settings.model import GENERAL_SETTINGS_ID
 from application.resource_drifts.model import DRIFT_SETTINGS_ID, ResourceDrift
 from application.resource_temp_state.model import ResourceTempState
 from application.resources.model import Resource
@@ -332,6 +333,15 @@ async def _load_drift_settings(keys: list[str]) -> list[dict[str, Any] | None]:
     ]
 
 
+async def _load_general_settings(keys: list[str]) -> list[dict[str, Any] | None]:
+    """Name the global general settings in entity links (e.g. audit log rows); a single row with a fixed id."""
+    settings_id = str(GENERAL_SETTINGS_ID)
+    return [
+        {"id": key, "name": "General settings", "entityName": "general_settings"} if key == settings_id else None
+        for key in keys
+    ]
+
+
 async def _load_users(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
     stmt = select(User.id, User.identifier).where(User.id.in_(keys))
     result = await session.execute(stmt)
@@ -451,6 +461,9 @@ def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, Any]]:
             load_fn=lambda keys: _load_feature_flags(list(keys), session)
         ),
         "drift_settings": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_drift_settings(list(keys))),
+        "general_settings": DataLoader[str, dict[str, Any] | None](
+            load_fn=lambda keys: _load_general_settings(list(keys))
+        ),
     }
 
 

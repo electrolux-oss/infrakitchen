@@ -11,6 +11,7 @@ from .source_code_versions import (
 )
 from .resources import Outputs, ResourceDTO, Variables
 from .common import DependencyConfig, DependencyTag
+from .general_settings.model import GeneralSettings
 from .resource_drifts.model import DriftSettings, ResourceDrift
 from .resource_temp_state.model import ResourceTempState
 from .storages import StorageDTO
@@ -43,6 +44,7 @@ __all__ = [
     "OutputVariableModel",
     "ResourceDTO",
     "DriftSettings",
+    "GeneralSettings",
     "ResourceDrift",
     "ResourceTempState",
     "SourceCodeDTO",

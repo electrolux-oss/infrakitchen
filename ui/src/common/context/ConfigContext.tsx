@@ -12,6 +12,12 @@ import { GqlUserShort, USER_SHORT_FIELDS } from "../../users/graphql";
 import { useEffectOnce } from "../hooks/useEffectOnce";
 import { notifyError } from "../hooks/useNotification";
 
+export interface GeneralSettingsPreview {
+  name: string;
+  announcement: string;
+  announcementColor: string;
+}
+
 export interface ServerInfo {
   version: string;
   versionUrl: string;
@@ -36,6 +42,13 @@ interface ConfigContextType {
   serverInfoLoading?: boolean;
   serverInfoError?: string | null;
   refreshGlobalConfig?: () => Promise<void>;
+  // the saved instance name and announcement, or the unsaved ones an admin is typing in Settings
+  instanceName?: string;
+  announcement?: string;
+  announcementColor?: string;
+  // an admin is previewing unsaved general settings
+  generalSettingsPreviewing?: boolean;
+  setGeneralSettingsPreview?: (preview: GeneralSettingsPreview | null) => void;
 }
 
 interface GlobalConfigType {
@@ -70,6 +83,9 @@ export const ConfigProvider = ({
     serverInfoError: null,
   });
 
+  const [generalSettingsPreview, setGeneralSettingsPreview] =
+    useState<GeneralSettingsPreview | null>(null);
+
   const getBootstrapConfig = useCallback(async (): Promise<void> => {
     try {
       const response = await initialIkApi.graphqlRequest<{
@@ -83,6 +99,9 @@ export const ConfigProvider = ({
           globalConfig {
             approvalFlow
             demoMode
+            instanceName
+            announcement
+            announcementColor
             websocket
             services
             cloudProviderRegistry
@@ -115,6 +134,9 @@ export const ConfigProvider = ({
       const mappedGlobalConfig = {
         approval_flow: gql.approvalFlow,
         demo_mode: gql.demoMode,
+        instance_name: gql.instanceName,
+        announcement: gql.announcement,
+        announcement_color: gql.announcementColor,
         websocket: gql.websocket,
         services: gql.services,
         cloud_provider_registry: gql.cloudProviderRegistry,
@@ -155,8 +177,25 @@ export const ConfigProvider = ({
   });
 
   const value = useMemo(
-    () => ({ ...config, refreshGlobalConfig: getBootstrapConfig }),
-    [config, getBootstrapConfig],
+    () => ({
+      ...config,
+      refreshGlobalConfig: getBootstrapConfig,
+      instanceName:
+        generalSettingsPreview?.name ??
+        config.globalConfig?.instance_name ??
+        "",
+      announcement:
+        generalSettingsPreview?.announcement ??
+        config.globalConfig?.announcement ??
+        "",
+      announcementColor:
+        generalSettingsPreview?.announcementColor ??
+        config.globalConfig?.announcement_color ??
+        "blue",
+      generalSettingsPreviewing: generalSettingsPreview !== null,
+      setGeneralSettingsPreview,
+    }),
+    [config, getBootstrapConfig, generalSettingsPreview],
   );
 
   return (
