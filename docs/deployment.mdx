@@ -138,6 +138,13 @@ during a build, the build fails once the worker's lease expires and its Job is
 deleted; build the commit again. To cancel a build, delete its Job
 (`kubectl delete job ik-build-<build id>`).
 
+Builds target `linux/amd64` unless the service or the build chooses
+`linux/arm64` or both; choosing both pushes one multi-platform image. Build
+pods run on any node, and BuildKit runs the steps of other platforms through the
+QEMU emulators bundled in its image, so the nodes need no setup. Emulated steps
+are several times slower; Dockerfiles that use `FROM --platform=$BUILDPLATFORM`
+and cross-compile avoid emulation.
+
 The UI and API are served from one origin through nginx, so the API sends no
 CORS headers. To let another browser origin call the API, set
 `CORS_ALLOW_ORIGINS` to a comma-separated list of exact origins (e.g.

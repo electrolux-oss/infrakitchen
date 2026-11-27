@@ -15,7 +15,12 @@ from graphql_api.modules.service_build.types import ServiceBuildType
 class ServiceBuildMutation:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def build_service(
-        self, info: Info, service_id: uuid.UUID, commit_sha: str, tag: str | None = None
+        self,
+        info: Info,
+        service_id: uuid.UUID,
+        commit_sha: str,
+        tag: str | None = None,
+        platforms: list[str] | None = None,
     ) -> ServiceBuildType:
         session = info.context["session"]
         requester = info.context["request"].state.user
@@ -25,5 +30,5 @@ class ServiceBuildMutation:
             raise AccessDenied(f"Access denied for action {ModelActions.BUILD.value}")
 
         return await get_service_build_service(session).create_build(
-            service_id=service_id, commit_sha=commit_sha, requester=requester, tag=tag
+            service_id=service_id, commit_sha=commit_sha, requester=requester, tag=tag, platforms=platforms
         )

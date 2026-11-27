@@ -104,6 +104,7 @@ class ImageBuildRequest:
     logins: tuple[RegistryLogin, ...] = field(repr=False)
     pull_logins: tuple[RegistryLogin, ...] = field(default=(), repr=False)
     labels: dict[str, str] = field(default_factory=dict)
+    platforms: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -184,6 +185,10 @@ def rootless_buildkit(settings: Settings) -> dict[str, Any]:
     }
 
 
+def platform_args(request: ImageBuildRequest) -> list[str]:
+    return ["--opt", f"platform={','.join(request.platforms)}"] if request.platforms else []
+
+
 def build_args(request: ImageBuildRequest) -> list[str]:
     dockerfile_dir, dockerfile_name = os.path.split(request.dockerfile)
     args = [
@@ -195,6 +200,7 @@ def build_args(request: ImageBuildRequest) -> list[str]:
         "--opt", f"filename={dockerfile_name}",
         "--output", f"type=oci,dest={OUTPUT_LAYOUT},tar=false",
         "--metadata-file", OUTPUT_METADATA,
+        *platform_args(request),
     ]  # fmt: skip
     for key, value in request.labels.items():
         args += ["--opt", f"label:{key}={value}"]
@@ -211,6 +217,7 @@ def push_args(request: ImageBuildRequest) -> list[str]:
         "--oci-layout", f"built={OUTPUT_LAYOUT}",
         # The output is parsed as CSV, so the comma separated names are quoted
         "--output", f'type=image,"name={",".join(request.images)}",push=true',
+        *platform_args(request),
     ]  # fmt: skip
 
 

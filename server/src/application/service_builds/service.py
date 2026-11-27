@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 
 from application.integrations.model import Integration
 from application.services.crud import ServiceCRUD
+from application.services.schema import validate_platforms
 from application.source_codes.model import SourceCodeCommit
 from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions, ModelStatus
@@ -47,7 +48,12 @@ class ServiceBuildService:
         return await self.crud.count_by_service(service_id)
 
     async def create_build(
-        self, service_id: str | UUID, commit_sha: str, requester: UserDTO, tag: str | None = None
+        self,
+        service_id: str | UUID,
+        commit_sha: str,
+        requester: UserDTO,
+        tag: str | None = None,
+        platforms: list[str] | None = None,
     ) -> ServiceBuild:
         service = await self.service_crud.get_by_id(service_id)
         if not service:
@@ -70,6 +76,7 @@ class ServiceBuildService:
         if await self.crud.has_active_build(service.id, commit_sha):
             raise EntityWrongState(f"Commit {commit_sha[:7]} is already being built")
 
+        platforms = validate_platforms(platforms if platforms is not None else service.build_platforms)
         tag = validate_image_tag(tag or commit_sha)
         if existing := await self.crud.get_by_tag(service.id, tag):
             raise EntityWrongState(
@@ -95,6 +102,7 @@ class ServiceBuildService:
                         for registry in service.registries
                     ],
                     "tag": tag,
+                    "platforms": platforms,
                     "status": ModelStatus.QUEUED,
                     "created_by": requester.id,
                 }
@@ -105,7 +113,12 @@ class ServiceBuildService:
             service.id,
             requester.id,
             ModelActions.BUILD,
-            action_metadata={"build_id": str(build.id), "commit_sha": commit_sha, "tag": build.tag},
+            action_metadata={
+                "build_id": str(build.id),
+                "commit_sha": commit_sha,
+                "tag": build.tag,
+                "platforms": build.platforms,
+            },
         )
         await self.crud.refresh(build)
         await self.event_sender.send_event(ServiceBuildResponse.model_validate(build), ModelActions.CREATE)

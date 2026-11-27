@@ -34,6 +34,7 @@ import {
 } from "../graphql";
 
 import { IMAGE_TAG_RE, isActiveBuild, isActiveStatus } from "./builds";
+import { PlatformSelector } from "./PlatformSelector";
 import { ServiceCommitBuildsDialog } from "./ServiceCommitBuildsDialog";
 
 const POLL_INTERVAL_MS = 5000;
@@ -201,13 +202,14 @@ export const ServiceCommits = ({
   }, [hasActiveBuild, loadBuilds, pageShas]);
 
   const startBuild = useCallback(
-    async (commit: GqlSourceCodeCommit, tag: string) => {
+    async (commit: GqlSourceCodeCommit, tag: string, platforms: string[]) => {
       setStartingSha(commit.sha);
       try {
         await ikApi.graphqlRequest(BUILD_SERVICE_MUTATION, {
           serviceId: service.id,
           commitSha: commit.sha,
           tag,
+          platforms,
         });
         notify(`Build of ${commit.shortSha} as ${tag} queued`, "success");
         setBuildCommit(null);
@@ -325,10 +327,13 @@ export const ServiceCommits = ({
         <BuildTagDialog
           commit={buildCommit}
           registries={registries}
+          defaultPlatforms={service.buildPlatforms}
           usedTags={usedTags}
           loading={startingSha === buildCommit.sha}
           onClose={() => setBuildCommit(null)}
-          onBuild={(tag) => void startBuild(buildCommit, tag)}
+          onBuild={(tag, platforms) =>
+            void startBuild(buildCommit, tag, platforms)
+          }
         />
       )}
     </>
@@ -338,15 +343,17 @@ export const ServiceCommits = ({
 interface BuildTagDialogProps {
   commit: GqlSourceCodeCommit;
   registries: GqlServiceRegistry[];
+  defaultPlatforms: string[];
   usedTags: Set<string>;
   loading: boolean;
   onClose: () => void;
-  onBuild: (tag: string) => void;
+  onBuild: (tag: string, platforms: string[]) => void;
 }
 
 const BuildTagDialog = ({
   commit,
   registries,
+  defaultPlatforms,
   usedTags,
   loading,
   onClose,
@@ -360,9 +367,10 @@ const BuildTagDialog = ({
     return candidate;
   });
   const [tag, setTag] = useState(suggestedTag);
+  const [platforms, setPlatforms] = useState(defaultPlatforms);
   const trimmed = tag.trim();
   const used = usedTags.has(trimmed);
-  const invalid = !IMAGE_TAG_RE.test(trimmed) || used;
+  const invalid = !IMAGE_TAG_RE.test(trimmed) || used || platforms.length === 0;
   const pushedTag = [commit.shortSha, commit.sha].find((t) => usedTags.has(t));
   const rebuild = !!pushedTag && trimmed === suggestedTag;
 
@@ -375,13 +383,14 @@ const BuildTagDialog = ({
           value={tag}
           onChange={(e) => setTag(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !invalid && !loading) onBuild(trimmed);
+            if (e.key === "Enter" && !invalid && !loading)
+              onBuild(trimmed, platforms);
           }}
-          error={trimmed !== "" && invalid}
+          error={trimmed !== "" && (used || !IMAGE_TAG_RE.test(trimmed))}
           helperText={
             used
               ? `Tag ${trimmed} is already used by a build of this service`
-              : invalid
+              : !IMAGE_TAG_RE.test(trimmed)
                 ? "Letters, digits, '_', '.' and '-', not starting with '.' or '-', at most 128 characters"
                 : rebuild
                   ? `${pushedTag} is already pushed and a tag can only be pushed once, so a rebuild needs a new tag`
@@ -391,6 +400,10 @@ const BuildTagDialog = ({
           margin="normal"
           autoFocus
         />
+        <div className="mt-2 text-body2 font-medium text-fg-muted">
+          Platforms
+        </div>
+        <PlatformSelector value={platforms} onChange={setPlatforms} />
         <div className="mt-2 text-body2 font-medium text-fg-muted">
           Pushed as
         </div>
@@ -418,7 +431,7 @@ const BuildTagDialog = ({
           variant="contained"
           loading={loading}
           disabled={invalid}
-          onClick={() => onBuild(trimmed)}
+          onClick={() => onBuild(trimmed, platforms)}
         >
           Build
         </Button>

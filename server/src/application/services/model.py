@@ -80,6 +80,9 @@ class Service(BaseRevision):
     )
     dockerfile_path: Mapped[str] = mapped_column(default="Dockerfile", server_default="Dockerfile")
     build_context: Mapped[str] = mapped_column(default=".", server_default=".")
+    build_platforms: Mapped[list[str]] = mapped_column(
+        JSON, default=lambda: ["linux/amd64"], server_default='["linux/amd64"]'
+    )
 
     labels: Mapped[list[str]] = mapped_column(JSON, default=list)
 
@@ -111,6 +114,7 @@ class ServiceDTO(BaseModel):
     source_code_id: uuid.UUID | None = Field(default=None)
     dockerfile_path: str = Field(default="Dockerfile")
     build_context: str = Field(default=".")
+    build_platforms: list[str] = Field(default_factory=lambda: ["linux/amd64"])
     owners: list[UserDTO] = Field(default_factory=list)
     labels: list[str] = Field(default_factory=list)
 

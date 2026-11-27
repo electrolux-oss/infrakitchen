@@ -22,6 +22,7 @@ class ServiceBuildResponse(BaseModel):
     commit_sha: str
     images: list[ServiceBuildImageResponse] = Field(default_factory=list)
     tag: str
+    platforms: list[str] = Field(default_factory=lambda: ["linux/amd64"])
     image_digest: str | None = Field(default=None)
     status: ModelStatus
     started_at: datetime | None = Field(default=None)

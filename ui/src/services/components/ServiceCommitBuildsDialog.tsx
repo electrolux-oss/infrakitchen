@@ -24,7 +24,7 @@ import {
 } from "../../ui";
 import { GqlServiceBuild } from "../graphql";
 
-import { formatDuration } from "./builds";
+import { formatDuration, platformLabel } from "./builds";
 
 const EmptyCell = () => <span className="text-fg-muted">—</span>;
 
@@ -65,11 +65,19 @@ export const ServiceCommitBuildsDialog = ({
         minWidth: 120,
         sortable: false,
         renderCell: (params: RenderCellParams<GqlServiceBuild>) => (
-          <Tooltip title={params.row.tag}>
-            <span className="truncate" style={{ fontFamily: CODE_FONT_FAMILY }}>
-              {params.row.tag}
+          <div className="flex min-w-0 flex-col py-1">
+            <Tooltip title={params.row.tag}>
+              <span
+                className="truncate"
+                style={{ fontFamily: CODE_FONT_FAMILY }}
+              >
+                {params.row.tag}
+              </span>
+            </Tooltip>
+            <span className="truncate text-body2 text-fg-muted">
+              {params.row.platforms.map(platformLabel).join(", ")}
             </span>
-          </Tooltip>
+          </div>
         ),
       },
       {
@@ -116,7 +124,7 @@ export const ServiceCommitBuildsDialog = ({
       {
         field: "status",
         headerName: "Status",
-        width: 130,
+        width: 120,
         sortable: false,
         mobile: "badge",
         renderCell: (params: RenderCellParams<GqlServiceBuild>) => (
@@ -126,7 +134,7 @@ export const ServiceCommitBuildsDialog = ({
       {
         field: "imageDigest",
         headerName: "Digest",
-        width: 200,
+        width: 190,
         sortable: false,
         renderCell: (params: RenderCellParams<GqlServiceBuild>) => {
           const { imageDigest } = params.row;
@@ -149,7 +157,7 @@ export const ServiceCommitBuildsDialog = ({
       {
         field: "duration",
         headerName: "Duration",
-        width: 90,
+        width: 85,
         sortable: false,
         renderCell: (params: RenderCellParams<GqlServiceBuild>) =>
           formatDuration(params.row) || <EmptyCell />,
@@ -174,7 +182,7 @@ export const ServiceCommitBuildsDialog = ({
       {
         field: "actions",
         headerName: "",
-        width: 90,
+        width: 75,
         sortable: false,
         align: "right",
         renderCell: (params: RenderCellParams<GqlServiceBuild>) => (

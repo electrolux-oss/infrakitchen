@@ -66,6 +66,21 @@ def validate_image_repository(value: str | None) -> str | None:
     return value
 
 
+IMAGE_PLATFORMS = ("linux/amd64", "linux/arm64")
+DEFAULT_IMAGE_PLATFORMS = ["linux/amd64"]
+
+
+def validate_platforms(value: list[str] | None) -> list[str] | None:
+    if value is None:
+        return value
+    unknown = [platform for platform in value if platform not in IMAGE_PLATFORMS]
+    if unknown:
+        raise ValueError(f"Unsupported platforms {', '.join(unknown)}; choose from {', '.join(IMAGE_PLATFORMS)}")
+    if not value:
+        raise ValueError("Choose at least one platform to build for")
+    return [platform for platform in IMAGE_PLATFORMS if platform in value]
+
+
 class ServiceCreate(BaseModel):
     name: str = Field(...)
     description: str = Field(default="")
@@ -91,6 +106,7 @@ class ServiceUpdate(BaseModel):
     repository_integration_id: uuid.UUID | None = Field(default=None)
     dockerfile_path: str | None = Field(default=None)
     build_context: str | None = Field(default=None)
+    build_platforms: list[str] | None = Field(default=None)
     labels: list[str] | None = Field(default=None)
     owners: list[uuid.UUID] | None = Field(default=None)
 
@@ -98,6 +114,7 @@ class ServiceUpdate(BaseModel):
 
     _check_repository_url = field_validator("repository_url", mode="before")(_validate_repository_url)
     _check_paths = field_validator("dockerfile_path", "build_context", mode="before")(_validate_repository_path)
+    _check_platforms = field_validator("build_platforms")(validate_platforms)
 
 
 class ServiceRegistryResponse(BaseModel):
@@ -126,6 +143,7 @@ class ServiceResponse(BaseModel):
     base_image_registries: list[IntegrationShort] = Field(default_factory=list)
     dockerfile_path: str = Field(default="Dockerfile")
     build_context: str = Field(default=".")
+    build_platforms: list[str] = Field(default_factory=lambda: list(DEFAULT_IMAGE_PLATFORMS))
     owners: list[UserShort] = Field(default_factory=list)
     labels: list[str] = Field(default_factory=list)
 

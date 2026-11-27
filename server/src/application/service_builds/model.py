@@ -31,6 +31,9 @@ class ServiceBuild(Base):
     commit_sha: Mapped[str] = mapped_column()
     images: Mapped[list[BuildImage]] = mapped_column(JSON, default=list)
     tag: Mapped[str] = mapped_column()
+    platforms: Mapped[list[str]] = mapped_column(
+        JSON, default=lambda: ["linux/amd64"], server_default='["linux/amd64"]'
+    )
     image_digest: Mapped[str | None] = mapped_column(nullable=True)
 
     status: Mapped[ModelStatus] = mapped_column(

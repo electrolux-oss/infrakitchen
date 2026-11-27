@@ -170,9 +170,11 @@ class ServiceBuildTask:
                 "org.opencontainers.image.revision": build.commit_sha,
                 "org.opencontainers.image.source": without_credentials(source_code.source_code_url),
             },
+            platforms=tuple(build.platforms),
         )
+        platforms = f" for {', '.join(request.platforms)}" if request.platforms else ""
         for name in request.images:
-            self.logger.info(f"Building {name}")
+            self.logger.info(f"Building {name}{platforms}")
         await self.builder.start(build.id, source, request, self.logger)
         await self.change_status(ModelStatus.IN_PROGRESS)
         await self.wait_for_job()
