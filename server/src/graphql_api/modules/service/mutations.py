@@ -42,6 +42,7 @@ class ServiceUpdateInput:
     repository_integration_id: uuid.UUID | None = None
     dockerfile_path: str | None = None
     build_context: str | None = None
+    build_platforms: list[str] | None = None
     labels: list[str] | None = None
     owners: list[uuid.UUID] | None = None
 

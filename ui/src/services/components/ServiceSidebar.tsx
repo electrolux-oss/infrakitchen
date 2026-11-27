@@ -34,6 +34,8 @@ import {
 import { useServiceNotificationDialog } from "../hooks";
 import { gitIntegrationHint } from "../repositoryUrl";
 
+import { platformLabel } from "./builds";
+import { PlatformSelector } from "./PlatformSelector";
 import { BaseImageRegistries, ServiceRegistries } from "./ServiceRegistries";
 
 type UserOption = GqlUserShort & { displayName?: string | null };
@@ -289,6 +291,27 @@ export const ServiceSidebar = ({
               margin="normal"
               autoFocus
             />
+          )}
+          span="full"
+        />
+        <CommonEditableField<string[]>
+          name={"Platforms"}
+          info="Default platforms of a build; each build can choose its own"
+          canEdit={canEdit}
+          value={service.buildPlatforms}
+          ariaLabel="Edit build platforms"
+          isEqual={(a, b) => a.join(",") === b.join(",")}
+          display={service.buildPlatforms.map(platformLabel).join(", ")}
+          onSave={(value) => {
+            if (value.length === 0) {
+              const error = new Error("Choose at least one platform");
+              notifyError(error);
+              return Promise.reject(error);
+            }
+            return saveField({ buildPlatforms: value });
+          }}
+          renderEditor={({ value, onChange }) => (
+            <PlatformSelector value={value} onChange={onChange} />
           )}
           span="full"
         />

@@ -9,6 +9,20 @@ export const IMAGE_TAG_RE = /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$/;
 export const IMAGE_REPOSITORY_RE =
   /^[a-z0-9]+(?:(?:\.|_|__|-+)[a-z0-9]+)*(?:\/[a-z0-9]+(?:(?:\.|_|__|-+)[a-z0-9]+)*)*$/;
 
+// Same as IMAGE_PLATFORMS in server/src/application/services/schema.py
+export const IMAGE_PLATFORMS = [
+  { id: "linux/amd64", label: "amd64" },
+  { id: "linux/arm64", label: "arm64" },
+] as const;
+
+export const sortPlatforms = (platforms: string[]) =>
+  IMAGE_PLATFORMS.map((platform) => platform.id).filter((id) =>
+    platforms.includes(id),
+  );
+
+export const platformLabel = (platform: string) =>
+  IMAGE_PLATFORMS.find((option) => option.id === platform)?.label ?? platform;
+
 export const isActiveStatus = (status: string | undefined) =>
   !!status && ACTIVE_BUILD_STATUSES.includes(status.toLowerCase());
 

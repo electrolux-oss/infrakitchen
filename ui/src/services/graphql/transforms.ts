@@ -26,6 +26,7 @@ type GqlServiceDetailFieldTypes = {
   sourceCodeId: string | null;
   dockerfilePath: string;
   buildContext: string;
+  buildPlatforms: string[];
   labels: string[] | null;
   revisionNumber: number;
   createdAt: string;
@@ -69,6 +70,7 @@ export type GqlServiceBuild = {
   commitSha: string;
   images: GqlServiceBuildImage[];
   tag: string;
+  platforms: string[];
   imageDigest: string | null;
   status: string;
   startedAt: string | null;

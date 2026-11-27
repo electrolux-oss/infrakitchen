@@ -24,6 +24,7 @@ export const SERVICE_GRAPHQL_FIELDS = {
     "sourceCodeId",
     "dockerfilePath",
     "buildContext",
+    "buildPlatforms",
     "labels",
     "revisionNumber",
     "createdAt",
@@ -124,6 +125,7 @@ export const SERVICE_BUILD_FIELDS = `
   serviceId
   commitSha
   tag
+  platforms
   imageDigest
   status
   startedAt

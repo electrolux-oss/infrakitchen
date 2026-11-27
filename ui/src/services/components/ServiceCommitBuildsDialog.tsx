@@ -24,7 +24,7 @@ import {
 } from "../../ui";
 import { GqlServiceBuild } from "../graphql";
 
-import { formatDuration } from "./builds";
+import { formatDuration, platformLabel } from "./builds";
 
 const EmptyCell = () => <span className="text-fg-muted">—</span>;
 
@@ -70,6 +70,18 @@ export const ServiceCommitBuildsDialog = ({
               {params.row.tag}
             </span>
           </Tooltip>
+        ),
+      },
+      {
+        field: "platforms",
+        headerName: "Platforms",
+        flex: 0.5,
+        minWidth: 110,
+        sortable: false,
+        renderCell: (params: RenderCellParams<GqlServiceBuild>) => (
+          <span className="truncate text-body2">
+            {params.row.platforms.map(platformLabel).join(", ")}
+          </span>
         ),
       },
       {

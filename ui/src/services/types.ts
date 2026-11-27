@@ -16,6 +16,7 @@ export interface ServiceUpdateRequest {
   repositoryIntegrationId?: string | null;
   dockerfilePath?: string;
   buildContext?: string;
+  buildPlatforms?: string[];
   labels?: string[];
   owners?: string[];
 }

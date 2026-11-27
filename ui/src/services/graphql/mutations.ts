@@ -23,8 +23,18 @@ export const UPDATE_SERVICE_MUTATION = `
 `;
 
 export const BUILD_SERVICE_MUTATION = `
-  mutation BuildService($serviceId: UUID!, $commitSha: String!, $tag: String) {
-    buildService(serviceId: $serviceId, commitSha: $commitSha, tag: $tag) {
+  mutation BuildService(
+    $serviceId: UUID!
+    $commitSha: String!
+    $tag: String
+    $platforms: [String!]
+  ) {
+    buildService(
+      serviceId: $serviceId
+      commitSha: $commitSha
+      tag: $tag
+      platforms: $platforms
+    ) {
       id
       commitSha
       status
